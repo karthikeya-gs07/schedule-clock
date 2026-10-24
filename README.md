@@ -15,7 +15,7 @@ A Wear OS watch face that shows the time **and the shape of your day**: calendar
 
 ## Live preview
 
-The prototype is published with GitHub Pages from the `main` branch. Every push to `main` updates it within a minute or two.
+**Not live yet.** GitHub Pages isn't available for private repositories on the free plan. Options are tracked in PRD.md §7. The repo is already set up for it: the root `index.html` redirects to `prototype/`, and `.nojekyll` serves files as-is, so any static host pointed at `main` works without changes.
 
 ## Run locally
 
