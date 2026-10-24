@@ -213,7 +213,7 @@
   <div>
     <h2>Simulated time</h2>
     <label><span id="timeLabel"></span>
-      <input id="time" type="range" min="360" max="1435" step="5" value="360" aria-label="Simulated time">
+      <input id="time" type="range" min="360" max="1800" step="5" value="360" aria-label="Simulated time">
     </label>
   </div>
   <div>
@@ -301,6 +301,8 @@ let scrubbing = false;
 let lookAhead = true;       // list tomorrow's meetings starting within 14 h, not only within the 12 h window
 
 const toMin = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
+// Midnight that ends the current simulated day (the slider runs past 12 AM into the next day).
+const dayEndOf = min => (Math.floor(min / 1440) + 1) * 1440;
 // Minutes from today's midnight; tomorrow's events (day: 1) are 1440 + …
 const events = () => PRESETS[preset].map(e => ({ ...e, s: (e.day || 0) * 1440 + toMin(e.start), e: (e.day || 0) * 1440 + toMin(e.end) }));
 
@@ -321,11 +323,14 @@ function upcoming() {
   const live = all.filter(e => e.s < nowMin && e.e > nowMin);
   const winStart = Math.min(nowMin, ...live.map(e => e.s));
   const winEnd = winStart + WINDOW_MIN;
+  const dayEnd = dayEndOf(nowMin);
   return all.flatMap(e => {
-    if (e.e > nowMin && e.e <= winEnd) return [{ ...e, lane: 'main', cs: Math.max(e.s, winStart), ce: e.e }];
-    // Tomorrow's meetings that start after the window: shown on the lane when "All of tomorrow" is on.
-    if (e.e > winEnd && e.s > nowMin && (e.s < 1440 || e.s < winEnd || (lookAhead && e.s <= nowMin + LOOKAHEAD_MIN)))
-      return [{ ...e, lane: 'later', cs: e.s, ce: e.s < 1440 ? Math.min(e.e, 1440) : e.e }];
+    // Tomorrow's meetings (start at or after the next midnight) never take the main ring early:
+    // they wait on the lane until the clock passes midnight, when they become today's (W5).
+    if (e.e > nowMin && e.e <= winEnd && e.s < dayEnd) return [{ ...e, lane: 'main', cs: Math.max(e.s, winStart), ce: e.e }];
+    // Rest of today that doesn't fit yet, plus tomorrow's within the 14 h look-ahead (or the window).
+    if ((e.e > winEnd || e.s >= dayEnd) && e.s > nowMin && (e.s < dayEnd || e.s < winEnd || (lookAhead && e.s <= nowMin + LOOKAHEAD_MIN)))
+      return [{ ...e, lane: 'later', cs: e.s, ce: e.s < dayEnd ? Math.min(e.e, dayEnd) : e.e }];
     return [];
   });
 }
@@ -579,7 +584,8 @@ function renderBase(list) {
 
   const timeStr = fmtClock(nowMin, false);
   const ampm = nowMin % 1440 < 720 ? 'AM' : 'PM';
-  setText('dDate', 'SAT · OCT 24');
+  const DAYS = ['SAT · OCT 24', 'SUN · OCT 25'];
+  setText('dDate', DAYS[Math.min(Math.floor(nowMin / 1440), DAYS.length - 1)]);
   setText('dTime', timeStr);
   setText('dAmpm', nowMin % 1440 < 720 ? 'AM' : 'PM');
   // Center time + AM/PM as one unit (the clock font's width varies, so the pair is measured).
@@ -714,7 +720,7 @@ function renderDetails(list) {
   // the hour numbers in both states (selected scales ×1.15); overflow gets an ellipsis.
   // Qualifiers: later today → range line in blue ("Later · …"); tomorrow → place line in blue
   // ("Tomorrow · …", the range line is too narrow for it). A double booking wins the place line, in coral.
-  const clash = clashesFor(list, e), tomorrow = e.s >= 1440, laterToday = e.lane === 'later' && !tomorrow;
+  const clash = clashesFor(list, e), tomorrow = e.s >= dayEndOf(nowMin), laterToday = e.lane === 'later' && !tomorrow;
   // Double booking (C7): title, then the clashing meeting, then the time range.
   const rangeY = clash.length ? 348 : 318, placeY = clash.length ? 318 : 348;
   $('dRange').setAttribute('y', rangeY); $('dPlace').setAttribute('y', placeY);
@@ -811,7 +817,7 @@ function renderAll() {
 }
 
 function renderPanel(list) {
-  $('timeLabel').textContent = fmtClock(nowMin);
+  $('timeLabel').textContent = fmtClock(nowMin) + (nowMin >= 1440 ? ' · next day' : '');
   $('stateLabel').textContent = ambient ? 'AMBIENT'
     : selected < 0 ? 'DEFAULT' : `SELECTED ${selected + 1}/${list.length}`;
   const slot = (name, segs) => {
@@ -990,7 +996,7 @@ $('play').onclick = () => {
   $('play').setAttribute('aria-pressed', on);
   if (!on) { clearInterval(playTimer); playTimer = null; return; }
   playTimer = setInterval(() => {
-    nowMin = nowMin >= 1435 ? 360 : nowMin + 1;
+    nowMin = nowMin >= 1800 ? 360 : nowMin + 1;
     $('time').value = nowMin;
     renderAll();
   }, 40);
