@@ -90,7 +90,11 @@
   .panel h2 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
   .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   label { display: flex; flex-direction: column; gap: 6px; }
-  input[type=range] { width: 100%; accent-color: var(--accent); }
+  input[type=range] { width: 100%; height: 32px; margin: 0; accent-color: var(--accent); touch-action: none; }
+  html { -webkit-tap-highlight-color: transparent; }
+  #face { touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+  /* Scrubbing the time slider: follow the finger exactly, no easing or settle animations */
+  #face.scrubbing .m, #face.scrubbing #trail, #face.scrubbing #dText { transition: none !important; }
   button {
     background: #222428; color: var(--text); border: 1px solid var(--line); border-radius: 8px;
     padding: 7px 12px; font: inherit; cursor: pointer;
@@ -280,6 +284,7 @@ let ambient = false;
 let autoReturn = true;
 let timer = null, swapTimer = null;
 let lastTap = '—';
+let scrubbing = false;
 
 const toMin = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
 // Minutes from today's midnight; tomorrow's events (day: 1) are 1440 + …
@@ -453,8 +458,8 @@ svg.innerHTML = `
     </g></g>
   </g>
 
+  <circle id="ringHit" cx="${CX}" cy="${CY}" r="${CY}" fill="transparent" style="cursor:pointer"/>
   <circle id="centerHit" cx="${CX}" cy="${CY}" r="150" fill="transparent"/>
-  <circle id="ringHit" cx="${CX}" cy="${CY}" r="${R - 12}" fill="none" stroke="transparent" stroke-width="64" style="cursor:pointer" pointer-events="stroke"/>
 `;
 const $ = id => document.getElementById(id);
 const setText = (id, s) => { $(id).textContent = s; };
@@ -535,7 +540,7 @@ function detectPromotions(main, later) {
   const lanes = new Map([...main, ...later].map(e => [keyOf(e), e.lane]));
   for (const e of main) {
     const k = keyOf(e);
-    if (prevLanes.get(k) === 'later' && !arriving.has(k)) settle(e, k);
+    if (!scrubbing && prevLanes.get(k) === 'later' && !arriving.has(k)) settle(e, k);
   }
   prevLanes = lanes;
 }
@@ -721,6 +726,7 @@ function tapAt(ev) {
 }
 // A precise tap on the thin later lane (I11): from 6 px inside it to 2 px outside, so it
 // never takes taps meant for the main band (which starts at R − 6).
+const CENTER_R = 150;
 const onLane = r => r >= R_LATER - 6 && r <= R_LATER + 2;
 
 // Indexes of upcoming events that touch the given clock hour on the dial.
@@ -750,7 +756,9 @@ function onRingTap(ev) {
   else if (pos === -1) setSelection(hits[0]);                    // new hour → its first event
   else setSelection(pos + 1 < hits.length ? hits[pos + 1] : -1); // same hour → next, then default
 }
-$('ringHit').addEventListener('click', onRingTap);
+// One handler for the whole face (a thin ring shrinks to a few px on a small watch, so the
+// zone is everything outside the center area; the center keeps its own action).
+svg.addEventListener('click', ev => { if (tapAt(ev).r >= CENTER_R) onRingTap(ev); });
 // Center tap (I8): opens the calendar app when a private meeting is shown, so details are
 // read there (behind the watch's lock), never on the face. Otherwise nothing.
 $('centerHit').addEventListener('click', () => {
@@ -780,7 +788,16 @@ Object.keys(PRESETS).forEach(name => {
   };
   presetsEl.appendChild(b);
 });
-$('time').oninput = ev => { nowMin = +ev.target.value; renderAll(); };
+// Scrub: render at most once per frame, with transitions off, and settle cleanly on release.
+let scrubFrame = 0, scrubEnd = 0;
+$('time').oninput = ev => {
+  nowMin = +ev.target.value;
+  scrubbing = true;
+  svg.classList.add('scrubbing');
+  clearTimeout(scrubEnd);
+  scrubEnd = setTimeout(() => { scrubbing = false; svg.classList.remove('scrubbing'); }, 250);
+  if (!scrubFrame) scrubFrame = requestAnimationFrame(() => { scrubFrame = 0; renderAll(); });
+};
 $('ambient').onclick = () => {
   ambient = !ambient;
   $('ambient').setAttribute('aria-pressed', ambient);
