@@ -623,6 +623,9 @@ function renderDetails(list) {
   // Qualifiers: later today → range line in blue ("Later · …"); tomorrow → place line in blue
   // ("Tomorrow · …", the range line is too narrow for it). A double booking wins the place line, in coral.
   const clash = clashesFor(list, e), tomorrow = e.s >= 1440, laterToday = e.lane === 'later' && !tomorrow;
+  // Double booking (C7): title, then the clashing meeting, then the time range.
+  const rangeY = clash.length ? 348 : 318, placeY = clash.length ? 318 : 348;
+  $('dRange').setAttribute('y', rangeY); $('dPlace').setAttribute('y', placeY);
   fitText('dRange', (laterToday ? 'Later · ' : '') + fmtRange(e), 24, 24, 255);
   $('dRange').setAttribute('fill', laterToday ? C.laterText : C.text);
   const where = priv ? 'Details hidden' : e.where;
@@ -636,7 +639,7 @@ function renderDetails(list) {
   $('dPlace').setAttribute('x', CX + iw / 2);
   $('dClashIcon').style.display = clash.length ? '' : 'none';
   if (clash.length) $('dClashIcon').setAttribute('transform',
-    `translate(${CX - ($('dPlace').getComputedTextLength() + iw) / 2} ${348 - 0.35 * +$('dPlace').getAttribute('font-size')})`);
+    `translate(${CX - ($('dPlace').getComputedTextLength() + iw) / 2} ${placeY - 0.35 * +$('dPlace').getAttribute('font-size')})`);
   $('dPlace').setAttribute('fill', clash.length ? C.clash : tomorrow ? C.laterText : C.muted);
 }
 
