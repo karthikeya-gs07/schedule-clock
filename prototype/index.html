@@ -179,12 +179,6 @@
   #face.empty #dDivider { opacity: 0; }
   #trail { transition: opacity var(--d) var(--ease); }
   #numerals, #ticks, #dRange, #dPlace, #dClashIcon, #dTodIcon, #dArrow { transition: opacity var(--d) var(--ease), stroke var(--d) var(--ease); }
-  /* Ring-shaped window onto the conic gradient: same radius and width as the track */
-  #trailFx {
-    width: 450px; height: 450px;
-    -webkit-mask: radial-gradient(circle at 225px 225px, transparent 212.5px, #000 213px, #000 225px, transparent 225.5px);
-            mask: radial-gradient(circle at 225px 225px, transparent 212.5px, #000 213px, #000 225px, transparent 225.5px);
-  }
   #face.ambient #dStatus { fill: #8e8e93; }
   #face.ambient #dRange, #face.ambient #dPlace, #face.ambient #dClashIcon, #face.ambient #dTodIcon { opacity: 0; }
   #face.ambient #dArrow { stroke: #8e8e93; }
@@ -438,7 +432,7 @@ svg.innerHTML = `
   <g id="ticks">${ticks}</g>
   <g id="numerals">${numerals}</g>
   <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${C.track}" stroke-width="12"/>
-  <foreignObject id="trail" x="0" y="0" width="450" height="450"><div xmlns="http://www.w3.org/1999/xhtml" id="trailFx"></div></foreignObject>
+  <g id="trail" fill="none" stroke="#fff" stroke-width="12"></g>
   <defs id="ringDefs"></defs>
   <g id="ringAll" class="m"></g>
   <g id="fx" class="m"></g>
@@ -616,14 +610,26 @@ function resetPromotions() {
   prevLanes = new Map();
 }
 
-// Comet trail behind the "now" dot: a tapering, fading tail on the ring, under the event arcs.
+// Comet trail behind the "now" dot: a fading tail on the ring, under the event arcs.
+// Pure SVG (a run of short arcs with rising opacity), because a CSS conic-gradient inside a
+// foreignObject doesn't render reliably on iOS/iPadOS Safari.
 // WFF: an Arc whose angles follow the clock, stroked with a SweepGradient (white → transparent).
-const TRAIL_DEG = 55;
+const TRAIL_DEG = 55, TRAIL_SEGS = 44, TRAIL_OVERLAP = 0.35;
+const trailAlpha = t => t < .45 ? .08 * (t / .45) : .08 + .52 * ((t - .45) / .55);   // 0 → .08 → .6
+const trailSegs = [];
+for (let i = 0; i < TRAIL_SEGS; i++) {
+  const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  p.setAttribute('stroke-opacity', trailAlpha((i + .5) / TRAIL_SEGS).toFixed(3));
+  $('trail').appendChild(p);
+  trailSegs.push(p);
+}
 function renderTrail() {
-  const head = angleOf(nowMin);
-  $('trailFx').style.background =
-    `conic-gradient(from ${head - TRAIL_DEG}deg, transparent 0deg, rgba(255,255,255,.08) ${TRAIL_DEG * .45}deg,
-      rgba(255,255,255,.6) ${TRAIL_DEG}deg, transparent ${TRAIL_DEG + 0.1}deg)`;
+  const head = angleOf(nowMin), step = TRAIL_DEG / TRAIL_SEGS;
+  trailSegs.forEach((p, i) => {
+    const a0 = head - TRAIL_DEG + i * step, a1 = a0 + step + (i < TRAIL_SEGS - 1 ? TRAIL_OVERLAP : 0);
+    const [x0, y0] = polar(a0, R), [x1, y1] = polar(a1, R);
+    p.setAttribute('d', `M${x0.toFixed(2)} ${y0.toFixed(2)} A${R} ${R} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`);
+  });
 }
 
 // Default meeting for the details: the next one that hasn't started. While a meeting is in
