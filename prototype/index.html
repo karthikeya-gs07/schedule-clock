@@ -455,7 +455,7 @@ svg.innerHTML = `
   <g id="ticks">${ticks}</g>
   <g id="numerals">${numerals}</g>
   <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${C.track}" stroke-width="12"/>
-  <g id="trail" fill="none" stroke="#fff" stroke-width="2.2"></g>
+  <g id="trail" fill="none" stroke="#fff" stroke-width="1.2"></g>
   <defs id="ringDefs"></defs>
   <g id="ringAll" class="m"></g>
   <g id="fx" class="m"></g>
@@ -639,7 +639,7 @@ function resetPromotions() {
 // "Illuminated" trail: a fixed ring of short dashes that never move. As the now dot passes a
 // dash it lights up, then fades back over the next TRAIL_DEG degrees. Only brightness changes.
 // WFF: a static set of tick-like elements whose opacity is a function of the clock.
-const TRAIL_DEG = 60, DASH_STEP = 3, DASH_BASE = .1, DASH_PEAK = .9;
+const TRAIL_DEG = 60, DASH_STEP = 1.5, DASH_BASE = .1, DASH_PEAK = .9;
 const dashes = [];
 for (let a = 0; a < 360; a += DASH_STEP) {
   const [x0, y0] = polar(a, R - 6), [x1, y1] = polar(a, R + 6);

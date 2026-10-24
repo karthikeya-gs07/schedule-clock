@@ -161,6 +161,7 @@ Wear OS 5+ (WFF v2, needed for `WeightedStroke` on `Arc`): Galaxy Watch 4 and la
 - **v0.25:** Softer meeting arcs (60 % opacity, tunable slider); Dim (low power) toggle; Tactical red toggle (A4, A5, R6a).
 - **v0.26:** Trail is now fixed dashes that light up as the now dot passes and fade behind it, instead of a glow that travels with the dot (R6).
 - **v0.27:** Tomorrow's meetings stay on the thin lane until the clock passes midnight, then all move to the main ring together. Simulated time now runs past 12 AM into the next day (W5).
+- **v0.28:** Trail dashes doubled to 20 per hour (240, every 1.5°) and thinned to 1.2 px (R6).
 - **v0.18.2:** Repo made public; GitHub Pages live at https://karthikeya-gs07.github.io/schedule-clock/.
 - **v0.18.1:** Project pushed to the private GitHub repo `schedule-clock`; live preview pending a hosting choice (§7.1).
 - **v0.18:** Morning + evening meetings in the same dial slot stack (ring + lane). Tap order: morning, then evening; a precise tap on the thin lane selects the evening meeting directly. Sample day gains Gym 7–7:45 AM.
