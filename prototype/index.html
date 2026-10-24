@@ -16,6 +16,7 @@
     --muted: #8b8d94;
     --accent: #ffb547;
     /* Motion tokens (become WFF <Animation duration interpolation>) */
+    --arc-alpha: .6;      /* meeting arcs: see-through so the time stays the focus */
     --d: 520ms;           /* select / release */
     --swap: 170ms;        /* text fades out ... */
     --swap-in: 280ms;     /* ... and back in */
@@ -120,23 +121,24 @@
   }
   #ringAll { opacity: 1; }
   #ringAll path { stroke: #ffb547; stroke-width: 12px; fill: none;
-    transition: stroke var(--d) var(--ease), stroke-width var(--d) var(--ease), opacity var(--d) var(--ease); }
+    stroke-opacity: var(--arc-alpha);
+    transition: stroke var(--d) var(--ease), stroke-width var(--d) var(--ease), opacity var(--d) var(--ease), stroke-opacity var(--d) var(--ease); }
   #ringAll path.enter, #ringAll path.leaving { opacity: 0; }
   #ringAll path.past { stroke: #6e4f22; }
-  #ringAll path.later { stroke: #8fa3d6; stroke-width: 4px; stroke-linecap: round; }
+  #ringAll path.later { stroke: #8fa3d6; stroke-width: 4px; stroke-linecap: round; stroke-opacity: calc(var(--arc-alpha) + .3); }
   #ringAll path.arriving { visibility: hidden; }   /* the settling animation stands in for it */
   #fx path {
-    fill: none; stroke: #8fa3d6; stroke-width: 4px;
+    fill: none; stroke-opacity: calc(var(--arc-alpha) + .3); stroke: #8fa3d6; stroke-width: 4px;
     transform-box: view-box; transform-origin: 225px 225px;
     transition: transform var(--promote) cubic-bezier(.22, 1, .36, 1),
-                stroke var(--promote) ease, stroke-width var(--promote) ease;
+                stroke var(--promote) ease, stroke-opacity var(--promote) ease, stroke-width var(--promote) ease;
   }
   #face.selected #fx { opacity: .35; }
   #ringAll path.later.private { stroke-dasharray: 4 3; stroke: #8e8e93; }
-  #ringAll path.clash-mask { stroke: #000; stroke-width: 14px; }
-  #ringAll path.clash { stroke: #ff7a59; stroke-width: 5px; }
+  #ringAll path.clash-mask { stroke: #000; stroke-width: 14px; stroke-opacity: 1; }
+  #ringAll path.clash { stroke: #ff7a59; stroke-width: 5px; stroke-opacity: calc(var(--arc-alpha) + .3); }
   #ringAll path.clash.past { stroke: #7a3b2c; }
-  .selArc { fill: none; stroke: #ffd27f; stroke-width: 12px; opacity: 0; }
+  .selArc { fill: none; stroke: #ffd27f; stroke-width: 12px; opacity: 0; stroke-opacity: calc(var(--arc-alpha) + .3); }
   .selArc.past { stroke: #8a6a35; }
   .selArc.later { stroke: #c3d0f2; stroke-width: 4px; stroke-linecap: round; }
   #dStatus { fill: var(--accent); }
@@ -166,7 +168,7 @@
   #face.swapping .selArc  { opacity: 0; stroke-width: 12px; transition-duration: var(--swap); }
 
   /* Ambient (always-on): outlines only, no selection */
-  #face.ambient #ringAll path { stroke: #9a9a9a; stroke-width: 3px; }
+  #face.ambient #ringAll path { stroke: #9a9a9a; stroke-width: 3px; stroke-opacity: 1; }
   #face.ambient #ringAll path.past { stroke: #4a4a4a; }
   #face.ambient #ringAll path.clash-mask { stroke: #000; stroke-width: 14px; }
   #face.ambient #ringAll path.later { stroke: #5c5c62; }
@@ -220,11 +222,19 @@
     <h2>Mode</h2>
     <div class="row">
       <button id="ambient" aria-pressed="false">Ambient (always-on)</button>
+      <button id="dim" aria-pressed="false">Dim (low power)</button>
+      <button id="tactical" aria-pressed="false">Tactical red</button>
       <button id="lookAhead" aria-pressed="true">Tomorrow look-ahead 14 h</button>
       <button id="autoReturn" aria-pressed="true">Auto-return 8 s</button>
       <button id="slowmo" aria-pressed="false">Slow motion ×5</button>
       <button id="play" aria-pressed="false">Fast-forward time</button>
     </div>
+  </div>
+  <div>
+    <h2>Meeting arc opacity</h2>
+    <label><span id="alphaLabel"></span>
+      <input id="arcAlpha" type="range" min="20" max="100" step="5" value="60" aria-label="Meeting arc opacity">
+    </label>
   </div>
   <div>
     <h2>State</h2>
@@ -429,6 +439,12 @@ for (let q = 0; q < 48; q++) {
 }
 
 svg.innerHTML = `
+  <defs>
+    <filter id="modeFx" filterUnits="userSpaceOnUse" x="0" y="0" width="450" height="450" color-interpolation-filters="sRGB">
+      <feColorMatrix id="modeMx" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
+    </filter>
+  </defs>
+  <g id="scene">
   <g id="ticks">${ticks}</g>
   <g id="numerals">${numerals}</g>
   <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${C.track}" stroke-width="12"/>
@@ -468,6 +484,7 @@ svg.innerHTML = `
     </g></g>
   </g>
 
+  </g>
   <circle id="ringHit" cx="${CX}" cy="${CY}" r="${CY}" fill="transparent" style="cursor:pointer"/>
   <circle id="centerHit" cx="${CX}" cy="${CY}" r="150" fill="transparent"/>
 `;
@@ -600,6 +617,7 @@ function settle(e, k) {
   p.getBoundingClientRect();                      // commit the start state before transitioning
   p.style.transform = `scale(${scale})`;
   p.style.stroke = C.event;
+  p.style.strokeOpacity = 'var(--arc-alpha)';
   p.style.strokeWidth = `${12 / scale}px`;
   arriving.set(k, setTimeout(() => { arriving.delete(k); p.remove(); renderAll(); }, PROMOTE_MS()));
 }
@@ -911,6 +929,41 @@ $('lookAhead').onclick = () => {
   resetPromotions();
   renderAll();
 };
+// Tactical (all red, brightness = luminance) and Dim (low power: darker, less colour) are one
+// colour matrix over the whole face, so the layout and animations are untouched.
+// WFF: a tactical/dim variant is a second set of colours (a color-configuration option).
+let tactical = false, dim = false;
+function modeValues() {
+  const k = (dim ? .42 : 1) * (tactical ? 1.15 : 1), sat = dim && !tactical ? .75 : 1;
+  const [lr, lg, lb] = [.3, .59, .11];
+  const rows = tactical
+    ? [[lr, lg, lb], [0, 0, 0], [0, 0, 0]]
+    : [[lr * (1 - sat) + sat, lg * (1 - sat), lb * (1 - sat)],
+       [lr * (1 - sat), lg * (1 - sat) + sat, lb * (1 - sat)],
+       [lr * (1 - sat), lg * (1 - sat), lb * (1 - sat) + sat]];
+  return rows.map(r => r.map(v => (v * k).toFixed(4)).join(' ') + ' 0 0').join('  ') + '  0 0 0 1 0';
+}
+// Fade the face down, switch the colours, fade back up.
+function applyMode() {
+  svg.style.transition = `opacity var(--swap) ease-in`;
+  svg.style.opacity = '.15';
+  setTimeout(() => {
+    if (tactical || dim) {
+      $('modeMx').setAttribute('values', modeValues());
+      $('scene').setAttribute('filter', 'url(#modeFx)');
+    } else $('scene').removeAttribute('filter');
+    svg.style.transition = `opacity var(--swap-in) ease-out`;
+    svg.style.opacity = '1';
+  }, cssMs('--swap'));
+}
+$('tactical').onclick = () => { tactical = !tactical; $('tactical').setAttribute('aria-pressed', tactical); applyMode(); };
+$('dim').onclick = () => { dim = !dim; $('dim').setAttribute('aria-pressed', dim); applyMode(); };
+$('arcAlpha').oninput = ev => {
+  document.documentElement.style.setProperty('--arc-alpha', ev.target.value / 100);
+  $('alphaLabel').textContent = ev.target.value + '%';
+};
+$('alphaLabel').textContent = '60%';
+
 $('autoReturn').onclick = () => {
   autoReturn = !autoReturn;
   $('autoReturn').setAttribute('aria-pressed', autoReturn);

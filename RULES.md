@@ -51,6 +51,7 @@ All sizes are in px on the **450 × 450 face canvas** (≈ 2 px per dp on a typi
 | R3 | A meeting is in progress | **Elapsed** part (start → now) is dim amber `#6e4f22`; the **remaining** part is amber `#ffb547`; the now dot sits between them. | Shows how far into the meeting you are. |
 | R4 | Two or more main-ring meetings **overlap** | Only the **overlapping minutes** become **two 5 px coral stripes** (`#ff7a59`) at R ± 4.5, with a 4 px black gap, inside the normal 12 px band (the outer stripe's last ~1 px falls past the screen edge). Elapsed overlap is dim coral `#7a3b2c`. The non-overlapping parts stay amber. 3+ overlaps still use two stripes. | Shape (split = "two things here") plus color (coral = attention) (P4, P5). It stays in the band's footprint, so it never reads as the later lane. |
 | R5 | Later-lane meeting (W4/W5) | Arc at **R − 10**, **4 px**, `#8fa3d6`, rounded ends. | Thin, cool and inside reads as "further away"; thick, warm and outside reads as "soon" (P4). |
+| R6a | Always | Meeting arcs are **see-through**: 60 % opacity (lane and clash stripes +30 points), so the clock stays the focus and the trail and ticks show through. The page has a 20–100 % slider to tune it. Ambient arcs stay solid. | The solid amber bars competed with the time. |
 | R6 | Always (not ambient) | **Now marker:** white dot with a soft halo on the main ring. **Comet trail:** 55° behind it, fading from 60 % white to transparent, drawn **under** meeting arcs. | Shows time sweeping through the day; the trail only shows over free time. |
 | R7 | Always | **Ticks** every 15 min, inside the later lane: hour (10 px, `#8e8e93`, 2.5 px wide), half-hour (6 px, `#4a4a50`), quarter (3 px, `#33333a`). | Three marks between each pair of hours for fine reading, faint enough not to compete. |
 | R8 | Always | **Hour numbers** 1–12, 24 px **Anta** (T5), radius R − 40. 12/3/6/9 `#8e8e93`, others `#5c5c62`. | Readable at the 24 px minimum (P7); cardinal hours stand out for orientation. |
@@ -145,6 +146,8 @@ All sizes are in px on the **450 × 450 face canvas** (≈ 2 px per dp on a typi
 | A1 | Black background. Meeting arcs become **3 px grey** lines; elapsed `#4a4a4a`; later lane `#5c5c62`; a double booking shows as two grey lines; a private meeting shows as grey stripes. | Low power, low burn-in. Structure survives without color. |
 | A2 | Trail hidden; ticks and numbers at 60 %; time range and place hidden; title stays; the C12 arrow turns grey. | Minimum lit pixels while still showing what's next. |
 | A3 | No selection; taps ignored. | |
+| A4 | **Dim (low power)** toggle | The same face, unchanged layout, at about 42 % brightness and 75 % colour. Separate from A1–A3 (outlines only). Tapping still works in the prototype. | A dimmer always-on version that keeps the meetings readable. |
+| A5 | **Tactical red** toggle | Everything is drawn in red only; brightness follows each element's luminance, so the clock is brightest, meeting arcs mid, and ticks and the track faint. Combines with Dim. | Night-vision-friendly look. WFF: a second colour configuration. |
 
 ---
 
