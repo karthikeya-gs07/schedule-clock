@@ -221,7 +221,7 @@
     <h2>Mode</h2>
     <div class="row">
       <button id="ambient" aria-pressed="false">Ambient (always-on)</button>
-      <button id="tomorrowAll" aria-pressed="true">Show all of tomorrow</button>
+      <button id="lookAhead" aria-pressed="true">Tomorrow look-ahead 14 h</button>
       <button id="autoReturn" aria-pressed="true">Auto-return 8 s</button>
       <button id="slowmo" aria-pressed="false">Slow motion ×5</button>
       <button id="play" aria-pressed="false">Fast-forward time</button>
@@ -274,6 +274,7 @@ const CX = 225, CY = 225, R = 219;   // band 213–225: flush with the screen ed
 const R_LATER = R - 10;      // thin inner lane for meetings later today, beyond the 12 h window
 const CLASH_OFFSET = 4.5;    // double booking: two 5 px stripes at R ± 4.5 inside the 12 px band
 const WINDOW_MIN = 12 * 60;
+const LOOKAHEAD_MIN = 14 * 60;   // tomorrow's meetings show up this far ahead (on the lane)
 const AUTO_RETURN_MS = 8000;
 
 // ---------- State ----------
@@ -286,7 +287,7 @@ let autoReturn = true;
 let timer = null, swapTimer = null;
 let lastTap = '—';
 let scrubbing = false;
-let tomorrowAll = true;     // show all of tomorrow, not only what starts inside the 12 h window
+let lookAhead = true;       // list tomorrow's meetings starting within 14 h, not only within the 12 h window
 
 const toMin = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
 // Minutes from today's midnight; tomorrow's events (day: 1) are 1440 + …
@@ -300,9 +301,9 @@ const events = () => PRESETS[preset].map(e => ({ ...e, s: (e.day || 0) * 1440 + 
 //          tomorrow's events that start inside the window but end past it. A meeting stays
 //          there until the main ring's slot for it is completely free (e.g. a 7–8 PM call
 //          moves down at 8:00 AM), so it never shares the dial with now or the trail.
-// Tomorrow's events: with "Show all of tomorrow" on (default) every one of them is listed, on the
-// lane until its slot is free. With it off, only those starting inside the 12 h window appear.
-// Nothing beyond tomorrow.
+// Tomorrow's events: with the 14 h look-ahead on (default) those starting within 14 h of now are
+// listed, on the lane until their slot is free. With it off, only those starting inside the 12 h
+// window appear. Later ones stay hidden until they come into range.
 // The list is chronological across both lanes, so indexes don't shift when a meeting moves.
 function upcoming() {
   const all = events().sort((a, b) => a.s - b.s);
@@ -312,7 +313,7 @@ function upcoming() {
   return all.flatMap(e => {
     if (e.e > nowMin && e.e <= winEnd) return [{ ...e, lane: 'main', cs: Math.max(e.s, winStart), ce: e.e }];
     // Tomorrow's meetings that start after the window: shown on the lane when "All of tomorrow" is on.
-    if (e.e > winEnd && e.s > nowMin && (e.s < 1440 || e.s < winEnd || (tomorrowAll && e.s < 2880)))
+    if (e.e > winEnd && e.s > nowMin && (e.s < 1440 || e.s < winEnd || (lookAhead && e.s <= nowMin + LOOKAHEAD_MIN)))
       return [{ ...e, lane: 'later', cs: e.s, ce: e.s < 1440 ? Math.min(e.e, 1440) : e.e }];
     return [];
   });
@@ -823,9 +824,9 @@ $('ambient').onclick = () => {
   if (ambient) setSelection(-1);
   renderAll();
 };
-$('tomorrowAll').onclick = () => {
-  tomorrowAll = !tomorrowAll;
-  $('tomorrowAll').setAttribute('aria-pressed', tomorrowAll);
+$('lookAhead').onclick = () => {
+  lookAhead = !lookAhead;
+  $('lookAhead').setAttribute('aria-pressed', lookAhead);
   resetPromotions();
   renderAll();
 };
