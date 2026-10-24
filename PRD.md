@@ -29,7 +29,7 @@ Full detail in [RULES.md](RULES.md). In short:
 |---|---|---|
 | Time window | Main ring = next 12 h. Meetings that don't fit yet (rest of today, or tomorrow but starting in the window) wait on a thin inner lane, then animate onto the ring once their slot is free. Tomorrow's meetings within 14 h also wait on the lane (toggle). Nothing further out. | W1–W10, M3 |
 | Ring | Amber arcs; elapsed part dimmed; double bookings as split coral stripes; private meetings as a grey caution-stripe band; later lane thin blue; now dot with comet trail; 15-min ticks; numbers 1–12. | R1–R10 |
-| Center | Date, big clock, then title / time / place of the next meeting. Qualifiers: "Later ·", "Tomorrow ·", overlap icon + clashing meeting (double booking). During a live meeting the text looks ahead to the next meeting, marked by an amber **→** before its title. Private meetings show only 🔒 **Private** · time · "Details hidden". With no meetings: just date + clock, centered, no message. | C1–C13 |
+| Center | Date, big clock, then title / time / place of the next meeting. Qualifiers: a time-of-day icon (sunrise / sun / sunset / moon) before the time of later-lane meetings, "Tomorrow ·", overlap icon + clashing meeting (double booking). During a live meeting the text looks ahead to the next meeting, marked by an amber **→** before its title. Private meetings show only 🔒 **Private** · time · "Details hidden". With no meetings: just date + clock, centered, no message. | C1–C13 |
 | Type | 24 px minimum everywhere; ellipsis instead of shrinking. | T1–T4 |
 | Taps | 12 one-hour tap sections on the ring; repeated taps cycle through meetings in that hour (near first, then the later lane); a precise tap on the thin lane jumps straight to the later meeting; auto-return after 8 s. Center tap on a private meeting opens the calendar app. | I1–I11 |
 | Motion | One layout, two sizes: clock shrinks, details grow (360 ms). Text dips only when the shown meeting changes. Lane → ring settle (700 ms). Reduced motion respected. | M1–M6 |
@@ -41,7 +41,7 @@ Full detail in [RULES.md](RULES.md). In short:
 |---|---|
 | 6:00 AM | Amber 7–7:45 AM (Gym) with thin blue 7–8 PM (Client call) stacked inside it on the lane; grey-striped 10–11 AM (Doctor appointment, private), amber 1–2 PM split coral (Design review + Vendor call double-booked), amber 4–5 PM. Details: Design review · 1:00 – 2:00 PM · **⧉ Vendor call** (overlap icon in coral). |
 | Tap 10 o'clock | 🔒 **Private** · 10:00 – 11:00 AM · Details hidden. Tap the center → calendar app opens. |
-| Tap 7 o'clock | Gym selected. Tap again → Client call: blue lane arc thickens; details: **Later · 7:00 – 8:00 PM** · Zoom. Tap again → default. |
+| Tap 7 o'clock | Gym selected. Tap again → Client call: blue lane arc thickens; details: **🌇 7:00 – 8:00 PM** (sunset icon) · Zoom. Tap again → default. |
 | Tap the thin lane at 7 | Client call directly (skips Gym). |
 | 8:00 AM | Client call settles from the blue lane onto the amber ring at 7→8. |
 | 4:20 PM | Weekly sync (4–5) is live: its arc shows elapsed/remaining. Text looks ahead: **→ Client call** · 7:00 – 8:00 PM · Zoom. Tapping 4 o'clock shows Weekly sync (no arrow). |
@@ -157,6 +157,7 @@ Wear OS 5+ (WFF v2, needed for `WeightedStroke` on `Arc`): Galaxy Watch 4 and la
 - **v0.21:** "Tomorrow look-ahead 14 h" toggle (default on): tomorrow's meetings start showing on the later lane 14 h ahead, so tomorrow 8 AM appears from 6 PM; further out stays hidden. Off = 12 h window only (W6).
 - **v0.22:** On a double booking the clash line (icon + other meeting) sits directly under the title, with the time range below it (C7).
 - **v0.23:** Smoother motion: S-curve easing and longer durations (520 ms select, 170/280 ms text swap, 900 ms lane settle with no bounce); arcs fade in/out and recolor instead of snapping (M1–M4b).
+- **v0.24:** Later-lane meetings show a time-of-day icon (sunrise, sun, sunset, moon) before the time instead of the word "Later" (C5).
 - **v0.18.2:** Repo made public; GitHub Pages live at https://karthikeya-gs07.github.io/schedule-clock/.
 - **v0.18.1:** Project pushed to the private GitHub repo `schedule-clock`; live preview pending a hosting choice (§7.1).
 - **v0.18:** Morning + evening meetings in the same dial slot stack (ring + lane). Tap order: morning, then evening; a precise tap on the thin lane selects the evening meeting directly. Sample day gains Gym 7–7:45 AM.

@@ -65,7 +65,7 @@ All sizes are in px on the **450 × 450 face canvas** (≈ 2 px per dp on a typi
 | past | `#6e4f22` | Elapsed part of a live meeting |
 | selected / selectedPast | `#ffd27f` / `#8a6a35` | Selected main-ring arc |
 | later / laterSelected | `#8fa3d6` / `#c3d0f2` | Later lane |
-| laterText | `#a9b8e0` | "Later ·" and "Tomorrow ·" text |
+| laterText | `#a9b8e0` | "Tomorrow ·" text and the time-of-day icons |
 | clash / clashPast | `#ff7a59` / `#7a3b2c` | Double-booking stripes, overlap icon and its text |
 | private / privatePast | `#8e8e93` / `#48484c` | Private caution stripes |
 | privateSel / privateSelPast | `#c7c7cc` / `#6a6a70` | Selected private stripes |
@@ -82,7 +82,7 @@ All sizes are in px on the **450 × 450 face canvas** (≈ 2 px per dp on a typi
 | C2 | A meeting is selected | The details show **the selected meeting**, in the same lines (P2). | |
 | C3 | **No meetings** in the window or lane | **Date + time only**, moved down to the center, clock enlarged to **115 %**. **No message.** | P8. (Changed 2026-10-24: "Nothing else today" removed.) |
 | C4 | Details layout | Three lines: **title** (30 px white, shrinks to 24 px, then ellipsis) · **time range** (24 px white) · **place** (24 px muted). | Time and place are on separate lines so neither has to drop below 24 px (P7). |
-| C5 | The meeting is on the later lane and is **today** | Time line: **"Later · 7:00 – 8:00 PM"** in `#a9b8e0`. | Matches the blue lane; explains why it's not on the main ring. |
+| C5 | The meeting is on the later lane and is **today** | Time line: a **time-of-day icon** then **"7:00 – 8:00 PM"** in `#a9b8e0`. Icon by start time: sunrise (5 AM–noon), sun (noon–5 PM), sunset (5–9 PM), moon (9 PM–5 AM). No "Later" word. The icon also precedes the time for tomorrow's lane meetings. | Matches the blue lane; explains why it's not on the main ring. |
 | C6 | The meeting is **tomorrow** | Place line: **"Tomorrow · Café Blue"** in `#a9b8e0`. | "Tomorrow · 8:00 – 8:45 AM" doesn't fit the time line at 24 px, so the qualifier goes on the place line. |
 | C7 | The meeting is **double-booked** | The clash line moves **above the time range** (order: title, clash line, time range). Clash line: a coral **overlap icon** (two intersecting rings, 22 px) followed by the other meeting's name, **"Vendor call"** (or "Vendor call +1" for 3+), in coral; no "Also" word. Takes priority over C6 and the place. | Who you're clashing with matters more than where. |
 | C8 | Time range formatting | AM/PM appears once if both ends are in the same half of the day ("1:00 – 2:00 PM"), otherwise on both ("11:30 AM – 12:30 PM"). | Saves width. |

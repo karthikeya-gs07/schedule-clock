@@ -178,7 +178,7 @@
   #face.empty #dClock   { transform: translateY(60px) scale(1.15); }
   #face.empty #dDivider { opacity: 0; }
   #trail { transition: opacity var(--d) var(--ease); }
-  #numerals, #ticks, #dRange, #dPlace, #dClashIcon, #dArrow { transition: opacity var(--d) var(--ease), stroke var(--d) var(--ease); }
+  #numerals, #ticks, #dRange, #dPlace, #dClashIcon, #dTodIcon, #dArrow { transition: opacity var(--d) var(--ease), stroke var(--d) var(--ease); }
   /* Ring-shaped window onto the conic gradient: same radius and width as the track */
   #trailFx {
     width: 450px; height: 450px;
@@ -186,7 +186,7 @@
             mask: radial-gradient(circle at 225px 225px, transparent 212.5px, #000 213px, #000 225px, transparent 225.5px);
   }
   #face.ambient #dStatus { fill: #8e8e93; }
-  #face.ambient #dRange, #face.ambient #dPlace, #face.ambient #dClashIcon { opacity: 0; }
+  #face.ambient #dRange, #face.ambient #dPlace, #face.ambient #dClashIcon, #face.ambient #dTodIcon { opacity: 0; }
   #face.ambient #dArrow { stroke: #8e8e93; }
 </style>
 </head>
@@ -467,6 +467,7 @@ svg.innerHTML = `
       ${T('dTitle', CX, 284, 30, { weight: 500 })}
       ${T('dRange', CX, 318, 24)}
       ${T('dPlace', CX, 348, 24, { fill: C.muted })}
+      <g id="dTodIcon" style="display:none" fill="none" stroke="${C.laterText}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></g>
       <g id="dClashIcon" style="display:none" fill="none" stroke="${C.clash}" stroke-width="2.5">
         <circle cx="7" cy="0" r="7"/><circle cx="15" cy="0" r="7"/>
       </g>
@@ -636,6 +637,23 @@ const shownIndex = (list, sel) => sel >= 0 ? sel : defaultIndex(list);
 // Look-ahead arrow before the title: shown while a meeting is live and the details show the
 // upcoming (default) meeting instead (RULES C12).
 const showsArrow = (list, i) => !!list[i] && !isLive(list[i]) && list.some(isLive) && i === defaultIndex(list);
+// Time-of-day icons (22 px, centered on 0,0): sunrise, sun, sunset, moon.
+const TOD_W = 22, TOD_GAP = 8;
+const rays = (cx, cy, r0, r1, angles) => angles.map(a => {
+  const t = a * Math.PI / 180, f = n => n.toFixed(1);
+  return `M${f(cx + r0 * Math.cos(t))} ${f(cy + r0 * Math.sin(t))} L${f(cx + r1 * Math.cos(t))} ${f(cy + r1 * Math.sin(t))}`;
+}).join(' ');
+const TOD_ICONS = {
+  morning:   `<path d="M-5 2 A5 5 0 0 1 5 2 M-10 2 H10 M0 10.5 V6 M-2.5 8 L0 5.5 L2.5 8 ${rays(0, 2, 8, 10.5, [270, 225, 315])}"/>`,
+  afternoon: `<circle r="4.5"/><path d="${rays(0, 0, 7.5, 10.5, [0, 45, 90, 135, 180, 225, 270, 315])}"/>`,
+  evening:   `<path d="M-5 2 A5 5 0 0 1 5 2 M-10 2 H10 M0 5.5 V10 M-2.5 8 L0 10.5 L2.5 8 ${rays(0, 2, 8, 10.5, [270, 225, 315])}"/>`,
+  night:     `<path d="M6 4.5 A7.5 7.5 0 1 1 -3 -7 A6 6 0 0 0 6 4.5 Z"/>`,
+};
+// Part of the day by start time: 5–12 morning, 12–17 afternoon, 17–21 evening, otherwise night.
+function timeOfDay(min) {
+  const h = (min % 1440) / 60;
+  return h >= 5 && h < 12 ? 'morning' : h >= 12 && h < 17 ? 'afternoon' : h >= 17 && h < 21 ? 'evening' : 'night';
+}
 const ARROW_W = 20, ARROW_GAP = 10, LOCK_W = 16, LOCK_GAP = 9;
 const titleOf = e => e.private ? 'Private' : e.title;          // private details never reach the face
 
@@ -647,7 +665,7 @@ function renderDetails(list) {
   else if (e) setText('dStatus', (isLive(e) ? '' : 'NEXT · ') + statusFor(e));
   else setText('dStatus', '');
   // Nothing in the window: no message, the clock simply takes the center.
-  if (!e) { ['dTitle', 'dRange', 'dPlace'].forEach(id => setText(id, '')); $('dClashIcon').style.display = 'none'; $('dArrow').setAttribute('d', ''); $('dLock').style.display = 'none'; return; }
+  if (!e) { ['dTitle', 'dRange', 'dPlace'].forEach(id => setText(id, '')); $('dClashIcon').style.display = 'none'; $('dTodIcon').style.display = 'none'; $('dArrow').setAttribute('d', ''); $('dLock').style.display = 'none'; return; }
   // Title, with the look-ahead arrow (C12) and the private lock (C13) centered together with it.
   const arrow = showsArrow(list, i), priv = !!e.private;
   const extra = (arrow ? ARROW_W + ARROW_GAP : 0) + (priv ? LOCK_W + LOCK_GAP : 0);
@@ -671,8 +689,21 @@ function renderDetails(list) {
   // Double booking (C7): title, then the clashing meeting, then the time range.
   const rangeY = clash.length ? 348 : 318, placeY = clash.length ? 318 : 348;
   $('dRange').setAttribute('y', rangeY); $('dPlace').setAttribute('y', placeY);
-  fitText('dRange', (laterToday ? 'Later · ' : '') + fmtRange(e), 24, 24, 255);
+  // Later-lane meetings: a time-of-day icon (morning / afternoon / evening / night) precedes the
+  // time range instead of the word "Later" (C5).
+  const onLane = e.lane === 'later', tw2 = onLane ? TOD_W + TOD_GAP : 0;
+  $('dRange').setAttribute('x', CX);
+  fitText('dRange', fmtRange(e), 24, 24, 255 - tw2);
+  $('dRange').setAttribute('x', CX + tw2 / 2);
   $('dRange').setAttribute('fill', laterToday ? C.laterText : C.text);
+  $('dTodIcon').style.display = onLane ? '' : 'none';
+  if (onLane) {
+    const tod = timeOfDay(e.s);
+    $('dTodIcon').innerHTML = TOD_ICONS[tod];
+    $('dTodIcon').setAttribute('aria-label', tod);
+    $('dTodIcon').setAttribute('transform',
+      `translate(${CX - ($('dRange').getComputedTextLength() + tw2) / 2 + TOD_W / 2} ${rangeY - 0.35 * +$('dRange').getAttribute('font-size')})`);
+  }
   const where = priv ? 'Details hidden' : e.where;
   // Double booking: an overlap icon (two intersecting rings) replaces the word "Also".
   const ICON_W = 22, ICON_GAP = 8;
