@@ -27,7 +27,7 @@ Full detail in [RULES.md](RULES.md). In short:
 
 | Area | Summary | Rules |
 |---|---|---|
-| Time window | Main ring = next 12 h. Meetings that don't fit yet (rest of today, or tomorrow but starting in the window) wait on a thin inner lane, then animate onto the ring once their slot is free. Nothing beyond the window is shown. | W1–W10, M3 |
+| Time window | Main ring = next 12 h. Meetings that don't fit yet (rest of today, or tomorrow but starting in the window) wait on a thin inner lane, then animate onto the ring once their slot is free. All of tomorrow also waits on the lane (toggle). Nothing beyond tomorrow. | W1–W10, M3 |
 | Ring | Amber arcs; elapsed part dimmed; double bookings as split coral stripes; private meetings as a grey caution-stripe band; later lane thin blue; now dot with comet trail; 15-min ticks; numbers 1–12. | R1–R10 |
 | Center | Date, big clock, then title / time / place of the next meeting. Qualifiers: "Later ·", "Tomorrow ·", overlap icon + clashing meeting (double booking). During a live meeting the text looks ahead to the next meeting, marked by an amber **→** before its title. Private meetings show only 🔒 **Private** · time · "Details hidden". With no meetings: just date + clock, centered, no message. | C1–C13 |
 | Type | 24 px minimum everywhere; ellipsis instead of shrinking. | T1–T4 |
@@ -154,6 +154,7 @@ Wear OS 5+ (WFF v2, needed for `WeightedStroke` on `Arc`): Galaxy Watch 4 and la
 
 - **v0.19:** Prototype shows the face at true physical size: tabs for Galaxy Watch8/Watch9 40 mm and 44 mm, Watch8 Classic 46 mm and Watch Ultra 2 47 mm (display diameter + case outline), plus a "Large" tab that fills the screen. Scale is auto-detected on iPhone/iPad, estimated elsewhere, and can be calibrated against a bank card.
 - **v0.20:** Double-booking line drops the word "Also": a coral overlap icon (two intersecting rings) precedes the other meeting's name (C7, C13).
+- **v0.21:** "Show all of tomorrow" toggle (default on): tomorrow's meetings are listed on the later lane even when they start after the 12 h window (e.g. tomorrow 8 AM visible at 7 PM). Off = old behavior (W6).
 - **v0.18.2:** Repo made public; GitHub Pages live at https://karthikeya-gs07.github.io/schedule-clock/.
 - **v0.18.1:** Project pushed to the private GitHub repo `schedule-clock`; live preview pending a hosting choice (§7.1).
 - **v0.18:** Morning + evening meetings in the same dial slot stack (ring + lane). Tap order: morning, then evening; a precise tap on the thin lane selects the evening meeting directly. Sample day gains Gym 7–7:45 AM.

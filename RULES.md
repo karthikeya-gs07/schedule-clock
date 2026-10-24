@@ -34,7 +34,7 @@ All sizes are in px on the **450 × 450 face canvas** (≈ 2 px per dp on a typi
 | W3 | A meeting **ends within** the window | It goes on the **main ring** (12 px, amber). | It fits completely, so its dial position is free. |
 | W4 | A meeting is today but **doesn't end within** the window (e.g. 7–8 PM, seen at 6 AM) | It goes on the **later lane** (thin, blue), at its real clock position. | On a 12 h dial, 7 PM and 7 AM share an angle. A separate lane keeps them apart (P6). |
 | W5 | A meeting is **tomorrow** and starts within the window | It ends within the window → main ring. It ends past the window → later lane. | The user asked to see tomorrow's meetings that fall inside the visible 12 hours. |
-| W6 | A meeting is tomorrow and starts **after** the window, or is further out | **Not shown.** | Keeps the face to the visible 12 hours (P8). |
+| W6 | A meeting is tomorrow and starts **after** the window | **Toggle "Show all of tomorrow" (default on):** on the later lane, in the list, with "Tomorrow ·". It moves to the main ring once it fits (W5). With the toggle off: not shown (P8). Anything beyond tomorrow is never shown. | You shouldn't have to wait until the evening to learn tomorrow's 8 AM exists. Shown on the lane so it never competes with today's ring. |
 | W7 | A meeting has ended | Not shown. | Past is noise on a glanceable face. |
 | W8 | A later-lane meeting comes to **fit completely** in the window (end ≤ window end) | It **moves to the main ring**, animated (M3). Example: the 7–8 PM call moves at **8:00 AM**, after the now dot and trail have passed the 7→8 slot. | Never shows as a clipped sliver, and never shares a slot with now (P6). |
 | W9 | All-day events | Ignored (v1). | No position on a time dial. Open question Q5. |
@@ -181,7 +181,7 @@ Taps: 12 `Launch` hotspots on the band → `app://scheduleclock/select?hour=N`, 
 | 2026-10-24 | Ring moved flush to the screen edge (R 206 → 219); selected arc grows inward; lane, ticks and numbers move out with it. | R1, R4, R9 |
 | 2026-10-24 | Empty state shows only date + clock; "Nothing else today" removed. | C3, M4 |
 | 2026-10-24 | Selection follows the meeting itself, not its list position: it survives a lane change and releases when the meeting is no longer shown. | I10, W10 |
-| 2026-10-24 | Tomorrow's meetings inside the 12 h window are shown; nothing beyond it. "Tomorrow ·" goes on the place line. | W5, W6, C6 |
+| 2026-10-24 | Tomorrow's meetings inside the 12 h window are shown (later: all of tomorrow, toggle, W6). "Tomorrow ·" goes on the place line. | W5, W6, C6 |
 | 2026-10-24 | Later-lane meetings move to the main ring only when they fit completely, with an animation. | W8, M3 |
 | 2026-10-24 | Later-today lane and double-booking stripes introduced. | W4, R4, R5, C5, C7 |
 | 2026-10-24 | 24 px minimum text; time and place split onto two lines. | T1, C4 |
