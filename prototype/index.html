@@ -31,14 +31,58 @@
     display: flex; flex-wrap: wrap; gap: 32px; justify-content: center; align-items: flex-start;
     padding: 32px 16px;
   }
-  .stage { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .stage { display: flex; flex-direction: column; align-items: center; gap: 12px; max-width: 100%; }
+
+  /* ---------- Device picker ----------
+     Real-size tabs draw the display and case at their physical diameter (JS sets --dial,
+     --glass and --case in CSS px from the screen's estimated or calibrated CSS px per inch).
+     "Large" ignores physical size and fills the viewport. */
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 100%; }
+  .tabs button[aria-selected=true] { border-color: var(--accent); color: var(--accent); }
+  .size-info { color: var(--muted); font-size: 13px; text-align: center; max-width: 460px; }
+  .size-info b { color: var(--text); font-weight: 600; }
+  .linkish { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; font-size: 13px; }
+  .device {
+    --dial: 220px; --glass: 236px; --case: 260px;
+    position: relative; display: grid; place-items: center; flex: none;
+    width: var(--case); height: var(--case); border-radius: 50%;
+    background: linear-gradient(145deg, #5a5c63, #26272b 45%, #3d3f45);
+    box-shadow: 0 12px 40px rgba(0,0,0,.6);
+  }
+  .device::before {           /* black glass around the display */
+    content: ""; position: absolute; width: var(--glass); height: var(--glass);
+    border-radius: 50%; background: #050506; box-shadow: inset 0 0 0 1px #1d1e22;
+  }
+  .device.classic {           /* Classic: rotating bezel with notches */
+    background: repeating-conic-gradient(#5d5f66 0deg 1.6deg, #2a2b2f 1.6deg 6deg);
+  }
+  .device.ultra { border-radius: 27%; }   /* Ultra: cushion-shaped case */
   .watch {
-    width: 450px; height: 450px; max-width: calc(100vw - 32px); max-height: calc(100vw - 32px);
+    position: relative; width: var(--dial); height: var(--dial);
     border-radius: 50%; background: #000; overflow: hidden;
+  }
+  .device.large { width: auto; height: auto; background: none; box-shadow: none; border-radius: 0; }
+  .device.large::before { display: none; }
+  .device.large .watch {
+    --large: min(100vw - 54px, max(240px, min(100vh - 200px, 760px)));
+    width: var(--large); height: var(--large);
     box-shadow: 0 0 0 10px #1c1d20, 0 0 0 11px #33353a, 0 20px 60px rgba(0,0,0,.6);
   }
+  @supports (height: 100svh) {
+    .device.large .watch { --large: min(100vw - 54px, max(240px, min(100svh - 200px, 760px))); }
+  }
   .watch svg { width: 100%; height: 100%; display: block; }
-  .hint { color: var(--muted); font-size: 13px; }
+  .hint { color: var(--muted); font-size: 13px; text-align: center; }
+
+  /* Calibration: match a bank card's short edge (53.98 mm) on screen */
+  .calib {
+    width: 360px; max-width: 100%; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px;
+  }
+  .calib[hidden] { display: none; }
+  .calib p { margin: 0; color: var(--muted); font-size: 13px; }
+  .card-wrap { overflow-x: auto; padding-bottom: 4px; }
+  .card { height: 48px; border: 2px solid var(--accent); border-radius: 6px; background: rgba(255,181,71,.08); }
   .panel {
     width: 360px; max-width: 100%; background: var(--panel); border: 1px solid var(--line);
     border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 18px;
@@ -140,7 +184,21 @@
 <body>
 
 <div class="stage">
-  <div class="watch"><svg id="face" viewBox="0 0 450 450" role="img" aria-label="Watch face preview"></svg></div>
+  <div class="tabs" id="deviceTabs" role="tablist" aria-label="Watch size"></div>
+  <div class="size-info" id="sizeInfo"></div>
+  <div class="calib" id="calib" hidden>
+    <p>Hold a bank or ID card against the screen. Drag the slider until the box is exactly as wide as the card's <b>short edge</b> (53.98 mm).</p>
+    <div class="card-wrap"><div class="card" id="calibCard"></div></div>
+    <input id="calibRange" type="range" min="60" max="260" step="0.5" aria-label="Screen scale">
+    <div class="row">
+      <button id="calibSave">Save calibration</button>
+      <button id="calibReset">Reset to auto</button>
+      <button id="calibCancel">Cancel</button>
+    </div>
+  </div>
+  <div class="device" id="device">
+    <div class="watch"><svg id="face" viewBox="0 0 450 450" role="img" aria-label="Watch face preview"></svg></div>
+  </div>
   <div class="hint">Tap an hour on the ring to select its event. Auto-returns after 8 s.</div>
 </div>
 
@@ -755,6 +813,85 @@ $('play').onclick = () => {
   }, 40);
 };
 
+// ---------- True-size preview ----------
+// Browsers don't expose the screen's physical size, so CSS px per inch is estimated from the
+// device (exact for iPhone and iPad models) and can be calibrated against a bank card.
+const DEVICES = [
+  { id: '40',      tab: '40 mm',         name: 'Galaxy Watch8 / Watch9 · 40 mm',  inch: 1.34, px: 438, caseMm: 40 },
+  { id: '44',      tab: '44 mm',         name: 'Galaxy Watch8 / Watch9 · 44 mm',  inch: 1.47, px: 480, caseMm: 44 },
+  { id: 'classic', tab: 'Classic 46 mm', name: 'Galaxy Watch8 Classic · 46 mm',   inch: 1.34, px: 438, caseMm: 46, shape: 'classic' },
+  { id: 'ultra',   tab: 'Ultra 47 mm',   name: 'Galaxy Watch Ultra 2 · 47 mm',    inch: 1.52, px: 498, caseMm: 47, shape: 'ultra' },
+  { id: 'large',   tab: 'Large',         name: 'Large preview (not to scale)' },
+];
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} },
+};
+// Calibration is per screen + zoom level.
+const screenKey = () => `sc.cssPerIn.${Math.min(screen.width, screen.height)}x${Math.max(screen.width, screen.height)}@${devicePixelRatio}`;
+
+// CSS px per physical inch = panel ppi ÷ (device px per CSS px).
+function detectScale() {
+  const ua = navigator.userAgent, dpr = devicePixelRatio || 1;
+  const w = Math.min(screen.width, screen.height);
+  const iPad = /iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  if (/iPhone|iPod/.test(ua)) return { cssPerIn: dpr >= 3 ? 153.3 : 163, source: 'iPhone, auto-detected' };
+  if (iPad) return { cssPerIn: w === 744 ? 163 : 132, source: w === 744 ? 'iPad mini, auto-detected' : 'iPad, auto-detected' };
+  if (/Android/.test(ua)) return { cssPerIn: 160, source: 'Android, estimated', rough: true };
+  if (/Macintosh/.test(ua) && dpr >= 2) return { cssPerIn: 120, source: 'Mac, estimated', rough: true };
+  return { cssPerIn: 96, source: 'desktop, estimated', rough: true };
+}
+function currentScale() {
+  const saved = parseFloat(store.get(screenKey()));
+  return saved > 0 ? { cssPerIn: saved, source: 'calibrated' } : detectScale();
+}
+
+let deviceId = DEVICES.some(d => d.id === store.get('sc.device')) ? store.get('sc.device') : '44';
+const mmToPx = (mm, cssPerIn) => mm / 25.4 * cssPerIn;
+
+function applyDevice() {
+  const d = DEVICES.find(x => x.id === deviceId), el = $('device');
+  $('deviceTabs').querySelectorAll('button').forEach(b => b.setAttribute('aria-selected', b.dataset.id === deviceId));
+  el.className = 'device' + (d.id === 'large' ? ' large' : d.shape ? ' ' + d.shape : '');
+  if (d.id === 'large') {
+    $('sizeInfo').innerHTML = `<b>${d.name}</b>. Fills the screen; pick a size above to see the real dimensions.`;
+    return;
+  }
+  const { cssPerIn, source, rough } = currentScale();
+  const dispMm = d.inch * 25.4;
+  const glassMm = dispMm + (d.caseMm - dispMm) * 0.45;
+  el.style.setProperty('--dial', `${mmToPx(dispMm, cssPerIn)}px`);
+  el.style.setProperty('--glass', `${mmToPx(glassMm, cssPerIn)}px`);
+  el.style.setProperty('--case', `${mmToPx(d.caseMm, cssPerIn)}px`);
+  $('sizeInfo').innerHTML = `<b>${d.name}</b>: ${d.inch}″ (${dispMm.toFixed(1)} mm) display, ${d.px}×${d.px} px.<br>` +
+    `Actual size (${source}${rough ? ', may be off' : ''}). <button class="linkish" id="calibOpen">Calibrate</button>`;
+  $('calibOpen').onclick = openCalib;
+}
+
+DEVICES.forEach(d => {
+  const b = document.createElement('button');
+  b.textContent = d.tab;
+  b.dataset.id = d.id;
+  b.setAttribute('role', 'tab');
+  b.onclick = () => { deviceId = d.id; store.set('sc.device', d.id); closeCalib(); applyDevice(); };
+  $('deviceTabs').appendChild(b);
+});
+
+function drawCalibCard() { $('calibCard').style.width = `${mmToPx(53.98, +$('calibRange').value)}px`; }
+function openCalib() {
+  $('calibRange').value = currentScale().cssPerIn;
+  drawCalibCard();
+  $('calib').hidden = false;
+}
+function closeCalib() { $('calib').hidden = true; }
+$('calibRange').oninput = drawCalibCard;
+$('calibSave').onclick = () => { store.set(screenKey(), $('calibRange').value); closeCalib(); applyDevice(); };
+$('calibReset').onclick = () => { store.set(screenKey(), null); closeCalib(); applyDevice(); };
+$('calibCancel').onclick = closeCalib;
+// Zoom changes devicePixelRatio, which changes which calibration applies.
+addEventListener('resize', applyDevice);
+
+applyDevice();
 renderAll();
 // Re-measure once the clock font has loaded (its width drives the AM/PM position).
 document.fonts.load('88px "Anta"').then(renderAll);

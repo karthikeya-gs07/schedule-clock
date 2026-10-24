@@ -6,7 +6,7 @@
 > **Documents**
 > - **This file:** what we're building, for whom, on what platform, open questions, risks, tooling, history.
 > - **[RULES.md](RULES.md):** the source of truth for *behavior and design*: what the face does in every situation, and why. Rule IDs (W1, R4, C6…) are referenced below.
-> - **[prototype/index.html](prototype/index.html):** interactive HTML prototype that implements RULES.md (time slider, sample days, ambient, slow motion, fast-forward, live complication payload).
+> - **[prototype/index.html](prototype/index.html):** interactive HTML prototype that implements RULES.md (true-size watch tabs, time slider, sample days, ambient, slow motion, fast-forward, live complication payload).
 
 ---
 
@@ -152,6 +152,7 @@ Wear OS 5+ (WFF v2, needed for `WeightedStroke` on `Arc`): Galaxy Watch 4 and la
 
 ## 8. Changelog
 
+- **v0.19:** Prototype shows the face at true physical size: tabs for Galaxy Watch8/Watch9 40 mm and 44 mm, Watch8 Classic 46 mm and Watch Ultra 2 47 mm (display diameter + case outline), plus a "Large" tab that fills the screen. Scale is auto-detected on iPhone/iPad, estimated elsewhere, and can be calibrated against a bank card.
 - **v0.18.2:** Repo made public; GitHub Pages live at https://karthikeya-gs07.github.io/schedule-clock/.
 - **v0.18.1:** Project pushed to the private GitHub repo `schedule-clock`; live preview pending a hosting choice (§7.1).
 - **v0.18:** Morning + evening meetings in the same dial slot stack (ring + lane). Tap order: morning, then evening; a precise tap on the thin lane selects the evening meeting directly. Sample day gains Gym 7–7:45 AM.

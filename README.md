@@ -10,7 +10,7 @@ A Wear OS watch face that shows the time **and the shape of your day**: calendar
 |---|---|
 | [`PRD.md`](PRD.md) | Product requirements: concept, platform (Wear OS / Watch Face Format), open questions, risks, tooling, changelog |
 | [`RULES.md`](RULES.md) | **Source of truth for behavior and design.** What the face does in every situation, and why (rule IDs W1, R4, C6, …) |
-| [`prototype/index.html`](prototype/index.html) | Interactive HTML prototype implementing RULES.md: time slider, sample days, ambient mode, slow motion, fast-forward, live complication payload |
+| [`prototype/index.html`](prototype/index.html) | Interactive HTML prototype implementing RULES.md: true-size tabs for Galaxy Watch 40 / 44 / Classic 46 / Ultra 47 mm (plus a full-screen "Large" view), time slider, sample days, ambient mode, slow motion, fast-forward, live complication payload |
 | `index.html` | Redirects the GitHub Pages site to the prototype |
 
 ## Live preview
