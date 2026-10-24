@@ -128,12 +128,13 @@ All sizes are in px on the **450 × 450 face canvas** (≈ 2 px per dp on a typi
 
 | # | When | Then |
 |---|---|---|
-| M1 | **Select / release** (360 ms, `cubic-bezier(.2,.8,.2,1)`; release = reverse) | Time → 55 %, up 10 px · Date → 90 %, stays put (moving it would hit the 11 and 1) · Divider up 32 px, 60 % wide · Details (incl. the C12 arrow) → 115 %, up 30 px · Selected arc 12 → 22 px and fades in · Other arcs → 35 %. |
-| M2 | The **shown meeting changes** (selecting a meeting other than "next", or switching A → B) | Text dips to 0 opacity for **140 ms**, the content swaps, and it fades back. The layout keeps scaling, with no second screen (P2). Selecting the meeting that's already shown doesn't dip. |
-| M3 | **Lane → main ring** (W8) | The blue arc grows outward from R − 10 to R about the center, 4 → 12 px, blue → amber, **700 ms** with a slight overshoot (`cubic-bezier(.3,1.35,.5,1)`), so it "sits down" into the band. |
+| M1 | **Select / release** (520 ms, `cubic-bezier(.4,0,.2,1)`, an S-curve; release = reverse) | Time → 55 %, up 10 px · Date → 90 %, stays put (moving it would hit the 11 and 1) · Divider up 32 px, 60 % wide · Details (incl. the C12 arrow) → 115 %, up 30 px · Selected arc 12 → 22 px and fades in · Other arcs → 35 %. |
+| M2 | The **shown meeting changes** (selecting a meeting other than "next", or switching A → B) | Text fades out and drops 6 px over **170 ms**, the content swaps, and it fades back in over **280 ms**. The layout keeps scaling, with no second screen (P2). Selecting the meeting that's already shown doesn't dip. |
+| M3 | **Lane → main ring** (W8) | The blue arc grows outward from R − 10 to R about the center, 4 → 12 px, blue → amber, **900 ms**, eased with no overshoot (`cubic-bezier(.22,1,.36,1)`), so it "sits down" into the band. |
 | M4 | Meetings ↔ **empty** (C3) | Date and clock move down to the center (clock 115 %) and the divider fades, with the M1 timing. |
+| M4b | Arcs **appear, disappear and recolor** (new day, new meeting, ambient on/off) | Arcs fade in and out and ease between colors over the select duration, instead of snapping. | Rebuilt-on-every-update arcs looked abrupt. |
 | M5 | System **reduced motion** is on | All of the above are instant. |
-| M6 | Prototype review aids | **Slow motion ×5** (M1 1.8 s, M2 0.7 s, M3 3.5 s) and **Fast-forward time** (1 simulated min / 40 ms). |
+| M6 | Prototype review aids | **Slow motion ×5** (M1 1.8 s, M2 0.7 s out / 1.2 s in, M3 3.5 s) and **Fast-forward time** (1 simulated min / 40 ms). |
 
 ---
 

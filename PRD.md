@@ -156,6 +156,7 @@ Wear OS 5+ (WFF v2, needed for `WeightedStroke` on `Arc`): Galaxy Watch 4 and la
 - **v0.20:** Double-booking line drops the word "Also": a coral overlap icon (two intersecting rings) precedes the other meeting's name (C7, C13).
 - **v0.21:** "Tomorrow look-ahead 14 h" toggle (default on): tomorrow's meetings start showing on the later lane 14 h ahead, so tomorrow 8 AM appears from 6 PM; further out stays hidden. Off = 12 h window only (W6).
 - **v0.22:** On a double booking the clash line (icon + other meeting) sits directly under the title, with the time range below it (C7).
+- **v0.23:** Smoother motion: S-curve easing and longer durations (520 ms select, 170/280 ms text swap, 900 ms lane settle with no bounce); arcs fade in/out and recolor instead of snapping (M1–M4b).
 - **v0.18.2:** Repo made public; GitHub Pages live at https://karthikeya-gs07.github.io/schedule-clock/.
 - **v0.18.1:** Project pushed to the private GitHub repo `schedule-clock`; live preview pending a hosting choice (§7.1).
 - **v0.18:** Morning + evening meetings in the same dial slot stack (ring + lane). Tap order: morning, then evening; a precise tap on the thin lane selects the evening meeting directly. Sample day gains Gym 7–7:45 AM.

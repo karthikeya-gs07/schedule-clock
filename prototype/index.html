@@ -16,13 +16,14 @@
     --muted: #8b8d94;
     --accent: #ffb547;
     /* Motion tokens (become WFF <Animation duration interpolation>) */
-    --d: 360ms;           /* select / release */
-    --swap: 140ms;        /* half of an A → B switch */
-    --promote: 700ms;     /* later-today arc settling onto the main ring */
-    --ease: cubic-bezier(.2, .8, .2, 1);
+    --d: 520ms;           /* select / release */
+    --swap: 170ms;        /* text fades out ... */
+    --swap-in: 280ms;     /* ... and back in */
+    --promote: 900ms;     /* later-today arc settling onto the main ring */
+    --ease: cubic-bezier(.4, 0, .2, 1);   /* S-curve: eases in and out, no sudden start */
   }
   @media (prefers-reduced-motion: reduce) {
-    :root { --d: 1ms; --swap: 1ms; --promote: 1ms; }
+    :root { --d: 1ms; --swap: 1ms; --swap-in: 1ms; --promote: 1ms; }
   }
   * { box-sizing: border-box; }
   body {
@@ -118,14 +119,16 @@
     transition: opacity var(--d) var(--ease), transform var(--d) var(--ease), stroke-width var(--d) var(--ease);
   }
   #ringAll { opacity: 1; }
-  #ringAll path { stroke: #ffb547; stroke-width: 12px; fill: none; transition: stroke var(--d) var(--ease), stroke-width var(--d) var(--ease); }
+  #ringAll path { stroke: #ffb547; stroke-width: 12px; fill: none;
+    transition: stroke var(--d) var(--ease), stroke-width var(--d) var(--ease), opacity var(--d) var(--ease); }
+  #ringAll path.enter, #ringAll path.leaving { opacity: 0; }
   #ringAll path.past { stroke: #6e4f22; }
   #ringAll path.later { stroke: #8fa3d6; stroke-width: 4px; stroke-linecap: round; }
-  #ringAll path.arriving { opacity: 0; }
+  #ringAll path.arriving { visibility: hidden; }   /* the settling animation stands in for it */
   #fx path {
     fill: none; stroke: #8fa3d6; stroke-width: 4px;
     transform-box: view-box; transform-origin: 225px 225px;
-    transition: transform var(--promote) cubic-bezier(.3, 1.35, .5, 1),
+    transition: transform var(--promote) cubic-bezier(.22, 1, .36, 1),
                 stroke var(--promote) ease, stroke-width var(--promote) ease;
   }
   #face.selected #fx { opacity: .35; }
@@ -145,7 +148,7 @@
   #dClock   { transform-origin: 225px 170px; }
   #dDivider { transform-origin: 225px 238px; }
   #dBottom  { transform-origin: 225px 310px; }
-  #dText    { transition: opacity var(--swap) linear; }
+  #dText    { transition: opacity var(--swap-in) ease-out, transform var(--swap-in) var(--ease); }
 
   /* Selected: time & date shrink up, details grow up into the space */
   #face.selected #ringAll  { opacity: .35; }
@@ -158,7 +161,8 @@
   #face.selected #dBottom  { transform: translateY(-30px) scale(1.15); }
 
   /* Text content change (e.g. selecting a meeting that isn't "next"): brief dip, no layout change */
-  #face.swapping #dText   { opacity: 0; }
+  #face.swapping #dText   { opacity: 0; transform: translateY(6px);
+    transition: opacity var(--swap) ease-in, transform var(--swap) ease-in; }
   #face.swapping .selArc  { opacity: 0; stroke-width: 12px; transition-duration: var(--swap); }
 
   /* Ambient (always-on): outlines only, no selection */
@@ -174,6 +178,7 @@
   #face.empty #dClock   { transform: translateY(60px) scale(1.15); }
   #face.empty #dDivider { opacity: 0; }
   #trail { transition: opacity var(--d) var(--ease); }
+  #numerals, #ticks, #dRange, #dPlace, #dClashIcon, #dArrow { transition: opacity var(--d) var(--ease), stroke var(--d) var(--ease); }
   /* Ring-shaped window onto the conic gradient: same radius and width as the track */
   #trailFx {
     width: 450px; height: 450px;
@@ -434,6 +439,7 @@ svg.innerHTML = `
   <g id="numerals">${numerals}</g>
   <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${C.track}" stroke-width="12"/>
   <foreignObject id="trail" x="0" y="0" width="450" height="450"><div xmlns="http://www.w3.org/1999/xhtml" id="trailFx"></div></foreignObject>
+  <defs id="ringDefs"></defs>
   <g id="ringAll" class="m"></g>
   <g id="fx" class="m"></g>
   <defs>
@@ -487,34 +493,72 @@ function fitText(id, str, base, min, maxWidth) {
   }
 }
 
+// Ring arcs are kept between renders (matched by key) instead of rebuilt, so colour, width and
+// visibility can ease: new arcs fade in, removed ones fade out, ambient recolours smoothly.
+const ringEls = new Map();
+const cssMs = name => parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
+function syncRing(items) {
+  const host = $('ringAll'), seen = new Set();
+  let cursor = null;
+  for (const it of items) {
+    seen.add(it.key);
+    let el = ringEls.get(it.key), fresh = false;
+    if (!el) {
+      el = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      ringEls.set(it.key, el);
+      fresh = true;
+    }
+    clearTimeout(el._gone);
+    el.classList.remove('leaving');
+    el.setAttribute('class', (it.cls + (fresh ? ' enter' : '')).trim());
+    el.setAttribute('d', it.d);
+    it.style ? el.setAttribute('style', it.style) : el.removeAttribute('style');
+    // Keep draw order without moving nodes that are already in place (moving restarts transitions).
+    let want = cursor ? cursor.nextElementSibling : host.firstElementChild;
+    while (want && want.classList.contains('leaving')) want = want.nextElementSibling;
+    if (el !== want) host.insertBefore(el, want);
+    if (fresh) { el.getBoundingClientRect(); el.classList.remove('enter'); }
+    cursor = el;
+  }
+  for (const [key, el] of ringEls) {
+    if (seen.has(key) || el.classList.contains('leaving')) continue;
+    el.classList.add('leaving');
+    el._gone = setTimeout(() => { el.remove(); ringEls.delete(key); }, cssMs('--d') + 60);
+  }
+}
+
 // Ring, clock and default layer: always current.
 function renderBase(list) {
   const main = list.filter(e => e.lane === 'main'), later = list.filter(e => e.lane === 'later');
   detectPromotions(main, later);
   // Private meetings (R10): the arc is a caution band of stripes at 45° to the arc instead of solid.
-  const defs = [];
+  const defs = [], items = [];
+  const add = (key, cls, d, style = '') => items.push({ key, cls, d, style });
+  // Private meetings (R10): a caution band of stripes at 45° to the arc instead of solid.
   const fillFor = (e, id, color, grey) => {
     if (!e.private) return '';
     defs.push(stripePattern(id, ambient ? grey : color, angleOf((e.cs + e.ce) / 2)));
-    return ` style="stroke:url(#${id})"`;
+    return `stroke:url(#${id})`;
   };
-  let ring = main.map((e, i) => {
-    const hide = arriving.has(keyOf(e)) ? ' arriving' : '';      // the settling animation stands in for it
-    return isLive(e)
-      ? `<path class="past${hide}"${fillFor(e, `pv${i}p`, C.privatePast, '#4a4a4a')} d="${arcPath(e.cs, nowMin, R)}"/>` +
-        `<path class="${hide}"${fillFor(e, `pv${i}n`, C.private, '#9a9a9a')} d="${arcPath(nowMin, e.ce, R)}"/>`
-      : `<path class="${hide}"${fillFor(e, `pv${i}n`, C.private, '#9a9a9a')} d="${arcPath(e.cs, e.ce, R)}"/>`;
-  }).join('');
-  ring += later.map(e => `<path class="later${e.private ? ' private' : ''}" d="${arcPath(e.cs, e.ce, R_LATER)}"/>`).join('');
-  // Double booking: blank the band over the overlap, then draw two thin coral stripes.
-  for (const [a, b] of clashRanges(list)) {
-    const parts = a < nowMin && b > nowMin ? [[a, nowMin, 'past'], [nowMin, b, '']] : [[a, b, b <= nowMin ? 'past' : '']];
-    for (const [f, t, cls] of parts) ring +=
-      `<path class="clash-mask" d="${arcPath(f, t, R)}"/>` +
-      `<path class="clash ${cls}" d="${arcPath(f, t, R - CLASH_OFFSET)}"/>` +
-      `<path class="clash ${cls}" d="${arcPath(f, t, R + CLASH_OFFSET)}"/>`;
+  for (const e of main) {
+    const k = keyOf(e), hide = arriving.has(k) ? ' arriving' : '', id = 'pv' + k.replace(/\W/g, '_');
+    if (isLive(e)) {
+      add(`${k}:past`, `past${hide}`, arcPath(e.cs, nowMin, R), fillFor(e, `${id}p`, C.privatePast, '#4a4a4a'));
+      add(`${k}:now`, hide.trim(), arcPath(nowMin, e.ce, R), fillFor(e, `${id}n`, C.private, '#9a9a9a'));
+    } else add(`${k}:arc`, hide.trim(), arcPath(e.cs, e.ce, R), fillFor(e, `${id}n`, C.private, '#9a9a9a'));
   }
-  $('ringAll').innerHTML = `<defs>${defs.join('')}</defs>` + ring;
+  for (const e of later) add(`${keyOf(e)}:lane`, `later${e.private ? ' private' : ''}`, arcPath(e.cs, e.ce, R_LATER));
+  // Double booking: blank the band over the overlap, then draw two thin coral stripes.
+  clashRanges(list).forEach(([a, b], n) => {
+    const parts = a < nowMin && b > nowMin ? [[a, nowMin, 'past'], [nowMin, b, '']] : [[a, b, b <= nowMin ? 'past' : '']];
+    parts.forEach(([f, t, cls], i) => {
+      add(`x${n}${i}:mask`, 'clash-mask', arcPath(f, t, R));
+      add(`x${n}${i}:in`, `clash ${cls}`.trim(), arcPath(f, t, R - CLASH_OFFSET));
+      add(`x${n}${i}:out`, `clash ${cls}`.trim(), arcPath(f, t, R + CLASH_OFFSET));
+    });
+  });
+  $('ringDefs').innerHTML = defs.join('');
+  syncRing(items);
   const [nx, ny] = polar(angleOf(nowMin), R);
   $('nowDot').setAttribute('transform', `translate(${nx} ${ny})`);
   renderTrail();
@@ -840,6 +884,7 @@ $('slowmo').onclick = () => {
   $('slowmo').setAttribute('aria-pressed', on);
   document.documentElement.style.setProperty('--d', on ? '1800ms' : '');
   document.documentElement.style.setProperty('--swap', on ? '700ms' : '');
+  document.documentElement.style.setProperty('--swap-in', on ? '1200ms' : '');
   document.documentElement.style.setProperty('--promote', on ? '3500ms' : '');
 };
 
