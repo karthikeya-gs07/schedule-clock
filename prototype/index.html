@@ -1,0 +1,763 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schedule Clock Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anta&display=block" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0f11;
+    --panel: #17181b;
+    --line: #2a2c31;
+    --text: #e8e8ea;
+    --muted: #8b8d94;
+    --accent: #ffb547;
+    /* Motion tokens (become WFF <Animation duration interpolation>) */
+    --d: 360ms;           /* select / release */
+    --swap: 140ms;        /* half of an A → B switch */
+    --promote: 700ms;     /* later-today arc settling onto the main ring */
+    --ease: cubic-bezier(.2, .8, .2, 1);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :root { --d: 1ms; --swap: 1ms; --promote: 1ms; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex; flex-wrap: wrap; gap: 32px; justify-content: center; align-items: flex-start;
+    padding: 32px 16px;
+  }
+  .stage { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .watch {
+    width: 450px; height: 450px; max-width: calc(100vw - 32px); max-height: calc(100vw - 32px);
+    border-radius: 50%; background: #000; overflow: hidden;
+    box-shadow: 0 0 0 10px #1c1d20, 0 0 0 11px #33353a, 0 20px 60px rgba(0,0,0,.6);
+  }
+  .watch svg { width: 100%; height: 100%; display: block; }
+  .hint { color: var(--muted); font-size: 13px; }
+  .panel {
+    width: 360px; max-width: 100%; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 18px;
+  }
+  .panel h2 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  label { display: flex; flex-direction: column; gap: 6px; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  button {
+    background: #222428; color: var(--text); border: 1px solid var(--line); border-radius: 8px;
+    padding: 7px 12px; font: inherit; cursor: pointer;
+  }
+  button[aria-pressed=true] { border-color: var(--accent); color: var(--accent); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  pre {
+    margin: 0; background: #0b0c0e; border: 1px solid var(--line); border-radius: 8px; padding: 12px;
+    font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: #b9bbc2; white-space: pre-wrap; word-break: break-all;
+  }
+  .state { font-family: ui-monospace, Menlo, monospace; color: var(--accent); }
+
+  /* ---------- Face motion ----------
+     Every animated property here maps to a WFF Transform target driven by one
+     numeric "selected" value (0 → 1) coming from the data source. */
+  #face text { font-family: system-ui, -apple-system, Roboto, sans-serif; }
+  /* Clock digits and dial numbers: Anta (Google Fonts, SIL Open Font License), see RULES T5. */
+  #face #dTime, #face #numerals text { font-family: 'Anta', system-ui, sans-serif; }
+  #face .m {
+    transform-box: view-box;
+    transition: opacity var(--d) var(--ease), transform var(--d) var(--ease), stroke-width var(--d) var(--ease);
+  }
+  #ringAll { opacity: 1; }
+  #ringAll path { stroke: #ffb547; stroke-width: 12px; fill: none; transition: stroke var(--d) var(--ease), stroke-width var(--d) var(--ease); }
+  #ringAll path.past { stroke: #6e4f22; }
+  #ringAll path.later { stroke: #8fa3d6; stroke-width: 4px; stroke-linecap: round; }
+  #ringAll path.arriving { opacity: 0; }
+  #fx path {
+    fill: none; stroke: #8fa3d6; stroke-width: 4px;
+    transform-box: view-box; transform-origin: 225px 225px;
+    transition: transform var(--promote) cubic-bezier(.3, 1.35, .5, 1),
+                stroke var(--promote) ease, stroke-width var(--promote) ease;
+  }
+  #face.selected #fx { opacity: .35; }
+  #ringAll path.later.private { stroke-dasharray: 4 3; stroke: #8e8e93; }
+  #ringAll path.clash-mask { stroke: #000; stroke-width: 14px; }
+  #ringAll path.clash { stroke: #ff7a59; stroke-width: 5px; }
+  #ringAll path.clash.past { stroke: #7a3b2c; }
+  .selArc { fill: none; stroke: #ffd27f; stroke-width: 12px; opacity: 0; }
+  .selArc.past { stroke: #8a6a35; }
+  .selArc.later { stroke: #c3d0f2; stroke-width: 4px; stroke-linecap: round; }
+  #dStatus { fill: var(--accent); }
+  /* Status line ("NEXT · IN 1H 30M") hidden for now; title and meta move up to close the gap. */
+  #dStatus { display: none; }
+
+  /* One layout, two sizes. Fixed origins so changing text never shifts the scale center. */
+  #dDateG   { transform-origin: 225px 110px; }
+  #dClock   { transform-origin: 225px 170px; }
+  #dDivider { transform-origin: 225px 238px; }
+  #dBottom  { transform-origin: 225px 310px; }
+  #dText    { transition: opacity var(--swap) linear; }
+
+  /* Selected: time & date shrink up, details grow up into the space */
+  #face.selected #ringAll  { opacity: .35; }
+  #face.selected .selArc   { opacity: 1; stroke-width: 22px; }
+  #face.selected .selArc.later { stroke-width: 8px; }
+  /* Date stays put (moving it up would hit the 11 and 1), time tucks under it, details grow. */
+  #face.selected #dDateG   { transform: scale(.9); }
+  #face.selected #dClock   { transform: translateY(-10px) scale(.55); }
+  #face.selected #dDivider { transform: translateY(-32px) scaleX(.6); }
+  #face.selected #dBottom  { transform: translateY(-30px) scale(1.15); }
+
+  /* Text content change (e.g. selecting a meeting that isn't "next"): brief dip, no layout change */
+  #face.swapping #dText   { opacity: 0; }
+  #face.swapping .selArc  { opacity: 0; stroke-width: 12px; transition-duration: var(--swap); }
+
+  /* Ambient (always-on): outlines only, no selection */
+  #face.ambient #ringAll path { stroke: #9a9a9a; stroke-width: 3px; }
+  #face.ambient #ringAll path.past { stroke: #4a4a4a; }
+  #face.ambient #ringAll path.clash-mask { stroke: #000; stroke-width: 14px; }
+  #face.ambient #ringAll path.later { stroke: #5c5c62; }
+  #face.ambient #trail { opacity: 0; }
+  #face.ambient #numerals, #face.ambient #ticks { opacity: .6; }
+
+  /* Nothing in the window: date + clock alone, centered */
+  #face.empty #dDateG   { transform: translateY(55px); }
+  #face.empty #dClock   { transform: translateY(60px) scale(1.15); }
+  #face.empty #dDivider { opacity: 0; }
+  #trail { transition: opacity var(--d) var(--ease); }
+  /* Ring-shaped window onto the conic gradient: same radius and width as the track */
+  #trailFx {
+    width: 450px; height: 450px;
+    -webkit-mask: radial-gradient(circle at 225px 225px, transparent 212.5px, #000 213px, #000 225px, transparent 225.5px);
+            mask: radial-gradient(circle at 225px 225px, transparent 212.5px, #000 213px, #000 225px, transparent 225.5px);
+  }
+  #face.ambient #dStatus { fill: #8e8e93; }
+  #face.ambient #dRange, #face.ambient #dPlace { opacity: 0; }
+  #face.ambient #dArrow { stroke: #8e8e93; }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="watch"><svg id="face" viewBox="0 0 450 450" role="img" aria-label="Watch face preview"></svg></div>
+  <div class="hint">Tap an hour on the ring to select its event. Auto-returns after 8 s.</div>
+</div>
+
+<div class="panel">
+  <div>
+    <h2>Simulated time</h2>
+    <label><span id="timeLabel"></span>
+      <input id="time" type="range" min="360" max="1435" step="5" value="360" aria-label="Simulated time">
+    </label>
+  </div>
+  <div>
+    <h2>Day</h2>
+    <div class="row" id="presets"></div>
+  </div>
+  <div>
+    <h2>Mode</h2>
+    <div class="row">
+      <button id="ambient" aria-pressed="false">Ambient (always-on)</button>
+      <button id="autoReturn" aria-pressed="true">Auto-return 8 s</button>
+      <button id="slowmo" aria-pressed="false">Slow motion ×5</button>
+      <button id="play" aria-pressed="false">Fast-forward time</button>
+    </div>
+  </div>
+  <div>
+    <h2>State</h2>
+    <div class="state" id="stateLabel"></div>
+  </div>
+  <div>
+    <h2>Complication payload (what the data source sends)</h2>
+    <pre id="payload"></pre>
+  </div>
+</div>
+
+<script>
+// ---------- Sample data ----------
+const PRESETS = {
+  'Example': [
+    { start: '07:00', end: '07:45', title: 'Gym', where: 'FitHub' },              // same dial slot as the 7 PM call
+    { start: '10:00', end: '11:00', title: 'Doctor appointment', where: 'Clinic', private: true },
+    { start: '13:00', end: '14:00', title: 'Design review', where: 'Room 4' },
+    { start: '13:00', end: '14:00', title: 'Vendor call', where: 'Zoom' },        // double booked
+    { start: '16:00', end: '17:00', title: 'Weekly sync', where: 'Google Meet' },
+    { start: '19:00', end: '20:00', title: 'Client call', where: 'Zoom' },        // beyond 12 h at 6 AM
+    { day: 1, start: '08:00', end: '08:45', title: 'Team breakfast', where: 'Café Blue' },  // tomorrow
+    { day: 1, start: '10:00', end: '11:00', title: 'Board prep', where: 'Room 1' },         // tomorrow, later
+  ],
+  'Busy day': [
+    { start: '09:00', end: '09:30', title: 'Standup', where: 'Google Meet' },
+    { start: '10:00', end: '11:30', title: 'Roadmap planning', where: 'Atlas room' },
+    { start: '12:30', end: '13:00', title: 'Lunch with Sam', where: 'Café Blue', private: true },
+    { start: '13:00', end: '14:00', title: 'Design review', where: 'Room 4' },
+    { start: '15:00', end: '15:45', title: 'Candidate interview', where: 'Zoom' },
+    { start: '15:30', end: '16:00', title: 'Recruiter sync', where: 'Room 2' },   // partial overlap
+    { start: '16:00', end: '17:00', title: 'Weekly sync', where: 'Google Meet' },
+    { start: '18:30', end: '20:00', title: 'Yoga', where: 'Studio 9' },
+  ],
+  'Empty': [],
+};
+
+// ---------- Tokens ----------
+const C = {
+  track: '#1c1c1f', event: '#ffb547', past: '#6e4f22', selected: '#ffd27f', selectedPast: '#8a6a35',
+  later: '#8fa3d6', laterText: '#a9b8e0', clash: '#ff7a59', clashPast: '#7a3b2c',
+  private: '#8e8e93', privatePast: '#48484c', privateSel: '#c7c7cc', privateSelPast: '#6a6a70',
+  text: '#f2f2f2', muted: '#8e8e93',
+};
+const CX = 225, CY = 225, R = 219;   // band 213–225: flush with the screen edge
+const R_LATER = R - 10;      // thin inner lane for meetings later today, beyond the 12 h window
+const CLASH_OFFSET = 4.5;    // double booking: two 5 px stripes at R ± 4.5 inside the 12 px band
+const WINDOW_MIN = 12 * 60;
+const AUTO_RETURN_MS = 8000;
+
+// ---------- State ----------
+let preset = 'Example';
+let nowMin = 6 * 60;
+let selected = -1;          // -1 = DEFAULT, otherwise index into upcoming()
+let selectedKey = null;     // which meeting is selected, so a changing list can't move the selection
+let ambient = false;
+let autoReturn = true;
+let timer = null, swapTimer = null;
+let lastTap = '—';
+
+const toMin = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
+// Minutes from today's midnight; tomorrow's events (day: 1) are 1440 + …
+const events = () => PRESETS[preset].map(e => ({ ...e, s: (e.day || 0) * 1440 + toMin(e.start), e: (e.day || 0) * 1440 + toMin(e.end) }));
+
+// Two lanes:
+//  main  – events that END within the 12h window. The window normally starts at now; if a
+//          meeting is in progress it starts at that meeting's start, so the elapsed part
+//          stays on the ring (and the far end shrinks to avoid overlap).
+//  later – events that don't fully fit yet, on a thin inner lane: the rest of today, plus
+//          tomorrow's events that start inside the window but end past it. A meeting stays
+//          there until the main ring's slot for it is completely free (e.g. a 7–8 PM call
+//          moves down at 8:00 AM), so it never shares the dial with now or the trail.
+// Tomorrow's events appear only if they start inside the 12 h window; nothing further out.
+// The list is chronological across both lanes, so indexes don't shift when a meeting moves.
+function upcoming() {
+  const all = events().sort((a, b) => a.s - b.s);
+  const live = all.filter(e => e.s < nowMin && e.e > nowMin);
+  const winStart = Math.min(nowMin, ...live.map(e => e.s));
+  const winEnd = winStart + WINDOW_MIN;
+  return all.flatMap(e => {
+    if (e.e > nowMin && e.e <= winEnd) return [{ ...e, lane: 'main', cs: Math.max(e.s, winStart), ce: e.e }];
+    if (e.e > winEnd && e.s > nowMin && (e.s < 1440 || e.s < winEnd))
+      return [{ ...e, lane: 'later', cs: e.s, ce: e.s < 1440 ? Math.min(e.e, 1440) : e.e }];
+    return [];
+  });
+}
+const keyOf = e => `${e.start}|${e.title}`;
+const isLive = e => e.s <= nowMin && e.e > nowMin;
+
+// Other main-lane meetings that overlap e (double bookings).
+const clashesFor = (list, e) => e.lane !== 'main' ? [] :
+  list.filter(o => o !== e && o.lane === 'main' && o.s < e.e && e.s < o.e);
+
+// Merged minute ranges where two or more main-lane meetings overlap.
+function clashRanges(list) {
+  const main = list.filter(e => e.lane === 'main'), out = [];
+  for (let i = 0; i < main.length; i++)
+    for (let j = i + 1; j < main.length; j++) {
+      const a = Math.max(main[i].cs, main[j].cs), b = Math.min(main[i].ce, main[j].ce);
+      if (b > a) out.push([a, b]);
+    }
+  out.sort((x, y) => x[0] - y[0]);
+  return out.reduce((m, r) => {
+    const last = m[m.length - 1];
+    if (last && r[0] <= last[1]) last[1] = Math.max(last[1], r[1]); else m.push([...r]);
+    return m;
+  }, []);
+}
+
+// ---------- Formatting ----------
+function fmtClock(min, withSuffix = true) {
+  const h24 = Math.floor(min / 60) % 24, m = min % 60;
+  const h = h24 % 12 || 12;
+  return `${h}:${String(m).padStart(2, '0')}${withSuffix ? (h24 < 12 ? ' AM' : ' PM') : ''}`;
+}
+function fmtRange(e) {
+  const sameHalf = (e.s % 1440 < 720) === (e.e % 1440 < 720);
+  return `${fmtClock(e.s, !sameHalf)} – ${fmtClock(e.e)}`;
+}
+function fmtDur(min) {
+  const h = Math.floor(min / 60), m = min % 60;
+  return h ? (m ? `${h}H ${m}M` : `${h}H`) : `${m}M`;
+}
+function statusFor(e) {
+  return isLive(e) ? `NOW · ${fmtDur(nowMin - e.s)} IN · ${fmtDur(e.e - nowMin)} LEFT` : `IN ${fmtDur(e.s - nowMin)}`;
+}
+
+// ---------- Geometry ----------
+const angleOf = min => ((min % 720) / 720) * 360;               // 0° = 12 o'clock, clockwise
+function polar(deg, r) {
+  const a = (deg - 90) * Math.PI / 180;
+  return [CX + r * Math.cos(a), CY + r * Math.sin(a)];
+}
+// GAP_DEG keeps back-to-back events visually separate (WFF: WeightedStroke discreteGap).
+const GAP_DEG = 1;
+function arcPath(fromMin, toMin, r) {
+  const a0 = angleOf(fromMin) + GAP_DEG, sweep = Math.max(0.5, ((toMin - fromMin) / 720) * 360 - 2 * GAP_DEG);
+  const [x0, y0] = polar(a0, r), [x1, y1] = polar(a0 + sweep, r);
+  return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${sweep > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+}
+
+// ---------- Data source simulation: WEIGHTED_ELEMENTS payload ----------
+// Segments start at 12 o'clock and go round once. Free time is transparent.
+// segments: [[fromMin, toMin, color], ...] → { colors, weights } for one slot.
+function dialPayload(segments) {
+  const marks = [];
+  // Map minutes to positions on the 12h dial, splitting across 12 o'clock.
+  for (const [from, to, color] of segments) {
+    if (to <= from) continue;
+    const a = ((from % 720) + 720) % 720, b = a + (to - from);
+    if (b > 720) { marks.push([a, 720, color]); marks.push([0, b - 720, color]); }
+    else marks.push([a, b, color]);
+  }
+  marks.sort((x, y) => x[0] - y[0]);
+  const colors = [], weights = [];
+  let cursor = 0;
+  for (const [a, b, color] of marks) {
+    if (b <= cursor) continue;                         // fully covered by an overlapping meeting
+    if (a > cursor) { colors.push('#00000000'); weights.push(a - cursor); }
+    colors.push(color);
+    weights.push(b - Math.max(a, cursor));
+    cursor = b;
+  }
+  if (cursor < 720) { colors.push('#00000000'); weights.push(720 - cursor); }
+  return { colors, weights };
+}
+// Elapsed part of a live meeting gets its own, dimmer color.
+const eventSegments = (e, color, pastColor) => {
+  const split = isLive(e) ? nowMin : e.cs;
+  return [[e.cs, split, pastColor], [split, e.ce, color]];
+};
+
+// ---------- Scene (built once, then updated in place so transitions can run) ----------
+const svg = document.getElementById('face');
+const T = (id, x, y, size, opts = {}) => {
+  const { weight = 400, spacing = 0, anchor = 'middle', fill = C.text } = opts;
+  return `<text id="${id}" x="${x}" y="${y}" font-size="${size}" font-weight="${weight}" letter-spacing="${spacing}" text-anchor="${anchor}" fill="${fill}"></text>`;
+};
+
+// Hour numbers 1–12 just inside the ring.
+let numerals = '';
+for (let h = 1; h <= 12; h++) {
+  const [x, y] = polar(h * 30, R - 40);
+  numerals += `<text x="${x.toFixed(1)}" y="${(y + 8.5).toFixed(1)}" font-size="24" font-weight="500" text-anchor="middle" fill="${h % 3 ? '#5c5c62' : '#8e8e93'}">${h}</text>`;
+}
+
+// Tick marks every 15 min: hour (long), half-hour (medium), quarters (short).
+// They start inside the "later today" lane (R_LATER ± 2).
+let ticks = '';
+for (let q = 0; q < 48; q++) {
+  const kind = q % 4 === 0 ? 'hour' : q % 2 === 0 ? 'half' : 'quarter';
+  const len = { hour: 10, half: 6, quarter: 3 }[kind];
+  const [x0, y0] = polar(q * 7.5, R - 14), [x1, y1] = polar(q * 7.5, R - 14 - len);
+  const stroke = { hour: '#8e8e93', half: '#4a4a50', quarter: '#33333a' }[kind];
+  ticks += `<line x1="${x0.toFixed(2)}" y1="${y0.toFixed(2)}" x2="${x1.toFixed(2)}" y2="${y1.toFixed(2)}" stroke="${stroke}" stroke-width="${kind === 'hour' ? 2.5 : 1.5}" stroke-linecap="round"/>`;
+}
+
+svg.innerHTML = `
+  <g id="ticks">${ticks}</g>
+  <g id="numerals">${numerals}</g>
+  <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${C.track}" stroke-width="12"/>
+  <foreignObject id="trail" x="0" y="0" width="450" height="450"><div xmlns="http://www.w3.org/1999/xhtml" id="trailFx"></div></foreignObject>
+  <g id="ringAll" class="m"></g>
+  <g id="fx" class="m"></g>
+  <defs>
+    <pattern id="pvSel" patternUnits="userSpaceOnUse" width="12" height="12"><rect width="12" height="6" fill="${C.privateSel}"/></pattern>
+    <pattern id="pvSelPast" patternUnits="userSpaceOnUse" width="12" height="12"><rect width="12" height="6" fill="${C.privateSelPast}"/></pattern>
+  </defs>
+  <path id="selArcPast" class="m selArc past"/>
+  <path id="selArc" class="m selArc"/>
+  <g id="nowDot"><circle r="11" fill="#fff" opacity=".18"/><circle r="7" fill="#000"/><circle r="4.5" fill="#fff"/></g>
+
+  <g id="defaultUI">
+    <g id="dDateG" class="m">${T('dDate', CX, 122, 24, { fill: C.muted, spacing: 2, weight: 500 })}</g>
+    <g id="dClock" class="m">
+      ${T('dTime', CX, 206, 88, { weight: 400 })}
+      ${T('dAmpm', 0, 205, 24, { fill: C.muted, anchor: 'start', weight: 500 })}
+    </g>
+    <line id="dDivider" class="m" x1="${CX - 70}" y1="238" x2="${CX + 70}" y2="238" stroke="#2a2a2e" stroke-width="2" stroke-linecap="round"/>
+    <g id="dBottom" class="m"><g id="dText">
+      ${T('dStatus', CX, 280, 17, { fill: 'currentColor', spacing: 1.8, weight: 600 })}
+      <path id="dArrow" fill="none" stroke="${C.event}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <g id="dLock" style="display:none">
+        <rect x="0" y="-12" width="16" height="12" rx="2.5" fill="${C.muted}"/>
+        <path d="M3.5 -12 V-15.5 a4.5 4.5 0 0 1 9 0 V-12" fill="none" stroke="${C.muted}" stroke-width="2.5"/>
+      </g>
+      ${T('dTitle', CX, 284, 30, { weight: 500 })}
+      ${T('dRange', CX, 318, 24)}
+      ${T('dPlace', CX, 348, 24, { fill: C.muted })}
+    </g></g>
+  </g>
+
+  <circle id="centerHit" cx="${CX}" cy="${CY}" r="150" fill="transparent"/>
+  <circle id="ringHit" cx="${CX}" cy="${CY}" r="${R - 12}" fill="none" stroke="transparent" stroke-width="64" style="cursor:pointer" pointer-events="stroke"/>
+`;
+const $ = id => document.getElementById(id);
+const setText = (id, s) => { $(id).textContent = s; };
+
+// Fit text to maxWidth: shrink from base toward min, then truncate with an ellipsis.
+function fitText(id, str, base, min, maxWidth) {
+  const el = $(id);
+  let size = base;
+  el.textContent = str;
+  el.setAttribute('font-size', size);
+  while (el.getComputedTextLength() > maxWidth && size > min) el.setAttribute('font-size', --size);
+  let s = str;
+  while (el.getComputedTextLength() > maxWidth && s.length > 1) {
+    s = s.slice(0, -1).trimEnd();
+    el.textContent = s + '…';
+  }
+}
+
+// Ring, clock and default layer: always current.
+function renderBase(list) {
+  const main = list.filter(e => e.lane === 'main'), later = list.filter(e => e.lane === 'later');
+  detectPromotions(main, later);
+  // Private meetings (R10): the arc is a caution band of stripes at 45° to the arc instead of solid.
+  const defs = [];
+  const fillFor = (e, id, color, grey) => {
+    if (!e.private) return '';
+    defs.push(stripePattern(id, ambient ? grey : color, angleOf((e.cs + e.ce) / 2)));
+    return ` style="stroke:url(#${id})"`;
+  };
+  let ring = main.map((e, i) => {
+    const hide = arriving.has(keyOf(e)) ? ' arriving' : '';      // the settling animation stands in for it
+    return isLive(e)
+      ? `<path class="past${hide}"${fillFor(e, `pv${i}p`, C.privatePast, '#4a4a4a')} d="${arcPath(e.cs, nowMin, R)}"/>` +
+        `<path class="${hide}"${fillFor(e, `pv${i}n`, C.private, '#9a9a9a')} d="${arcPath(nowMin, e.ce, R)}"/>`
+      : `<path class="${hide}"${fillFor(e, `pv${i}n`, C.private, '#9a9a9a')} d="${arcPath(e.cs, e.ce, R)}"/>`;
+  }).join('');
+  ring += later.map(e => `<path class="later${e.private ? ' private' : ''}" d="${arcPath(e.cs, e.ce, R_LATER)}"/>`).join('');
+  // Double booking: blank the band over the overlap, then draw two thin coral stripes.
+  for (const [a, b] of clashRanges(list)) {
+    const parts = a < nowMin && b > nowMin ? [[a, nowMin, 'past'], [nowMin, b, '']] : [[a, b, b <= nowMin ? 'past' : '']];
+    for (const [f, t, cls] of parts) ring +=
+      `<path class="clash-mask" d="${arcPath(f, t, R)}"/>` +
+      `<path class="clash ${cls}" d="${arcPath(f, t, R - CLASH_OFFSET)}"/>` +
+      `<path class="clash ${cls}" d="${arcPath(f, t, R + CLASH_OFFSET)}"/>`;
+  }
+  $('ringAll').innerHTML = `<defs>${defs.join('')}</defs>` + ring;
+  const [nx, ny] = polar(angleOf(nowMin), R);
+  $('nowDot').setAttribute('transform', `translate(${nx} ${ny})`);
+  renderTrail();
+
+  const timeStr = fmtClock(nowMin, false);
+  const ampm = nowMin % 1440 < 720 ? 'AM' : 'PM';
+  setText('dDate', 'SAT · OCT 24');
+  setText('dTime', timeStr);
+  setText('dAmpm', nowMin % 1440 < 720 ? 'AM' : 'PM');
+  // Center time + AM/PM as one unit (the clock font's width varies, so the pair is measured).
+  const tw = $('dTime').getComputedTextLength(), aw = $('dAmpm').getComputedTextLength();
+  $('dTime').setAttribute('x', CX - (8 + aw) / 2);
+  $('dAmpm').setAttribute('x', CX - (8 + aw) / 2 + tw / 2 + 8);
+  setText('dAmpm', ampm);
+}
+
+// Caution-band stripes for private meetings: 5 px on / 5 px off, rotated to 45° from the arc's
+// tangent at its middle so every private arc reads the same way around the dial.
+function stripePattern(id, color, midDeg, size = 10) {
+  return `<pattern id="${id}" patternUnits="userSpaceOnUse" width="${size}" height="${size}" patternTransform="rotate(${(midDeg + 45).toFixed(1)})">` +
+    `<rect width="${size}" height="${size / 2}" fill="${color}"/></pattern>`;
+}
+
+// Lane promotion: when a later-today meeting moves onto the main ring, its thin blue arc
+// grows outward into the amber band (scale about the center: R_LATER → R, 4 → 12 px).
+// WFF: the lane arc's radius/thickness/color are Transform targets eased by <Animation>,
+// driven by a per-event "promoted" value from the data source.
+let prevLanes = new Map();
+const arriving = new Map();                       // key → timeout id
+const PROMOTE_MS = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--promote'));
+function detectPromotions(main, later) {
+  const lanes = new Map([...main, ...later].map(e => [keyOf(e), e.lane]));
+  for (const e of main) {
+    const k = keyOf(e);
+    if (prevLanes.get(k) === 'later' && !arriving.has(k)) settle(e, k);
+  }
+  prevLanes = lanes;
+}
+function settle(e, k) {
+  const scale = R / R_LATER;
+  const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  p.setAttribute('d', arcPath(e.cs, e.ce, R_LATER));
+  $('fx').appendChild(p);
+  p.getBoundingClientRect();                      // commit the start state before transitioning
+  p.style.transform = `scale(${scale})`;
+  p.style.stroke = C.event;
+  p.style.strokeWidth = `${12 / scale}px`;
+  arriving.set(k, setTimeout(() => { arriving.delete(k); p.remove(); renderAll(); }, PROMOTE_MS()));
+}
+function resetPromotions() {
+  for (const t of arriving.values()) clearTimeout(t);
+  arriving.clear();
+  $('fx').innerHTML = '';
+  prevLanes = new Map();
+}
+
+// Comet trail behind the "now" dot: a tapering, fading tail on the ring, under the event arcs.
+// WFF: an Arc whose angles follow the clock, stroked with a SweepGradient (white → transparent).
+const TRAIL_DEG = 55;
+function renderTrail() {
+  const head = angleOf(nowMin);
+  $('trailFx').style.background =
+    `conic-gradient(from ${head - TRAIL_DEG}deg, transparent 0deg, rgba(255,255,255,.08) ${TRAIL_DEG * .45}deg,
+      rgba(255,255,255,.6) ${TRAIL_DEG}deg, transparent ${TRAIL_DEG + 0.1}deg)`;
+}
+
+// Default meeting for the details: the next one that hasn't started. While a meeting is in
+// progress the ring already shows it, so the text looks ahead. Falls back to the live one.
+function defaultIndex(list) {
+  const i = list.findIndex(e => !isLive(e));
+  return i >= 0 ? i : (list.length ? 0 : -1);
+}
+const shownIndex = (list, sel) => sel >= 0 ? sel : defaultIndex(list);
+
+// Look-ahead arrow before the title: shown while a meeting is live and the details show the
+// upcoming (default) meeting instead (RULES C12).
+const showsArrow = (list, i) => !!list[i] && !isLive(list[i]) && list.some(isLive) && i === defaultIndex(list);
+const ARROW_W = 20, ARROW_GAP = 10, LOCK_W = 16, LOCK_GAP = 9;
+const titleOf = e => e.private ? 'Private' : e.title;          // private details never reach the face
+
+// Details block: the selected event if any, otherwise the default one. Same elements either way.
+function renderDetails(list) {
+  const i = shownIndex(list, selected);
+  const e = list[i];
+  if (e && selected >= 0) setText('dStatus', `${i + 1} OF ${list.length} · ${statusFor(e)}`);
+  else if (e) setText('dStatus', (isLive(e) ? '' : 'NEXT · ') + statusFor(e));
+  else setText('dStatus', '');
+  // Nothing in the window: no message, the clock simply takes the center.
+  if (!e) { ['dTitle', 'dRange', 'dPlace'].forEach(id => setText(id, '')); $('dArrow').setAttribute('d', ''); $('dLock').style.display = 'none'; return; }
+  // Title, with the look-ahead arrow (C12) and the private lock (C13) centered together with it.
+  const arrow = showsArrow(list, i), priv = !!e.private;
+  const extra = (arrow ? ARROW_W + ARROW_GAP : 0) + (priv ? LOCK_W + LOCK_GAP : 0);
+  $('dTitle').setAttribute('x', CX);
+  fitText('dTitle', titleOf(e), 30, 24, 260 - extra);
+  const tw = $('dTitle').getComputedTextLength();
+  $('dTitle').setAttribute('x', CX + extra / 2);
+  let x = CX - (tw + extra) / 2;
+  if (arrow) {
+    const yc = 284 - 0.35 * +$('dTitle').getAttribute('font-size'), x1 = x + ARROW_W;  // mid cap height
+    $('dArrow').setAttribute('d', `M${x} ${yc} H${x1} M${x1 - 7} ${yc - 7} L${x1} ${yc} L${x1 - 7} ${yc + 7}`);
+    x += ARROW_W + ARROW_GAP;
+  } else $('dArrow').setAttribute('d', '');
+  $('dLock').style.display = priv ? '' : 'none';
+  if (priv) $('dLock').setAttribute('transform', `translate(${x} 284)`);
+  // Time and place on separate lines at the 24 px minimum. Width limits keep them clear of
+  // the hour numbers in both states (selected scales ×1.15); overflow gets an ellipsis.
+  // Qualifiers: later today → range line in blue ("Later · …"); tomorrow → place line in blue
+  // ("Tomorrow · …", the range line is too narrow for it). A double booking wins the place line, in coral.
+  const clash = clashesFor(list, e), tomorrow = e.s >= 1440, laterToday = e.lane === 'later' && !tomorrow;
+  fitText('dRange', (laterToday ? 'Later · ' : '') + fmtRange(e), 24, 24, 255);
+  $('dRange').setAttribute('fill', laterToday ? C.laterText : C.text);
+  const where = priv ? 'Details hidden' : e.where;
+  const place = clash.length ? `Also: ${titleOf(clash[0])}${clash.length > 1 ? ` +${clash.length - 1}` : ''}`
+    : tomorrow ? `Tomorrow · ${where}` : where;
+  fitText('dPlace', place, 24, 24, 220);
+  $('dPlace').setAttribute('fill', clash.length ? C.clash : tomorrow ? C.laterText : C.muted);
+}
+
+function renderSelArc(list) {
+  const e = list[selected];
+  if (!e) return;
+  // Main-ring selection thickens inward (22 px centered at R − 5) so it stays on screen.
+  const live = isLive(e), r = e.lane === 'later' ? R_LATER : R - 5;
+  $('selArc').classList.toggle('later', e.lane === 'later');
+  $('selArcPast').setAttribute('d', live ? arcPath(e.cs, nowMin, r) : '');
+  $('selArc').setAttribute('d', arcPath(live ? nowMin : e.cs, e.ce, r));
+  // Private: striped on the main ring, dashed on the lane (R10).
+  const stripes = e.private && e.lane === 'main';
+  const rot = `rotate(${(angleOf((e.cs + e.ce) / 2) + 45).toFixed(1)})`;
+  $('pvSel').setAttribute('patternTransform', rot); $('pvSelPast').setAttribute('patternTransform', rot);
+  $('selArc').style.stroke = stripes ? 'url(#pvSel)' : e.private ? C.privateSel : '';
+  $('selArcPast').style.stroke = stripes ? 'url(#pvSelPast)' : '';
+  $('selArc').style.strokeDasharray = e.private && e.lane === 'later' ? '6 4' : '';
+}
+
+// Change selection: the layout only scales; text content swaps with a brief dip when it changes.
+function setSelection(next) {
+  const list = upcoming();
+  const prev = selected;
+  selected = next;
+  selectedKey = next >= 0 ? keyOf(list[next]) : null;
+  clearTimeout(swapTimer);
+  svg.classList.remove('swapping');
+
+  const arcChanges = prev >= 0 && next >= 0 && prev !== next;
+  // Dip only when a different meeting is shown; "next" ↔ selecting that same meeting just scales.
+  const textChanges = shownIndex(list, prev) !== shownIndex(list, next);
+  if (next >= 0 && !arcChanges) renderSelArc(list);
+  svg.classList.toggle('selected', next >= 0);
+
+  if (textChanges) {
+    svg.classList.add('swapping');
+    swapTimer = setTimeout(() => {
+      const fresh = upcoming();                  // time/day may have changed during the dip
+      renderDetails(fresh);
+      if (selected >= 0) renderSelArc(fresh);
+      svg.classList.remove('swapping');
+    }, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--swap')));
+  } else {
+    renderDetails(list);
+  }
+  armAutoReturn();
+  renderPanel(list);
+}
+
+function renderAll() {
+  const list = upcoming();
+  // Rule I10: if the selected meeting is no longer shown, go back to default.
+  if (selected >= 0) {
+    selected = list.findIndex(e => keyOf(e) === selectedKey);
+    if (selected < 0) { selectedKey = null; svg.classList.remove('selected'); }
+  }
+  renderBase(list);
+  renderDetails(list);
+  if (selected >= 0) renderSelArc(list);
+  svg.classList.toggle('ambient', ambient);
+  svg.classList.toggle('empty', list.length === 0);
+  renderPanel(list);
+}
+
+function renderPanel(list) {
+  $('timeLabel').textContent = fmtClock(nowMin);
+  $('stateLabel').textContent = ambient ? 'AMBIENT'
+    : selected < 0 ? 'DEFAULT' : `SELECTED ${selected + 1}/${list.length}`;
+  const slot = (name, segs) => {
+    const p = dialPayload(segs);
+    return [`slot ${name} (WEIGHTED_ELEMENTS)`, `  colors : ${p.colors.join(' ')}`, `  weights: ${p.weights.join(' ')}`];
+  };
+  const lines = [
+    `last tap → ${lastTap}`,
+    '',
+    ...slot('ring', list.filter(e => e.lane === 'main' && !e.private).flatMap(e => eventSegments(e, C.event, C.past))),
+    ...slot('ring_private  (drawn as caution stripes)', list.filter(e => e.lane === 'main' && e.private).flatMap(e => eventSegments(e, C.private, C.privatePast))),
+    ...slot('ring_later', list.filter(e => e.lane === 'later').map(e => [e.cs, e.ce, C.later])),
+    ...slot('ring_clash  (drawn twice, R ± 4.5)', clashRanges(list).map(([a, b]) => [a, b, C.clash])),
+  ];
+  if (selected >= 0 && !ambient) lines.push(...slot('ring_selected', eventSegments(list[selected], C.selected, C.selectedPast)));
+  const e = list[shownIndex(list, selected)];
+  lines.push('slot details (LONG_TEXT)',
+    `  TITLE: ${e ? titleOf(e) : '—'}`, `  TEXT : ${e ? fmtRange(e) + ' · ' + (e.private ? '(hidden)' : e.where) : '—'}`,
+    'slot status (RANGED_VALUE)',
+    `  TITLE: ${showsArrow(list, shownIndex(list, selected)) ? 'next' : '—'}   ← look-ahead arrow flag`,
+    `  TEXT : ${!e ? '—' : selected >= 0 ? `${selected + 1} OF ${list.length} · ${statusFor(e)}` : statusFor(e)}`,
+    `  VALUE: ${selected >= 0 ? 1 : 0}   ← drives every animated Transform`);
+  $('payload').textContent = lines.join('\n');
+}
+
+// ---------- Interaction (mirrors the data source's tap handling) ----------
+// The ring is 12 one-hour hotspots. On the watch, each is a PartDraw with
+// <Launch target="app://scheduleclock/select?hour=N"> handled by the data source app.
+// Where a tap landed: clock hour (0 = 12→1 o'clock) and distance from the center.
+function tapAt(ev) {
+  const p = svg.createSVGPoint();
+  p.x = ev.clientX; p.y = ev.clientY;
+  const { x, y } = p.matrixTransform(svg.getScreenCTM().inverse());
+  const deg = (Math.atan2(y - CY, x - CX) * 180 / Math.PI + 90 + 360) % 360;
+  return { hour: Math.floor(deg / 30), r: Math.hypot(x - CX, y - CY) };
+}
+// A precise tap on the thin later lane (I11): from 6 px inside it to 2 px outside, so it
+// never takes taps meant for the main band (which starts at R − 6).
+const onLane = r => r >= R_LATER - 6 && r <= R_LATER + 2;
+
+// Indexes of upcoming events that touch the given clock hour on the dial.
+function eventsInHour(list, hour) {
+  const out = [];
+  list.forEach((e, i) => {
+    for (let m = e.cs; m < e.ce; m += 1) {
+      if (Math.floor((m % 720) / 60) === hour) { out.push(i); break; }
+    }
+  });
+  // Main-ring meetings first, then later-today ones.
+  return out.sort((a, b) => (list[a].lane === 'later') - (list[b].lane === 'later') || a - b);
+}
+
+function onRingTap(ev) {
+  if (ambient) return;
+  const { hour, r } = tapAt(ev);
+  const list = upcoming();
+  let hits = eventsInHour(list, hour);
+  // Precise tap on the inner lane: only that hour's later-lane meetings (I11).
+  const laneHits = hits.filter(i => list[i].lane === 'later');
+  const lane = onLane(r) && laneHits.length > 0;
+  if (lane) hits = laneHits;
+  lastTap = `app://scheduleclock/select?hour=${hour}${lane ? '&lane=later' : ''}  (${hour || 12}–${hour + 1} o'clock${lane ? ', inner lane' : ''})`;
+  const pos = hits.indexOf(selected);
+  if (!hits.length) setSelection(-1);                            // empty hour → default
+  else if (pos === -1) setSelection(hits[0]);                    // new hour → its first event
+  else setSelection(pos + 1 < hits.length ? hits[pos + 1] : -1); // same hour → next, then default
+}
+$('ringHit').addEventListener('click', onRingTap);
+// Center tap (I8): opens the calendar app when a private meeting is shown, so details are
+// read there (behind the watch's lock), never on the face. Otherwise nothing.
+$('centerHit').addEventListener('click', () => {
+  if (ambient) return;
+  const list = upcoming(), e = list[shownIndex(list, selected)];
+  lastTap = e && e.private ? 'center → Launch target="CALENDAR" (private meeting)' : 'center → (nothing)';
+  renderPanel(list);
+});
+
+function armAutoReturn() {
+  clearTimeout(timer);
+  if (autoReturn && selected >= 0) timer = setTimeout(() => setSelection(-1), AUTO_RETURN_MS);
+}
+
+// ---------- Controls ----------
+const presetsEl = $('presets');
+Object.keys(PRESETS).forEach(name => {
+  const b = document.createElement('button');
+  b.textContent = name;
+  b.setAttribute('aria-pressed', name === preset);
+  b.onclick = () => {
+    preset = name;
+    resetPromotions();
+    presetsEl.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    setSelection(-1);
+    renderAll();
+  };
+  presetsEl.appendChild(b);
+});
+$('time').oninput = ev => { nowMin = +ev.target.value; renderAll(); };
+$('ambient').onclick = () => {
+  ambient = !ambient;
+  $('ambient').setAttribute('aria-pressed', ambient);
+  if (ambient) setSelection(-1);
+  renderAll();
+};
+$('autoReturn').onclick = () => {
+  autoReturn = !autoReturn;
+  $('autoReturn').setAttribute('aria-pressed', autoReturn);
+  armAutoReturn();
+};
+$('slowmo').onclick = () => {
+  const on = $('slowmo').getAttribute('aria-pressed') !== 'true';
+  $('slowmo').setAttribute('aria-pressed', on);
+  document.documentElement.style.setProperty('--d', on ? '1800ms' : '');
+  document.documentElement.style.setProperty('--swap', on ? '700ms' : '');
+  document.documentElement.style.setProperty('--promote', on ? '3500ms' : '');
+};
+
+// Fast-forward: 1 simulated minute every 40 ms, to see the comet sweep the dial.
+let playTimer = null;
+$('play').onclick = () => {
+  const on = !playTimer;
+  $('play').setAttribute('aria-pressed', on);
+  if (!on) { clearInterval(playTimer); playTimer = null; return; }
+  playTimer = setInterval(() => {
+    nowMin = nowMin >= 1435 ? 360 : nowMin + 1;
+    $('time').value = nowMin;
+    renderAll();
+  }, 40);
+};
+
+renderAll();
+// Re-measure once the clock font has loaded (its width drives the AM/PM position).
+document.fonts.load('88px "Anta"').then(renderAll);
+</script>
+</body>
+</html>
