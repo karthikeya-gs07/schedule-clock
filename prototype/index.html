@@ -16,7 +16,8 @@
     --muted: #8b8d94;
     --accent: #ffb547;
     /* Motion tokens (become WFF <Animation duration interpolation>) */
-    --arc-alpha: .6;      /* meeting arcs: see-through so the time stays the focus */
+    --arc-pct: 60%;       /* meeting arcs: solid but darker, so the time stays the focus */
+    --arc-pct-hi: 90%;    /* thin lane, clash stripes, selection: a little brighter */
     --d: 520ms;           /* select / release */
     --swap: 170ms;        /* text fades out ... */
     --swap-in: 280ms;     /* ... and back in */
@@ -120,27 +121,26 @@
     transition: opacity var(--d) var(--ease), transform var(--d) var(--ease), stroke-width var(--d) var(--ease);
   }
   #ringAll { opacity: 1; }
-  #ringAll path { stroke: #ffb547; stroke-width: 12px; fill: none;
-    stroke-opacity: var(--arc-alpha);
+  #ringAll path { stroke: #996d2b; stroke: color-mix(in srgb, #ffb547 var(--arc-pct), #000); stroke-width: 12px; fill: none;
     transition: stroke var(--d) var(--ease), stroke-width var(--d) var(--ease), opacity var(--d) var(--ease), stroke-opacity var(--d) var(--ease); }
   #ringAll path.enter, #ringAll path.leaving { opacity: 0; }
-  #ringAll path.past { stroke: #6e4f22; }
-  #ringAll path.later { stroke: #8fa3d6; stroke-width: 4px; stroke-linecap: round; stroke-opacity: calc(var(--arc-alpha) + .3); }
+  #ringAll path.past { stroke: #422f14; stroke: color-mix(in srgb, #6e4f22 var(--arc-pct), #000); }
+  #ringAll path.later { stroke: #8193c1; stroke: color-mix(in srgb, #8fa3d6 var(--arc-pct-hi), #000); stroke-width: 4px; stroke-linecap: round; }
   #ringAll path.arriving { visibility: hidden; }   /* the settling animation stands in for it */
   #fx path {
-    fill: none; stroke-opacity: calc(var(--arc-alpha) + .3); stroke: #8fa3d6; stroke-width: 4px;
+    fill: none; stroke: #8193c1; stroke: color-mix(in srgb, #8fa3d6 var(--arc-pct-hi), #000); stroke-width: 4px;
     transform-box: view-box; transform-origin: 225px 225px;
     transition: transform var(--promote) cubic-bezier(.22, 1, .36, 1),
                 stroke var(--promote) ease, stroke-opacity var(--promote) ease, stroke-width var(--promote) ease;
   }
   #face.selected #fx { opacity: .35; }
   #ringAll path.later.private { stroke-dasharray: 4 3; stroke: #8e8e93; }
-  #ringAll path.clash-mask { stroke: #000; stroke-width: 14px; stroke-opacity: 1; }
-  #ringAll path.clash { stroke: #ff7a59; stroke-width: 5px; stroke-opacity: calc(var(--arc-alpha) + .3); }
-  #ringAll path.clash.past { stroke: #7a3b2c; }
-  .selArc { fill: none; stroke: #ffd27f; stroke-width: 12px; opacity: 0; stroke-opacity: calc(var(--arc-alpha) + .3); }
-  .selArc.past { stroke: #8a6a35; }
-  .selArc.later { stroke: #c3d0f2; stroke-width: 4px; stroke-linecap: round; }
+  #ringAll path.clash-mask { stroke: #3f1f17; stroke-width: 14px; stroke-opacity: 1; }   /* dark coral between the two stripes */
+  #ringAll path.clash { stroke: #e66e50; stroke: color-mix(in srgb, #ff7a59 var(--arc-pct-hi), #000); stroke-width: 5px; }
+  #ringAll path.clash.past { stroke: #6e3528; stroke: color-mix(in srgb, #7a3b2c var(--arc-pct-hi), #000); }
+  .selArc { fill: none; stroke: #e6bd72; stroke: color-mix(in srgb, #ffd27f var(--arc-pct-hi), #000); stroke-width: 12px; opacity: 0; }
+  .selArc.past { stroke: #7c5f30; stroke: color-mix(in srgb, #8a6a35 var(--arc-pct-hi), #000); }
+  .selArc.later { stroke: #b0bbda; stroke: color-mix(in srgb, #c3d0f2 var(--arc-pct-hi), #000); stroke-width: 4px; stroke-linecap: round; }
   #dStatus { fill: var(--accent); }
   /* Status line ("NEXT · IN 1H 30M") hidden for now; title and meta move up to close the gap. */
   #dStatus { display: none; }
@@ -233,9 +233,9 @@
     </div>
   </div>
   <div>
-    <h2>Meeting arc opacity</h2>
+    <h2>Meeting arc brightness</h2>
     <label><span id="alphaLabel"></span>
-      <input id="arcAlpha" type="range" min="20" max="100" step="5" value="60" aria-label="Meeting arc opacity">
+      <input id="arcAlpha" type="range" min="20" max="100" step="5" value="60" aria-label="Meeting arc brightness">
     </label>
   </div>
   <div>
@@ -460,8 +460,8 @@ svg.innerHTML = `
   <g id="ringAll" class="m"></g>
   <g id="fx" class="m"></g>
   <defs>
-    <pattern id="pvSel" patternUnits="userSpaceOnUse" width="12" height="12"><rect width="12" height="6" fill="${C.privateSel}"/></pattern>
-    <pattern id="pvSelPast" patternUnits="userSpaceOnUse" width="12" height="12"><rect width="12" height="6" fill="${C.privateSelPast}"/></pattern>
+    <pattern id="pvSel" patternUnits="userSpaceOnUse" width="12" height="12"><rect width="12" height="12" fill="#3a3a40"/><rect width="12" height="6" fill="${C.privateSel}"/></pattern>
+    <pattern id="pvSelPast" patternUnits="userSpaceOnUse" width="12" height="12"><rect width="12" height="12" fill="#2a2a2e"/><rect width="12" height="6" fill="${C.privateSelPast}"/></pattern>
   </defs>
   <path id="selArcPast" class="m selArc past"/>
   <path id="selArc" class="m selArc"/>
@@ -599,6 +599,7 @@ function renderBase(list) {
 // tangent at its middle so every private arc reads the same way around the dial.
 function stripePattern(id, color, midDeg, size = 10) {
   return `<pattern id="${id}" patternUnits="userSpaceOnUse" width="${size}" height="${size}" patternTransform="rotate(${(midDeg + 45).toFixed(1)})">` +
+    `<rect width="${size}" height="${size}" fill="${ambient ? '#161618' : '#26262a'}"/>` +
     `<rect width="${size}" height="${size / 2}" fill="${color}"/></pattern>`;
 }
 
@@ -624,8 +625,7 @@ function settle(e, k) {
   $('fx').appendChild(p);
   p.getBoundingClientRect();                      // commit the start state before transitioning
   p.style.transform = `scale(${scale})`;
-  p.style.stroke = C.event;
-  p.style.strokeOpacity = 'var(--arc-alpha)';
+  p.style.stroke = 'color-mix(in srgb, #ffb547 var(--arc-pct), #000)';
   p.style.strokeWidth = `${12 / scale}px`;
   arriving.set(k, setTimeout(() => { arriving.delete(k); p.remove(); renderAll(); }, PROMOTE_MS()));
 }
@@ -970,7 +970,8 @@ function applyMode() {
 $('tactical').onclick = () => { tactical = !tactical; $('tactical').setAttribute('aria-pressed', tactical); applyMode(); };
 $('dim').onclick = () => { dim = !dim; $('dim').setAttribute('aria-pressed', dim); applyMode(); };
 $('arcAlpha').oninput = ev => {
-  document.documentElement.style.setProperty('--arc-alpha', ev.target.value / 100);
+  document.documentElement.style.setProperty('--arc-pct', ev.target.value + '%');
+  document.documentElement.style.setProperty('--arc-pct-hi', Math.min(100, +ev.target.value + 30) + '%');
   $('alphaLabel').textContent = ev.target.value + '%';
 };
 $('alphaLabel').textContent = '60%';
