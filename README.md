@@ -15,7 +15,9 @@ A Wear OS watch face that shows the time **and the shape of your day**: calendar
 
 ## Live preview
 
-**Not live yet.** GitHub Pages isn't available for private repositories on the free plan. Options are tracked in PRD.md §7. The repo is already set up for it: the root `index.html` redirects to `prototype/`, and `.nojekyll` serves files as-is, so any static host pointed at `main` works without changes.
+**https://karthikeya-gs07.github.io/schedule-clock/**
+
+Published with GitHub Pages from the root of `main`. Every push to `main` updates it, usually within a minute or two. The root `index.html` redirects to `prototype/`, and `.nojekyll` serves files as-is.
 
 ## Run locally
 

@@ -146,12 +146,13 @@ Wear OS 5+ (WFF v2, needed for `WeightedStroke` on `Arc`): Galaxy Watch 4 and la
 
 | Item | Status |
 |---|---|
-| **GitHub repo** [`karthikeya-gs07/schedule-clock`](https://github.com/karthikeya-gs07/schedule-clock) | ✅ **Private**, `main` branch. Open it in Claude Code on the web (claude.ai/code) to work from a phone or iPad |
-| **Live preview** of `prototype/` | ❌ GitHub Pages is refused for private repos on the free plan (HTTP 422). Pick one: **(a)** GitHub Pro ($4/mo) → Pages works on the private repo; **(b)** a free static host (Cloudflare Pages / Netlify) connected to the private repo, which redeploys on every push; **(c)** make the repo public → free Pages. In every option the **site URL itself is public** (the repo can stay private) |
+| **GitHub repo** [`karthikeya-gs07/schedule-clock`](https://github.com/karthikeya-gs07/schedule-clock) | ✅ **Public** (made public 2026-10-24 so free GitHub Pages works), `main` branch. Open it in Claude Code on the web (claude.ai/code) to work from a phone or iPad |
+| **Live preview** | ✅ **https://karthikeya-gs07.github.io/schedule-clock/** via GitHub Pages from the root of `main`; every push to `main` redeploys (~1–2 min) |
 | Pages-ready layout | ✅ Root `index.html` redirects to `prototype/`; `.nojekyll` disables Jekyll processing |
 
 ## 8. Changelog
 
+- **v0.18.2:** Repo made public; GitHub Pages live at https://karthikeya-gs07.github.io/schedule-clock/.
 - **v0.18.1:** Project pushed to the private GitHub repo `schedule-clock`; live preview pending a hosting choice (§7.1).
 - **v0.18:** Morning + evening meetings in the same dial slot stack (ring + lane). Tap order: morning, then evening; a precise tap on the thin lane selects the evening meeting directly. Sample day gains Gym 7–7:45 AM.
 - **v0.17.2:** Private stripes are grey instead of amber.
