@@ -66,7 +66,7 @@ All sizes are in px on the **450 × 450 face canvas** (≈ 2 px per dp on a typi
 | selected / selectedPast | `#ffd27f` / `#8a6a35` | Selected main-ring arc |
 | later / laterSelected | `#8fa3d6` / `#c3d0f2` | Later lane |
 | laterText | `#a9b8e0` | "Later ·" and "Tomorrow ·" text |
-| clash / clashPast | `#ff7a59` / `#7a3b2c` | Double-booking stripes, "Also:" text |
+| clash / clashPast | `#ff7a59` / `#7a3b2c` | Double-booking stripes, overlap icon and its text |
 | private / privatePast | `#8e8e93` / `#48484c` | Private caution stripes |
 | privateSel / privateSelPast | `#c7c7cc` / `#6a6a70` | Selected private stripes |
 | track | `#1c1c1f` | Ring track |
@@ -84,12 +84,12 @@ All sizes are in px on the **450 × 450 face canvas** (≈ 2 px per dp on a typi
 | C4 | Details layout | Three lines: **title** (30 px white, shrinks to 24 px, then ellipsis) · **time range** (24 px white) · **place** (24 px muted). | Time and place are on separate lines so neither has to drop below 24 px (P7). |
 | C5 | The meeting is on the later lane and is **today** | Time line: **"Later · 7:00 – 8:00 PM"** in `#a9b8e0`. | Matches the blue lane; explains why it's not on the main ring. |
 | C6 | The meeting is **tomorrow** | Place line: **"Tomorrow · Café Blue"** in `#a9b8e0`. | "Tomorrow · 8:00 – 8:45 AM" doesn't fit the time line at 24 px, so the qualifier goes on the place line. |
-| C7 | The meeting is **double-booked** | Place line: **"Also: Vendor call"** (or "Also: X +1" for 3+) in coral. Takes priority over C6 and the place. | Who you're clashing with matters more than where. |
+| C7 | The meeting is **double-booked** | Place line: a coral **overlap icon** (two intersecting rings, 22 px) followed by the other meeting's name, **"Vendor call"** (or "Vendor call +1" for 3+), in coral; no "Also" word. Takes priority over C6 and the place. | Who you're clashing with matters more than where. |
 | C8 | Time range formatting | AM/PM appears once if both ends are in the same half of the day ("1:00 – 2:00 PM"), otherwise on both ("11:30 AM – 12:30 PM"). | Saves width. |
 | C9 | Text too wide | Title: shrink 30 → 24 px, then ellipsis. Time and place: ellipsis at 24 px. Max widths: title 260, time 255, place 220. | Keeps text clear of the hour numbers in both default and selected (×1.15) states. |
 | C10 | Status line ("NEXT · IN 1H 30M", "2 OF 2 · …") | **Hidden** (your call, 2026-10-24). The data source still produces it. | Less clutter; can return later. |
 | C11 | AM/PM | Placed 8 px right of the measured time width; time + AM/PM centered together. | Stays attached to the time whatever its width, and the pair stays visually centered. |
-| C13 | The shown meeting is **private** | Title becomes **"Private"** with a grey **lock icon** (16 × 20 px) before it; the time range stays (it's already visible on the ring); the place line reads **"Details hidden"**. Works together with the C12 arrow (arrow, lock, then title, all centered). A double booking with a private meeting reads **"Also: Private"**. | P10. The time is not a secret (the arc shows it); the title and place are. Showing the time was confirmed 2026-10-24 (PRD Q14). |
+| C13 | The shown meeting is **private** | Title becomes **"Private"** with a grey **lock icon** (16 × 20 px) before it; the time range stays (it's already visible on the ring); the place line reads **"Details hidden"**. Works together with the C12 arrow (arrow, lock, then title, all centered). A double booking with a private meeting reads the overlap icon + **"Private"**. | P10. The time is not a secret (the arc shows it); the title and place are. Showing the time was confirmed 2026-10-24 (PRD Q14). |
 | C12 | A meeting is **in progress** (e.g. 9:00–9:30, now 9:10) and the details show the upcoming meeting (C1) | An **amber arrow → (20 px wide, 3 px stroke, `#ffb547`)** sits 10 px before the title; arrow + title are centered together, and the title's max width shrinks by 30 px to make room. It's part of the details block, so it scales and dips with it. Not shown when the details show a live meeting, or when no meeting is in progress. Grey in ambient. | Says "this is coming up, not the meeting you're in" without adding a text label (changed 2026-10-24: the NEXT/NOW label was removed). |
 
 ---

@@ -181,7 +181,7 @@
             mask: radial-gradient(circle at 225px 225px, transparent 212.5px, #000 213px, #000 225px, transparent 225.5px);
   }
   #face.ambient #dStatus { fill: #8e8e93; }
-  #face.ambient #dRange, #face.ambient #dPlace { opacity: 0; }
+  #face.ambient #dRange, #face.ambient #dPlace, #face.ambient #dClashIcon { opacity: 0; }
   #face.ambient #dArrow { stroke: #8e8e93; }
 </style>
 </head>
@@ -455,6 +455,9 @@ svg.innerHTML = `
       ${T('dTitle', CX, 284, 30, { weight: 500 })}
       ${T('dRange', CX, 318, 24)}
       ${T('dPlace', CX, 348, 24, { fill: C.muted })}
+      <g id="dClashIcon" style="display:none" fill="none" stroke="${C.clash}" stroke-width="2.5">
+        <circle cx="7" cy="0" r="7"/><circle cx="15" cy="0" r="7"/>
+      </g>
     </g></g>
   </g>
 
@@ -594,7 +597,7 @@ function renderDetails(list) {
   else if (e) setText('dStatus', (isLive(e) ? '' : 'NEXT · ') + statusFor(e));
   else setText('dStatus', '');
   // Nothing in the window: no message, the clock simply takes the center.
-  if (!e) { ['dTitle', 'dRange', 'dPlace'].forEach(id => setText(id, '')); $('dArrow').setAttribute('d', ''); $('dLock').style.display = 'none'; return; }
+  if (!e) { ['dTitle', 'dRange', 'dPlace'].forEach(id => setText(id, '')); $('dClashIcon').style.display = 'none'; $('dArrow').setAttribute('d', ''); $('dLock').style.display = 'none'; return; }
   // Title, with the look-ahead arrow (C12) and the private lock (C13) centered together with it.
   const arrow = showsArrow(list, i), priv = !!e.private;
   const extra = (arrow ? ARROW_W + ARROW_GAP : 0) + (priv ? LOCK_W + LOCK_GAP : 0);
@@ -618,9 +621,17 @@ function renderDetails(list) {
   fitText('dRange', (laterToday ? 'Later · ' : '') + fmtRange(e), 24, 24, 255);
   $('dRange').setAttribute('fill', laterToday ? C.laterText : C.text);
   const where = priv ? 'Details hidden' : e.where;
-  const place = clash.length ? `Also: ${titleOf(clash[0])}${clash.length > 1 ? ` +${clash.length - 1}` : ''}`
+  // Double booking: an overlap icon (two intersecting rings) replaces the word "Also".
+  const ICON_W = 22, ICON_GAP = 8;
+  const place = clash.length ? `${titleOf(clash[0])}${clash.length > 1 ? ` +${clash.length - 1}` : ''}`
     : tomorrow ? `Tomorrow · ${where}` : where;
-  fitText('dPlace', place, 24, 24, 220);
+  const iw = clash.length ? ICON_W + ICON_GAP : 0;
+  $('dPlace').setAttribute('x', CX);
+  fitText('dPlace', place, 24, 24, 220 - iw);
+  $('dPlace').setAttribute('x', CX + iw / 2);
+  $('dClashIcon').style.display = clash.length ? '' : 'none';
+  if (clash.length) $('dClashIcon').setAttribute('transform',
+    `translate(${CX - ($('dPlace').getComputedTextLength() + iw) / 2} ${348 - 0.35 * +$('dPlace').getAttribute('font-size')})`);
   $('dPlace').setAttribute('fill', clash.length ? C.clash : tomorrow ? C.laterText : C.muted);
 }
 
