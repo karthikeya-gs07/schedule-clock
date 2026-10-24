@@ -31,9 +31,9 @@
   body {
     margin: 0; background: var(--bg); color: var(--text);
     font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    display: flex; flex-wrap: wrap; gap: 32px; justify-content: center; align-items: flex-start;
-    padding: 32px 16px;
+    padding: 28px 16px 48px; min-height: 100vh;
   }
+  .layout { display: flex; flex-wrap: wrap; gap: 40px; justify-content: center; align-items: flex-start; }
   .stage { display: flex; flex-direction: column; align-items: center; gap: 12px; max-width: 100%; }
 
   /* ---------- Device picker ----------
@@ -86,11 +86,44 @@
   .calib p { margin: 0; color: var(--muted); font-size: 13px; }
   .card-wrap { overflow-x: auto; padding-bottom: 4px; }
   .card { height: 48px; border: 2px solid var(--accent); border-radius: 6px; background: rgba(255,181,71,.08); }
+  /* ---------- Control panel ---------- */
   .panel {
-    width: 360px; max-width: 100%; background: var(--panel); border: 1px solid var(--line);
-    border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 18px;
+    width: 340px; max-width: 100%; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 16px; overflow: hidden; position: sticky; top: 16px;
   }
-  .panel h2 { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  @media (max-width: 760px) { .panel { position: static; width: 100%; max-width: 460px; } }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  .panel-head h1 { margin: 0; font-size: 15px; font-weight: 650; letter-spacing: .01em; }
+  .chip { font-size: 11px; letter-spacing: .08em; font-weight: 600; color: var(--accent); background: rgba(255,181,71,.1); border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
+  .sect { padding: 14px 16px 16px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 12px; }
+  .sect:last-child { border-bottom: 0; }
+  .panel h2 { margin: 0; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .time-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  #timeLabel { font-size: 26px; font-weight: 600; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+  #timeLabel small { font-size: 12px; color: var(--muted); font-weight: 500; letter-spacing: 0; margin-left: 6px; }
+  .pill { padding: 6px 12px; border-radius: 999px; font-size: 13px; }
+  #play .on, #play[aria-pressed=true] .off { display: none; }
+  #play[aria-pressed=true] .on { display: inline; }
+  .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 3px; padding: 3px; background: #0f1012; border: 1px solid var(--line); border-radius: 10px; }
+  .seg button { border: 0; background: transparent; color: var(--muted); border-radius: 7px; padding: 7px 6px; font-size: 13px; }
+  .seg button[aria-pressed=true] { background: #2c2e34; color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.4); }
+  .toggles { display: flex; flex-direction: column; gap: 2px; margin: 0 -6px; }
+  .toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; text-align: left; background: transparent; border: 0; border-radius: 8px; padding: 8px 6px; color: var(--text); }
+  .toggle:hover { background: #1d1e22; }
+  .toggle small { display: block; color: var(--muted); font-size: 12px; }
+  .toggle i { flex: none; position: relative; width: 38px; height: 22px; border-radius: 999px; background: #34363c; transition: background .2s; }
+  .toggle i::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #c9cacf; transition: transform .2s, background .2s; }
+  .toggle[aria-pressed=true] i { background: var(--accent); }
+  .toggle[aria-pressed=true] i::after { transform: translateX(16px); background: #1a1405; }
+  .toggle[aria-pressed=true] { color: var(--text); border: 0; }
+  .range-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .range-row output { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; }
+  /* Dial-only mode: everything but the watch is hidden */
+  body.focus { display: grid; place-items: center; }
+  body.focus .panel, body.focus .tabs, body.focus .size-info, body.focus .hint, body.focus .calib { display: none; }
+  .focus-exit { display: none; position: fixed; top: 12px; right: 12px; z-index: 5; opacity: .55; border-radius: 999px; padding: 6px 12px; font-size: 13px; background: rgba(34,36,40,.85); }
+  .focus-exit:hover, .focus-exit:focus-visible { opacity: 1; }
+  body.focus .focus-exit { display: block; }
   .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   label { display: flex; flex-direction: column; gap: 6px; }
   input[type=range] { width: 100%; height: 32px; margin: 0; accent-color: var(--accent); touch-action: none; }
@@ -104,11 +137,6 @@
   }
   button[aria-pressed=true] { border-color: var(--accent); color: var(--accent); }
   button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  pre {
-    margin: 0; background: #0b0c0e; border: 1px solid var(--line); border-radius: 8px; padding: 12px;
-    font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: #b9bbc2; white-space: pre-wrap; word-break: break-all;
-  }
-  .state { font-family: ui-monospace, Menlo, monospace; color: var(--accent); }
 
   /* ---------- Face motion ----------
      Every animated property here maps to a WFF Transform target driven by one
@@ -190,6 +218,7 @@
 </head>
 <body>
 
+<main class="layout">
 <div class="stage">
   <div class="tabs" id="deviceTabs" role="tablist" aria-label="Watch size"></div>
   <div class="size-info" id="sizeInfo"></div>
@@ -209,44 +238,49 @@
   <div class="hint">Tap an hour on the ring to select its event. Auto-returns after 8 s.</div>
 </div>
 
-<div class="panel">
-  <div>
-    <h2>Simulated time</h2>
-    <label><span id="timeLabel"></span>
-      <input id="time" type="range" min="360" max="1800" step="5" value="360" aria-label="Simulated time">
-    </label>
+<aside class="panel" id="panel" aria-label="Controls">
+  <div class="panel-head">
+    <h1>Schedule Clock</h1>
+    <span class="chip" id="stateLabel"></span>
+    <button class="pill" id="focusOn" title="Hide everything except the watch (F)">Dial only</button>
   </div>
-  <div>
+
+  <div class="sect">
+    <h2>Time</h2>
+    <div class="time-row">
+      <div id="timeLabel"></div>
+      <button class="pill" id="play" aria-pressed="false"><span class="off">▶ Play</span><span class="on">❚❚ Pause</span></button>
+    </div>
+    <input id="time" type="range" min="360" max="1800" step="5" value="360" aria-label="Simulated time">
+  </div>
+
+  <div class="sect">
     <h2>Day</h2>
-    <div class="row" id="presets"></div>
+    <div class="seg" id="presets"></div>
   </div>
-  <div>
-    <h2>Mode</h2>
-    <div class="row">
-      <button id="ambient" aria-pressed="false">Ambient (always-on)</button>
-      <button id="dim" aria-pressed="false">Dim (low power)</button>
-      <button id="tactical" aria-pressed="false">Tactical red</button>
-      <button id="lookAhead" aria-pressed="true">Tomorrow look-ahead 14 h</button>
-      <button id="autoReturn" aria-pressed="true">Auto-return 8 s</button>
-      <button id="slowmo" aria-pressed="false">Slow motion ×5</button>
-      <button id="play" aria-pressed="false">Fast-forward time</button>
+
+  <div class="sect">
+    <h2>Display</h2>
+    <div class="toggles">
+      <button class="toggle" id="ambient" aria-pressed="false"><span>Ambient<small>Always-on outlines</small></span><i></i></button>
+      <button class="toggle" id="dim" aria-pressed="false"><span>Dim<small>Low-power brightness</small></span><i></i></button>
+      <button class="toggle" id="tactical" aria-pressed="false"><span>Tactical red<small>All red, by brightness</small></span><i></i></button>
+    </div>
+    <div class="range-row"><h2>Arc brightness</h2><output id="alphaLabel"></output></div>
+    <input id="arcAlpha" type="range" min="20" max="100" step="5" value="60" aria-label="Meeting arc brightness">
+  </div>
+
+  <div class="sect">
+    <h2>Behavior</h2>
+    <div class="toggles">
+      <button class="toggle" id="lookAhead" aria-pressed="true"><span>Tomorrow look-ahead<small>Show tomorrow 14 h ahead</small></span><i></i></button>
+      <button class="toggle" id="autoReturn" aria-pressed="true"><span>Auto-return<small>Back to default after 8 s</small></span><i></i></button>
+      <button class="toggle" id="slowmo" aria-pressed="false"><span>Slow motion<small>Animations ×5 slower</small></span><i></i></button>
     </div>
   </div>
-  <div>
-    <h2>Meeting arc brightness</h2>
-    <label><span id="alphaLabel"></span>
-      <input id="arcAlpha" type="range" min="20" max="100" step="5" value="60" aria-label="Meeting arc brightness">
-    </label>
-  </div>
-  <div>
-    <h2>State</h2>
-    <div class="state" id="stateLabel"></div>
-  </div>
-  <div>
-    <h2>Complication payload (what the data source sends)</h2>
-    <pre id="payload"></pre>
-  </div>
-</div>
+</aside>
+</main>
+<button class="focus-exit" id="focusOff">Show controls</button>
 
 <script>
 // ---------- Sample data ----------
@@ -817,30 +851,11 @@ function renderAll() {
 }
 
 function renderPanel(list) {
-  $('timeLabel').textContent = fmtClock(nowMin) + (nowMin >= 1440 ? ' · next day' : '');
+  const t = $('timeLabel');
+  t.textContent = fmtClock(nowMin);
+  if (nowMin >= 1440) { const n = document.createElement('small'); n.textContent = 'next day'; t.appendChild(n); }
   $('stateLabel').textContent = ambient ? 'AMBIENT'
     : selected < 0 ? 'DEFAULT' : `SELECTED ${selected + 1}/${list.length}`;
-  const slot = (name, segs) => {
-    const p = dialPayload(segs);
-    return [`slot ${name} (WEIGHTED_ELEMENTS)`, `  colors : ${p.colors.join(' ')}`, `  weights: ${p.weights.join(' ')}`];
-  };
-  const lines = [
-    `last tap → ${lastTap}`,
-    '',
-    ...slot('ring', list.filter(e => e.lane === 'main' && !e.private).flatMap(e => eventSegments(e, C.event, C.past))),
-    ...slot('ring_private  (drawn as caution stripes)', list.filter(e => e.lane === 'main' && e.private).flatMap(e => eventSegments(e, C.private, C.privatePast))),
-    ...slot('ring_later', list.filter(e => e.lane === 'later').map(e => [e.cs, e.ce, C.later])),
-    ...slot('ring_clash  (drawn twice, R ± 4.5)', clashRanges(list).map(([a, b]) => [a, b, C.clash])),
-  ];
-  if (selected >= 0 && !ambient) lines.push(...slot('ring_selected', eventSegments(list[selected], C.selected, C.selectedPast)));
-  const e = list[shownIndex(list, selected)];
-  lines.push('slot details (LONG_TEXT)',
-    `  TITLE: ${e ? titleOf(e) : '—'}`, `  TEXT : ${e ? fmtRange(e) + ' · ' + (e.private ? '(hidden)' : e.where) : '—'}`,
-    'slot status (RANGED_VALUE)',
-    `  TITLE: ${showsArrow(list, shownIndex(list, selected)) ? 'next' : '—'}   ← look-ahead arrow flag`,
-    `  TEXT : ${!e ? '—' : selected >= 0 ? `${selected + 1} OF ${list.length} · ${statusFor(e)}` : statusFor(e)}`,
-    `  VALUE: ${selected >= 0 ? 1 : 0}   ← drives every animated Transform`);
-  $('payload').textContent = lines.join('\n');
 }
 
 // ---------- Interaction (mirrors the data source's tap handling) ----------
@@ -1080,6 +1095,22 @@ $('calibReset').onclick = () => { store.set(screenKey(), null); closeCalib(); ap
 $('calibCancel').onclick = closeCalib;
 // Zoom changes devicePixelRatio, which changes which calibration applies.
 addEventListener('resize', applyDevice);
+
+// Dial-only mode: hides every control so the watch can be studied or shown on its own.
+// F toggles it; #dial in the URL opens straight into it, so it can be shared as a link.
+function setFocus(on) {
+  document.body.classList.toggle('focus', on);
+  closeCalib();
+  try { history.replaceState(null, '', on ? '#dial' : location.pathname + location.search); } catch {}
+}
+$('focusOn').onclick = () => setFocus(true);
+$('focusOff').onclick = () => setFocus(false);
+addEventListener('keydown', ev => {
+  if (ev.target.matches && ev.target.matches('input, textarea')) return;
+  if (ev.key === 'f' || ev.key === 'F') setFocus(!document.body.classList.contains('focus'));
+  else if (ev.key === 'Escape') setFocus(false);
+});
+if (location.hash === '#dial') setFocus(true);
 
 applyDevice();
 renderAll();

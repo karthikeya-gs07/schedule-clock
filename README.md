@@ -19,6 +19,10 @@ A Wear OS watch face that shows the time **and the shape of your day**: calendar
 
 Published with GitHub Pages from the root of `main`. Every push to `main` updates it, usually within a minute or two. The root `index.html` redirects to `prototype/`, and `.nojekyll` serves files as-is.
 
+## Dial only
+
+Press **Dial only** (or the `F` key) to hide every control and see just the watch. Add `#dial` to the URL (for example `…/schedule-clock/#dial`) to open straight into it; `Esc` or **Show controls** brings the panel back.
+
 ## Run locally
 
 ```bash
