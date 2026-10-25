@@ -1,7 +1,7 @@
 # Schedule Clock: Product Requirements (living doc)
 
-> Status: **v0.18 — design prototype complete enough for a Wear OS spike. No watch code yet.**
-> Last updated: 2026-10-24
+> Status: **v0.31 — design signed off; ready to start the Wear OS build (§7.0). No watch code yet.**
+> Last updated: 2026-10-25
 >
 > **Documents**
 > - **This file:** what we're building, for whom, on what platform, open questions, risks, tooling, history.
@@ -130,17 +130,35 @@ Wear OS 5+ (WFF v2, needed for `WeightedStroke` on `Arc`): Galaxy Watch 4 and la
 
 ## 7. Tooling requirements
 
+Checked on this Mac (2026-10-25): Apple silicon (arm64), macOS 26.6, 16 GB RAM, 72 GB free, Homebrew installed. No Java, no Android tooling yet.
+
 | Tool | Needed for | Status |
 |---|---|---|
-| **Android Studio** (latest stable) | Building both packages; includes the SDK, `adb`, Gradle, JDK | ❌ Not installed |
-| **Wear OS emulator image** (Wear OS 5 and 6, round) | Testing without a watch | ❌ Via Android Studio's SDK Manager |
-| **WFF validator + memory footprint tool** (Google's `watchface` tools) | Play requires faces to pass these | ❌ I'll fetch once Android Studio is in |
-| **Real Galaxy Watch** (Wear OS 5+), Developer options + ADB over Wi-Fi | Calendar sync, tap latency, battery | ❓ Do you have one? |
-| **Google Play Console account** ($25 one-time) | Publishing | ❓ Later |
+| **Android Studio** (latest stable) | Building both packages; bundles the JDK, Android SDK, `adb`, Gradle and the emulator | ❌ Not installed (`brew install --cask android-studio`, or download from developer.android.com) |
+| **SDK pieces** via SDK Manager: Wear OS 5 + 6 platforms, platform-tools, **Wear OS arm64 system images** (round) | Compiling, and running the face on an emulator | ❌ After Android Studio (~10–15 GB) |
+| **WFF validator + memory footprint tool** (Google's `watchface` tools) | Play requires faces to pass these | ❌ I'll set up once Android Studio is in |
+| **Real Wear OS watch** (Galaxy Watch 4 or newer on Wear OS 5+), Developer options + ADB over Wi-Fi | Tap latency, calendar sync, private flag, edge visibility, battery (risks 1, 11, 13, 16, 17) | ❓ Do you have one? |
+| **An Android phone** paired with the watch, signed in to the calendar(s) you use | Galaxy Watch 4+ and Pixel Watch **can't pair with an iPhone**; the watch gets its calendar from the paired Android phone | ❓ Needed for real-device testing |
+| **Google Play Console account** ($25 one-time, identity verification) | Publishing | ❓ Before release. New personal accounts must run a **closed test with at least 12 testers for 14 days** before production (to re-check when we get there) |
+| **Privacy policy URL** + Play "Data safety" form | Calendar access is sensitive data; Play requires both | ❓ Can be a page on the GitHub Pages site |
+| **Store assets**: icon, face screenshots, short/long description, package name (e.g. `io.github.karthikeyags07.scheduleclock`) | Play listing | ❓ Later |
 | **Python 3** | Serving the prototype locally (`python3 -m http.server`) | ✅ Built into macOS |
 | **Figma** | Visual design, if we move there | ✅ Installed; Figma MCP needs authorizing via `/mcp` |
-| Samsung **Watch Face Studio** | Optional WYSIWYG WFF editor | Optional |
+| Samsung **Watch Face Studio** | Optional WYSIWYG WFF editor | Optional, not needed |
 | **Anta** font (Google Fonts, OFL) | Clock digits and dial numbers (RULES T5). Prototype loads it from Google Fonts; the WFF build bundles `Anta-Regular.ttf` | ✅ Prototype. TTF to download into the watch project when we start it |
+
+**Where to build:** the Android build and emulator must run on this Mac (a local session). Cloud sessions can keep editing the prototype and docs.
+
+### 7.0 Build plan
+
+| Phase | What | Done when |
+|---|---|---|
+| 0. Setup | Install Android Studio + SDK + Wear OS emulator; create the Gradle project with two modules: `watchface` (WFF XML, no code) and `datasource` (Kotlin) | An empty face installs on the emulator |
+| 1. Spike | Prove the risky parts with fake data: `Launch` deep-link tap → redraw speed (risk 1), animation on complication changes (2), clock reacting to `selected` (3), transparent gaps + element limit (8, 9), private stripes (15), lane → ring slot (4), edge visibility (13) | Each risk marked go / fallback in §6.3 |
+| 2. Data source app | Port the prototype's rules engine (lanes, clashes, next meeting, qualifiers; RULES §1 and §3) to Kotlin; read the watch calendar (`READ_CALENDAR`); publish the 8 complication slots with timelines; the invisible tap activity | Real calendar shows correctly on the emulator |
+| 3. Watch face | Full WFF layout from RULES: ring, lane, ticks, numbers, Anta clock, details, motion, ambient, dim/red modes, 12 + 12 tap hotspots | Matches the prototype side by side |
+| 4. Test | Emulator + real watch: rule checklist, validator, memory footprint, battery in always-on | Validator and memory checks pass |
+| 5. Publish | Play listing(s), privacy policy, data safety, closed test (12 testers × 14 days), production | Live on Play |
 
 ### 7.1 Repository & preview
 
@@ -164,6 +182,7 @@ Wear OS 5+ (WFF v2, needed for `WeightedStroke` on `Arc`): Galaxy Watch 4 and la
 - **v0.28:** Trail dashes doubled to 20 per hour (240, every 1.5°) and thinned to 1.2 px (R6).
 - **v0.29:** Arcs are solid and darker instead of see-through; private stripes and the double-booking gap get a dark fill instead of transparency (R6a).
 - **v0.30:** Prototype control panel redesigned into grouped sections (Time, Day, Display, Behavior) with switches and a segmented day picker; the complication payload view is removed. New **Dial only** mode (button, `F` key, or `#dial` in the URL) hides all controls and shows just the watch.
+- **v0.31:** Build readiness: tooling list checked against this Mac, Android-phone and Play testing requirements added, phased build plan (§7.0).
 - **v0.18.2:** Repo made public; GitHub Pages live at https://karthikeya-gs07.github.io/schedule-clock/.
 - **v0.18.1:** Project pushed to the private GitHub repo `schedule-clock`; live preview pending a hosting choice (§7.1).
 - **v0.18:** Morning + evening meetings in the same dial slot stack (ring + lane). Tap order: morning, then evening; a precise tap on the thin lane selects the evening meeting directly. Sample day gains Gym 7–7:45 AM.
