@@ -50,3 +50,13 @@ class DetailsDataSourceService : SlotDataSourceService("details", ComplicationTy
 class PromoteDataSourceService : SlotDataSourceService("promote", ComplicationType.RANGED_VALUE) {
     override fun data() = SpikeSchedule.promoteArc(this)
 }
+
+/** Slot 4 `title_scroll` (C9a): the full title, scrolled by the face, in the window without the arrow. */
+class TitleScrollDataSourceService : SlotDataSourceService("title scroll", ComplicationType.RANGED_VALUE) {
+    override fun data() = SpikeSchedule.titleScroll(this, withArrow = false)
+}
+
+/** Slot 6 `title_scroll_arrow` (C9a): the same, in the narrower window beside the look-ahead arrow. */
+class TitleScrollArrowDataSourceService : SlotDataSourceService("title scroll arrow", ComplicationType.RANGED_VALUE) {
+    override fun data() = SpikeSchedule.titleScroll(this, withArrow = true)
+}

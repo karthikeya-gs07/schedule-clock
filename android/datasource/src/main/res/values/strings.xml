@@ -6,4 +6,5 @@
     <string name="status_label">Schedule details</string>
     <string name="details_label">Meeting place</string>
     <string name="promote_label">Settling meeting</string>
+    <string name="title_scroll_label">Scrolling title</string>
 </resources>

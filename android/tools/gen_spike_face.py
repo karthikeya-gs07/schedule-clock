@@ -87,13 +87,14 @@ def selected_arc(name, alpha, diameter, color, thick0, thick1):
         </PartDraw>'''
 
 # Center content (RULES §3, T2, M1), in the prototype's layout. S = selected (0/1).
-# Status MAX = 1 + title width + 10000 × flags (1 arrow, 2 lock, 4 clash); details MAX = 1 + width + 10000 × kind.
+# Status MAX = 1 + title width + 10000 × flags (1 arrow, 2 lock, 4 clash, 8 title scrolls); details MAX = 1 + width + 10000 × kind.
 S = "[COMPLICATION.RANGED_VALUE_VALUE]"
 F = "round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000))"
 W = "(([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000)"
 ARROW = f"({F} % 2)"
 LOCK = f"(floor({F} / 2) % 2)"
 CLASH = f"(floor({F} / 4) % 2)"
+SCROLL = f"(floor({F} / 8) % 2)"
 EXTRA = f"(30 * {ARROW} + 25 * {LOCK})"
 ICON_X = f"(225 - ({W} + {EXTRA}) / 2)"
 
@@ -123,6 +124,43 @@ def line_variants():
             {text(0, 0, 450, 30, 24, color, "[COMPLICATION.TEXT]")}
           </Group>''')
     return chr(10).join(groups)
+
+# Long titles (C9a). WFF has no marquee, so the full title is drawn by two extra slots (4: window without the
+# look-ahead arrow, 6: the narrower window beside it) whose BoundingBox crops the text to the window (bounding
+# areas crop drawing, see commit 37ad830). The text's x is a Transform on the clock: hold, glide, hold, fade out,
+# jump back, fade in. MAX = 1 + overflow px + 10000 × scrolling (1); VALUE = selected moves it up like the details.
+SPEED, HOLD1, HOLD2, FADE = 30, 1400, 1300, 260   # px/s, ms
+SC_OVER = "(([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000)"
+SC_ON = "floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)"
+
+def scroll_slot(slot_id, name, service, arrow):
+    left = 125 if arrow else 95
+    glide = f"(clamp({SC_OVER}, 1, 9999) * {1000 / SPEED:.4f})"
+    end = f"({HOLD1} + {glide} + {HOLD2})"
+    t = f"(([MINUTE] * 60000 + [SECOND_MILLISECOND]) % ({end} + {2 * FADE}))"   # ms into the cycle (wraps hourly)
+    u = f"clamp(({t} - {HOLD1}) / {glide}, 0, 1)"
+    x = f"{left} - ({t} &lt; {end} + {FADE} ? {SC_OVER} * ({u} * {u} * (3 - 2 * {u})) : 0)"
+    alpha = (f"{SC_ON} * 255 * ({t} &lt; {end} ? 1 : ({t} &lt; {end} + {FADE} ? 1 - ({t} - {end}) / {FADE} "
+             f": ({t} - {end} - {FADE}) / {FADE}))")
+    return f'''
+    <!-- Slot `{name}` (C9a): the full title scrolling inside x {left}..355. Hidden in ambient (A2a shows the status title). -->
+    <ComplicationSlot slotId="{slot_id}" name="{name}" displayName="@string/slot_title" x="0" y="0" width="450" height="450"
+        supportedTypes="RANGED_VALUE EMPTY" isCustomizable="FALSE">
+      {provider(service, "RANGED_VALUE")}
+      <BoundingBox x="{left}" y="215" width="{355 - left}" height="85"/>
+      <Complication type="RANGED_VALUE">
+        <Group name="scroll_live" x="0" y="0" width="450" height="450">
+          <Variant mode="AMBIENT" target="alpha" value="0"/>
+          <PartText x="{left}" y="255" width="900" height="36" alpha="0">
+            <Transform target="x" value="{x}"/>
+            <Transform target="y" value="255 - 30 * {S}">{SELECT_ANIM}</Transform>
+            <Transform target="alpha" value="{alpha}"/>
+            <Text align="START"><Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="#fff2f2f2">
+              <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
+          </PartText>
+        </Group>
+      </Complication>
+    </ComplicationSlot>'''
 
 def hotspot(h):
     a = math.radians(h * 30 + 15)                      # middle of the hour
@@ -283,7 +321,19 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
         </Group>
         <!-- Title with the look-ahead arrow (C12) and private lock (C13) before it, then the time range (C4, C8).
              On a double booking the range moves down a row so the clash line sits under the title (C7). -->
-{details_group("details", f"""          <PartText x="0" y="5" width="450" height="36">
+{details_group("details", f"""          <!-- Live title: hidden while the full title scrolls in slot 4/6 (C9a), and in ambient -->
+          <Group name="title_live" x="0" y="0" width="450" height="60">
+            <Variant mode="AMBIENT" target="alpha" value="0"/>
+            <PartText x="0" y="5" width="450" height="36">
+              <Transform target="x" value="{EXTRA} / 2"/>
+              <Transform target="alpha" value="255 * (1 - {SCROLL})"/>
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="30" weight="MEDIUM" color="#fff2f2f2">
+                <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
+            </PartText>
+          </Group>
+          <!-- Ambient title (A2a): the shortened title, first characters and an ellipsis; nothing moves -->
+          <PartText name="title_ambient" x="0" y="5" width="450" height="36" alpha="0">
+            <Variant mode="AMBIENT" target="alpha" value="255"/>
             <Transform target="x" value="{EXTRA} / 2"/>
             <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="30" weight="MEDIUM" color="#fff2f2f2">
               <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
@@ -326,6 +376,9 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
 """ + line_variants())}
       </Complication>
     </ComplicationSlot>
+
+{scroll_slot(4, 'title_scroll', 'TitleScrollDataSourceService', False)}
+{scroll_slot(6, 'title_scroll_arrow', 'TitleScrollArrowDataSourceService', True)}
 
     <!-- Risks 1 + 7: twelve transparent one-hour hotspots on the ring, each a Launch deep link (I1) -->
 {chr(10).join(hotspot(h) for h in range(12))}

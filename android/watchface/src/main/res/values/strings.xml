@@ -6,4 +6,5 @@
     <string name="slot_selected">Selected meeting</string>
     <string name="slot_details">Meeting place</string>
     <string name="slot_promote">Settling meeting</string>
+    <string name="slot_title">Scrolling title</string>
 </resources>

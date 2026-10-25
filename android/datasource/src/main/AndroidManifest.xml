@@ -94,6 +94,41 @@
                 android:value="0" />
         </service>
 
+
+        <!-- Slot `title_scroll`: the full title, scrolled by the face when it doesn't fit (C9a). -->
+        <service
+            android:name=".TitleScrollDataSourceService"
+            android:exported="true"
+            android:label="@string/title_scroll_label"
+            android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
+            <intent-filter>
+                <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+            </intent-filter>
+            <meta-data
+                android:name="android.support.wearable.complications.SUPPORTED_TYPES"
+                android:value="RANGED_VALUE" />
+            <meta-data
+                android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
+                android:value="300" />
+        </service>
+
+        <!-- Slot `title_scroll_arrow`: the full title, scrolled by the face when it doesn't fit (C9a). -->
+        <service
+            android:name=".TitleScrollArrowDataSourceService"
+            android:exported="true"
+            android:label="@string/title_scroll_label"
+            android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
+            <intent-filter>
+                <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+            </intent-filter>
+            <meta-data
+                android:name="android.support.wearable.complications.SUPPORTED_TYPES"
+                android:value="RANGED_VALUE" />
+            <meta-data
+                android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
+                android:value="300" />
+        </service>
+
         <!-- Invisible tap handler for the face's 12 hour hotspots (PRD §6.3 risk 1). -->
         <activity
             android:name=".TapActivity"

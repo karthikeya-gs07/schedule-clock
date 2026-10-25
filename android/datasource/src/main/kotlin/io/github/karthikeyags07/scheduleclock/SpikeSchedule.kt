@@ -42,6 +42,7 @@ object SpikeSchedule {
         Meeting(15 * 60, 15 * 60 + 45, "Candidate interview", "Zoom"),
         Meeting(15 * 60 + 30, 16 * 60, "Recruiter sync", "Room 2"),       // partial overlap
         Meeting(16 * 60, 17 * 60, "Weekly sync", "Google Meet"),
+        Meeting(17 * 60 + 30, 18 * 60 + 30, "Quarterly roadmap and budget alignment with leadership", "Atlas room"),  // long title (C9a)
         Meeting(19 * 60, 20 * 60, "Client call", "Zoom"),
         Meeting(23 * 60, 23 * 60 + 45, "Late sync", "Zoom"),             // later lane until 11:45 AM
     )
@@ -151,10 +152,38 @@ object SpikeSchedule {
         val lock = p.meeting.private
         val clash = ScheduleRules.clashesFor(list, p).isNotEmpty()
         val iconSpace = (if (arrow) 30 else 0) + (if (lock) 25 else 0)
-        val (title, width) = TextFit.title(if (lock) "Private" else p.meeting.title, 260 - iconSpace)
+        // TEXT stays the shortened title with an ellipsis: it is what ambient mode shows (A2a). When the
+        // full title overflows (C9a) the face hides it and the scroll slots draw the full title instead.
+        val (title, fitted) = TextFit.title(if (lock) "Private" else p.meeting.title, 260 - iconSpace)
+        val scrolls = scrollOver(p, arrow) > 0
+        val width = if (scrolls) 260 - iconSpace else fitted   // icons sit at the edge of the full window
         val (range, _) = TextFit.line(ScheduleRules.formatRange(p.meeting), 255)
-        val flags = (if (arrow) 1 else 0) + (if (lock) 2 else 0) + (if (clash) 4 else 0)
+        val flags = (if (arrow) 1 else 0) + (if (lock) 2 else 0) + (if (clash) 4 else 0) + (if (scrolls) 8 else 0)
         return ranged(if (selected >= 0) 1f else 0f, 0f, 1f + width + 10000f * flags, title, range)
+    }
+
+    /** C9a: pixels by which the full title at 24 px overflows its window; 0 if it fits or is private. */
+    private fun scrollOver(p: Placed, arrow: Boolean): Int {
+        if (p.meeting.private) return 0
+        return (TextFit.titleMinWidth(p.meeting.title) - (260 - (if (arrow) 30 else 0))).coerceAtLeast(0)
+    }
+
+    /**
+     * Slots 4 and 6: the full title when it doesn't fit, scrolled by the face (C9a). Slot 4 is the window used
+     * without the look-ahead arrow, slot 6 the narrower one with it. VALUE = selected (0/1) moves the title up
+     * with the details (M1). MAX = 1 + overflow px + 10000 × scrolling (1); idle slots send 1.
+     */
+    fun titleScroll(context: Context, withArrow: Boolean): RangedValueComplicationData {
+        val now = now(context)
+        val list = placed(context, now)
+        val selected = selectedIndex(context, list)
+        val i = if (selected >= 0) selected else ScheduleRules.defaultIndex(list, now)
+        if (i < 0) return ranged(0f, 0f, 1f, "", "")
+        val p = list[i]
+        val arrow = ScheduleRules.showsArrow(list, i, now)
+        val over = if (arrow == withArrow) scrollOver(p, arrow) else 0
+        val value = if (selected >= 0) 1f else 0f
+        return if (over > 0) ranged(value, 0f, 1f + over + 10000f, p.meeting.title, "") else ranged(value, 0f, 1f, "", "")
     }
 
     /**
@@ -214,6 +243,8 @@ object SpikeSchedule {
         StatusDataSourceService::class.java,
         DetailsDataSourceService::class.java,
         PromoteDataSourceService::class.java,
+        TitleScrollDataSourceService::class.java,
+        TitleScrollArrowDataSourceService::class.java,
     )
 
     fun requestUpdate(context: Context, vararg services: Class<out ComplicationDataSourceService>) {

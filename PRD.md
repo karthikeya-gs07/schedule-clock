@@ -207,6 +207,25 @@ The data source now runs a first Kotlin port of the prototype's rules engine (`S
 
 **Not yet on the watch:** AM/PM next to the clock, the later-lane time-of-day icon (C5), "Tomorrow ·" styling with real tomorrow data (C6), the empty-day centered clock (C3), ambient variants (A1–A5), precise lane taps (I11).
 
+### 6.3e Spike 5 (2026-10-25): scrolling long titles (C9a), written but **not yet built or run**
+
+Written without an Android SDK (the session could not download one), so none of it has been compiled or seen on the emulator. Code: `SpikeSchedule.titleScroll`, `TextFit.titleMinWidth`, two new data-source services (slots 4 and 6 of the face; 7 of 8 slots now used), the title blocks in `gen_spike_face.py`, and a fake "Quarterly roadmap and budget alignment with leadership" meeting at 5:30 PM.
+
+How it works: WFF has no marquee, so the full title is drawn by its own slot whose `BoundingBox` crops it to the title window, and its x is a `Transform` driven by `[MINUTE] * 60000 + [SECOND_MILLISECOND]`: hold 1.4 s, glide at 30 px/s (smoothstep), hold 1.3 s, fade out, jump back, fade in. The status slot hides its own (shortened) title while scrolling and shows it alone in ambient (`Variant mode="AMBIENT"`).
+
+Things to check on the emulator, in this order:
+
+| # | Check | If it fails |
+|---|---|---|
+| 1 | The project still builds and the face loads (new `BoundingBox`, `Variant`, `floor`/`clamp`/`<` in expressions) | The error names the element; most likely `Variant` placement or expression syntax |
+| 2 | `BoundingBox` really crops the scrolling text to x 95–355 (it did for ovals) | Cover the edges with black shapes drawn above |
+| 3 | `[SECOND_MILLISECOND]` runs 0–59999 and the scroll is smooth, not stepping once a second | Fall back to `[SECOND]` (1 Hz steps), or scroll in whole-second steps |
+| 4 | Expression length is accepted (each scroll expression repeats the time term several times) | Move the shared term into a `UserConfiguration`-free helper or shorten the formula |
+| 5 | Battery: the per-frame expression runs only while a long title is on screen; measure CPU/min like spike 3's trail | Scroll once per minute, or only when selected |
+| 6 | Ambient: shortened title only, no scroll (A2a). The rest of the face has no ambient design yet | Ambient is a separate task |
+| 7 | Selected state: the scrolling title moves up 30 px with the details but is not enlarged ×1.15 (the crop window is fixed) | Accept for now |
+| 8 | The title is shrunk 30 → 24 px in the prototype but the watch only truncates at 30 px; a title that fits at 24 but not 30 still shows an ellipsis | Needs a per-meeting font size; a later spike |
+
 ### 6.4 Minimum OS
 
 Wear OS 5+ (WFF v2, needed for `WeightedStroke` on `Arc`): Galaxy Watch 4 and later on current software, and Pixel Watch 1 and later.
@@ -276,6 +295,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 - **v0.28:** Trail dashes doubled to 20 per hour (240, every 1.5°) and thinned to 1.2 px (R6).
 - **v0.29:** Arcs are solid and darker instead of see-through; private stripes and the double-booking gap get a dark fill instead of transparency (R6a).
 - **v0.30:** Prototype control panel redesigned into grouped sections (Time, Day, Display, Behavior) with switches and a segmented day picker; the complication payload view is removed. New **Dial only** mode (button, `F` key, or `#dial` in the URL) hides all controls and shows just the watch.
+- **v0.39:** Watch-face spike 5 written (unbuilt): long titles scroll in their own cropped slots (4 and 6), ambient shows the shortened title; checklist in §6.3e. Fake long-title meeting added.
 - **v0.38:** Long titles scroll slowly through a fixed window instead of ending in an ellipsis; ambient shows the first characters and "…" (C9a, A2a). Prototype only (new "Long titles" demo day). **Not on the watch yet:** WFF has no marquee, so the face needs a cropped title text moved by a seconds-based `Transform` plus a second, truncated title for ambient, which means a new complication field or slot (slot 6 of 8); the data source must send the full title and its width. To spike on the emulator first.
 - **v0.37:** AM/PM label on the watch face (C11), muted 24 px right of the time. WFF can't measure text, so the time is right-aligned to a fixed seam and both shift 16 px for two-digit hours; widths come from the prototype, **not yet checked on the emulator**. The time is forced to 12-hour (`hourFormat="TWELVE"`) so it always matches AM/PM; AM/PM text comes from the watch locale. The `TWELVE` value is from memory of the WFF reference, so confirm it builds.
 - **v0.36:** Spike 4: date, time range, place line, look-ahead arrow, private lock and the double-booking line on the watch, driven by the rules engine ported to Kotlin; icons placed from data-side text widths; `details` slot added (5 of 8) (§6.3d).

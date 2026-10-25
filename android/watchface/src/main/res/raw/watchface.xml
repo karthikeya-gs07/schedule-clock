@@ -479,7 +479,19 @@
           <Transform target="y" value="250 - 30 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
           <Transform target="scaleX" value="1 + 0.15 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
           <Transform target="scaleY" value="1 + 0.15 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
-          <PartText x="0" y="5" width="450" height="36">
+          <!-- Live title: hidden while the full title scrolls in slot 4/6 (C9a), and in ambient -->
+          <Group name="title_live" x="0" y="0" width="450" height="60">
+            <Variant mode="AMBIENT" target="alpha" value="0"/>
+            <PartText x="0" y="5" width="450" height="36">
+              <Transform target="x" value="(30 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2) + 25 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 2) % 2)) / 2"/>
+              <Transform target="alpha" value="255 * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 8) % 2))"/>
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="30" weight="MEDIUM" color="#fff2f2f2">
+                <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
+            </PartText>
+          </Group>
+          <!-- Ambient title (A2a): the shortened title, first characters and an ellipsis; nothing moves -->
+          <PartText name="title_ambient" x="0" y="5" width="450" height="36" alpha="0">
+            <Variant mode="AMBIENT" target="alpha" value="255"/>
             <Transform target="x" value="(30 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2) + 25 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 2) % 2)) / 2"/>
             <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="30" weight="MEDIUM" color="#fff2f2f2">
               <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
@@ -543,6 +555,47 @@
             <Transform target="alpha" value="round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) == 2 ? 255 : 0"/>
             <PartText x="0" y="0" width="450" height="30"><Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" weight="NORMAL" color="#ffa9b8e0"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text></PartText>
           </Group>
+        </Group>
+      </Complication>
+    </ComplicationSlot>
+
+
+    <!-- Slot `title_scroll` (C9a): the full title scrolling inside x 95..355. Hidden in ambient (A2a shows the status title). -->
+    <ComplicationSlot slotId="4" name="title_scroll" displayName="@string/slot_title" x="0" y="0" width="450" height="450"
+        supportedTypes="RANGED_VALUE EMPTY" isCustomizable="FALSE">
+      <DefaultProviderPolicy defaultSystemProvider="EMPTY" defaultSystemProviderType="EMPTY"
+          primaryProvider="io.github.karthikeyags07.scheduleclock/io.github.karthikeyags07.scheduleclock.TitleScrollDataSourceService" primaryProviderType="RANGED_VALUE"/>
+      <BoundingBox x="95" y="215" width="260" height="85"/>
+      <Complication type="RANGED_VALUE">
+        <Group name="scroll_live" x="0" y="0" width="450" height="450">
+          <Variant mode="AMBIENT" target="alpha" value="0"/>
+          <PartText x="95" y="255" width="900" height="36" alpha="0">
+            <Transform target="x" value="95 - ((([MINUTE] * 60000 + [SECOND_MILLISECOND]) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) &lt; (1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 260 ? (([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000) * (clamp(((([MINUTE] * 60000 + [SECOND_MILLISECOND]) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) - 1400) / (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333), 0, 1) * clamp(((([MINUTE] * 60000 + [SECOND_MILLISECOND]) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) - 1400) / (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333), 0, 1) * (3 - 2 * clamp(((([MINUTE] * 60000 + [SECOND_MILLISECOND]) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) - 1400) / (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333), 0, 1))) : 0)"/>
+            <Transform target="y" value="255 - 30 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
+            <Transform target="alpha" value="floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000) * 255 * ((([MINUTE] * 60000 + [SECOND_MILLISECOND]) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) &lt; (1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) ? 1 : ((([MINUTE] * 60000 + [SECOND_MILLISECOND]) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) &lt; (1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 260 ? 1 - ((([MINUTE] * 60000 + [SECOND_MILLISECOND]) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) - (1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300)) / 260 : ((([MINUTE] * 60000 + [SECOND_MILLISECOND]) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) - (1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) - 260) / 260))"/>
+            <Text align="START"><Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="#fff2f2f2">
+              <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
+          </PartText>
+        </Group>
+      </Complication>
+    </ComplicationSlot>
+
+    <!-- Slot `title_scroll_arrow` (C9a): the full title scrolling inside x 125..355. Hidden in ambient (A2a shows the status title). -->
+    <ComplicationSlot slotId="6" name="title_scroll_arrow" displayName="@string/slot_title" x="0" y="0" width="450" height="450"
+        supportedTypes="RANGED_VALUE EMPTY" isCustomizable="FALSE">
+      <DefaultProviderPolicy defaultSystemProvider="EMPTY" defaultSystemProviderType="EMPTY"
+          primaryProvider="io.github.karthikeyags07.scheduleclock/io.github.karthikeyags07.scheduleclock.TitleScrollArrowDataSourceService" primaryProviderType="RANGED_VALUE"/>
+      <BoundingBox x="125" y="215" width="230" height="85"/>
+      <Complication type="RANGED_VALUE">
+        <Group name="scroll_live" x="0" y="0" width="450" height="450">
+          <Variant mode="AMBIENT" target="alpha" value="0"/>
+          <PartText x="125" y="255" width="900" height="36" alpha="0">
+            <Transform target="x" value="125 - ((([MINUTE] * 60000 + [SECOND_MILLISECOND]) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) &lt; (1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 260 ? (([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000) * (clamp(((([MINUTE] * 60000 + [SECOND_MILLISECOND]) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) - 1400) / (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333), 0, 1) * clamp(((([MINUTE] * 60000 + [SECOND_MILLISECOND]) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) - 1400) / (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333), 0, 1) * (3 - 2 * clamp(((([MINUTE] * 60000 + [SECOND_MILLISECOND]) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) - 1400) / (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333), 0, 1))) : 0)"/>
+            <Transform target="y" value="255 - 30 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
+            <Transform target="alpha" value="floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000) * 255 * ((([MINUTE] * 60000 + [SECOND_MILLISECOND]) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) &lt; (1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) ? 1 : ((([MINUTE] * 60000 + [SECOND_MILLISECOND]) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) &lt; (1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 260 ? 1 - ((([MINUTE] * 60000 + [SECOND_MILLISECOND]) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) - (1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300)) / 260 : ((([MINUTE] * 60000 + [SECOND_MILLISECOND]) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) - (1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) - 260) / 260))"/>
+            <Text align="START"><Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="#fff2f2f2">
+              <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
+          </PartText>
         </Group>
       </Complication>
     </ComplicationSlot>
