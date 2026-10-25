@@ -3,4 +3,6 @@
     <string name="watch_face_name">Schedule Clock</string>
     <string name="slot_ring">Schedule ring</string>
     <string name="slot_status">Schedule details</string>
+    <string name="slot_selected">Selected meeting</string>
+    <string name="slot_promote">Settling meeting</string>
 </resources>

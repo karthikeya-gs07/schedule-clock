@@ -24,7 +24,6 @@ object RingRenderer {
     private const val GAP_DEG = 1f          // back-to-back gap (R2)
     private const val DIAL_MIN = 12 * 60
 
-    private val TRACK = Color.parseColor("#1c1c1f")
     private val AMBER = Color.parseColor("#ffb547")
     private val AMBER_DIM = Color.parseColor("#5a4320")
     private val AMBER_SELECTED = Color.parseColor("#ffd27f")
@@ -35,24 +34,22 @@ object RingRenderer {
     private val CLASH = Color.parseColor("#ff7a59")
 
     /** Draws the ring and returns it as PNG bytes (transparent outside the arcs). */
-    fun renderPng(meetings: List<SpikeSchedule.Meeting>, selected: Int): ByteArray {
+    fun renderPng(meetings: List<SpikeSchedule.Meeting>, selected: SpikeSchedule.Meeting?): ByteArray {
         val bitmap = Bitmap.createBitmap(SIZE, SIZE, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         val stroke = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeCap = Paint.Cap.BUTT }
 
-        // Track (R1)
-        stroke.color = TRACK; stroke.strokeWidth = BAND
-        canvas.drawCircle(C, C, R, stroke)
+        // No track here: the face draws it, with the comet trail on top, so free time stays transparent.
 
         // Main ring (R3, R9, R10)
-        meetings.forEachIndexed { i, m ->
-            if (m.later) return@forEachIndexed
+        meetings.forEach { m ->
+            if (m.later) return@forEach
             val base = when {
-                m.private && selected < 0 -> PRIVATE
-                m.private && i == selected -> PRIVATE_SELECTED
+                m.private && selected == null -> PRIVATE
+                m.private && m == selected -> PRIVATE_SELECTED
                 m.private -> PRIVATE_DIM
-                selected < 0 -> AMBER
-                i == selected -> AMBER_SELECTED
+                selected == null -> AMBER
+                m == selected -> AMBER_SELECTED
                 else -> AMBER_DIM
             }
             stroke.strokeWidth = BAND

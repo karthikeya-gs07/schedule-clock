@@ -1,6 +1,6 @@
 # Schedule Clock: Product Requirements (living doc)
 
-> Status: **v0.34 — Spikes 1–2 done on the emulator (§6.3a–b): taps, animation, default provider and the one-image ring all work. Next: remaining spike items, then the real data source.**
+> Status: **v0.35 — Phase 1 spikes done on the emulator (§6.3a–c): every design risk the emulator can answer passes. Next: the real data source (calendar + rules engine), then real-watch checks.**
 > Last updated: 2026-10-25
 >
 > **Documents**
@@ -166,6 +166,22 @@ The data source draws the whole ring (meetings, later lane, double-booking strip
 
 **Still open:** lane → ring settle animation (risk 4, can't tween inside an image: use the transient slot or a face-side arc); comet trail (6); real-watch checks (edge 13, lane taps 17, battery, calendar sync 11, private flag 16); validator (blocked on permission).
 
+### 6.3c Spike 3 results (2026-10-25): selected arc, lane → ring settle, comet trail
+
+| Item | Result | How / evidence |
+|---|---|---|
+| **Selected arc on top (R9)** | ✅ **Pass** | Slot 2 is a `RANGED_VALUE`: MIN/MAX = the arc's start/end angle, VALUE = MAX when shown, MIN when hidden. The face animates `startAngle`/`endAngle`, stroke `thickness` (12 → 22 px, growing inward) and `alpha`. Selecting another meeting **slides** the arc across the dial (frame burst caught it mid-way between 1–2 and 4–5); it's never hidden under clash stripes |
+| **Risk 4: lane → ring settle (M3)** | ✅ **Pass** | Slot 5 `RANGED_VALUE`, VALUE = progress lane → ring; the data source steps it: arc placed on the lane (+342 ms), moving (+662 ms), image takes over (+1342 ms). A `Group` scale (R − 10 → R) plus thickness 4 → 12 px and a blue/amber crossfade animate over 0.9 s (mid-frame captured). Polish: the crossfade passes through a lavender grey; WFF v4 can animate color directly |
+| **Risk 6: comet trail (R6)** | ✅ **Pass** | 240 fixed dashes drawn by the face, each `alpha` computed from `[HOUR_0_11]`/`[MINUTE]` (`%`, `clamp`, `pow`). No data source involvement. Now dot = `Group` rotated by the same time expression. Cost: **+~0.3 s CPU per minute interactive** (1.69 → 1.98 s/min on the debug face with a seconds clock), **no measurable change in ambient** |
+| Layering | ✅ | Track → trail → ring image → selected arc → settle arc → now dot → clock/details → hotspots. The ring image no longer draws the track, so free time is transparent and the trail shows through |
+
+**Gotchas found:**
+- ❗ `<Animation interpolation="CUBIC_BEZIER" controls="0.4, 0, 0.2, 1">` (comma-separated) **silently freezes the whole renderer** after one frame: no error in the log. **Use space-separated `controls="0.4 0 0.2 1"`.** Found by bisecting.
+- The ring image re-renders immediately, so it highlights the destination before the sliding arc arrives. Fix in the real build: the image dims the others but doesn't highlight the selected meeting (the slot does).
+- Trail and settle arc have no ambient variants yet (A1–A3 needs `Variant` work).
+
+**Phase 1 status:** all design risks that the emulator can answer are answered. Remaining: real-watch checks (edge 13, lane taps 17, battery, calendar sync 11, private flag 16), Play/publishing (12), and the validator (blocked on permission).
+
 ### 6.4 Minimum OS
 
 Wear OS 5+ (WFF v2, needed for `WeightedStroke` on `Arc`): Galaxy Watch 4 and later on current software, and Pixel Watch 1 and later.
@@ -235,6 +251,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 - **v0.28:** Trail dashes doubled to 20 per hour (240, every 1.5°) and thinned to 1.2 px (R6).
 - **v0.29:** Arcs are solid and darker instead of see-through; private stripes and the double-booking gap get a dark fill instead of transparency (R6a).
 - **v0.30:** Prototype control panel redesigned into grouped sections (Time, Day, Display, Behavior) with switches and a segmented day picker; the complication payload view is removed. New **Dial only** mode (button, `F` key, or `#dial` in the URL) hides all controls and shows just the watch.
+- **v0.35:** Spike 3: selected arc slides and grows on its own slot, lane → ring settle animates, comet trail runs face-side for ~0.3 s CPU/min; `CUBIC_BEZIER` controls must be space-separated (§6.3c).
 - **v0.34:** Spike 2: the ring is one image drawn by the data source (`SMALL_IMAGE`, PHOTO style). No meeting limit, private and clash stripes included; ~170 ms tap-to-face, +2 MB, ~+35 ms CPU per update (§6.3b). Slot plan updated (RULES §8).
 - **v0.33:** Phase 1 spike 1 on the emulator: taps, animation, clock-in-slot, default provider and gaps pass; weighted elements capped at 7 (fail) → propose a single ring image (§6.3a).
 - **v0.32:** Phase 0 setup: Android Studio, Android SDK, Wear OS 5 and 6 emulators installed and created (§7, §7.0a).
