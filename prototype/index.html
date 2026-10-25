@@ -305,6 +305,12 @@ const PRESETS = {
     { start: '16:00', end: '17:00', title: 'Weekly sync', where: 'Google Meet' },
     { start: '18:30', end: '20:00', title: 'Yoga', where: 'Studio 9' },
   ],
+  'Long titles': [
+    { start: '09:00', end: '10:00', title: 'Quarterly roadmap and budget alignment with leadership', where: 'Atlas room' },
+    { start: '11:00', end: '12:00', title: 'Standup', where: 'Google Meet' },
+    { start: '13:00', end: '14:00', title: 'Customer discovery interview: onboarding pain points', where: 'Zoom' },
+    { start: '15:00', end: '16:00', title: 'Design critique', where: 'Room 4' },
+  ],
   'Empty': [],
 };
 
@@ -481,6 +487,7 @@ for (let q = 0; q < 48; q++) {
 
 svg.innerHTML = `
   <defs>
+    <clipPath id="titleClip"><rect id="titleClipRect" x="0" y="246" width="450" height="52"/></clipPath>
     <filter id="modeFx" filterUnits="userSpaceOnUse" x="0" y="0" width="450" height="450" color-interpolation-filters="sRGB">
       <feColorMatrix id="modeMx" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
     </filter>
@@ -515,7 +522,7 @@ svg.innerHTML = `
         <rect x="0" y="-12" width="16" height="12" rx="2.5" fill="${C.muted}"/>
         <path d="M3.5 -12 V-15.5 a4.5 4.5 0 0 1 9 0 V-12" fill="none" stroke="${C.muted}" stroke-width="2.5"/>
       </g>
-      ${T('dTitle', CX, 284, 30, { weight: 500 })}
+      <g id="dTitleWin">${T('dTitle', CX, 284, 30, { weight: 500 })}</g>
       ${T('dRange', CX, 318, 24)}
       ${T('dPlace', CX, 348, 24, { fill: C.muted })}
       <g id="dTodIcon" style="display:none" fill="none" stroke="${C.laterText}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></g>
@@ -726,6 +733,57 @@ function timeOfDay(min) {
 const ARROW_W = 20, ARROW_GAP = 10, LOCK_W = 16, LOCK_GAP = 9;
 const titleOf = e => e.private ? 'Private' : e.title;          // private details never reach the face
 
+// Long titles (C9a): a title that doesn't fit at the 24 px minimum slowly scrolls through a fixed window
+// (hold, glide, hold, fade, restart) so the whole name can be read. In ambient mode, and with reduced motion,
+// it stays still and shows its first characters and an ellipsis instead.
+// WFF: the window is a cropped PartText whose x is a Transform on a seconds-based expression.
+const TITLE_SPEED = 30, TITLE_HOLD_START = 1400, TITLE_HOLD_END = 1300, TITLE_FADE = 260;   // px/s, ms
+let titleAnim = null, titleKey = '';
+function stopTitleScroll() {
+  if (titleAnim) titleAnim.cancel();
+  titleAnim = null; titleKey = '';
+  $('dTitleWin').removeAttribute('clip-path');
+}
+// Lays the title out inside maxW (centered), returns the width it occupies.
+function layoutTitle(str, maxW, extra) {
+  const el = $('dTitle');
+  el.setAttribute('text-anchor', 'middle');
+  el.setAttribute('x', CX);
+  fitText('dTitle', str, 30, 24, maxW);
+  const fitted = el.textContent === str;
+  if (fitted || ambient || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    stopTitleScroll();
+    el.setAttribute('x', CX + extra / 2);
+    return el.getComputedTextLength();
+  }
+  // Doesn't fit even at 24 px: show it in full, scrolling inside a maxW window.
+  el.textContent = str;
+  const left = CX + extra / 2 - maxW / 2, over = el.getComputedTextLength() - maxW;
+  el.setAttribute('text-anchor', 'start');
+  el.setAttribute('x', left);
+  const rect = $('titleClipRect');
+  rect.setAttribute('x', left); rect.setAttribute('width', maxW);
+  $('dTitleWin').setAttribute('clip-path', 'url(#titleClip)');
+  const key = `${str}|${maxW}|${left}`;
+  if (titleAnim && key === titleKey) return maxW;               // already scrolling this title
+  if (titleAnim) titleAnim.cancel();
+  const glide = over / TITLE_SPEED * 1000;
+  const total = TITLE_HOLD_START + glide + TITLE_HOLD_END + 2 * TITLE_FADE;
+  const at = ms => ms / total, end = TITLE_HOLD_START + glide + TITLE_HOLD_END;
+  const tx = v => `translateX(${v}px)`;
+  titleAnim = el.animate([
+    { transform: tx(0), opacity: 1, offset: 0 },
+    { transform: tx(0), opacity: 1, offset: at(TITLE_HOLD_START), easing: 'ease-in-out' },
+    { transform: tx(-over), opacity: 1, offset: at(TITLE_HOLD_START + glide) },
+    { transform: tx(-over), opacity: 1, offset: at(end) },
+    { transform: tx(-over), opacity: 0, offset: at(end + TITLE_FADE) },
+    { transform: tx(0), opacity: 0, offset: at(end + TITLE_FADE) },
+    { transform: tx(0), opacity: 1, offset: 1 },
+  ], { duration: total, iterations: Infinity });
+  titleKey = key;
+  return maxW;
+}
+
 // Details block: the selected event if any, otherwise the default one. Same elements either way.
 function renderDetails(list) {
   const i = shownIndex(list, selected);
@@ -738,10 +796,7 @@ function renderDetails(list) {
   // Title, with the look-ahead arrow (C12) and the private lock (C13) centered together with it.
   const arrow = showsArrow(list, i), priv = !!e.private;
   const extra = (arrow ? ARROW_W + ARROW_GAP : 0) + (priv ? LOCK_W + LOCK_GAP : 0);
-  $('dTitle').setAttribute('x', CX);
-  fitText('dTitle', titleOf(e), 30, 24, 260 - extra);
-  const tw = $('dTitle').getComputedTextLength();
-  $('dTitle').setAttribute('x', CX + extra / 2);
+  const tw = layoutTitle(titleOf(e), 260 - extra, extra);
   let x = CX - (tw + extra) / 2;
   if (arrow) {
     const yc = 284 - 0.35 * +$('dTitle').getAttribute('font-size'), x1 = x + ARROW_W;  // mid cap height
