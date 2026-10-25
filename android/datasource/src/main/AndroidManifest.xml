@@ -9,9 +9,9 @@
             android:name="com.google.android.wearable.standalone"
             android:value="true" />
 
-        <!-- Slot `ring`: meetings as weighted segments (RULES §8 slot 1). -->
+        <!-- Slot `ring`: the whole ring drawn as one image (spike 2, PRD §6.3a risk 9). -->
         <service
-            android:name=".RingDataSourceService"
+            android:name=".RingImageDataSourceService"
             android:exported="true"
             android:label="@string/ring_label"
             android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
@@ -20,7 +20,7 @@
             </intent-filter>
             <meta-data
                 android:name="android.support.wearable.complications.SUPPORTED_TYPES"
-                android:value="WEIGHTED_ELEMENTS" />
+                android:value="SMALL_IMAGE" />
             <meta-data
                 android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
                 android:value="0" />

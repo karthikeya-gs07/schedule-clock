@@ -155,18 +155,18 @@ All sizes are in px on the **450 × 450 face canvas** (≈ 2 px per dp on a typi
 
 | Slot | Type | Carries | Drawn as |
 |---|---|---|---|
-| 1 `ring` | WEIGHTED_ELEMENTS | Main-ring meetings (amber / dim amber) | `Arc` + `WeightedStroke`, 12 px |
-| 2 `ring_selected` | WEIGHTED_ELEMENTS | Selected meeting only | Same arc, 22 px, on top |
+| 1 `ring` | SMALL_IMAGE (PHOTO style) | **The whole ring as one image** drawn by the data source: main-ring meetings, elapsed parts, later lane, double-booking stripes, private caution stripes (R1–R10). Grey variant in the ambient image field (A1) | Full-face `PartImage` |
+| 2 `ring_selected` | WEIGHTED_ELEMENTS | Selected meeting only (3 elements: free, selected, free) | Arc on top, 22 px, so the selection is never hidden under clash stripes |
 | 3 `details` | LONG_TEXT | Title, time range, place | Center text |
-| 4 `status` | RANGED_VALUE | VALUE = `selected` (0/1); TEXT = status line | Drives every M1 `Transform` |
-| 5 `ring_later` | WEIGHTED_ELEMENTS | Later-lane meetings | Thin arc at R − 10 |
-| 6 `ring_clash` | WEIGHTED_ELEMENTS | Overlap ranges only | Drawn 3 times: black mask + 2 coral stripes |
-| 7 `ring_promote` | WEIGHTED_ELEMENTS | The promoting meeting, for ~1 s | Animated M3 arc |
-| 8 `ring_private` | WEIGHTED_ELEMENTS | Private main-ring meetings only (removed from `ring`) | Caution-stripe arc (R10) |
+| 4 `status` | RANGED_VALUE | VALUE = `selected` (0/1); TEXT = status line. **The clock, date and details are drawn inside this slot** so their Transforms can read VALUE (spike 1) | Drives every M1 `Transform` |
+| 5 `ring_promote` | WEIGHTED_ELEMENTS | The promoting meeting, for ~1 s | Animated M3 arc |
+| 6–8 | — | Free | Weather, battery… later |
 
-**All 8 slots are now used.** Private titles/places are never in any slot: `details` carries "Private" / "Details hidden".
+Why one image (spike 2, PRD §6.3b): `WEIGHTED_ELEMENTS` is capped at 7 segments (3 meetings), and `PHOTO_IMAGE` is rejected for third-party providers. Free time in any `WEIGHTED_ELEMENTS` slot must be `#10000000`, not fully transparent (`#0` breaks the runtime).
 
-Taps: 12 `Launch` hotspots on the band → `app://scheduleclock/select?hour=N`, plus 12 thin hotspots on the later lane → `…&lane=later` (I11), and a center hotspot (I8) → the data source app updates the selection. Feasibility risks for each row are tracked in PRD §6.4.
+Private titles/places are never in any slot: `details` carries "Private" / "Details hidden", and the ring image only has grey stripes.
+
+Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.scheduleclock/select?hour=N` (verified in spike 1: ~0.2–0.5 s to the face), plus 12 thin hotspots on the later lane → `…&lane=later` (I11), and a center hotspot (I8) → the data source's invisible `TapActivity` updates the selection. Feasibility risks are tracked in PRD §6.3, results in §6.3a–b.
 
 ---
 
@@ -174,6 +174,7 @@ Taps: 12 `Launch` hotspots on the band → `app://scheduleclock/select?hour=N`, 
 
 | Date | Change | Rules |
 |---|---|---|
+| 2026-10-25 | Slot plan after spikes 1–2: the ring is one image (slot 1), clock/date/details live inside the status slot, 3 slots freed. | §8 |
 | 2026-10-24 | Precise taps on the inner lane select the later meeting directly; 7 AM + 7 PM stacking documented. | I3, I11, §8 |
 | 2026-10-24 | Private stripes recolored from amber to grey. | R10, color tokens |
 | 2026-10-24 | Private meetings: caution-stripe arcs, "Private" + lock, "Details hidden", center tap opens the calendar. All 8 slots used. | P10, R10, C13, I8, A1, §8 |

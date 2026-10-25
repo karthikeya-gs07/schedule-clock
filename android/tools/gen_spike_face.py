@@ -31,19 +31,17 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
       </Arc>
     </PartDraw>
 
-    <!-- Risks 8 + 10: meetings as WEIGHTED_ELEMENTS (transparent = free time), slot fixed to our data source -->
+    <!-- Spike 2: the whole ring drawn by the data source as one SMALL_IMAGE (PHOTO_IMAGE is rejected for our provider) (fixes the 7-segment limit,
+         spike 1 risk 9; also carries lane, clash and private layers). Risk 10: fixed to our data source. -->
     <ComplicationSlot slotId="0" name="ring" displayName="@string/slot_ring" x="0" y="0" width="450" height="450"
-        supportedTypes="WEIGHTED_ELEMENTS EMPTY" isCustomizable="FALSE">
+        supportedTypes="SMALL_IMAGE EMPTY" isCustomizable="FALSE">
       <DefaultProviderPolicy defaultSystemProvider="EMPTY" defaultSystemProviderType="EMPTY"
-          primaryProvider="{PKG}/{PKG}.RingDataSourceService" primaryProviderType="WEIGHTED_ELEMENTS"/>
+          primaryProvider="{PKG}/{PKG}.RingImageDataSourceService" primaryProviderType="SMALL_IMAGE"/>
       <BoundingOval x="0" y="0" width="450" height="450"/>
-      <Complication type="WEIGHTED_ELEMENTS">
-        <PartDraw x="0" y="0" width="450" height="450">
-          <Arc centerX="{CX}" centerY="{CY}" width="{2*R}" height="{2*R}" startAngle="0" endAngle="360">
-            <WeightedStroke thickness="12" colors="[COMPLICATION.WEIGHTED_ELEMENTS_COLORS]"
-                weights="[COMPLICATION.WEIGHTED_ELEMENTS_WEIGHTS]" interpolate="FALSE"/>
-          </Arc>
-        </PartDraw>
+      <Complication type="SMALL_IMAGE">
+        <PartImage x="0" y="0" width="450" height="450">
+          <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
+        </PartImage>
       </Complication>
     </ComplicationSlot>
 
