@@ -15,6 +15,7 @@ R = 219          # ring radius: band 213–225, flush with the edge (RULES R1)
 R_LATER = R - 10 # later lane (R5)
 HOT = 72         # hotspot box size
 
+SEAM = 294   # right edge of a 1-digit-hour time, so time + AM/PM are centered as a unit (C11)
 SELECT_ANIM = '<Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/>'   # M1
 SETTLE_ANIM = '<Animation duration="0.9" interpolation="CUBIC_BEZIER" controls="0.22 1 0.36 1"/>'  # M3
 
@@ -249,11 +250,28 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
           <Transform target="y" value="119 - 10 * {S}">{SELECT_ANIM}</Transform>
           <Transform target="scaleX" value="1 - 0.45 * {S}">{SELECT_ANIM}</Transform>
           <Transform target="scaleY" value="1 - 0.45 * {S}">{SELECT_ANIM}</Transform>
-          <DigitalClock x="0" y="0" width="450" height="110">
-            <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="SYNC_TO_DEVICE" align="CENTER">
-              <Font family="{FONT}" size="88" color="#fff2f2f2"/>
-            </TimeText>
-          </DigitalClock>
+          <!-- AM/PM (C11): WFF can't measure text, so time + AM/PM are centered as a unit with fixed widths. The time is
+               right-aligned to a seam; AM/PM starts 8 px after it. A two-digit hour (10-12) is ~32 px wider, so both
+               move 16 px right (half the extra width). Widths measured from the prototype's Anta render: 1-digit
+               hour ~185 px, 2-digit ~217, AM/PM ~38. Re-check on the emulator. -->
+          <Group name="clock_time" x="{SEAM - 450}" y="0" width="450" height="110">
+            <Transform target="x" value="{SEAM - 450} + 16 * floor([HOUR_1_12] / 10)"/>
+            <DigitalClock x="0" y="0" width="450" height="110">
+              <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="SYNC_TO_DEVICE" align="END">
+                <Font family="{FONT}" size="88" color="#fff2f2f2"/>
+              </TimeText>
+            </DigitalClock>
+          </Group>
+          <Group name="clock_ampm" x="{SEAM + 8}" y="62" width="60" height="30">
+            <Transform target="x" value="{SEAM + 8} + 16 * floor([HOUR_1_12] / 10)"/>
+            <PartText x="0" y="0" width="60" height="30">
+              <Text align="START">
+                <Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="#ff8e8e93">
+                  <Upper><Template><![CDATA[%s]]><Parameter expression="icuText(&quot;a&quot;)"/></Template></Upper>
+                </Font>
+              </Text>
+            </PartText>
+          </Group>
         </Group>
         <!-- Divider (T2): selected: up 32 px, 60 % wide -->
         <Group name="divider" x="{CX - 70}" y="236" width="140" height="4" pivotX="0.5" pivotY="0.5">
