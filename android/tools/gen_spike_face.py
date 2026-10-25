@@ -193,6 +193,14 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
             </TimeText>
           </DigitalClock>
         </Group>
+        <!-- Divider between clock and details (T2: y 238, 140 px). Selected: up 18 px, 60 % wide (M1). -->
+        <Group name="divider" x="{CX - 70}" y="236" width="140" height="4" pivotX="0.5" pivotY="0.5">
+          <Transform target="y" value="236 - 18 * {selected}">{SELECT_ANIM}</Transform>
+          <Transform target="scaleX" value="1 - 0.4 * {selected}">{SELECT_ANIM}</Transform>
+          <PartDraw x="0" y="0" width="140" height="4">
+            <Line startX="1" startY="2" endX="139" endY="2"><Stroke color="#ff2a2a2e" thickness="2" cap="ROUND"/></Line>
+          </PartDraw>
+        </Group>
         <Group name="details" x="0" y="250" width="450" height="56" pivotX="0.5" pivotY="0.5">
           <Transform target="scaleX" value="1 + 0.15 * {selected}">{SELECT_ANIM}</Transform>
           <Transform target="scaleY" value="1 + 0.15 * {selected}">{SELECT_ANIM}</Transform>
