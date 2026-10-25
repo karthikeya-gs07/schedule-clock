@@ -1,6 +1,6 @@
 # Schedule Clock: Product Requirements (living doc)
 
-> Status: **v0.31 — design signed off; ready to start the Wear OS build (§7.0). No watch code yet.**
+> Status: **v0.32 — Phase 0 setup done (Android Studio, SDK, Wear OS emulators). Next: create the project and run the spike (§7.0). No watch code yet.**
 > Last updated: 2026-10-25
 >
 > **Documents**
@@ -130,12 +130,12 @@ Wear OS 5+ (WFF v2, needed for `WeightedStroke` on `Arc`): Galaxy Watch 4 and la
 
 ## 7. Tooling requirements
 
-Checked on this Mac (2026-10-25): Apple silicon (arm64), macOS 26.6, 16 GB RAM, 72 GB free, Homebrew installed. No Java, no Android tooling yet.
+This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setup done 2026-10-25** (see 7.0a).
 
 | Tool | Needed for | Status |
 |---|---|---|
-| **Android Studio** (latest stable) | Building both packages; bundles the JDK, Android SDK, `adb`, Gradle and the emulator | ❌ Not installed (`brew install --cask android-studio`, or download from developer.android.com) |
-| **SDK pieces** via SDK Manager: Wear OS 5 + 6 platforms, platform-tools, **Wear OS arm64 system images** (round) | Compiling, and running the face on an emulator | ❌ After Android Studio (~10–15 GB) |
+| **Android Studio** 2026.2.1 | Building both packages; bundles the JDK (JBR, OpenJDK 25), Gradle and the emulator UI | ✅ Installed via Homebrew (`android-studio` cask) |
+| **Android SDK** in `~/Library/Android/sdk` (~8 GB): platform-tools 37.0.1, emulator 37.2.12, build-tools 37.0.0, platforms android-36 (Wear OS 6) + android-34 (Wear OS 5), Wear OS arm64 system images for both | Compiling and running on emulators | ✅ Installed with Google's SDK command-line tools (`android-commandlinetools` cask). Licenses accepted: Android SDK, SDK preview, ARM DBT |
 | **WFF validator + memory footprint tool** (Google's `watchface` tools) | Play requires faces to pass these | ❌ I'll set up once Android Studio is in |
 | **Real Wear OS watch** (Galaxy Watch 4 or newer on Wear OS 5+), Developer options + ADB over Wi-Fi | Tap latency, calendar sync, private flag, edge visibility, battery (risks 1, 11, 13, 16, 17) | ❓ Do you have one? |
 | **An Android phone** paired with the watch, signed in to the calendar(s) you use | Galaxy Watch 4+ and Pixel Watch **can't pair with an iPhone**; the watch gets its calendar from the paired Android phone | ❓ Needed for real-device testing |
@@ -146,6 +146,17 @@ Checked on this Mac (2026-10-25): Apple silicon (arm64), macOS 26.6, 16 GB RAM, 
 | **Figma** | Visual design, if we move there | ✅ Installed; Figma MCP needs authorizing via `/mcp` |
 | Samsung **Watch Face Studio** | Optional WYSIWYG WFF editor | Optional, not needed |
 | **Anta** font (Google Fonts, OFL) | Clock digits and dial numbers (RULES T5). Prototype loads it from Google Fonts; the WFF build bundles `Anta-Regular.ttf` | ✅ Prototype. TTF to download into the watch project when we start it |
+
+### 7.0a Local setup (done 2026-10-25)
+
+| Item | Detail |
+|---|---|
+| Emulator `Wear_OS_6_Large_Round` | Wear OS 6 (API 36, Android 16), 454 × 454 round, 320 dpi. **Verified:** boots in ~45 s, shows up as `emulator-5554` in `adb` |
+| Emulator `Wear_OS_5_Small_Round` | Wear OS 5 (API 34), 384 × 384 round, 320 dpi (oldest supported, small screen) |
+| Command-line env | `export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"` · `export ANDROID_HOME="$HOME/Library/Android/sdk"`. Not added to `~/.zshrc`; Android Studio finds both on its own |
+| Start an emulator | `"$ANDROID_HOME/emulator/emulator" -avd Wear_OS_6_Large_Round`, or Device Manager in Android Studio |
+| Gotcha | If an emulator says "Cannot find AVD system path", check `image.sysdir.1` in `~/.android/avd/<name>.avd/config.ini` starts with `system-images/` (no `sdk/` prefix) |
+| Note | `sdkmanager` (CLI) is deprecated in favour of the new `android` CLI and its installed-package list is unreliable; check folders under the SDK instead |
 
 **Where to build:** the Android build and emulator must run on this Mac (a local session). Cloud sessions can keep editing the prototype and docs.
 
@@ -182,6 +193,7 @@ Checked on this Mac (2026-10-25): Apple silicon (arm64), macOS 26.6, 16 GB RAM, 
 - **v0.28:** Trail dashes doubled to 20 per hour (240, every 1.5°) and thinned to 1.2 px (R6).
 - **v0.29:** Arcs are solid and darker instead of see-through; private stripes and the double-booking gap get a dark fill instead of transparency (R6a).
 - **v0.30:** Prototype control panel redesigned into grouped sections (Time, Day, Display, Behavior) with switches and a segmented day picker; the complication payload view is removed. New **Dial only** mode (button, `F` key, or `#dial` in the URL) hides all controls and shows just the watch.
+- **v0.32:** Phase 0 setup: Android Studio, Android SDK, Wear OS 5 and 6 emulators installed and created (§7, §7.0a).
 - **v0.31:** Build readiness: tooling list checked against this Mac, Android-phone and Play testing requirements added, phased build plan (§7.0).
 - **v0.18.2:** Repo made public; GitHub Pages live at https://karthikeya-gs07.github.io/schedule-clock/.
 - **v0.18.1:** Project pushed to the private GitHub repo `schedule-clock`; live preview pending a hosting choice (§7.1).
