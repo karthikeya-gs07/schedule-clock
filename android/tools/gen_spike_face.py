@@ -257,7 +257,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
           <Group name="clock_time" x="{SEAM - 450}" y="0" width="450" height="110">
             <Transform target="x" value="{SEAM - 450} + 16 * floor([HOUR_1_12] / 10)"/>
             <DigitalClock x="0" y="0" width="450" height="110">
-              <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="SYNC_TO_DEVICE" align="END">
+              <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="TWELVE" align="END">
                 <Font family="{FONT}" size="88" color="#fff2f2f2"/>
               </TimeText>
             </DigitalClock>

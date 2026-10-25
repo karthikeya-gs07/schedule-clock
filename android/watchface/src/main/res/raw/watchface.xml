@@ -449,7 +449,7 @@
           <Group name="clock_time" x="-156" y="0" width="450" height="110">
             <Transform target="x" value="-156 + 16 * floor([HOUR_1_12] / 10)"/>
             <DigitalClock x="0" y="0" width="450" height="110">
-              <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="SYNC_TO_DEVICE" align="END">
+              <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="TWELVE" align="END">
                 <Font family="anta_regular" size="88" color="#fff2f2f2"/>
               </TimeText>
             </DigitalClock>
