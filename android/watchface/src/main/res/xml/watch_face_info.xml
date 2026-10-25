@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WatchFaceInfo>
+    <Preview value="@drawable/preview" />
+    <!-- Slots are fixed to our own data source (RULES §8), so nothing is user-editable yet. -->
+    <Editable value="false" />
+</WatchFaceInfo>

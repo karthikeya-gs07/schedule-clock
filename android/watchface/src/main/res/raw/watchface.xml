@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Phase 1 spike face. Comments name the PRD §6.3 risk each block tests. -->
+<WatchFace width="450" height="450">
+  <Scene backgroundColor="#ff000000">
+
+    <!-- Ring track (RULES R1) -->
+    <PartDraw x="0" y="0" width="450" height="450">
+      <Arc centerX="225" centerY="225" width="438" height="438" startAngle="0" endAngle="360">
+        <Stroke color="#ff1c1c1f" thickness="12"/>
+      </Arc>
+    </PartDraw>
+
+    <!-- Risks 8 + 10: meetings as WEIGHTED_ELEMENTS (transparent = free time), slot fixed to our data source -->
+    <ComplicationSlot slotId="0" name="ring" displayName="@string/slot_ring" x="0" y="0" width="450" height="450"
+        supportedTypes="WEIGHTED_ELEMENTS EMPTY" isCustomizable="FALSE">
+      <DefaultProviderPolicy defaultSystemProvider="EMPTY" defaultSystemProviderType="EMPTY"
+          primaryProvider="io.github.karthikeyags07.scheduleclock/io.github.karthikeyags07.scheduleclock.RingDataSourceService" primaryProviderType="WEIGHTED_ELEMENTS"/>
+      <BoundingOval x="0" y="0" width="450" height="450"/>
+      <Complication type="WEIGHTED_ELEMENTS">
+        <PartDraw x="0" y="0" width="450" height="450">
+          <Arc centerX="225" centerY="225" width="438" height="438" startAngle="0" endAngle="360">
+            <WeightedStroke thickness="12" colors="[COMPLICATION.WEIGHTED_ELEMENTS_COLORS]"
+                weights="[COMPLICATION.WEIGHTED_ELEMENTS_WEIGHTS]" interpolate="FALSE"/>
+          </Arc>
+        </PartDraw>
+      </Complication>
+    </ComplicationSlot>
+
+    <!-- Risks 2 + 3: VALUE = selected (0/1). The clock and details live inside this slot so their
+         Transforms can read it; Animation should ease every change. -->
+    <ComplicationSlot slotId="1" name="status" displayName="@string/slot_status" x="0" y="0" width="450" height="450"
+        supportedTypes="RANGED_VALUE EMPTY" isCustomizable="FALSE">
+      <DefaultProviderPolicy defaultSystemProvider="EMPTY" defaultSystemProviderType="EMPTY"
+          primaryProvider="io.github.karthikeyags07.scheduleclock/io.github.karthikeyags07.scheduleclock.StatusDataSourceService" primaryProviderType="RANGED_VALUE"/>
+      <BoundingOval x="60" y="60" width="330" height="330"/>
+      <Complication type="RANGED_VALUE">
+        <Group name="clock" x="0" y="110" width="450" height="110" pivotX="0.5" pivotY="0.5">
+          <Transform target="scaleX" value="1 - 0.45 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="EASE_IN_OUT"/></Transform>
+          <Transform target="scaleY" value="1 - 0.45 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="EASE_IN_OUT"/></Transform>
+          <DigitalClock x="0" y="0" width="450" height="110">
+            <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="SYNC_TO_DEVICE" align="CENTER">
+              <Font family="SYNC_TO_DEVICE" size="88" color="#fff2f2f2"/>
+            </TimeText>
+          </DigitalClock>
+        </Group>
+        <Group name="details" x="0" y="250" width="450" height="56" pivotX="0.5" pivotY="0.5">
+          <Transform target="scaleX" value="1 + 0.15 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="EASE_IN_OUT"/></Transform>
+          <Transform target="scaleY" value="1 + 0.15 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="EASE_IN_OUT"/></Transform>
+          <PartText x="0" y="0" width="450" height="56">
+            <Text align="CENTER" ellipsis="TRUE">
+              <Font family="SYNC_TO_DEVICE" size="30" color="#fff2f2f2">
+                <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template>
+              </Font>
+            </Text>
+          </PartText>
+        </Group>
+        <!-- Risk 2 marker: an amber bar that should fade in (not snap) when something is selected -->
+        <PartDraw x="185" y="320" width="80" height="6" alpha="0">
+          <Transform target="alpha" value="255 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="EASE_IN_OUT"/></Transform>
+          <Rectangle x="0" y="0" width="80" height="6"><Fill color="#ffffb547"/></Rectangle>
+        </PartDraw>
+      </Complication>
+    </ComplicationSlot>
+
+    <!-- Risk 3 control: a clock outside any complication (can't read the selected value) -->
+    <DigitalClock x="0" y="360" width="450" height="30">
+      <TimeText x="0" y="0" width="450" height="30" format="h:mm:ss" hourFormat="SYNC_TO_DEVICE" align="CENTER">
+        <Font family="SYNC_TO_DEVICE" size="22" color="#ff8e8e93"/>
+      </TimeText>
+    </DigitalClock>
+
+    <!-- Risks 1 + 7: twelve transparent one-hour hotspots on the ring, each a Launch deep link -->
+    <PartDraw name="hour_0" x="243" y="-11" width="72" height="72">
+      <Rectangle x="0" y="0" width="72" height="72"><Fill color="#00000000"/></Rectangle>
+      <Launch target="app://io.github.karthikeyags07.scheduleclock/select?hour=0"/>
+    </PartDraw>
+    <PartDraw name="hour_1" x="335" y="43" width="72" height="72">
+      <Rectangle x="0" y="0" width="72" height="72"><Fill color="#00000000"/></Rectangle>
+      <Launch target="app://io.github.karthikeyags07.scheduleclock/select?hour=1"/>
+    </PartDraw>
+    <PartDraw name="hour_2" x="389" y="135" width="72" height="72">
+      <Rectangle x="0" y="0" width="72" height="72"><Fill color="#00000000"/></Rectangle>
+      <Launch target="app://io.github.karthikeyags07.scheduleclock/select?hour=2"/>
+    </PartDraw>
+    <PartDraw name="hour_3" x="389" y="243" width="72" height="72">
+      <Rectangle x="0" y="0" width="72" height="72"><Fill color="#00000000"/></Rectangle>
+      <Launch target="app://io.github.karthikeyags07.scheduleclock/select?hour=3"/>
+    </PartDraw>
+    <PartDraw name="hour_4" x="335" y="335" width="72" height="72">
+      <Rectangle x="0" y="0" width="72" height="72"><Fill color="#00000000"/></Rectangle>
+      <Launch target="app://io.github.karthikeyags07.scheduleclock/select?hour=4"/>
+    </PartDraw>
+    <PartDraw name="hour_5" x="243" y="389" width="72" height="72">
+      <Rectangle x="0" y="0" width="72" height="72"><Fill color="#00000000"/></Rectangle>
+      <Launch target="app://io.github.karthikeyags07.scheduleclock/select?hour=5"/>
+    </PartDraw>
+    <PartDraw name="hour_6" x="135" y="389" width="72" height="72">
+      <Rectangle x="0" y="0" width="72" height="72"><Fill color="#00000000"/></Rectangle>
+      <Launch target="app://io.github.karthikeyags07.scheduleclock/select?hour=6"/>
+    </PartDraw>
+    <PartDraw name="hour_7" x="43" y="335" width="72" height="72">
+      <Rectangle x="0" y="0" width="72" height="72"><Fill color="#00000000"/></Rectangle>
+      <Launch target="app://io.github.karthikeyags07.scheduleclock/select?hour=7"/>
+    </PartDraw>
+    <PartDraw name="hour_8" x="-11" y="243" width="72" height="72">
+      <Rectangle x="0" y="0" width="72" height="72"><Fill color="#00000000"/></Rectangle>
+      <Launch target="app://io.github.karthikeyags07.scheduleclock/select?hour=8"/>
+    </PartDraw>
+    <PartDraw name="hour_9" x="-11" y="135" width="72" height="72">
+      <Rectangle x="0" y="0" width="72" height="72"><Fill color="#00000000"/></Rectangle>
+      <Launch target="app://io.github.karthikeyags07.scheduleclock/select?hour=9"/>
+    </PartDraw>
+    <PartDraw name="hour_10" x="43" y="43" width="72" height="72">
+      <Rectangle x="0" y="0" width="72" height="72"><Fill color="#00000000"/></Rectangle>
+      <Launch target="app://io.github.karthikeyags07.scheduleclock/select?hour=10"/>
+    </PartDraw>
+    <PartDraw name="hour_11" x="135" y="-11" width="72" height="72">
+      <Rectangle x="0" y="0" width="72" height="72"><Fill color="#00000000"/></Rectangle>
+      <Launch target="app://io.github.karthikeyags07.scheduleclock/select?hour=11"/>
+    </PartDraw>
+  </Scene>
+</WatchFace>
