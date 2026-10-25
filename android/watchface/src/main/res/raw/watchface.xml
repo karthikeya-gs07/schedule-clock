@@ -331,7 +331,8 @@
     </ComplicationSlot>
 
     <!-- Slot 2 `ring_selected` (R9): MIN/MAX = the arc's angles, VALUE = MAX shown / MIN hidden.
-         Grows 12 → 22 px inward (centered at R − 5) and fades; slides when the selection moves. -->
+         Grows 12 → 22 px inward (centered at R − 5) and fades in place. Switching meetings: the data
+         source fades the old arc out, then sends the new one (M2), so nothing travels across the dial. -->
     <ComplicationSlot slotId="2" name="selected" displayName="@string/slot_selected" x="0" y="0" width="450" height="450"
         supportedTypes="RANGED_VALUE EMPTY" isCustomizable="FALSE">
       <DefaultProviderPolicy defaultSystemProvider="EMPTY" defaultSystemProviderType="EMPTY"
@@ -341,8 +342,9 @@
         <PartDraw x="0" y="0" width="450" height="450" alpha="0">
           <Transform target="alpha" value="255 * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1)"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
           <Arc centerX="225" centerY="225" width="428" height="428" startAngle="0" endAngle="1">
-            <Transform target="startAngle" value="[COMPLICATION.RANGED_VALUE_MIN] + 1"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
-            <Transform target="endAngle" value="[COMPLICATION.RANGED_VALUE_MAX] - 1"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
+            <!-- Angles jump (no Animation): animating them made the arc sweep across the dial. -->
+            <Transform target="startAngle" value="[COMPLICATION.RANGED_VALUE_MIN] + 1"/>
+            <Transform target="endAngle" value="[COMPLICATION.RANGED_VALUE_MAX] - 1"/>
             <Stroke color="#ffffd27f" thickness="12" cap="BUTT">
               <Transform target="thickness" value="12 + 10 * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1)"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
             </Stroke>

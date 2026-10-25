@@ -58,9 +58,35 @@ object SpikeSchedule {
     fun selected(context: Context): Int = prefs(context).getInt("selected", -1)
 
     fun setSelected(context: Context, index: Int) {
-        prefs(context).edit().putInt("selected", index).apply {
-            if (index >= 0) putInt("lastSelected", index)
-        }.commit()
+        prefs(context).edit().putInt("selected", index).commit()
+    }
+
+    // The selected arc (slot 2) has its own state so a switch can fade out in place before moving.
+    private fun setArc(context: Context, index: Int, shown: Boolean) {
+        prefs(context).edit().putInt("arcIndex", index).putBoolean("arcShown", shown).commit()
+    }
+
+    private const val SWITCH_FADE_MS = 400L  // let the old arc fade out (M1 is 520 ms) before the new one appears
+
+    /**
+     * Changes the selection (I2–I5). Switching between two meetings fades the old arc out where it
+     * is, then shows the new one (M2); the arc never travels between them.
+     */
+    fun select(context: Context, next: Int) {
+        val app = context.applicationContext
+        val prev = selected(app)
+        setSelected(app, next)
+        if (prev >= 0 && next >= 0 && prev != next) {
+            setArc(app, prev, shown = false)
+            requestUpdate(app)
+            Handler(Looper.getMainLooper()).postDelayed({
+                setArc(app, next, shown = true)
+                requestUpdate(app, SelectedDataSourceService::class.java)
+            }, SWITCH_FADE_MS)
+        } else {
+            setArc(app, if (next >= 0) next else prefs(app).getInt("arcIndex", 0), shown = next >= 0)
+            requestUpdate(app)
+        }
     }
 
     fun promotePhase(context: Context): Int = prefs(context).getInt("promote", PROMOTE_IDLE)
@@ -95,10 +121,10 @@ object SpikeSchedule {
      * shown, MIN when hidden. Hidden keeps the last position so the face fades it out in place.
      */
     fun selectedArc(context: Context): RangedValueComplicationData {
-        val index = selected(context)
-        val m = meetings[if (index >= 0) index else prefs(context).getInt("lastSelected", 0)]
+        val shown = prefs(context).getBoolean("arcShown", false)
+        val m = meetings[prefs(context).getInt("arcIndex", 0)]
         val (start, end) = degrees(m)
-        return ranged(if (index >= 0) end else start, start, end, m.title)
+        return ranged(if (shown) end else start, start, end, m.title)
     }
 
     /** Slot 4: VALUE = selected (0/1) drives the face's Transforms; TEXT = the shown meeting's title. */

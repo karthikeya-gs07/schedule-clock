@@ -23,8 +23,7 @@ class TapActivity : Activity() {
             val hour = uri?.getQueryParameter("hour")?.toIntOrNull()
             val hit = hour?.let { SpikeSchedule.meetingInHour(it) } ?: -1
             val next = if (hit < 0 || hit == SpikeSchedule.selected(this)) -1 else hit
-            SpikeSchedule.setSelected(this, next)
-            SpikeSchedule.requestUpdate(this)
+            SpikeSchedule.select(this, next)
             Log.i(TAG, "selected=$next, update requested after ${System.currentTimeMillis() - received} ms")
         }
 

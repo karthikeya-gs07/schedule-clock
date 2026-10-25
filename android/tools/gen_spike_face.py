@@ -114,7 +114,8 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
     </ComplicationSlot>
 
     <!-- Slot 2 `ring_selected` (R9): MIN/MAX = the arc's angles, VALUE = MAX shown / MIN hidden.
-         Grows 12 → 22 px inward (centered at R − 5) and fades; slides when the selection moves. -->
+         Grows 12 → 22 px inward (centered at R − 5) and fades in place. Switching meetings: the data
+         source fades the old arc out, then sends the new one (M2), so nothing travels across the dial. -->
     <ComplicationSlot slotId="2" name="selected" displayName="@string/slot_selected" x="0" y="0" width="450" height="450"
         supportedTypes="RANGED_VALUE EMPTY" isCustomizable="FALSE">
       {provider("SelectedDataSourceService", "RANGED_VALUE")}
@@ -123,8 +124,9 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
         <PartDraw x="0" y="0" width="450" height="450" alpha="0">
           <Transform target="alpha" value="255 * {P}">{SELECT_ANIM}</Transform>
           <Arc centerX="{CX}" centerY="{CY}" width="{2*(R-5)}" height="{2*(R-5)}" startAngle="0" endAngle="1">
-            <Transform target="startAngle" value="[COMPLICATION.RANGED_VALUE_MIN] + 1">{SELECT_ANIM}</Transform>
-            <Transform target="endAngle" value="[COMPLICATION.RANGED_VALUE_MAX] - 1">{SELECT_ANIM}</Transform>
+            <!-- Angles jump (no Animation): animating them made the arc sweep across the dial. -->
+            <Transform target="startAngle" value="[COMPLICATION.RANGED_VALUE_MIN] + 1"/>
+            <Transform target="endAngle" value="[COMPLICATION.RANGED_VALUE_MAX] - 1"/>
             <Stroke color="#ffffd27f" thickness="12" cap="BUTT">
               <Transform target="thickness" value="12 + 10 * {P}">{SELECT_ANIM}</Transform>
             </Stroke>

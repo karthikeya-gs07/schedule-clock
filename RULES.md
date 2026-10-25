@@ -156,7 +156,7 @@ All sizes are in px on the **450 × 450 face canvas** (≈ 2 px per dp on a typi
 | Slot | Type | Carries | Drawn as |
 |---|---|---|---|
 | 1 `ring` | SMALL_IMAGE (PHOTO style) | **The whole ring as one image** drawn by the data source: main-ring meetings, elapsed parts, later lane, double-booking stripes, private caution stripes (R1–R10). Grey variant in the ambient image field (A1) | Full-face `PartImage` |
-| 2 `ring_selected` | RANGED_VALUE | MIN/MAX = the selected arc's start/end angle (degrees from 12 o'clock); VALUE = MAX when shown, MIN when hidden (keeps the last position so it fades out in place) | Arc on top: angles, thickness (12 → 22 px, inward) and alpha animated (M1), so it slides between meetings and is never hidden under clash stripes |
+| 2 `ring_selected` | RANGED_VALUE | MIN/MAX = the selected arc's start/end angle (degrees from 12 o'clock); VALUE = MAX when shown, MIN when hidden (keeps the last position so it fades out in place) | Arc on top: thickness (12 → 22 px, inward) and alpha animated (M1); angles **jump, never animate** (animating them made the arc sweep across the dial). Switching meetings: fade out in place, then the new arc fades in (M2), stepped by the data source ~400 ms apart. Never hidden under clash stripes |
 | 3 `details` | LONG_TEXT | Title, time range, place | Center text |
 | 4 `status` | RANGED_VALUE | VALUE = `selected` (0/1); TEXT = status line. **The clock, date and details are drawn inside this slot** so their Transforms can read VALUE (spike 1) | Drives every M1 `Transform` |
 | 5 `ring_promote` | RANGED_VALUE | The promoting meeting: MIN/MAX = its angles, VALUE = progress lane → ring; no data otherwise. Stepped by the data source: on the lane → moving → handed to the image | Arc scaled R − 10 → R, 4 → 12 px, blue → amber over 0.9 s (M3) |
@@ -176,6 +176,7 @@ Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.sched
 
 | Date | Change | Rules |
 |---|---|---|
+| 2026-10-25 | Selected arc no longer slides between meetings (it swept across the face): angles jump, the old arc fades out in place and the new one fades in. The ring image only dims the others; the highlight comes from the arc. | §8 slot 2, R9, M2 |
 | 2026-10-25 | Spike 3: selected and settle slots are `RANGED_VALUE` (angles in MIN/MAX, state in VALUE); trail and now dot are face-side. | §8, R6, R9, M3 |
 | 2026-10-25 | Slot plan after spikes 1–2: the ring is one image (slot 1), clock/date/details live inside the status slot, 3 slots freed. | §8 |
 | 2026-10-24 | Precise taps on the inner lane select the later meeting directly; 7 AM + 7 PM stacking documented. | I3, I11, §8 |

@@ -26,10 +26,8 @@ object RingRenderer {
 
     private val AMBER = Color.parseColor("#ffb547")
     private val AMBER_DIM = Color.parseColor("#5a4320")
-    private val AMBER_SELECTED = Color.parseColor("#ffd27f")
     private val PRIVATE = Color.parseColor("#8e8e93")
     private val PRIVATE_DIM = Color.parseColor("#48484c")
-    private val PRIVATE_SELECTED = Color.parseColor("#c7c7cc")
     private val LATER = Color.parseColor("#8fa3d6")
     private val CLASH = Color.parseColor("#ff7a59")
 
@@ -44,13 +42,12 @@ object RingRenderer {
         // Main ring (R3, R9, R10)
         meetings.forEach { m ->
             if (m.later) return@forEach
+            // The image only dims the others; the highlight itself is the selected-arc slot on top (R9),
+            // so it appears with the arc's fade instead of jumping ahead of it.
+            val dim = selected != null && m != selected
             val base = when {
-                m.private && selected == null -> PRIVATE
-                m.private && m == selected -> PRIVATE_SELECTED
-                m.private -> PRIVATE_DIM
-                selected == null -> AMBER
-                m == selected -> AMBER_SELECTED
-                else -> AMBER_DIM
+                m.private -> if (dim) PRIVATE_DIM else PRIVATE
+                else -> if (dim) AMBER_DIM else AMBER
             }
             stroke.strokeWidth = BAND
             stroke.color = base
