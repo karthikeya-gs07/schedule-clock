@@ -252,6 +252,70 @@
     <PartDraw x="211" y="-1" width="5" height="15" alpha="15"><Transform target="alpha" value="15 + 140 * pow(clamp(1 - (((([HOUR_0_11] * 60 + [MINUTE]) * 0.5) - 357.0 + 360) % 360) / 55, 0, 1), 2)"/><Line startX="2.8" startY="12.3" endX="2.3" endY="2.3"><Stroke color="#ffffffff" thickness="1.2" cap="BUTT"/></Line></PartDraw>
     <PartDraw x="217" y="-1" width="5" height="15" alpha="15"><Transform target="alpha" value="15 + 140 * pow(clamp(1 - (((([HOUR_0_11] * 60 + [MINUTE]) * 0.5) - 358.5 + 360) % 360) / 55, 0, 1), 2)"/><Line startX="2.4" startY="12.1" endX="2.1" endY="2.1"><Stroke color="#ffffffff" thickness="1.2" cap="BUTT"/></Line></PartDraw>
 
+    <!-- Dial: 15-minute ticks (R7) and hour numbers (R8) -->
+    <PartDraw x="0" y="0" width="450" height="450">
+      <Line startX="225.0" startY="20.0" endX="225.0" endY="30.0"><Stroke color="#ff8e8e93" thickness="2.5" cap="ROUND"/></Line>
+      <Line startX="251.8" startY="21.8" endX="251.4" endY="24.7"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="278.1" startY="27.0" endX="276.5" endY="32.8"><Stroke color="#ff4a4a50" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="303.5" startY="35.6" endX="302.3" endY="38.4"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="327.5" startY="47.5" endX="322.5" endY="56.1"><Stroke color="#ff8e8e93" thickness="2.5" cap="ROUND"/></Line>
+      <Line startX="349.8" startY="62.4" endX="348.0" endY="64.7"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="370.0" startY="80.0" endX="365.7" endY="84.3"><Stroke color="#ff4a4a50" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="387.6" startY="100.2" endX="385.3" endY="102.0"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="402.5" startY="122.5" endX="393.9" endY="127.5"><Stroke color="#ff8e8e93" thickness="2.5" cap="ROUND"/></Line>
+      <Line startX="414.4" startY="146.5" endX="411.6" endY="147.7"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="423.0" startY="171.9" endX="417.2" endY="173.5"><Stroke color="#ff4a4a50" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="428.2" startY="198.2" endX="425.3" endY="198.6"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="430.0" startY="225.0" endX="420.0" endY="225.0"><Stroke color="#ff8e8e93" thickness="2.5" cap="ROUND"/></Line>
+      <Line startX="428.2" startY="251.8" endX="425.3" endY="251.4"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="423.0" startY="278.1" endX="417.2" endY="276.5"><Stroke color="#ff4a4a50" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="414.4" startY="303.5" endX="411.6" endY="302.3"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="402.5" startY="327.5" endX="393.9" endY="322.5"><Stroke color="#ff8e8e93" thickness="2.5" cap="ROUND"/></Line>
+      <Line startX="387.6" startY="349.8" endX="385.3" endY="348.0"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="370.0" startY="370.0" endX="365.7" endY="365.7"><Stroke color="#ff4a4a50" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="349.8" startY="387.6" endX="348.0" endY="385.3"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="327.5" startY="402.5" endX="322.5" endY="393.9"><Stroke color="#ff8e8e93" thickness="2.5" cap="ROUND"/></Line>
+      <Line startX="303.5" startY="414.4" endX="302.3" endY="411.6"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="278.1" startY="423.0" endX="276.5" endY="417.2"><Stroke color="#ff4a4a50" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="251.8" startY="428.2" endX="251.4" endY="425.3"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="225.0" startY="430.0" endX="225.0" endY="420.0"><Stroke color="#ff8e8e93" thickness="2.5" cap="ROUND"/></Line>
+      <Line startX="198.2" startY="428.2" endX="198.6" endY="425.3"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="171.9" startY="423.0" endX="173.5" endY="417.2"><Stroke color="#ff4a4a50" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="146.5" startY="414.4" endX="147.7" endY="411.6"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="122.5" startY="402.5" endX="127.5" endY="393.9"><Stroke color="#ff8e8e93" thickness="2.5" cap="ROUND"/></Line>
+      <Line startX="100.2" startY="387.6" endX="102.0" endY="385.3"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="80.0" startY="370.0" endX="84.3" endY="365.7"><Stroke color="#ff4a4a50" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="62.4" startY="349.8" endX="64.7" endY="348.0"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="47.5" startY="327.5" endX="56.1" endY="322.5"><Stroke color="#ff8e8e93" thickness="2.5" cap="ROUND"/></Line>
+      <Line startX="35.6" startY="303.5" endX="38.4" endY="302.3"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="27.0" startY="278.1" endX="32.8" endY="276.5"><Stroke color="#ff4a4a50" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="21.8" startY="251.8" endX="24.7" endY="251.4"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="20.0" startY="225.0" endX="30.0" endY="225.0"><Stroke color="#ff8e8e93" thickness="2.5" cap="ROUND"/></Line>
+      <Line startX="21.8" startY="198.2" endX="24.7" endY="198.6"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="27.0" startY="171.9" endX="32.8" endY="173.5"><Stroke color="#ff4a4a50" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="35.6" startY="146.5" endX="38.4" endY="147.7"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="47.5" startY="122.5" endX="56.1" endY="127.5"><Stroke color="#ff8e8e93" thickness="2.5" cap="ROUND"/></Line>
+      <Line startX="62.4" startY="100.2" endX="64.7" endY="102.0"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="80.0" startY="80.0" endX="84.3" endY="84.3"><Stroke color="#ff4a4a50" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="100.2" startY="62.4" endX="102.0" endY="64.7"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="122.5" startY="47.5" endX="127.5" endY="56.1"><Stroke color="#ff8e8e93" thickness="2.5" cap="ROUND"/></Line>
+      <Line startX="146.5" startY="35.6" endX="147.7" endY="38.4"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="171.9" startY="27.0" endX="173.5" endY="32.8"><Stroke color="#ff4a4a50" thickness="1.5" cap="ROUND"/></Line>
+      <Line startX="198.2" startY="21.8" endX="198.6" endY="24.7"><Stroke color="#ff33333a" thickness="1.5" cap="ROUND"/></Line>
+    </PartDraw>
+    <PartText x="292" y="54" width="44" height="32"><Text align="CENTER"><Font family="anta_regular" size="24" color="#ff5c5c62"><Template><![CDATA[1]]></Template></Font></Text></PartText>
+    <PartText x="358" y="120" width="44" height="32"><Text align="CENTER"><Font family="anta_regular" size="24" color="#ff5c5c62"><Template><![CDATA[2]]></Template></Font></Text></PartText>
+    <PartText x="382" y="209" width="44" height="32"><Text align="CENTER"><Font family="anta_regular" size="24" color="#ff8e8e93"><Template><![CDATA[3]]></Template></Font></Text></PartText>
+    <PartText x="358" y="298" width="44" height="32"><Text align="CENTER"><Font family="anta_regular" size="24" color="#ff5c5c62"><Template><![CDATA[4]]></Template></Font></Text></PartText>
+    <PartText x="292" y="364" width="44" height="32"><Text align="CENTER"><Font family="anta_regular" size="24" color="#ff5c5c62"><Template><![CDATA[5]]></Template></Font></Text></PartText>
+    <PartText x="203" y="388" width="44" height="32"><Text align="CENTER"><Font family="anta_regular" size="24" color="#ff8e8e93"><Template><![CDATA[6]]></Template></Font></Text></PartText>
+    <PartText x="114" y="364" width="44" height="32"><Text align="CENTER"><Font family="anta_regular" size="24" color="#ff5c5c62"><Template><![CDATA[7]]></Template></Font></Text></PartText>
+    <PartText x="48" y="299" width="44" height="32"><Text align="CENTER"><Font family="anta_regular" size="24" color="#ff5c5c62"><Template><![CDATA[8]]></Template></Font></Text></PartText>
+    <PartText x="24" y="209" width="44" height="32"><Text align="CENTER"><Font family="anta_regular" size="24" color="#ff8e8e93"><Template><![CDATA[9]]></Template></Font></Text></PartText>
+    <PartText x="48" y="120" width="44" height="32"><Text align="CENTER"><Font family="anta_regular" size="24" color="#ff5c5c62"><Template><![CDATA[10]]></Template></Font></Text></PartText>
+    <PartText x="113" y="54" width="44" height="32"><Text align="CENTER"><Font family="anta_regular" size="24" color="#ff5c5c62"><Template><![CDATA[11]]></Template></Font></Text></PartText>
+    <PartText x="203" y="30" width="44" height="32"><Text align="CENTER"><Font family="anta_regular" size="24" color="#ff8e8e93"><Template><![CDATA[12]]></Template></Font></Text></PartText>
+
     <!-- Slot 1 `ring` (spike 2): the whole ring as one image from the data source (fixes the 7-segment
          limit; carries lane, clash and private layers). SMALL_IMAGE: PHOTO_IMAGE is rejected for our provider. -->
     <ComplicationSlot slotId="0" name="ring" displayName="@string/slot_ring" x="0" y="0" width="450" height="450"
@@ -345,7 +409,7 @@
           <Transform target="scaleY" value="1 - 0.45 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
           <DigitalClock x="0" y="0" width="450" height="110">
             <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="SYNC_TO_DEVICE" align="CENTER">
-              <Font family="SYNC_TO_DEVICE" size="88" color="#fff2f2f2"/>
+              <Font family="anta_regular" size="88" color="#fff2f2f2"/>
             </TimeText>
           </DigitalClock>
         </Group>

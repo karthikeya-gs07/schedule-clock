@@ -203,7 +203,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 | **Python 3** | Serving the prototype locally (`python3 -m http.server`) | ✅ Built into macOS |
 | **Figma** | Visual design, if we move there | ✅ Installed; Figma MCP needs authorizing via `/mcp` |
 | Samsung **Watch Face Studio** | Optional WYSIWYG WFF editor | Optional, not needed |
-| **Anta** font (Google Fonts, OFL) | Clock digits and dial numbers (RULES T5). Prototype loads it from Google Fonts; the WFF build bundles `Anta-Regular.ttf` | ✅ Prototype. TTF to download into the watch project when we start it |
+| **Anta** font (Google Fonts, OFL) | Clock digits and dial numbers (RULES T5). Prototype loads it from Google Fonts; the WFF build bundles `Anta-Regular.ttf` | ✅ Bundled in the face: `android/watchface/src/main/res/font/anta_regular.ttf` (from google/fonts, license in `android/watchface/ANTA_FONT_LICENSE.txt`); WFF uses `family="anta_regular"` |
 
 ### 7.0a Local setup (done 2026-10-25)
 
@@ -251,6 +251,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 - **v0.28:** Trail dashes doubled to 20 per hour (240, every 1.5°) and thinned to 1.2 px (R6).
 - **v0.29:** Arcs are solid and darker instead of see-through; private stripes and the double-booking gap get a dark fill instead of transparency (R6a).
 - **v0.30:** Prototype control panel redesigned into grouped sections (Time, Day, Display, Behavior) with switches and a segmented day picker; the complication payload view is removed. New **Dial only** mode (button, `F` key, or `#dial` in the URL) hides all controls and shows just the watch.
+- **v0.35.1:** Spike face gains the dial: 15-minute ticks (R7), 1–12 numbers and clock in bundled Anta (R8, T5).
 - **v0.35:** Spike 3: selected arc slides and grows on its own slot, lane → ring settle animates, comet trail runs face-side for ~0.3 s CPU/min; `CUBIC_BEZIER` controls must be space-separated (§6.3c).
 - **v0.34:** Spike 2: the ring is one image drawn by the data source (`SMALL_IMAGE`, PHOTO style). No meeting limit, private and clash stripes included; ~170 ms tap-to-face, +2 MB, ~+35 ms CPU per update (§6.3b). Slot plan updated (RULES §8).
 - **v0.33:** Phase 1 spike 1 on the emulator: taps, animation, clock-in-slot, default provider and gaps pass; weighted elements capped at 7 (fail) → propose a single ring image (§6.3a).

@@ -1,7 +1,7 @@
 """Generates the Phase 1 spike watchface.xml and a preview PNG.
 
 Usage: python3 tools/gen_spike_face.py watchface/src/main/res
-Layers, bottom to top: track, comet trail, ring image (slot 0), selected arc (slot 2), settling arc
+Layers, bottom to top: track, comet trail, ticks + numbers, ring image (slot 0), selected arc (slot 2), settling arc
 (slot 5), now dot, clock + details (status slot 1), tap hotspots. Comments name the
 PRD §6.3 risk each block tests; slot numbers follow RULES §8.
 """
@@ -44,6 +44,31 @@ def dash(i):
             f'<Line startX="{p1[0] - x0:.1f}" startY="{p1[1] - y0:.1f}" endX="{p2[0] - x0:.1f}" endY="{p2[1] - y0:.1f}">'
             f'<Stroke color="#ffffffff" thickness="1.2" cap="BUTT"/></Line></PartDraw>')
 
+# --- Dial (R7, R8): 15-minute ticks just inside the later lane, and hour numbers 1–12 in Anta.
+FONT = "anta_regular"   # res/font/anta_regular.ttf (SIL OFL, see watchface/ANTA_FONT_LICENSE.txt)
+
+def ticks():
+    lines = []
+    for q in range(48):
+        kind = "hour" if q % 4 == 0 else "half" if q % 2 == 0 else "quarter"
+        length = {"hour": 10, "half": 6, "quarter": 3}[kind]
+        color = {"hour": "#ff8e8e93", "half": "#ff4a4a50", "quarter": "#ff33333a"}[kind]
+        width = 2.5 if kind == "hour" else 1.5
+        a = math.radians(q * 7.5)
+        r0, r1 = R - 14, R - 14 - length
+        lines.append(f'      <Line startX="{CX + r0 * math.sin(a):.1f}" startY="{CY - r0 * math.cos(a):.1f}" '
+                     f'endX="{CX + r1 * math.sin(a):.1f}" endY="{CY - r1 * math.cos(a):.1f}">'
+                     f'<Stroke color="{color}" thickness="{width}" cap="ROUND"/></Line>')
+    return "\n".join(lines)
+
+def numeral(h):
+    a = math.radians(h * 30)
+    x, y = CX + (R - 40) * math.sin(a), CY - (R - 40) * math.cos(a)
+    color = "#ff8e8e93" if h % 3 == 0 else "#ff5c5c62"
+    return (f'    <PartText x="{round(x - 22)}" y="{round(y - 16)}" width="44" height="32">'
+            f'<Text align="CENTER"><Font family="{FONT}" size="24" color="{color}">'
+            f'<Template><![CDATA[{h}]]></Template></Font></Text></PartText>')
+
 def hotspot(h):
     a = math.radians(h * 30 + 15)                      # middle of the hour
     x = round(CX + (R - 12) * math.sin(a) - HOT / 2)
@@ -68,6 +93,12 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
 
     <!-- Risk 6: comet trail (R6). Face-side, driven by the clock only; under the ring image so it shows on free time. -->
 {chr(10).join(dash(i) for i in range(240))}
+
+    <!-- Dial: 15-minute ticks (R7) and hour numbers (R8) -->
+    <PartDraw x="0" y="0" width="450" height="450">
+{ticks()}
+    </PartDraw>
+{chr(10).join(numeral(h) for h in range(1, 13))}
 
     <!-- Slot 1 `ring` (spike 2): the whole ring as one image from the data source (fixes the 7-segment
          limit; carries lane, clash and private layers). SMALL_IMAGE: PHOTO_IMAGE is rejected for our provider. -->
@@ -158,7 +189,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
           <Transform target="scaleY" value="1 - 0.45 * {selected}">{SELECT_ANIM}</Transform>
           <DigitalClock x="0" y="0" width="450" height="110">
             <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="SYNC_TO_DEVICE" align="CENTER">
-              <Font family="SYNC_TO_DEVICE" size="88" color="#fff2f2f2"/>
+              <Font family="{FONT}" size="88" color="#fff2f2f2"/>
             </TimeText>
           </DigitalClock>
         </Group>
