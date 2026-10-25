@@ -1,6 +1,6 @@
 # Schedule Clock: Product Requirements (living doc)
 
-> Status: **v0.35 — Phase 1 spikes done on the emulator (§6.3a–c): every design risk the emulator can answer passes. Next: the real data source (calendar + rules engine), then real-watch checks.**
+> Status: **v0.36 — Spikes 1–4 done on the emulator (§6.3a–d): the face shows the prototype's center content and rules with fake meetings. Next: read the real calendar, then real-watch checks.**
 > Last updated: 2026-10-25
 >
 > **Documents**
@@ -182,6 +182,31 @@ The data source draws the whole ring (meetings, later lane, double-booking strip
 
 **Phase 1 status:** all design risks that the emulator can answer are answered. Remaining: real-watch checks (edge 13, lane taps 17, battery, calendar sync 11, private flag 16), Play/publishing (12), and the validator (blocked on permission).
 
+### 6.3d Spike 4 (2026-10-25): center content and time-aware rules on the watch
+
+The data source now runs a first Kotlin port of the prototype's rules engine (`ScheduleRules.kt`: W1–W10, C1, C7, C8, C12) at the current time, and the face shows the prototype's center content. Verified on the emulator at 10:20 AM (debug time offset; see below):
+
+| Prototype feature | On the watch |
+|---|---|
+| Day + date above the clock (C1) | ✅ "SUN · OCT 25" via `icuText`, 24 px muted; shrinks to 90 % when selected |
+| Start/end time (C4, C8) | ✅ "12:30 – 1:00 PM" under the title |
+| Look-ahead arrow (C12) | ✅ Amber arrow before the title while a meeting is live (Roadmap 10:00–11:30, elapsed part dimmed) |
+| Private (C13) | ✅ Grey lock + "Private", "Details hidden" |
+| Double booking (C7) | ✅ Coral stripes on the ring, and under the title a coral overlap icon + the other meeting ("⊚ Vendor call"); tapping 1 o'clock again shows the other one |
+| Later lane (blue arc, R5) | ✅ "Late sync" 11:00–11:45 PM on the thin blue lane |
+
+**How icons work:** WFF can't measure text and ignores a second colored `Font` run in one line, so the data source measures each line with the watch's default typeface and sends the width in the RANGED_VALUE's MAX (with flags); the face draws the icon as shapes just before the centered text (RULES §8).
+
+**Consequences of adding these:**
+- **One more slot:** `details` (5 of 8 used).
+- **Two slots update separately** (status and details), so on a slow watch the title and the place line could change a frame apart.
+- **Time-aware slots refresh every 5 minutes** (the minimum), so past/live/next/lane stay current; a small extra battery cost, to measure on a real watch.
+- **Width measurement assumes** the data source's default typeface is the face's `SYNC_TO_DEVICE` font. Both run on the same watch, so they should match; verify on a Galaxy Watch (Samsung's One UI font).
+- **Packing numbers into MAX** is a contract between the two apps; documented in RULES §8 and `SpikeSchedule.kt`.
+- Debug only: `app://io.github.karthikeyags07.scheduleclock/time?offset=-720` shifts the data source's clock 12 h (the dial looks the same) so daytime rules can be tested when the emulator says evening.
+
+**Not yet on the watch:** AM/PM next to the clock, the later-lane time-of-day icon (C5), "Tomorrow ·" styling with real tomorrow data (C6), the empty-day centered clock (C3), ambient variants (A1–A5), precise lane taps (I11).
+
 ### 6.4 Minimum OS
 
 Wear OS 5+ (WFF v2, needed for `WeightedStroke` on `Arc`): Galaxy Watch 4 and later on current software, and Pixel Watch 1 and later.
@@ -251,6 +276,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 - **v0.28:** Trail dashes doubled to 20 per hour (240, every 1.5°) and thinned to 1.2 px (R6).
 - **v0.29:** Arcs are solid and darker instead of see-through; private stripes and the double-booking gap get a dark fill instead of transparency (R6a).
 - **v0.30:** Prototype control panel redesigned into grouped sections (Time, Day, Display, Behavior) with switches and a segmented day picker; the complication payload view is removed. New **Dial only** mode (button, `F` key, or `#dial` in the URL) hides all controls and shows just the watch.
+- **v0.36:** Spike 4: date, time range, place line, look-ahead arrow, private lock and the double-booking line on the watch, driven by the rules engine ported to Kotlin; icons placed from data-side text widths; `details` slot added (5 of 8) (§6.3d).
 - **v0.35.3:** Fixed a stray arc sweeping across the face on taps: the selected arc's angles no longer animate; switching meetings fades the old arc out in place, then the new one in (~400 ms apart, M2). The ring image only dims the others. Verified frame by frame on the emulator.
 - **v0.35.2:** Spike face gains the clock/details divider (T2), animated with the selection (M1: up 18 px, 60 % wide; the prototype's 32 px fits its different layout).
 - **v0.35.1:** Spike face gains the dial: 15-minute ticks (R7), 1–12 numbers and clock in bundled Anta (R8, T5).

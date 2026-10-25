@@ -6,8 +6,9 @@ import android.util.Log
 
 /**
  * Invisible handler for the face's deep links (PRD §6.3 risk 1):
- * - `app://<package>/select?hour=N`: toggles the meeting in that hour.
- * - `app://<package>/promote`: plays the lane → ring settle (spike 3), or resets it.
+ * - `app://<package>/select?hour=N`: cycles the meetings in that dial hour (I2–I6).
+ * - `app://<package>/promote`: plays the lane → ring settle (spike 3).
+ * - `app://<package>/time?offset=M`: debug time shift in minutes for testing.
  * Asks for fresh complication data and finishes before anything is shown.
  */
 class TapActivity : Activity() {
@@ -19,12 +20,11 @@ class TapActivity : Activity() {
 
         if (uri?.path == "/promote") {
             SpikeSchedule.runPromotion(this)
+        } else if (uri?.path == "/time") {
+            SpikeSchedule.setOffset(this, uri.getQueryParameter("offset")?.toIntOrNull() ?: 0)
         } else {
-            val hour = uri?.getQueryParameter("hour")?.toIntOrNull()
-            val hit = hour?.let { SpikeSchedule.meetingInHour(it) } ?: -1
-            val next = if (hit < 0 || hit == SpikeSchedule.selected(this)) -1 else hit
-            SpikeSchedule.select(this, next)
-            Log.i(TAG, "selected=$next, update requested after ${System.currentTimeMillis() - received} ms")
+            uri?.getQueryParameter("hour")?.toIntOrNull()?.let { SpikeSchedule.tapHour(this, it) }
+            Log.i(TAG, "update requested after ${System.currentTimeMillis() - received} ms")
         }
 
         finish()

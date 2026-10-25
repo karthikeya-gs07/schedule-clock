@@ -16,67 +16,84 @@ import androidx.wear.watchface.complications.data.SmallImageComplicationData
 import androidx.wear.watchface.complications.data.SmallImageType
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceService
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceUpdateRequester
+import java.util.Calendar
 
 internal const val TAG = "ScheduleClockSpike"
 
-/** Phase 1 spikes: fixed fake meetings and the selection, standing in for the calendar and rules engine. */
+/**
+ * Phase 1 spikes: fake meetings (stand-in for the calendar) run through the real rules engine
+ * ([ScheduleRules]) at the current time, plus the selection state and the data for each slot.
+ *
+ * Packed number fields (WFF can't measure text or pass extra fields, so widths and flags ride in
+ * RANGED_VALUE MAX; VALUE stays 0/1 for "selected"):
+ * - status:  MAX = 1 + titleWidth + 10000 × flags, flags = 1 arrow (C12) + 2 lock (C13) + 4 clash (C7)
+ * - details: MAX = 1 + lineWidth + 10000 × kind, kind 0 place · 1 clash · 2 tomorrow · 3 private
+ * - selected arc: MIN/MAX = angles + 1000 (later lane) + 2000 (private)
+ */
 object SpikeSchedule {
 
-    data class Meeting(
-        val startMin: Int,
-        val endMin: Int,
-        val title: String,
-        val private: Boolean = false,
-        val later: Boolean = false,
+    // The prototype's busy day, plus a late meeting that lands on the later lane during the day.
+    private val meetings = listOf(
+        Meeting(9 * 60, 9 * 60 + 30, "Standup", "Google Meet"),
+        Meeting(10 * 60, 11 * 60 + 30, "Roadmap planning", "Atlas room"),
+        Meeting(12 * 60 + 30, 13 * 60, "Lunch with Sam", "Café Blue", private = true),
+        Meeting(13 * 60, 14 * 60, "Design review", "Room 4"),
+        Meeting(13 * 60, 14 * 60, "Vendor call", "Zoom"),                 // full double booking
+        Meeting(15 * 60, 15 * 60 + 45, "Candidate interview", "Zoom"),
+        Meeting(15 * 60 + 30, 16 * 60, "Recruiter sync", "Room 2"),       // partial overlap
+        Meeting(16 * 60, 17 * 60, "Weekly sync", "Google Meet"),
+        Meeting(19 * 60, 20 * 60, "Client call", "Zoom"),
+        Meeting(23 * 60, 23 * 60 + 45, "Late sync", "Zoom"),             // later lane until 11:45 AM
     )
 
-    // The prototype's busy day, more than the 7-segment weighted-elements limit allowed (spike 1, risk 9).
-    val meetings = listOf(
-        Meeting(9 * 60, 9 * 60 + 30, "Standup"),
-        Meeting(10 * 60, 11 * 60 + 30, "Roadmap planning"),
-        Meeting(12 * 60 + 30, 13 * 60, "Lunch with Sam", private = true),
-        Meeting(13 * 60, 14 * 60, "Design review"),
-        Meeting(13 * 60, 14 * 60, "Vendor call"),                 // full double booking
-        Meeting(15 * 60, 15 * 60 + 45, "Candidate interview"),
-        Meeting(15 * 60 + 30, 16 * 60, "Recruiter sync"),         // partial overlap
-        Meeting(16 * 60, 17 * 60, "Weekly sync"),
-        Meeting(19 * 60, 20 * 60, "Client call", later = true),   // later lane; spike 3 promotes it (M3)
-    )
-    private val promotable = meetings.first { it.later }
-
-    private const val DIAL_MIN = 12 * 60
-
-    // Lane → ring settle (RULES W8, M3), spike 3.
-    const val PROMOTE_IDLE = 0     // on the lane
-    const val PROMOTE_START = 1    // removed from the image; promote arc drawn on the lane
-    const val PROMOTE_MOVING = 2   // promote arc animating out to the ring
-    const val PROMOTE_DONE = 3     // on the main ring in the image; promote arc gone
-    private const val SETTLE_MS = 900L
+    private const val SWITCH_FADE_MS = 400L  // old arc fades out in place before the new one appears (M2)
+    private const val SETTLE_MS = 900L       // M3
 
     private fun prefs(context: Context) = context.getSharedPreferences("spike", Context.MODE_PRIVATE)
 
-    fun selected(context: Context): Int = prefs(context).getInt("selected", -1)
-
-    fun setSelected(context: Context, index: Int) {
-        prefs(context).edit().putInt("selected", index).commit()
-    }
-
-    // The selected arc (slot 2) has its own state so a switch can fade out in place before moving.
-    private fun setArc(context: Context, index: Int, shown: Boolean) {
-        prefs(context).edit().putInt("arcIndex", index).putBoolean("arcShown", shown).commit()
-    }
-
-    private const val SWITCH_FADE_MS = 400L  // let the old arc fade out (M1 is 520 ms) before the new one appears
-
     /**
-     * Changes the selection (I2–I5). Switching between two meetings fades the old arc out where it
-     * is, then shows the new one (M2); the arc never travels between them.
+     * Minutes since midnight, shifted by a debug offset (`app://<package>/time?offset=-720`). On the
+     * 12 h dial a ±12 h shift keeps the face's clock, dot and trail in the same place, so the spike can
+     * be tested in daytime when the emulator's clock says evening.
      */
-    fun select(context: Context, next: Int) {
+    fun now(context: Context): Int {
+        val real = Calendar.getInstance().run { get(Calendar.HOUR_OF_DAY) * 60 + get(Calendar.MINUTE) }
+        return ((real + prefs(context).getInt("offsetMin", 0)) % 1440 + 1440) % 1440
+    }
+
+    fun setOffset(context: Context, minutes: Int) {
+        prefs(context).edit().putInt("offsetMin", minutes).commit()
+        requestUpdate(context.applicationContext)
+    }
+
+    private fun placed(context: Context, now: Int = now(context)) = ScheduleRules.place(meetings, now)
+
+    /** The selected meeting's index in [list], or -1. A selection that is no longer shown is cleared (I10). */
+    private fun selectedIndex(context: Context, list: List<Placed>): Int {
+        val key = prefs(context).getString("selected", null) ?: return -1
+        return list.indexOfFirst { it.meeting.key == key }
+    }
+
+    /** I2–I6: tapping a dial hour cycles its meetings (main ring first), then back to the default. */
+    fun tapHour(context: Context, hour: Int) {
+        val list = placed(context)
+        val hits = ScheduleRules.meetingsInHour(list, hour)
+        val pos = hits.indexOf(selectedIndex(context, list))
+        val next = when {
+            hits.isEmpty() -> null
+            pos < 0 -> list[hits[0]].meeting.key
+            pos + 1 < hits.size -> list[hits[pos + 1]].meeting.key
+            else -> null
+        }
+        select(context, next)
+    }
+
+    /** Switching between two meetings fades the old arc out where it is, then shows the new one (M2). */
+    private fun select(context: Context, next: String?) {
         val app = context.applicationContext
-        val prev = selected(app)
-        setSelected(app, next)
-        if (prev >= 0 && next >= 0 && prev != next) {
+        val prev = prefs(app).getString("selected", null)
+        prefs(app).edit().putString("selected", next).commit()
+        if (prev != null && next != null && prev != next) {
             setArc(app, prev, shown = false)
             requestUpdate(app)
             Handler(Looper.getMainLooper()).postDelayed({
@@ -84,86 +101,109 @@ object SpikeSchedule {
                 requestUpdate(app, SelectedDataSourceService::class.java)
             }, SWITCH_FADE_MS)
         } else {
-            setArc(app, if (next >= 0) next else prefs(app).getInt("arcIndex", 0), shown = next >= 0)
+            setArc(app, next ?: prefs(app).getString("arcKey", null), shown = next != null)
             requestUpdate(app)
         }
+        Log.i(TAG, "selected=$next")
     }
 
-    fun promotePhase(context: Context): Int = prefs(context).getInt("promote", PROMOTE_IDLE)
-
-    private fun setPromotePhase(context: Context, phase: Int) {
-        prefs(context).edit().putInt("promote", phase).commit()
+    private fun setArc(context: Context, key: String?, shown: Boolean) {
+        prefs(context).edit().putString("arcKey", key).putBoolean("arcShown", shown).commit()
     }
 
-    /** Index of the first main-ring meeting in the tapped dial hour (0 = 12→1 o'clock), or -1. */
-    fun meetingInHour(hour: Int): Int =
-        meetings.indexOfFirst { !it.later && (it.startMin % DIAL_MIN) / 60 == hour }
+    // ---- Slot data -------------------------------------------------------------------------
 
-    /** Meetings as the ring image should show them for the current promotion phase. */
-    private fun ringMeetings(context: Context): List<Meeting> = when (promotePhase(context)) {
-        PROMOTE_START, PROMOTE_MOVING -> meetings - promotable
-        PROMOTE_DONE -> meetings.map { if (it == promotable) it.copy(later = false) else it }
-        else -> meetings
-    }
-
-    /** Slot 1: the whole ring as one image (spike 2). SMALL_IMAGE with the PHOTO style, since PHOTO_IMAGE is rejected. */
+    /** Slot 1: the whole ring as one image (spike 2). */
     fun ringImage(context: Context): SmallImageComplicationData {
         val t0 = SystemClock.elapsedRealtimeNanos()
-        val selected = selected(context).takeIf { it >= 0 }?.let { meetings[it] }
-        val png = RingRenderer.renderPng(ringMeetings(context), selected)
+        val now = now(context)
+        val list = placed(context, now)
+        val selected = selectedIndex(context, list).takeIf { it >= 0 }?.let { list[it].meeting.key }
+        val png = RingRenderer.renderPng(list, now, selected, hiddenKey = prefs(context).getString("settling", null))
         Log.i(TAG, "ring image: ${png.size / 1024} KB PNG, drawn+encoded in ${(SystemClock.elapsedRealtimeNanos() - t0) / 1_000_000} ms")
         val image = SmallImage.Builder(Icon.createWithData(png, 0, png.size), SmallImageType.PHOTO).build()
         return SmallImageComplicationData.Builder(image, text("Today's meetings")).build()
     }
 
-    /**
-     * Slot 2: the selected arc (R9). MIN/MAX = its start/end angle on the dial; VALUE = MAX when
-     * shown, MIN when hidden. Hidden keeps the last position so the face fades it out in place.
-     */
+    /** Slot 2: the selected arc (R9). VALUE = MAX shown, MIN hidden; hidden keeps its last position. */
     fun selectedArc(context: Context): RangedValueComplicationData {
-        val shown = prefs(context).getBoolean("arcShown", false)
-        val m = meetings[prefs(context).getInt("arcIndex", 0)]
-        val (start, end) = degrees(m)
-        return ranged(if (shown) end else start, start, end, m.title)
-    }
-
-    /** Slot 4: VALUE = selected (0/1) drives the face's Transforms; TEXT = the shown meeting's title. */
-    fun status(context: Context): RangedValueComplicationData {
-        val index = selected(context)
-        val shown = meetings[if (index >= 0) index else 0]
-        return ranged(if (index >= 0) 1f else 0f, 0f, 1f, if (shown.private) "Private" else shown.title)
-    }
-
-    /** Slot 5: the settling arc. VALUE runs MIN (lane) → MAX (ring); no data outside a promotion. */
-    fun promoteArc(context: Context): ComplicationData {
-        val (start, end) = degrees(promotable)
-        return when (promotePhase(context)) {
-            PROMOTE_START -> ranged(start, start, end, promotable.title)
-            PROMOTE_MOVING -> ranged(end, start, end, promotable.title)
-            else -> NoDataComplicationData()
-        }
+        val list = placed(context)
+        val p = list.firstOrNull { it.meeting.key == prefs(context).getString("arcKey", null) }
+            ?: return ranged(0f, 0f, 1f, "", "")
+        val shown = prefs(context).getBoolean("arcShown", false) && selectedIndex(context, list) >= 0
+        val offset = (if (p.lane == Lane.LATER) 1000f else 0f) + (if (p.meeting.private) 2000f else 0f)
+        val (start, end) = degrees(p)
+        return ranged(if (shown) end + offset else start + offset, start + offset, end + offset, p.meeting.title, "")
     }
 
     /**
-     * Plays the lane → ring settle (spike 3): hide it from the image and show the promote arc on
-     * the lane, then move it out, then hand over to the image. Tapping again resets to the lane.
+     * Slot 4: VALUE = selected (0/1) drives every M1 Transform. TEXT = title (or "Private", C13),
+     * TITLE = time range (C4, C8). MAX carries the measured title width and the icon flags.
+     */
+    fun status(context: Context): RangedValueComplicationData {
+        val now = now(context)
+        val list = placed(context, now)
+        val selected = selectedIndex(context, list)
+        val i = if (selected >= 0) selected else ScheduleRules.defaultIndex(list, now)
+        if (i < 0) return ranged(0f, 0f, 1f, "", "")
+        val p = list[i]
+        val arrow = ScheduleRules.showsArrow(list, i, now)
+        val lock = p.meeting.private
+        val clash = ScheduleRules.clashesFor(list, p).isNotEmpty()
+        val iconSpace = (if (arrow) 30 else 0) + (if (lock) 25 else 0)
+        val (title, width) = TextFit.title(if (lock) "Private" else p.meeting.title, 260 - iconSpace)
+        val (range, _) = TextFit.line(ScheduleRules.formatRange(p.meeting), 255)
+        val flags = (if (arrow) 1 else 0) + (if (lock) 2 else 0) + (if (clash) 4 else 0)
+        return ranged(if (selected >= 0) 1f else 0f, 0f, 1f + width + 10000f * flags, title, range)
+    }
+
+    /**
+     * Slot 3: the line under the time range. TEXT = place, or the clashing meeting (C7), or
+     * "Tomorrow · place" (C6), or "Details hidden" (C13). MAX carries its width and kind.
+     */
+    fun detailsLine(context: Context): RangedValueComplicationData {
+        val now = now(context)
+        val list = placed(context, now)
+        val selected = selectedIndex(context, list)
+        val i = if (selected >= 0) selected else ScheduleRules.defaultIndex(list, now)
+        if (i < 0) return ranged(0f, 0f, 1f, "", "")
+        val p = list[i]
+        val clashes = ScheduleRules.clashesFor(list, p)
+        val (kind, raw) = when {
+            clashes.isNotEmpty() -> 1 to (clashes[0].meeting.let { if (it.private) "Private" else it.title } +
+                if (clashes.size > 1) " +${clashes.size - 1}" else "")
+            p.meeting.private -> 3 to "Details hidden"
+            p.meeting.startMin >= 24 * 60 -> 2 to "Tomorrow · ${p.meeting.where}"
+            else -> 0 to p.meeting.where
+        }
+        val (line, width) = TextFit.line(raw, if (kind == 1) 190 else 220)
+        return ranged(if (selected >= 0) 1f else 0f, 0f, 1f + width + 10000f * kind, line, "")
+    }
+
+    /** Slot 5: the settling arc (M3). VALUE runs MIN (lane) → MAX (ring); no data otherwise. */
+    fun promoteArc(context: Context): ComplicationData {
+        val key = prefs(context).getString("settling", null) ?: return NoDataComplicationData()
+        val p = placed(context).firstOrNull { it.meeting.key == key } ?: return NoDataComplicationData()
+        val (start, end) = degrees(p)
+        return ranged(if (prefs(context).getBoolean("settleMoving", false)) end else start, start, end, p.meeting.title, "")
+    }
+
+    /**
+     * Demo of the lane → ring settle (spike 3) for the first later-lane meeting: the image drops it,
+     * the settle arc carries it out to the ring, then it returns to its rule-based place.
      */
     fun runPromotion(context: Context) {
         val app = context.applicationContext
-        if (promotePhase(app) != PROMOTE_IDLE) {
-            setPromotePhase(app, PROMOTE_IDLE)
-            requestUpdate(app)
-            return
-        }
+        val key = placed(app).firstOrNull { it.lane == Lane.LATER }?.meeting?.key ?: return
         val main = Handler(Looper.getMainLooper())
-        setPromotePhase(app, PROMOTE_START)
+        prefs(app).edit().putString("settling", key).putBoolean("settleMoving", false).commit()
         requestUpdate(app, RingImageDataSourceService::class.java, PromoteDataSourceService::class.java)
         main.postDelayed({
-            setPromotePhase(app, PROMOTE_MOVING)
+            prefs(app).edit().putBoolean("settleMoving", true).commit()
             requestUpdate(app, PromoteDataSourceService::class.java)
         }, 150)
         main.postDelayed({
-            setPromotePhase(app, PROMOTE_DONE)
+            prefs(app).edit().remove("settling").commit()
             requestUpdate(app, RingImageDataSourceService::class.java, PromoteDataSourceService::class.java)
         }, 150 + SETTLE_MS)
     }
@@ -172,6 +212,7 @@ object SpikeSchedule {
         RingImageDataSourceService::class.java,
         SelectedDataSourceService::class.java,
         StatusDataSourceService::class.java,
+        DetailsDataSourceService::class.java,
         PromoteDataSourceService::class.java,
     )
 
@@ -181,14 +222,17 @@ object SpikeSchedule {
         }
     }
 
-    /** Start and end of a meeting on the 12 h dial, in degrees clockwise from 12 o'clock. */
-    private fun degrees(m: Meeting): Pair<Float, Float> {
-        val start = (m.startMin % DIAL_MIN) / DIAL_MIN.toFloat() * 360f
-        return start to start + (m.endMin - m.startMin) / DIAL_MIN.toFloat() * 360f
+    /** Start and end of a placed meeting on the 12 h dial, in degrees clockwise from 12 o'clock. */
+    private fun degrees(p: Placed): Pair<Float, Float> {
+        val start = (p.cs % ScheduleRules.DIAL_MIN) / ScheduleRules.DIAL_MIN.toFloat() * 360f
+        return start to start + (p.ce - p.cs) / ScheduleRules.DIAL_MIN.toFloat() * 360f
     }
 
-    private fun ranged(value: Float, min: Float, max: Float, title: String) =
-        RangedValueComplicationData.Builder(value, min, max, text(title)).setText(text(title)).build()
+    private fun ranged(value: Float, min: Float, max: Float, text: String, title: String) =
+        RangedValueComplicationData.Builder(value, min, max, text(text.ifEmpty { "—" }))
+            .setText(text(text))
+            .apply { if (title.isNotEmpty()) setTitle(text(title)) }
+            .build()
 
     private fun text(s: String) = PlainComplicationText.Builder(s).build()
 }

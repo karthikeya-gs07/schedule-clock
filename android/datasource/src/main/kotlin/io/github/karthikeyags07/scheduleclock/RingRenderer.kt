@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.DashPathEffect
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.RectF
@@ -11,9 +12,9 @@ import android.graphics.Shader
 import java.io.ByteArrayOutputStream
 
 /**
- * Spike 2: draws the whole ring (meetings, later lane, double-booking stripes, private caution
- * stripes) into one transparent 450 × 450 PNG, sent to the face as a SMALL_IMAGE (PHOTO style).
- * Geometry and colors follow RULES §2 (R1–R10) on the 450 px canvas.
+ * Draws the whole ring (main-ring meetings with elapsed parts, later lane, double-booking stripes,
+ * private caution stripes) into one transparent 450 × 450 PNG, sent to the face as a SMALL_IMAGE
+ * (PHOTO style). The face draws the track and trail underneath. Geometry and colors follow RULES §2.
  */
 object RingRenderer {
     const val SIZE = 450
@@ -22,52 +23,63 @@ object RingRenderer {
     private const val R_LATER = R - 10f     // later lane (R5)
     private const val BAND = 12f
     private const val GAP_DEG = 1f          // back-to-back gap (R2)
-    private const val DIAL_MIN = 12 * 60
 
     private val AMBER = Color.parseColor("#ffb547")
+    private val AMBER_PAST = Color.parseColor("#6e4f22")
     private val AMBER_DIM = Color.parseColor("#5a4320")
     private val PRIVATE = Color.parseColor("#8e8e93")
+    private val PRIVATE_PAST = Color.parseColor("#48484c")
     private val PRIVATE_DIM = Color.parseColor("#48484c")
     private val LATER = Color.parseColor("#8fa3d6")
     private val CLASH = Color.parseColor("#ff7a59")
+    private val CLASH_PAST = Color.parseColor("#7a3b2c")
 
-    /** Draws the ring and returns it as PNG bytes (transparent outside the arcs). */
-    fun renderPng(meetings: List<SpikeSchedule.Meeting>, selected: SpikeSchedule.Meeting?): ByteArray {
+    /**
+     * @param selectedKey dims every other meeting (R9); the highlight itself is the selected-arc slot.
+     * @param hiddenKey left out entirely (a meeting the settle arc is carrying, M3).
+     */
+    fun renderPng(list: List<Placed>, now: Int, selectedKey: String?, hiddenKey: String? = null): ByteArray {
         val bitmap = Bitmap.createBitmap(SIZE, SIZE, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         val stroke = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeCap = Paint.Cap.BUTT }
+        val shown = list.filter { it.meeting.key != hiddenKey }
 
-        // No track here: the face draws it, with the comet trail on top, so free time stays transparent.
-
-        // Main ring (R3, R9, R10)
-        meetings.forEach { m ->
-            if (m.later) return@forEach
-            // The image only dims the others; the highlight itself is the selected-arc slot on top (R9),
-            // so it appears with the arc's fade instead of jumping ahead of it.
-            val dim = selected != null && m != selected
-            val base = when {
+        // Main ring (R3, R9, R10): elapsed part dimmer, private meetings as caution stripes.
+        for (p in shown.filter { it.lane == Lane.MAIN }) {
+            val m = p.meeting
+            val dim = selectedKey != null && m.key != selectedKey
+            val color = when {
                 m.private -> if (dim) PRIVATE_DIM else PRIVATE
                 else -> if (dim) AMBER_DIM else AMBER
             }
+            val past = if (m.private) PRIVATE_PAST else AMBER_PAST
+            val split = if (ScheduleRules.isLive(p, now)) now else p.cs
             stroke.strokeWidth = BAND
-            stroke.color = base
-            stroke.shader = if (m.private) stripes(base, midDeg(m)) else null
-            arc(canvas, m.startMin, m.endMin, R, stroke)
-            stroke.shader = null
+            paintArc(canvas, stroke, p.cs, split, R, past, m.private)
+            paintArc(canvas, stroke, split, p.ce, R, color, m.private)
         }
 
-        // Double bookings (R4): blank the band, then two 5 px coral stripes at R ± 4.5
-        for ((a, b) in clashRanges(meetings.filterNot { it.later })) {
-            stroke.color = Color.BLACK; stroke.strokeWidth = BAND + 2
-            arc(canvas, a, b, R, stroke)
-            stroke.color = CLASH; stroke.strokeWidth = 5f
-            arc(canvas, a, b, R - 4.5f, stroke)
-            arc(canvas, a, b, R + 4.5f, stroke)
+        // Double bookings (R4): blank the band, then two 5 px coral stripes at R ± 4.5.
+        for ((a, b) in ScheduleRules.clashRanges(shown)) {
+            for ((from, to, color) in listOf(Triple(a, minOf(b, maxOf(a, now)), CLASH_PAST), Triple(maxOf(a, now), b, CLASH))) {
+                if (to <= from) continue
+                stroke.shader = null
+                stroke.color = Color.BLACK; stroke.strokeWidth = BAND + 2
+                arc(canvas, from, to, R, stroke)
+                stroke.color = color; stroke.strokeWidth = 5f
+                arc(canvas, from, to, R - 4.5f, stroke)
+                arc(canvas, from, to, R + 4.5f, stroke)
+            }
         }
 
-        // Later lane (R5)
-        stroke.strokeCap = Paint.Cap.ROUND; stroke.strokeWidth = 4f; stroke.color = LATER
-        meetings.filter { it.later }.forEach { arc(canvas, it.startMin, it.endMin, R_LATER, stroke) }
+        // Later lane (R5): thin blue, rounded; private ones grey and dashed.
+        stroke.shader = null
+        stroke.strokeCap = Paint.Cap.ROUND; stroke.strokeWidth = 4f
+        for (p in shown.filter { it.lane == Lane.LATER }) {
+            stroke.color = if (p.meeting.private) PRIVATE else LATER
+            stroke.pathEffect = if (p.meeting.private) DashPathEffect(floatArrayOf(4f, 3f), 0f) else null
+            arc(canvas, p.cs, p.ce, R_LATER, stroke)
+        }
 
         return ByteArrayOutputStream().use { out ->
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
@@ -76,14 +88,22 @@ object RingRenderer {
         }
     }
 
+    private fun paintArc(canvas: Canvas, paint: Paint, from: Int, to: Int, r: Float, color: Int, private: Boolean) {
+        if (to <= from) return
+        paint.color = color
+        paint.shader = if (private) stripes(color, midDeg(from, to)) else null
+        arc(canvas, from, to, r, paint)
+        paint.shader = null
+    }
+
     private fun arc(canvas: Canvas, from: Int, to: Int, r: Float, paint: Paint) {
-        val start = (from % DIAL_MIN) / DIAL_MIN.toFloat() * 360f - 90f + GAP_DEG
-        val sweep = (to - from) / DIAL_MIN.toFloat() * 360f - 2 * GAP_DEG
+        val start = (from % ScheduleRules.DIAL_MIN) / ScheduleRules.DIAL_MIN.toFloat() * 360f - 90f + GAP_DEG
+        val sweep = (to - from) / ScheduleRules.DIAL_MIN.toFloat() * 360f - 2 * GAP_DEG
         canvas.drawArc(RectF(C - r, C - r, C + r, C + r), start, sweep.coerceAtLeast(0.5f), false, paint)
     }
 
-    private fun midDeg(m: SpikeSchedule.Meeting) =
-        (((m.startMin + m.endMin) / 2) % DIAL_MIN) / DIAL_MIN.toFloat() * 360f
+    private fun midDeg(from: Int, to: Int) =
+        (((from + to) / 2) % ScheduleRules.DIAL_MIN) / ScheduleRules.DIAL_MIN.toFloat() * 360f
 
     /** Caution band (R10): 5 px on / 5 px off, at 45° to the arc at its middle. */
     private fun stripes(color: Int, midDeg: Float): Shader {
@@ -91,23 +111,6 @@ object RingRenderer {
         Canvas(tile).drawRect(0f, 0f, 10f, 5f, Paint().apply { this.color = color })
         return BitmapShader(tile, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT).apply {
             setLocalMatrix(Matrix().apply { setRotate(midDeg + 45f) })
-        }
-    }
-
-    /** Merged minute ranges where two or more meetings overlap. */
-    private fun clashRanges(main: List<SpikeSchedule.Meeting>): List<Pair<Int, Int>> {
-        val pairs = buildList {
-            for (i in main.indices) for (j in i + 1 until main.size) {
-                val a = maxOf(main[i].startMin, main[j].startMin)
-                val b = minOf(main[i].endMin, main[j].endMin)
-                if (b > a) add(a to b)
-            }
-        }.sortedBy { it.first }
-        return pairs.fold(mutableListOf()) { merged, r ->
-            val last = merged.lastOrNull()
-            if (last != null && r.first <= last.second) merged[merged.size - 1] = last.first to maxOf(last.second, r.second)
-            else merged += r
-            merged
         }
     }
 }

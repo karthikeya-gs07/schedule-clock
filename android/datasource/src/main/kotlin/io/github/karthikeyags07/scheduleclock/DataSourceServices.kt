@@ -36,9 +36,14 @@ class SelectedDataSourceService : SlotDataSourceService("selected", Complication
     override fun data() = SpikeSchedule.selectedArc(this)
 }
 
-/** Slot 4 `status`: VALUE = selected (0/1); the clock, date and details live inside this slot. */
+/** Slot 4 `status`: VALUE = selected (0/1); the date, clock, title and time range live inside this slot. */
 class StatusDataSourceService : SlotDataSourceService("status", ComplicationType.RANGED_VALUE) {
     override fun data() = SpikeSchedule.status(this)
+}
+
+/** Slot 3 `details`: the line under the time range (place, clash, tomorrow, or "Details hidden"). */
+class DetailsDataSourceService : SlotDataSourceService("details", ComplicationType.RANGED_VALUE) {
+    override fun data() = SpikeSchedule.detailsLine(this)
 }
 
 /** Slot 5 `ring_promote` (M3): the arc settling from the later lane onto the ring. */

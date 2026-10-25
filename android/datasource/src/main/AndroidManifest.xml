@@ -23,7 +23,7 @@
                 android:value="SMALL_IMAGE" />
             <meta-data
                 android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
-                android:value="0" />
+                android:value="300" />
         </service>
 
         <!-- Slot `status`: VALUE = selected (0/1) drives the face's Transforms; TEXT = details (slot 4). -->
@@ -40,7 +40,7 @@
                 android:value="RANGED_VALUE" />
             <meta-data
                 android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
-                android:value="0" />
+                android:value="300" />
         </service>
 
         <!-- Slot `ring_selected`: the selected arc on top of the image (R9). -->
@@ -57,7 +57,24 @@
                 android:value="RANGED_VALUE" />
             <meta-data
                 android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
-                android:value="0" />
+                android:value="300" />
+        </service>
+
+        <!-- Slot `details`: the line under the time range. -->
+        <service
+            android:name=".DetailsDataSourceService"
+            android:exported="true"
+            android:label="@string/details_label"
+            android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
+            <intent-filter>
+                <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+            </intent-filter>
+            <meta-data
+                android:name="android.support.wearable.complications.SUPPORTED_TYPES"
+                android:value="RANGED_VALUE" />
+            <meta-data
+                android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
+                android:value="300" />
         </service>
 
         <!-- Slot `ring_promote`: the arc settling from the later lane onto the ring (M3). -->

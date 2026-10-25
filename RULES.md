@@ -157,10 +157,12 @@ All sizes are in px on the **450 × 450 face canvas** (≈ 2 px per dp on a typi
 |---|---|---|---|
 | 1 `ring` | SMALL_IMAGE (PHOTO style) | **The whole ring as one image** drawn by the data source: main-ring meetings, elapsed parts, later lane, double-booking stripes, private caution stripes (R1–R10). Grey variant in the ambient image field (A1) | Full-face `PartImage` |
 | 2 `ring_selected` | RANGED_VALUE | MIN/MAX = the selected arc's start/end angle (degrees from 12 o'clock); VALUE = MAX when shown, MIN when hidden (keeps the last position so it fades out in place) | Arc on top: thickness (12 → 22 px, inward) and alpha animated (M1); angles **jump, never animate** (animating them made the arc sweep across the dial). Switching meetings: fade out in place, then the new arc fades in (M2), stepped by the data source ~400 ms apart. Never hidden under clash stripes |
-| 3 `details` | LONG_TEXT | Title, time range, place | Center text |
-| 4 `status` | RANGED_VALUE | VALUE = `selected` (0/1); TEXT = status line. **The clock, date and details are drawn inside this slot** so their Transforms can read VALUE (spike 1) | Drives every M1 `Transform` |
+| 3 `details` | RANGED_VALUE | TEXT = the line under the time range: place, the clashing meeting (C7), "Tomorrow · place" (C6) or "Details hidden" (C13). VALUE = selected (0/1) so it moves with the layout; MAX = 1 + measured width + 10000 × kind (0 place · 1 clash · 2 tomorrow · 3 private) | Muted / coral with the overlap icon / blue; a clash line moves up under the title |
+| 4 `status` | RANGED_VALUE | VALUE = `selected` (0/1); TEXT = title (or "Private"); TITLE = time range; MAX = 1 + measured title width + 10000 × flags (1 arrow C12, 2 lock C13, 4 clash C7). **Date, clock, divider, title and time range are drawn inside this slot** so their Transforms can read VALUE (spike 1) | Drives every M1 `Transform`; the arrow and lock are drawn just before the centered title using the width |
 | 5 `ring_promote` | RANGED_VALUE | The promoting meeting: MIN/MAX = its angles, VALUE = progress lane → ring; no data otherwise. Stepped by the data source: on the lane → moving → handed to the image | Arc scaled R − 10 → R, 4 → 12 px, blue → amber over 0.9 s (M3) |
 | 6–8 | — | Free | Weather, battery… later |
+
+**Why widths travel in MAX:** WFF can't measure text, and one line can't mix colors (a second `Font` run is ignored), so icons can't be inline glyphs. The data source measures each line with the watch's own default typeface at the face's sizes, shortens it with an ellipsis (C9) and sends the width; the face draws the icon as shapes at `225 − (width + icon space) / 2` and nudges the text right by half the icon space. A slot's bounding area also crops its drawing, so text slots use a full-face bounding oval.
 
 Face-side, no slot: comet trail (240 dashes lit by time expressions) and the now dot (R6), verified in spike 3.
 
@@ -176,6 +178,7 @@ Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.sched
 
 | Date | Change | Rules |
 |---|---|---|
+| 2026-10-25 | Watch build gains the date, time range, place line, look-ahead arrow, lock and overlap line (C1, C4, C7, C12, C13), driven by a first port of the rules engine; `details` becomes a RANGED_VALUE slot with packed width/kind. | §8 slots 3–4 |
 | 2026-10-25 | Selected arc no longer slides between meetings (it swept across the face): angles jump, the old arc fades out in place and the new one fades in. The ring image only dims the others; the highlight comes from the arc. | §8 slot 2, R9, M2 |
 | 2026-10-25 | Spike 3: selected and settle slots are `RANGED_VALUE` (angles in MIN/MAX, state in VALUE); trail and now dot are face-side. | §8, R6, R9, M3 |
 | 2026-10-25 | Slot plan after spikes 1–2: the ring is one image (slot 1), clock/date/details live inside the status slot, 3 slots freed. | §8 |
