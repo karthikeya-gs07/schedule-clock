@@ -59,7 +59,7 @@ def band_d(from_min, to_min, r, width):
 
 
 def private_arc(name, from_min, to_min, color, clip_id):
-    """Caution band (R10): 5 px stripes / 5 px gaps at 45° to the arc's middle tangent."""
+    """For private-meeting variants. Caution band (R10): 5 px stripes / 5 px gaps at 45° to the arc's middle tangent."""
     mid = deg((from_min + to_min) / 2)
     cx, cy = pt(mid, R)
     lines = []
@@ -121,7 +121,7 @@ def meetings(dim):
     parts = [
         arc("Roadmap planning · elapsed", 600, NOW, R, AMBER_PAST, 12),
         arc("Roadmap planning · remaining", NOW, 690, R, amber, 12),
-        private_arc("Lunch (private)", 750, 780, grey, "clipPrivate" + ("Dim" if dim else "")),
+        arc("Coffee Catch Up", 750, 780, R, amber, 12),
         arc("Design review", 780, 840, R, amber, 12),
         arc("Vendor call", 780, 840, R, amber, 12),
         arc("Candidate interview", 900, 945, R, amber, 12),
@@ -151,7 +151,7 @@ def arrow(x, y, s=1.0):
 
 
 def lock(x, top, s=1.0):
-    """Private lock (C13): 16 × 20, grey."""
+    """For private-meeting variants. Private lock (C13): 16 × 20, grey."""
     return (f'<g id="Lock (private)"><path d="M{x + 3.5 * s:.2f} {top + 9 * s:.2f} V{top + 6.5 * s:.2f} '
             f'a{4.5 * s} {4.5 * s} 0 0 1 {9 * s:.2f} 0 V{top + 9 * s:.2f}" fill="none" stroke="{MUTED}" stroke-width="{2.5 * s:g}"/>'
             f'<rect x="{x:.2f}" y="{top + 9 * s:.2f}" width="{16 * s:g}" height="{12 * s:g}" rx="{2.5 * s:g}" fill="{MUTED}"/></g>')
@@ -164,8 +164,8 @@ def overlap_icon(x, y, s=1.0):
 
 
 def default_center():
-    """C1–C13 default layout (T2): next meeting is the private lunch, with the arrow because Roadmap is live."""
-    title_w, extra = 95, 30 + 25          # "Private" at 30 px; arrow + lock space
+    """C1–C12 default layout (T2): next meeting is Coffee Catch Up, with the arrow because Roadmap is live."""
+    title_w, extra = 219, 30              # "Coffee Catch Up" at 30 px Roboto Medium (measured); arrow space
     icons_x = C - (title_w + extra) / 2
     return ('<g id="Center">'
             + text("Date", C, 122, 24, MUTED, "SUN · OCT 25", weight=500, spacing=2)
@@ -174,10 +174,10 @@ def default_center():
             + text("AM/PM", 322, 206, 24, MUTED, "AM", weight=500, anchor="start") + "</g>"
             + f'<line id="Divider" x1="155" y1="238" x2="295" y2="238" stroke="#2a2a2e" stroke-width="2" stroke-linecap="round"/>'
             + '<g id="Details">'
-            + arrow(icons_x, 273.5) + lock(icons_x + 30, 262)
-            + text("Title", C + extra / 2, 284, 30, TEXT, "Private", weight=500)
+            + arrow(icons_x, 273.5)
+            + text("Title", C + extra / 2, 284, 30, TEXT, "Coffee Catch Up", weight=500)
             + text("Time range", C, 318, 24, TEXT, "12:30 – 1:00 PM")
-            + text("Place", C, 348, 24, MUTED, "Details hidden")
+            + text("Place", C, 348, 24, MUTED, "Café Blue")
             + "</g></g>")
 
 
