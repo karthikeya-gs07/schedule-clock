@@ -105,6 +105,8 @@
   .time-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
   #timeLabel { font-size: 26px; font-weight: 600; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
   #timeLabel small { font-size: 12px; color: var(--muted); font-weight: 500; letter-spacing: 0; margin-left: 6px; }
+  .time-btns { display: flex; gap: 6px; }
+  #liveBtn[aria-pressed=true] { color: #7ee2a0; border-color: #2c5f49; }
   .pill { padding: 6px 12px; border-radius: 999px; font-size: 13px; }
   #play .on, #play[aria-pressed=true] .off { display: none; }
   #play[aria-pressed=true] .on { display: inline; }
@@ -273,9 +275,12 @@
     <h2>Time</h2>
     <div class="time-row">
       <div id="timeLabel"></div>
-      <button class="pill" id="play" aria-pressed="false"><span class="off">▶ Play</span><span class="on">❚❚ Pause</span></button>
+      <div class="time-btns">
+        <button class="pill" id="liveBtn" aria-pressed="true" title="Follow the real time">● Live</button>
+        <button class="pill" id="play" aria-pressed="false"><span class="off">▶ Play</span><span class="on">❚❚ Pause</span></button>
+      </div>
     </div>
-    <input id="time" type="range" min="360" max="1800" step="5" value="360" aria-label="Simulated time">
+    <input id="time" type="range" min="0" max="1800" step="1" value="0" aria-label="Simulated time">
   </div>
 
   <div class="sect">
@@ -364,7 +369,10 @@ const AUTO_RETURN_MS = 8000;
 
 // ---------- State ----------
 let preset = 'Example';
-let nowMin = 6 * 60;
+// Starts at the device's real local time (so in India it is the India time) and follows it until you move the
+// slider or press Play; "Live" brings it back.
+const realNow = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
+let nowMin = realNow(), live = true;
 let selected = -1;          // -1 = DEFAULT, otherwise index into upcoming()
 let selectedKey = null;     // which meeting is selected, so a changing list can't move the selection
 let ambient = false;
@@ -663,8 +671,9 @@ function renderBase(list) {
 
   const timeStr = fmtClock(nowMin, false);
   const ampm = nowMin % 1440 < 720 ? 'AM' : 'PM';
-  const DAYS = ['SAT · OCT 24', 'SUN · OCT 25'];
-  setText('dDate', DAYS[Math.min(Math.floor(nowMin / 1440), DAYS.length - 1)]);
+  const day = new Date(); day.setDate(day.getDate() + Math.floor(nowMin / 1440));   // real date, rolls over past midnight
+  const part = o => day.toLocaleDateString('en-US', o).toUpperCase();
+  setText('dDate', `${part({ weekday: 'short' })} · ${part({ month: 'short' })} ${day.getDate()}`);
   setText('dTime', timeStr);
   setText('dAmpm', nowMin % 1440 < 720 ? 'AM' : 'PM');
   // Center time + AM/PM as one unit (the clock font's width varies, so the pair is measured).
@@ -947,7 +956,7 @@ function renderAll() {
 function renderPanel(list) {
   const t = $('timeLabel');
   t.textContent = fmtClock(nowMin);
-  if (nowMin >= 1440) { const n = document.createElement('small'); n.textContent = 'next day'; t.appendChild(n); }
+  if (nowMin >= 1440 || live) { const n = document.createElement('small'); n.textContent = live ? 'live' : 'next day'; t.appendChild(n); }
   $('stateLabel').textContent = ambient ? 'AMBIENT'
     : selected < 0 ? 'DEFAULT' : `SELECTED ${selected + 1}/${list.length}`;
 }
@@ -1027,10 +1036,29 @@ Object.keys(PRESETS).forEach(name => {
   };
   presetsEl.appendChild(b);
 });
+function setLive(on) {
+  live = on;
+  $('liveBtn').setAttribute('aria-pressed', on);
+}
+$('liveBtn').onclick = () => {
+  if (playTimer) $('play').click();                 // stop fast-forward first
+  setLive(true);
+  nowMin = realNow(); $('time').value = nowMin;
+  scrubbing = true; svg.classList.add('scrubbing');   // jump without replaying animations
+  renderAll();
+  setTimeout(() => { scrubbing = false; svg.classList.remove('scrubbing'); }, 250);
+};
+setInterval(() => {                                 // follow the real clock while live
+  if (!live) return;
+  const n = realNow();
+  if (n !== nowMin) { nowMin = n; $('time').value = n; renderAll(); }
+}, 10000);
+
 // Scrub: render at most once per frame, with transitions off, and settle cleanly on release.
 let scrubFrame = 0, scrubEnd = 0;
 $('time').oninput = ev => {
   nowMin = +ev.target.value;
+  setLive(false);
   scrubbing = true;
   svg.classList.add('scrubbing');
   clearTimeout(scrubEnd);
@@ -1103,10 +1131,11 @@ $('slowmo').onclick = () => {
 let playTimer = null;
 $('play').onclick = () => {
   const on = !playTimer;
+  if (on) setLive(false);
   $('play').setAttribute('aria-pressed', on);
   if (!on) { clearInterval(playTimer); playTimer = null; return; }
   playTimer = setInterval(() => {
-    nowMin = nowMin >= 1800 ? 360 : nowMin + 1;
+    nowMin = nowMin >= 1800 ? 0 : nowMin + 1;
     $('time').value = nowMin;
     renderAll();
   }, 40);
@@ -1282,6 +1311,7 @@ addEventListener('keydown', ev => {
 });
 if (location.hash === '#dial') setFocus(true);
 
+$('time').value = nowMin;
 applyDevice();
 applyColors(currentTheme());
 // Re-measure once the clock font has loaded (its width drives the AM/PM position).
