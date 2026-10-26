@@ -34,6 +34,7 @@ object SpikeSchedule {
 
     // The prototype's busy day, plus a late meeting that lands on the later lane during the day.
     private val meetings = listOf(
+        Meeting(30, 2 * 60, "Night call", "Zoom"),                        // before 6 AM: on the lane, not the ring (W5a)
         Meeting(9 * 60, 9 * 60 + 30, "Standup", "Google Meet"),
         Meeting(10 * 60, 11 * 60 + 30, "Roadmap planning", "Atlas room"),
         Meeting(12 * 60 + 30, 13 * 60, "Lunch with Sam", "Café Blue", private = true),

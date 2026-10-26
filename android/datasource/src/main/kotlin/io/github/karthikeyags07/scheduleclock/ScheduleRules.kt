@@ -31,9 +31,9 @@ object ScheduleRules {
      * W1–W7: main ring = meetings that end within the 12 h window (which starts at a live meeting's
      * start, W2); later lane = the rest of today, plus tomorrow's that start inside the window but
      * end past it; everything else, including past meetings, is not shown. Chronological (W10).
-     * W5a: from 12 to 6 AM the day hasn't started, so its meetings from 6 AM on stay on the lane once they
-     * end within the window (never a clipped sliver; never past 6 PM, so lane arcs never share an angle),
-     * and settle onto the ring at 6 AM.
+     * W5a: from 12 to 6 AM the day hasn't started, so nothing takes the main ring: every meeting, night ones
+     * included, stays on the lane once it ends within the window (never a clipped sliver; never past 6 PM,
+     * so lane arcs never share an angle), and they settle onto the ring at 6 AM.
      */
     fun place(meetings: List<Meeting>, now: Int): List<Placed> {
         val all = meetings.filter { !it.allDay }.sortedBy { it.startMin }   // W9: all-day events are never drawn…
@@ -43,8 +43,8 @@ object ScheduleRules {
         val laneEnd = minOf(winEnd, DAY_START_MIN + WINDOW_MIN)
         return all.mapNotNull { m ->
             when {
-                now < DAY_START_MIN && m.startMin >= DAY_START_MIN ->
-                    if (m.endMin <= laneEnd) Placed(m, Lane.LATER, m.startMin, m.endMin, overlapping(allDays, m)) else null
+                now < DAY_START_MIN ->
+                    if (m.endMin > now && m.endMin <= laneEnd) Placed(m, Lane.LATER, m.startMin, m.endMin, overlapping(allDays, m)) else null
                 m.endMin > now && m.endMin <= winEnd -> Placed(m, Lane.MAIN, maxOf(m.startMin, winStart), m.endMin, overlapping(allDays, m))
                 m.endMin > winEnd && m.startMin > now && (m.startMin < DAY_MIN || m.startMin < winEnd) ->
                     Placed(m, Lane.LATER, m.startMin, if (m.startMin < DAY_MIN) minOf(m.endMin, DAY_MIN) else m.endMin, overlapping(allDays, m))
