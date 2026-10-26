@@ -1,4 +1,4 @@
-# Schedule Clock: Behavior & Design Rules
+# Calen-Time: Behavior & Design Rules
 
 > **Source of truth** for what the watch face does in every situation, and why.
 > Updated whenever a design decision changes. The working reference is [`prototype/index.html`](prototype/index.html); product context, platform and risks are in [`PRD.md`](PRD.md).

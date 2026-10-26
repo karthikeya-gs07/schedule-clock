@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Schedule Clock data</string>
+    <string name="app_name">Calen-Time data</string>
     <string name="ring_label">Schedule ring</string>
     <string name="selected_label">Selected meeting</string>
     <string name="status_label">Schedule details</string>

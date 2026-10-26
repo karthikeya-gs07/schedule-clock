@@ -1,8 +1,10 @@
-# Schedule Clock
+# Calen-Time
 
-A Wear OS watch face that shows the time **and the shape of your day**: calendar meetings are drawn as arcs on the dial at the hours they occupy, with the next meeting's details under the clock.
+**Calen-Time** (calendar + time) is a Wear OS watch face that shows the time **and the shape of your day**: calendar meetings are drawn as arcs on the dial at the hours they occupy, with the next meeting's details under the clock.
 
 **Status:** design prototype. No watch code yet.
+
+> Formerly "Schedule Clock". The GitHub repository name, the Pages address and the Android package ids (`io.github.karthikeyags07.scheduleclock`) keep the old name for now.
 
 ## Files
 

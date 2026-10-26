@@ -1,4 +1,4 @@
-"""Generates Figma-friendly SVGs of the Schedule Clock watch face.
+"""Generates Figma-friendly SVGs of the Calen-Time watch face.
 
 Usage: python3 design/gen_figma_svg.py   (writes design/watchface-default.svg and design/watchface-selected.svg)
 
@@ -219,6 +219,6 @@ def face(name, center, dim):
 '''
 
 
-(OUT / "watchface-default.svg").write_text(face("Schedule Clock · default 10:20 AM", default_center(), dim=False))
-(OUT / "watchface-selected.svg").write_text(face("Schedule Clock · selected Design review", selected_center(), dim=True))
+(OUT / "watchface-default.svg").write_text(face("Calen-Time · default 10:20 AM", default_center(), dim=False))
+(OUT / "watchface-selected.svg").write_text(face("Calen-Time · selected Design review", selected_center(), dim=True))
 print("wrote", OUT / "watchface-default.svg", "and", OUT / "watchface-selected.svg")

@@ -1,4 +1,4 @@
-# Schedule Clock: Product Requirements (living doc)
+# Calen-Time: Product Requirements (living doc)
 
 > Status: **v0.40 — Spikes 1–5 verified on the emulator (§6.3a–e): the face shows the prototype's center content, AM/PM and scrolling long titles with fake meetings. Next: read the real calendar, then real-watch checks.**
 > Last updated: 2026-10-25
@@ -88,7 +88,7 @@ Full detail in [RULES.md](RULES.md). In short:
 
 ```
 ┌───────────────────────────┐   complication data (7 slots)   ┌──────────────────────────┐
-│ Schedule Data Source app  │ ──────────────────────────────▶ │ Schedule Clock face (WFF)│
+│ Calen-Time data source    │ ──────────────────────────────▶ │ Calen-Time face (WFF)    │
 │ (Kotlin, runs on watch)   │                                 │ (XML only, no code)      │
 │ • reads calendar on watch │                                 │ • ring, lane, clash arcs │
 │ • applies RULES.md W/C    │ ◀────────────────────────────── │ • clock, date, details   │
@@ -310,6 +310,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 - **v0.28:** Trail dashes doubled to 20 per hour (240, every 1.5°) and thinned to 1.2 px (R6).
 - **v0.29:** Arcs are solid and darker instead of see-through; private stripes and the double-booking gap get a dark fill instead of transparency (R6a).
 - **v0.30:** Prototype control panel redesigned into grouped sections (Time, Day, Display, Behavior) with switches and a segmented day picker; the complication payload view is removed. New **Dial only** mode (button, `F` key, or `#dial` in the URL) hides all controls and shows just the watch.
+- **v0.42:** Project renamed **Calen-Time** (calendar + time): titles, watch face and app labels, Figma SVGs. Repository, Pages URL and Android package ids unchanged.
 - **v0.41:** All arcs have round ends (R1a), in the prototype, the ring image and the selected/settle arcs on the watch (unbuilt). Prototype gains a **Colors** section: themes (Amber real; Mint, Violet, Rose are examples), per-element colour pickers, Copy theme, saved Custom theme (RULES §9). Watch colour configurations are planned, not built: waiting for the colours.
 - **v0.40:** Spike 5 verified on the emulator: AM/PM label works; scrolling titles fixed (`[SECOND_MILLISECOND]` is seconds, not ms) and made cheap (scroll slots send no data unless scrolling: 0.63 vs 3.5 s CPU/min) (§6.3e).
 - **v0.39:** Watch-face spike 5 written (unbuilt): long titles scroll in their own cropped slots (4 and 6), ambient shows the shortened title; checklist in §6.3e. Fake long-title meeting added.
