@@ -57,7 +57,7 @@ Full detail in [RULES.md](RULES.md). In short:
 | Q2 | Which calendar(s)? Google, Outlook, iCloud, all on-phone calendars? | **Open.** Affects data access and permissions. |
 | Q3 | 12 h dial vs. full day | **Decided:** main ring + later lane (W1–W8) |
 | Q4 | Overlapping events | **Decided:** split coral stripes (R4, C7) |
-| Q5 | All-day events | **Open.** Ignored for now (W9); maybe a small indicator. |
+| Q5 | All-day events | **Decided (2026-10-26):** kept as events, never shown on the face (W9). No indicator. |
 | Q6 | Past events | **Decided:** hidden (W7) |
 | Q7 | Ambient mode | **Decided:** A1–A3 |
 | Q8 | Exiting selection | **Decided:** I4, I5, I7 |
@@ -311,6 +311,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 - **v0.29:** Arcs are solid and darker instead of see-through; private stripes and the double-booking gap get a dark fill instead of transparency (R6a).
 - **v0.30:** Prototype control panel redesigned into grouped sections (Time, Day, Display, Behavior) with switches and a segmented day picker; the complication payload view is removed. New **Dial only** mode (button, `F` key, or `#dial` in the URL) hides all controls and shows just the watch.
 - **v0.44:** True-size scale now comes from the screen's resolution: native pixels (CSS size × pixel ratio) are matched to a table of known panels (Galaxy Z Fold5–8 Ultra and Flip7/8 inner and cover screens, iPhones, iPads, MacBooks), and CSS px per inch = CSS diagonal ÷ real diagonal, so it follows browser zoom and folding/unfolding. The Android model comes from client hints when Chrome hides it; a shared resolution (Fold7 cover vs Flip inner) without a model averages and says "may be off". Unlisted phones still use an estimate. Calibration uses the card's long edge on screens wide enough. Fold8 / Fold8 Ultra sizes are from press listings, not yet checked on a device.
+- **v0.45:** All-day events are kept as events but never shown on the face (W9, Q5 decided): filtered out of the rules in the prototype (demo "Company holiday" and a note in the panel) and in the Kotlin rules engine (`Meeting.allDay`, set from the calendar's ALL_DAY flag). Not yet built on the watch.
 - **v0.43:** Prototype opens at the device's real local time and date and follows the clock (Live); moving the slider or pressing Play simulates, Live returns. The slider now spans 12 AM to 6 AM next day. The watch already reads its own clock (a debug time offset is only applied if set).
 - **v0.42:** Project renamed **Calen-Time** (calendar + time): titles, watch face and app labels, Figma SVGs. Repository, Pages URL and Android package ids unchanged.
 - **v0.41:** All arcs have round ends (R1a), in the prototype, the ring image and the selected/settle arcs on the watch (unbuilt). Prototype gains a **Colors** section: themes (Amber real; Mint, Violet, Rose are examples), per-element colour pickers, Copy theme, saved Custom theme (RULES §9). Watch colour configurations are planned, not built: waiting for the colours.

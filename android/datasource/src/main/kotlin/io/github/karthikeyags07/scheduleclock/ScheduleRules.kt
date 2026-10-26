@@ -10,6 +10,8 @@ data class Meeting(
     val title: String,
     val where: String = "",
     val private: Boolean = false,
+    /** W9: an all-day event is kept as an event but never placed or shown. Set from CalendarContract.Events.ALL_DAY. */
+    val allDay: Boolean = false,
 ) {
     val key: String get() = "$startMin|$title"
 }
@@ -30,7 +32,7 @@ object ScheduleRules {
      * end past it; everything else, including past meetings, is not shown. Chronological (W10).
      */
     fun place(meetings: List<Meeting>, now: Int): List<Placed> {
-        val all = meetings.sortedBy { it.startMin }
+        val all = meetings.filter { !it.allDay }.sortedBy { it.startMin }   // W9: all-day events never reach the face
         val winStart = minOf(now, all.filter { it.startMin < now && it.endMin > now }.minOfOrNull { it.startMin } ?: now)
         val winEnd = winStart + WINDOW_MIN
         return all.mapNotNull { m ->

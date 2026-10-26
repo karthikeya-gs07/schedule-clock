@@ -37,7 +37,7 @@ All sizes are in px on the **450 × 450 face canvas** (≈ 2 px per dp on a typi
 | W6 | A meeting is tomorrow and starts **after** the window | **Toggle "Tomorrow look-ahead 14 h" (default on):** if it starts within **14 hours of now** it shows on the later lane, in the list, with "Tomorrow ·"; it moves to the main ring once it fits (W5). Further out: **not shown** until it comes into range. Toggle off: only what starts inside the 12 h window (P8). | Tomorrow's 8 AM should appear in the evening (from about 6 PM), not at breakfast time. It must not clutter the face all day. |
 | W7 | A meeting has ended | Not shown. | Past is noise on a glanceable face. |
 | W8 | A later-lane meeting comes to **fit completely** in the window (end ≤ window end) | It **moves to the main ring**, animated (M3). Example: the 7–8 PM call moves at **8:00 AM**, after the now dot and trail have passed the 7→8 slot. | Never shows as a clipped sliver, and never shares a slot with now (P6). |
-| W9 | All-day events | Ignored (v1). | No position on a time dial. Open question Q5. |
+| W9 | An event is an **all-day event** (the calendar's all-day flag, not its times) | It is **kept as an event but never shown**: not on the ring, not on the lane, not in the details, not selectable, and it never counts as "next" or as a double booking. | It has no time on a 12 h dial, and a whole-day banner would bury the meetings. Decided 2026-10-26 (PRD Q5). The calendar stores all-day events as midnight-to-midnight in UTC, so the flag must be used: in a time zone like India's their times fall on the wrong side of local midnight. |
 | W10 | List order (for "next" and for taps) | **Chronological across both lanes.** | Indexes don't shift when a meeting changes lane, so a selection never jumps. |
 
 ---

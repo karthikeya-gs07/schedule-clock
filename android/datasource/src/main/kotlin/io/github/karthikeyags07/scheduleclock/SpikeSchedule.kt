@@ -44,6 +44,7 @@ object SpikeSchedule {
         Meeting(16 * 60, 17 * 60, "Weekly sync", "Google Meet"),
         Meeting(17 * 60 + 30, 18 * 60 + 30, "Quarterly roadmap and budget alignment with leadership", "Atlas room"),  // long title (C9a)
         Meeting(19 * 60, 20 * 60, "Client call", "Zoom"),
+        Meeting(0, 24 * 60, "Company holiday", allDay = true),               // all-day: never shown (W9)
         Meeting(23 * 60, 23 * 60 + 45, "Late sync", "Zoom"),             // later lane until 11:45 AM
     )
 

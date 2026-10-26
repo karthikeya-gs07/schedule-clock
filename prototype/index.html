@@ -105,6 +105,8 @@
   .time-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
   #timeLabel { font-size: 26px; font-weight: 600; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
   #timeLabel small { font-size: 12px; color: var(--muted); font-weight: 500; letter-spacing: 0; margin-left: 6px; }
+  .note { color: var(--muted); font-size: 12px; min-height: 0; }
+  .note:empty { display: none; }
   .time-btns { display: flex; gap: 6px; }
   #liveBtn[aria-pressed=true] { color: #7ee2a0; border-color: #2c5f49; }
   .pill { padding: 6px 12px; border-radius: 999px; font-size: 13px; }
@@ -286,6 +288,7 @@
   <div class="sect">
     <h2>Day</h2>
     <div class="seg" id="presets"></div>
+    <div class="note" id="allDayNote"></div>
   </div>
 
   <div class="sect">
@@ -331,6 +334,7 @@ const PRESETS = {
     { start: '13:00', end: '14:00', title: 'Vendor call', where: 'Zoom' },        // double booked
     { start: '16:00', end: '17:00', title: 'Weekly sync', where: 'Google Meet' },
     { start: '19:00', end: '20:00', title: 'Client call', where: 'Zoom' },        // beyond 12 h at 6 AM
+    { allDay: true, title: 'Company holiday', where: '' },                        // all-day: kept as an event, never shown (W9)
     { day: 1, start: '08:00', end: '08:45', title: 'Team breakfast', where: 'Café Blue' },  // tomorrow
     { day: 1, start: '10:00', end: '11:00', title: 'Board prep', where: 'Room 1' },         // tomorrow, later
   ],
@@ -386,7 +390,10 @@ const toMin = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m;
 // Midnight that ends the current simulated day (the slider runs past 12 AM into the next day).
 const dayEndOf = min => (Math.floor(min / 1440) + 1) * 1440;
 // Minutes from today's midnight; tomorrow's events (day: 1) are 1440 + …
-const events = () => PRESETS[preset].map(e => ({ ...e, s: (e.day || 0) * 1440 + toMin(e.start), e: (e.day || 0) * 1440 + toMin(e.end) }));
+// All-day events (W9) have no start or end time: they span the whole day and are kept as events but never placed.
+const events = () => PRESETS[preset].map(e => e.allDay
+  ? { ...e, start: '00:00', end: '24:00', s: (e.day || 0) * 1440, e: (e.day || 0) * 1440 + 1440 }
+  : { ...e, s: (e.day || 0) * 1440 + toMin(e.start), e: (e.day || 0) * 1440 + toMin(e.end) });
 
 // Two lanes:
 //  main  – events that END within the 12h window. The window normally starts at now; if a
@@ -401,7 +408,7 @@ const events = () => PRESETS[preset].map(e => ({ ...e, s: (e.day || 0) * 1440 + 
 // window appear. Later ones stay hidden until they come into range.
 // The list is chronological across both lanes, so indexes don't shift when a meeting moves.
 function upcoming() {
-  const all = events().sort((a, b) => a.s - b.s);
+  const all = events().filter(e => !e.allDay).sort((a, b) => a.s - b.s);   // W9: all-day events never reach the face
   const live = all.filter(e => e.s < nowMin && e.e > nowMin);
   const winStart = Math.min(nowMin, ...live.map(e => e.s));
   const winEnd = winStart + WINDOW_MIN;
@@ -959,6 +966,8 @@ function renderPanel(list) {
   if (nowMin >= 1440 || live) { const n = document.createElement('small'); n.textContent = live ? 'live' : 'next day'; t.appendChild(n); }
   $('stateLabel').textContent = ambient ? 'AMBIENT'
     : selected < 0 ? 'DEFAULT' : `SELECTED ${selected + 1}/${list.length}`;
+  const hidden = events().filter(e => e.allDay).length;
+  $('allDayNote').textContent = hidden ? `${hidden} all-day event${hidden > 1 ? 's' : ''} not shown on the watch` : '';
 }
 
 // ---------- Interaction (mirrors the data source's tap handling) ----------
