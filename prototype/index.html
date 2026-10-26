@@ -371,6 +371,7 @@ const R_LATER = R - 10;      // thin inner lane for meetings later today, beyond
 const CLASH_OFFSET = 4.5;    // double booking: two 5 px stripes at R ± 4.5 inside the 12 px band
 const WINDOW_MIN = 12 * 60;
 const LOOKAHEAD_MIN = 14 * 60;   // tomorrow's meetings show up this far ahead (on the lane)
+const DAY_START_MIN = 6 * 60;    // W5a: before 6 AM the day's meetings wait on the lane
 const AUTO_RETURN_MS = 8000;
 
 // ---------- State ----------
@@ -415,7 +416,13 @@ function upcoming() {
   const winStart = Math.min(nowMin, ...live.map(e => e.s));
   const winEnd = winStart + WINDOW_MIN;
   const dayEnd = dayEndOf(nowMin);
+  const dayStart = dayEnd - 1440 + DAY_START_MIN;
+  // W5a: from 12 to 6 AM the day hasn't started: its meetings from 6 AM on stay on the lane once they end
+  // within the look-ahead (never past 6 PM, so lane arcs never share an angle, and never a clipped sliver).
+  // At 6 AM they settle onto the ring.
+  const laneEnd = Math.min(nowMin + (lookAhead ? LOOKAHEAD_MIN : WINDOW_MIN), dayStart + WINDOW_MIN);
   return all.flatMap(e => {
+    if (nowMin < dayStart && e.s >= dayStart) return e.e <= laneEnd ? [{ ...e, lane: 'later', cs: e.s, ce: e.e }] : [];
     // Tomorrow's meetings (start at or after the next midnight) never take the main ring early:
     // they wait on the lane until the clock passes midnight, when they become today's (W5).
     if (e.e > nowMin && e.e <= winEnd && e.s < dayEnd) return [{ ...e, lane: 'main', cs: Math.max(e.s, winStart), ce: e.e }];
