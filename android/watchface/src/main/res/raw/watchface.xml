@@ -342,9 +342,9 @@
         <PartDraw name="sel_main" x="0" y="0" width="450" height="450" alpha="0">
           <Transform target="alpha" value="255 * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1) * (1 - (floor([COMPLICATION.RANGED_VALUE_MIN] / 1000) % 2)) * (1 - floor([COMPLICATION.RANGED_VALUE_MIN] / 2000))"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
           <Arc centerX="225" centerY="225" width="428" height="428" startAngle="0" endAngle="1">
-            <Transform target="startAngle" value="([COMPLICATION.RANGED_VALUE_MIN] % 1000) + 1"/>
-            <Transform target="endAngle" value="([COMPLICATION.RANGED_VALUE_MAX] % 1000) - 1"/>
-            <Stroke color="#ffffd27f" thickness="12" cap="BUTT">
+            <Transform target="startAngle" value="(([COMPLICATION.RANGED_VALUE_MIN] % 1000) + 1 + 2.945)"/>
+            <Transform target="endAngle" value="clamp(([COMPLICATION.RANGED_VALUE_MAX] % 1000) - 1 - 2.945, (([COMPLICATION.RANGED_VALUE_MIN] % 1000) + 1 + 2.945) + 0.01, 100000)"/>
+            <Stroke color="#ffffd27f" thickness="12" cap="ROUND">
               <Transform target="thickness" value="12 + 10 * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1)"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
             </Stroke>
           </Arc>
@@ -352,9 +352,9 @@
         <PartDraw name="sel_private" x="0" y="0" width="450" height="450" alpha="0">
           <Transform target="alpha" value="255 * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1) * (1 - (floor([COMPLICATION.RANGED_VALUE_MIN] / 1000) % 2)) * floor([COMPLICATION.RANGED_VALUE_MIN] / 2000)"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
           <Arc centerX="225" centerY="225" width="428" height="428" startAngle="0" endAngle="1">
-            <Transform target="startAngle" value="([COMPLICATION.RANGED_VALUE_MIN] % 1000) + 1"/>
-            <Transform target="endAngle" value="([COMPLICATION.RANGED_VALUE_MAX] % 1000) - 1"/>
-            <Stroke color="#ffc7c7cc" thickness="12" cap="BUTT">
+            <Transform target="startAngle" value="(([COMPLICATION.RANGED_VALUE_MIN] % 1000) + 1 + 2.945)"/>
+            <Transform target="endAngle" value="clamp(([COMPLICATION.RANGED_VALUE_MAX] % 1000) - 1 - 2.945, (([COMPLICATION.RANGED_VALUE_MIN] % 1000) + 1 + 2.945) + 0.01, 100000)"/>
+            <Stroke color="#ffc7c7cc" thickness="12" cap="ROUND">
               <Transform target="thickness" value="12 + 10 * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1)"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
             </Stroke>
           </Arc>
@@ -362,9 +362,9 @@
         <PartDraw name="sel_lane" x="0" y="0" width="450" height="450" alpha="0">
           <Transform target="alpha" value="255 * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1) * (floor([COMPLICATION.RANGED_VALUE_MIN] / 1000) % 2)"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
           <Arc centerX="225" centerY="225" width="418" height="418" startAngle="0" endAngle="1">
-            <Transform target="startAngle" value="([COMPLICATION.RANGED_VALUE_MIN] % 1000) + 1"/>
-            <Transform target="endAngle" value="([COMPLICATION.RANGED_VALUE_MAX] % 1000) - 1"/>
-            <Stroke color="#ffc3d0f2" thickness="4" cap="BUTT">
+            <Transform target="startAngle" value="(([COMPLICATION.RANGED_VALUE_MIN] % 1000) + 1 + 1.097)"/>
+            <Transform target="endAngle" value="clamp(([COMPLICATION.RANGED_VALUE_MAX] % 1000) - 1 - 1.097, (([COMPLICATION.RANGED_VALUE_MIN] % 1000) + 1 + 1.097) + 0.01, 100000)"/>
+            <Stroke color="#ffc3d0f2" thickness="4" cap="ROUND">
               <Transform target="thickness" value="4 + 4 * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1)"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
             </Stroke>
           </Arc>
@@ -372,6 +372,7 @@
       </Complication>
     </ComplicationSlot>
 
+    <!-- Round caps (R1a): the arc's ends are pulled in by the cap's angle, growing 0.55° → 1.57° with the stroke -->
     <!-- Slot 5 `ring_promote` (risk 4, M3): VALUE runs MIN (on the lane) → MAX (on the ring). The arc grows
          outward from R − 10 to R, thickens 4 → 12 px and crossfades blue → amber. -->
     <ComplicationSlot slotId="5" name="promote" displayName="@string/slot_promote" x="0" y="0" width="450" height="450"
@@ -386,9 +387,9 @@
           <PartDraw x="0" y="0" width="450" height="450">
             <Transform target="alpha" value="255 * (1 - clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1))"><Animation duration="0.9" interpolation="CUBIC_BEZIER" controls="0.22 1 0.36 1"/></Transform>
             <Arc centerX="225" centerY="225" width="418" height="418" startAngle="0" endAngle="1">
-              <Transform target="startAngle" value="[COMPLICATION.RANGED_VALUE_MIN] + 1"/>
-              <Transform target="endAngle" value="[COMPLICATION.RANGED_VALUE_MAX] - 1"/>
-              <Stroke color="#ff8fa3d6" thickness="4" cap="BUTT">
+              <Transform target="startAngle" value="[COMPLICATION.RANGED_VALUE_MIN] + 1.55 + 1.02 * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1)"/>
+              <Transform target="endAngle" value="[COMPLICATION.RANGED_VALUE_MAX] - 1.55 - 1.02 * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1)"/>
+              <Stroke color="#ff8fa3d6" thickness="4" cap="ROUND">
                 <Transform target="thickness" value="4 + 8 * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1)"><Animation duration="0.9" interpolation="CUBIC_BEZIER" controls="0.22 1 0.36 1"/></Transform>
               </Stroke>
             </Arc>
@@ -396,9 +397,9 @@
           <PartDraw x="0" y="0" width="450" height="450" alpha="0">
             <Transform target="alpha" value="255 * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1)"><Animation duration="0.9" interpolation="CUBIC_BEZIER" controls="0.22 1 0.36 1"/></Transform>
             <Arc centerX="225" centerY="225" width="418" height="418" startAngle="0" endAngle="1">
-              <Transform target="startAngle" value="[COMPLICATION.RANGED_VALUE_MIN] + 1"/>
-              <Transform target="endAngle" value="[COMPLICATION.RANGED_VALUE_MAX] - 1"/>
-              <Stroke color="#ffffb547" thickness="4" cap="BUTT">
+              <Transform target="startAngle" value="[COMPLICATION.RANGED_VALUE_MIN] + 1.55 + 1.02 * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1)"/>
+              <Transform target="endAngle" value="[COMPLICATION.RANGED_VALUE_MAX] - 1.55 - 1.02 * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1)"/>
+              <Stroke color="#ffffb547" thickness="4" cap="ROUND">
                 <Transform target="thickness" value="4 + 8 * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1)"><Animation duration="0.9" interpolation="CUBIC_BEZIER" controls="0.22 1 0.36 1"/></Transform>
               </Stroke>
             </Arc>

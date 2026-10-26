@@ -47,6 +47,7 @@ All sizes are in px on the **450 × 450 face canvas** (≈ 2 px per dp on a typi
 | # | When | Then | Why |
 |---|---|---|---|
 | R1 | Always | **Dial:** 0° = 12 o'clock, clockwise, 12 hours per turn. **Track:** 12 px, `#1c1c1f`, radius **R = 219**, so the band (213–225) is **flush with the screen edge**. | Familiar clock geometry (P3). Using the very edge gives the center content the most room and makes the ring read as the watch's own bezel. |
+| R1a | Always | **Every arc has round ends** (main ring, elapsed and remaining parts, later lane, double-booking stripes, selected arc). A round cap reaches half the stroke width past the path, so each path is shortened by that angle (about 1.6° on the 12 px band, 0.55° on the 4 px lane, 2.9° on the 22 px selected arc): the visible rounded ends stay at the meeting's start and end, and a very short meeting becomes a dot. The back-to-back gap (R2) is unchanged. The dashed private lane and the double-booking mask stay square. | Softer look; the geometry stays honest. |
 | R2 | Two meetings are back to back | **1° gap** at each arc end. | Adjacent meetings read as separate (WFF: `discreteGap`). |
 | R3 | A meeting is in progress | **Elapsed** part (start → now) is dim amber `#6e4f22`; the **remaining** part is amber `#ffb547`; the now dot sits between them. | Shows how far into the meeting you are. |
 | R4 | Two or more main-ring meetings **overlap** | Only the **overlapping minutes** become **two 5 px coral stripes** (`#ff7a59`) at R ± 4.5, with a 4 px black gap, inside the normal 12 px band (the outer stripe's last ~1 px falls past the screen edge). Elapsed overlap is dim coral `#7a3b2c`. The non-overlapping parts stay amber. 3+ overlaps still use two stripes. | Shape (split = "two things here") plus color (coral = attention) (P4, P5). It stays in the band's footprint, so it never reads as the later lane. |
@@ -205,3 +206,10 @@ Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.sched
 | 2026-10-24 | 15-min ticks, hour numbers, comet trail. | R6–R8 |
 | 2026-10-24 | Scale-only select/release ("one layout, two sizes"). | P2, M1, M2 |
 | 2026-10-24 | One-hour tap sections. | I1–I7 |
+
+## 9. Colour themes
+
+Every colour the face draws with is a token (the table in §2: meeting arcs, elapsed part, selected arc and its elapsed/lane variants, later lane, later/tomorrow text, double booking and its elapsed part, private stripes and their selected variants, clock/title text, secondary text, ring track). A **theme** is one complete set of tokens. The prototype's **Colors** section lists the themes, lets you edit any token with a colour picker (this becomes the "Custom" theme, saved in the browser) and **Copy theme** exports the tokens as JSON. Amber is the real design; Mint, Violet and Rose are examples of the mechanism, to be replaced with your colours. Ambient mode stays monochrome whatever the theme (A1), and Dim and Tactical red (A4, A5) apply on top of a theme.
+
+On the watch each theme becomes one option of a WFF colour configuration (`UserConfigurations`), so it appears in the watch's customize screen. The ring image drawn by the data source (arcs, lane, stripes) must receive the chosen theme too, since its colours are drawn in the image, not in the face XML.
+

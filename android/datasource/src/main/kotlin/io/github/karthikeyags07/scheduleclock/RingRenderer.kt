@@ -33,6 +33,7 @@ object RingRenderer {
     private val LATER = Color.parseColor("#8fa3d6")
     private val CLASH = Color.parseColor("#ff7a59")
     private val CLASH_PAST = Color.parseColor("#7a3b2c")
+    private val CLASH_MASK = Color.parseColor("#3f1f17")   // dark coral between the two stripes, never empty (R6a)
 
     /**
      * @param selectedKey dims every other meeting (R9); the highlight itself is the selected-arc slot.
@@ -44,7 +45,8 @@ object RingRenderer {
         val stroke = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeCap = Paint.Cap.BUTT }
         val shown = list.filter { it.meeting.key != hiddenKey }
 
-        // Main ring (R3, R9, R10): elapsed part dimmer, private meetings as caution stripes.
+        // Main ring (R3, R9, R10): elapsed part dimmer, private meetings as caution stripes. Round caps (R1a).
+        stroke.strokeCap = Paint.Cap.ROUND
         for (p in shown.filter { it.lane == Lane.MAIN }) {
             val m = p.meeting
             val dim = selectedKey != null && m.key != selectedKey
@@ -64,8 +66,10 @@ object RingRenderer {
             for ((from, to, color) in listOf(Triple(a, minOf(b, maxOf(a, now)), CLASH_PAST), Triple(maxOf(a, now), b, CLASH))) {
                 if (to <= from) continue
                 stroke.shader = null
-                stroke.color = Color.BLACK; stroke.strokeWidth = BAND + 2
+                stroke.strokeCap = Paint.Cap.BUTT
+                stroke.color = CLASH_MASK; stroke.strokeWidth = BAND + 2
                 arc(canvas, from, to, R, stroke)
+                stroke.strokeCap = Paint.Cap.ROUND
                 stroke.color = color; stroke.strokeWidth = 5f
                 arc(canvas, from, to, R - 4.5f, stroke)
                 arc(canvas, from, to, R + 4.5f, stroke)
@@ -96,10 +100,16 @@ object RingRenderer {
         paint.shader = null
     }
 
+    /**
+     * Round caps (R1a) reach half the stroke width past the path's ends, so a round-capped arc is shortened
+     * by that angle: its visible ends stay at the meeting's start and end, and a very short meeting is a dot.
+     */
     private fun arc(canvas: Canvas, from: Int, to: Int, r: Float, paint: Paint) {
-        val start = (from % ScheduleRules.DIAL_MIN) / ScheduleRules.DIAL_MIN.toFloat() * 360f - 90f + GAP_DEG
-        val sweep = (to - from) / ScheduleRules.DIAL_MIN.toFloat() * 360f - 2 * GAP_DEG
-        canvas.drawArc(RectF(C - r, C - r, C + r, C + r), start, sweep.coerceAtLeast(0.5f), false, paint)
+        val capDeg = if (paint.strokeCap == Paint.Cap.ROUND) Math.toDegrees((paint.strokeWidth / 2f / r).toDouble()).toFloat() else 0f
+        val inset = GAP_DEG + capDeg
+        val start = (from % ScheduleRules.DIAL_MIN) / ScheduleRules.DIAL_MIN.toFloat() * 360f - 90f + inset
+        val sweep = (to - from) / ScheduleRules.DIAL_MIN.toFloat() * 360f - 2 * inset
+        canvas.drawArc(RectF(C - r, C - r, C + r, C + r), start, sweep.coerceAtLeast(if (capDeg > 0f) 0.01f else 0.5f), false, paint)
     }
 
     private fun midDeg(from: Int, to: Int) =

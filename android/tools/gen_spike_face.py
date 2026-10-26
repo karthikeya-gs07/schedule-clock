@@ -75,12 +75,17 @@ LANE = "(floor([COMPLICATION.RANGED_VALUE_MIN] / 1000) % 2)"
 PRIV = "floor([COMPLICATION.RANGED_VALUE_MIN] / 2000)"
 
 def selected_arc(name, alpha, diameter, color, thick0, thick1):
+    # Round caps (R1a): shorten both ends by the cap's angle, at the full selected thickness, so the visible
+    # ends stay at the meeting's times. clamp keeps a very short meeting from reversing (it becomes a dot).
+    cap = f"{thick1 / 2 / (diameter / 2) * 180 / math.pi:.3f}"
+    start = f"(([COMPLICATION.RANGED_VALUE_MIN] % 1000) + 1 + {cap})"
+    end = f"clamp(([COMPLICATION.RANGED_VALUE_MAX] % 1000) - 1 - {cap}, {start} + 0.01, 100000)"
     return f'''        <PartDraw name="sel_{name}" x="0" y="0" width="450" height="450" alpha="0">
           <Transform target="alpha" value="{alpha}">{SELECT_ANIM}</Transform>
           <Arc centerX="{CX}" centerY="{CY}" width="{diameter}" height="{diameter}" startAngle="0" endAngle="1">
-            <Transform target="startAngle" value="([COMPLICATION.RANGED_VALUE_MIN] % 1000) + 1"/>
-            <Transform target="endAngle" value="([COMPLICATION.RANGED_VALUE_MAX] % 1000) - 1"/>
-            <Stroke color="{color}" thickness="{thick0}" cap="BUTT">
+            <Transform target="startAngle" value="{start}"/>
+            <Transform target="endAngle" value="{end}"/>
+            <Stroke color="{color}" thickness="{thick0}" cap="ROUND">
               <Transform target="thickness" value="{thick0} + {thick1 - thick0} * {P}">{SELECT_ANIM}</Transform>
             </Stroke>
           </Arc>
@@ -221,6 +226,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
       </Complication>
     </ComplicationSlot>
 
+    <!-- Round caps (R1a): the arc's ends are pulled in by the cap's angle, growing 0.55° → 1.57° with the stroke -->
     <!-- Slot 5 `ring_promote` (risk 4, M3): VALUE runs MIN (on the lane) → MAX (on the ring). The arc grows
          outward from R − 10 to R, thickens 4 → 12 px and crossfades blue → amber. -->
     <ComplicationSlot slotId="5" name="promote" displayName="@string/slot_promote" x="0" y="0" width="450" height="450"
@@ -234,9 +240,9 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
           <PartDraw x="0" y="0" width="450" height="450">
             <Transform target="alpha" value="255 * (1 - {P})">{SETTLE_ANIM}</Transform>
             <Arc centerX="{CX}" centerY="{CY}" width="{2*R_LATER}" height="{2*R_LATER}" startAngle="0" endAngle="1">
-              <Transform target="startAngle" value="[COMPLICATION.RANGED_VALUE_MIN] + 1"/>
-              <Transform target="endAngle" value="[COMPLICATION.RANGED_VALUE_MAX] - 1"/>
-              <Stroke color="#ff8fa3d6" thickness="4" cap="BUTT">
+              <Transform target="startAngle" value="[COMPLICATION.RANGED_VALUE_MIN] + 1.55 + 1.02 * {P}"/>
+              <Transform target="endAngle" value="[COMPLICATION.RANGED_VALUE_MAX] - 1.55 - 1.02 * {P}"/>
+              <Stroke color="#ff8fa3d6" thickness="4" cap="ROUND">
                 <Transform target="thickness" value="4 + 8 * {P}">{SETTLE_ANIM}</Transform>
               </Stroke>
             </Arc>
@@ -244,9 +250,9 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
           <PartDraw x="0" y="0" width="450" height="450" alpha="0">
             <Transform target="alpha" value="255 * {P}">{SETTLE_ANIM}</Transform>
             <Arc centerX="{CX}" centerY="{CY}" width="{2*R_LATER}" height="{2*R_LATER}" startAngle="0" endAngle="1">
-              <Transform target="startAngle" value="[COMPLICATION.RANGED_VALUE_MIN] + 1"/>
-              <Transform target="endAngle" value="[COMPLICATION.RANGED_VALUE_MAX] - 1"/>
-              <Stroke color="#ffffb547" thickness="4" cap="BUTT">
+              <Transform target="startAngle" value="[COMPLICATION.RANGED_VALUE_MIN] + 1.55 + 1.02 * {P}"/>
+              <Transform target="endAngle" value="[COMPLICATION.RANGED_VALUE_MAX] - 1.55 - 1.02 * {P}"/>
+              <Stroke color="#ffffb547" thickness="4" cap="ROUND">
                 <Transform target="thickness" value="4 + 8 * {P}">{SETTLE_ANIM}</Transform>
               </Stroke>
             </Arc>

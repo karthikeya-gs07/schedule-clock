@@ -16,6 +16,10 @@
     --muted: #8b8d94;
     --accent: #ffb547;
     /* Motion tokens (become WFF <Animation duration interpolation>) */
+    --c-event: #ffb547; --c-past: #6e4f22; --c-selected: #ffd27f; --c-selected-past: #8a6a35; --c-selected-later: #c3d0f2;
+    --c-later: #8fa3d6; --c-later-text: #a9b8e0; --c-clash: #ff7a59; --c-clash-past: #7a3b2c;
+    --c-private: #8e8e93; --c-private-sel: #c7c7cc; --c-private-sel-past: #6a6a70;
+    --c-text: #f2f2f2; --c-muted: #8e8e93; --c-track: #1c1c1f;   /* overwritten by the colour theme */
     --arc-pct: 60%;       /* meeting arcs: solid but darker, so the time stays the focus */
     --arc-pct-hi: 90%;    /* thin lane, clash stripes, selection: a little brighter */
     --d: 520ms;           /* select / release */
@@ -118,6 +122,14 @@
   .toggle[aria-pressed=true] { color: var(--text); border: 0; }
   .range-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .range-row output { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 6px; }
+  .swatches button { display: flex; align-items: center; gap: 7px; padding: 6px 11px 6px 8px; border-radius: 999px; font-size: 13px; }
+  .swatches i { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,.25); }
+  .custom summary { cursor: pointer; color: var(--muted); font-size: 13px; padding: 2px 0; }
+  .color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin: 12px 0; }
+  .color-grid label { flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); }
+  .color-grid input[type=color] { width: 34px; height: 26px; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: none; flex: none; }
+  .row-btns { display: flex; gap: 8px; }
   /* Dial-only mode: everything but the watch is hidden */
   body.focus { display: grid; place-items: center; }
   body.focus .panel, body.focus .tabs, body.focus .size-info, body.focus .hint, body.focus .calib { display: none; }
@@ -149,26 +161,26 @@
     transition: opacity var(--d) var(--ease), transform var(--d) var(--ease), stroke-width var(--d) var(--ease);
   }
   #ringAll { opacity: 1; }
-  #ringAll path { stroke: #996d2b; stroke: color-mix(in srgb, #ffb547 var(--arc-pct), #000); stroke-width: 12px; fill: none;
+  #ringAll path { stroke: var(--c-event); stroke: color-mix(in srgb, var(--c-event) var(--arc-pct), #000); stroke-width: 12px; fill: none; stroke-linecap: round;
     transition: stroke var(--d) var(--ease), stroke-width var(--d) var(--ease), opacity var(--d) var(--ease), stroke-opacity var(--d) var(--ease); }
   #ringAll path.enter, #ringAll path.leaving { opacity: 0; }
-  #ringAll path.past { stroke: #422f14; stroke: color-mix(in srgb, #6e4f22 var(--arc-pct), #000); }
-  #ringAll path.later { stroke: #8193c1; stroke: color-mix(in srgb, #8fa3d6 var(--arc-pct-hi), #000); stroke-width: 4px; stroke-linecap: round; }
+  #ringAll path.past { stroke: var(--c-past); stroke: color-mix(in srgb, var(--c-past) var(--arc-pct), #000); }
+  #ringAll path.later { stroke: var(--c-later); stroke: color-mix(in srgb, var(--c-later) var(--arc-pct-hi), #000); stroke-width: 4px; }
   #ringAll path.arriving { visibility: hidden; }   /* the settling animation stands in for it */
   #fx path {
-    fill: none; stroke: #8193c1; stroke: color-mix(in srgb, #8fa3d6 var(--arc-pct-hi), #000); stroke-width: 4px;
+    fill: none; stroke-linecap: round; stroke: var(--c-later); stroke: color-mix(in srgb, var(--c-later) var(--arc-pct-hi), #000); stroke-width: 4px;
     transform-box: view-box; transform-origin: 225px 225px;
     transition: transform var(--promote) cubic-bezier(.22, 1, .36, 1),
                 stroke var(--promote) ease, stroke-opacity var(--promote) ease, stroke-width var(--promote) ease;
   }
   #face.selected #fx { opacity: .35; }
-  #ringAll path.later.private { stroke-dasharray: 4 3; stroke: #8e8e93; }
-  #ringAll path.clash-mask { stroke: #3f1f17; stroke-width: 14px; stroke-opacity: 1; }   /* dark coral between the two stripes */
-  #ringAll path.clash { stroke: #e66e50; stroke: color-mix(in srgb, #ff7a59 var(--arc-pct-hi), #000); stroke-width: 5px; }
-  #ringAll path.clash.past { stroke: #6e3528; stroke: color-mix(in srgb, #7a3b2c var(--arc-pct-hi), #000); }
-  .selArc { fill: none; stroke: #e6bd72; stroke: color-mix(in srgb, #ffd27f var(--arc-pct-hi), #000); stroke-width: 12px; opacity: 0; }
-  .selArc.past { stroke: #7c5f30; stroke: color-mix(in srgb, #8a6a35 var(--arc-pct-hi), #000); }
-  .selArc.later { stroke: #b0bbda; stroke: color-mix(in srgb, #c3d0f2 var(--arc-pct-hi), #000); stroke-width: 4px; stroke-linecap: round; }
+  #ringAll path.later.private { stroke-dasharray: 4 3; stroke: var(--c-private); stroke-linecap: butt; }
+  #ringAll path.clash-mask { stroke: #3f1f17; stroke: color-mix(in srgb, var(--c-clash) 25%, #000); stroke-width: 14px; stroke-opacity: 1; stroke-linecap: butt; }   /* dark coral between the two stripes */
+  #ringAll path.clash { stroke: var(--c-clash); stroke: color-mix(in srgb, var(--c-clash) var(--arc-pct-hi), #000); stroke-width: 5px; }
+  #ringAll path.clash.past { stroke: var(--c-clash-past); stroke: color-mix(in srgb, var(--c-clash-past) var(--arc-pct-hi), #000); }
+  .selArc { fill: none; stroke-linecap: round; stroke: var(--c-selected); stroke: color-mix(in srgb, var(--c-selected) var(--arc-pct-hi), #000); stroke-width: 12px; opacity: 0; }
+  .selArc.past { stroke: var(--c-selected-past); stroke: color-mix(in srgb, var(--c-selected-past) var(--arc-pct-hi), #000); }
+  .selArc.later { stroke: var(--c-selected-later); stroke: color-mix(in srgb, var(--c-selected-later) var(--arc-pct-hi), #000); stroke-width: 4px; }
   #dStatus { fill: var(--accent); }
   /* Status line ("NEXT · IN 1H 30M") hidden for now; title and meta move up to close the gap. */
   #dStatus { display: none; }
@@ -199,6 +211,18 @@
   #face.ambient #ringAll path { stroke: #9a9a9a; stroke-width: 3px; stroke-opacity: 1; }
   #face.ambient #ringAll path.past { stroke: #4a4a4a; }
   #face.ambient #ringAll path.clash-mask { stroke: #000; stroke-width: 14px; }
+  /* Theme colours for the static parts of the face (ambient rules above stay monochrome) */
+  #face #dDate, #face #dAmpm { fill: var(--c-muted); }
+  #face #dTime, #face #dTitle { fill: var(--c-text); }
+  #face #track { stroke: var(--c-track); }
+  #face #dArrow { stroke: var(--c-event); }
+  #face #dLock rect { fill: var(--c-muted); }
+  #face #dLock path { stroke: var(--c-muted); }
+  #face #dTodIcon { stroke: var(--c-later-text); }
+  #face #dClashIcon { stroke: var(--c-clash); }
+  #face #pvSel rect + rect { fill: var(--c-private-sel); }
+  #face #pvSelPast rect + rect { fill: var(--c-private-sel-past); }
+  #face.ambient #dArrow { stroke: #8e8e93; }
   #face.ambient #ringAll path.later { stroke: #5c5c62; }
   #face.ambient #trail { opacity: 0; }
   #face.ambient #numerals, #face.ambient #ticks { opacity: .6; }
@@ -268,6 +292,16 @@
     </div>
     <div class="range-row"><h2>Arc brightness</h2><output id="alphaLabel"></output></div>
     <input id="arcAlpha" type="range" min="20" max="100" step="5" value="60" aria-label="Meeting arc brightness">
+  </div>
+
+  <div class="sect">
+    <h2>Colors</h2>
+    <div class="swatches" id="themes"></div>
+    <details class="custom" id="customColors">
+      <summary>Customize colors</summary>
+      <div class="color-grid" id="colorGrid"></div>
+      <div class="row-btns"><button class="pill" id="themeCopy">Copy theme</button><button class="pill" id="themeReset">Reset</button></div>
+    </details>
   </div>
 
   <div class="sect">
@@ -423,8 +457,11 @@ function polar(deg, r) {
 }
 // GAP_DEG keeps back-to-back events visually separate (WFF: WeightedStroke discreteGap).
 const GAP_DEG = 1;
-function arcPath(fromMin, toMin, r) {
-  const a0 = angleOf(fromMin) + GAP_DEG, sweep = Math.max(0.5, ((toMin - fromMin) / 720) * 360 - 2 * GAP_DEG);
+// Round caps (R1a) extend half the stroke width past the path's ends, so the path is shortened by that
+// angle: the visible rounded ends stay at the meeting's start and end. w = the stroke width drawn with it.
+function arcPath(fromMin, toMin, r, w = 12) {
+  const cap = (w / 2) / r * 180 / Math.PI;
+  const a0 = angleOf(fromMin) + GAP_DEG + cap, sweep = Math.max(0.01, ((toMin - fromMin) / 720) * 360 - 2 * (GAP_DEG + cap));
   const [x0, y0] = polar(a0, r), [x1, y1] = polar(a0 + sweep, r);
   return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${sweep > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
 }
@@ -495,7 +532,7 @@ svg.innerHTML = `
   <g id="scene">
   <g id="ticks">${ticks}</g>
   <g id="numerals">${numerals}</g>
-  <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${C.track}" stroke-width="12"/>
+  <circle id="track" cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${C.track}" stroke-width="12"/>
   <g id="trail" fill="none" stroke="#fff" stroke-width="1.2"></g>
   <defs id="ringDefs"></defs>
   <g id="ringAll" class="m"></g>
@@ -593,6 +630,7 @@ function renderBase(list) {
   detectPromotions(main, later);
   // Private meetings (R10): the arc is a caution band of stripes at 45° to the arc instead of solid.
   const defs = [], items = [];
+  const wMain = ambient ? 3 : 12, wClash = ambient ? 3 : 5;
   const add = (key, cls, d, style = '') => items.push({ key, cls, d, style });
   // Private meetings (R10): a caution band of stripes at 45° to the arc instead of solid.
   const fillFor = (e, id, color, grey) => {
@@ -603,18 +641,18 @@ function renderBase(list) {
   for (const e of main) {
     const k = keyOf(e), hide = arriving.has(k) ? ' arriving' : '', id = 'pv' + k.replace(/\W/g, '_');
     if (isLive(e)) {
-      add(`${k}:past`, `past${hide}`, arcPath(e.cs, nowMin, R), fillFor(e, `${id}p`, C.privatePast, '#4a4a4a'));
-      add(`${k}:now`, hide.trim(), arcPath(nowMin, e.ce, R), fillFor(e, `${id}n`, C.private, '#9a9a9a'));
-    } else add(`${k}:arc`, hide.trim(), arcPath(e.cs, e.ce, R), fillFor(e, `${id}n`, C.private, '#9a9a9a'));
+      add(`${k}:past`, `past${hide}`, arcPath(e.cs, nowMin, R, wMain), fillFor(e, `${id}p`, C.privatePast, '#4a4a4a'));
+      add(`${k}:now`, hide.trim(), arcPath(nowMin, e.ce, R, wMain), fillFor(e, `${id}n`, C.private, '#9a9a9a'));
+    } else add(`${k}:arc`, hide.trim(), arcPath(e.cs, e.ce, R, wMain), fillFor(e, `${id}n`, C.private, '#9a9a9a'));
   }
-  for (const e of later) add(`${keyOf(e)}:lane`, `later${e.private ? ' private' : ''}`, arcPath(e.cs, e.ce, R_LATER));
+  for (const e of later) add(`${keyOf(e)}:lane`, `later${e.private ? ' private' : ''}`, arcPath(e.cs, e.ce, R_LATER, ambient ? 3 : 4));
   // Double booking: blank the band over the overlap, then draw two thin coral stripes.
   clashRanges(list).forEach(([a, b], n) => {
     const parts = a < nowMin && b > nowMin ? [[a, nowMin, 'past'], [nowMin, b, '']] : [[a, b, b <= nowMin ? 'past' : '']];
     parts.forEach(([f, t, cls], i) => {
-      add(`x${n}${i}:mask`, 'clash-mask', arcPath(f, t, R));
-      add(`x${n}${i}:in`, `clash ${cls}`.trim(), arcPath(f, t, R - CLASH_OFFSET));
-      add(`x${n}${i}:out`, `clash ${cls}`.trim(), arcPath(f, t, R + CLASH_OFFSET));
+      add(`x${n}${i}:mask`, 'clash-mask', arcPath(f, t, R, 0));
+      add(`x${n}${i}:in`, `clash ${cls}`.trim(), arcPath(f, t, R - CLASH_OFFSET, wClash));
+      add(`x${n}${i}:out`, `clash ${cls}`.trim(), arcPath(f, t, R + CLASH_OFFSET, wClash));
     });
   });
   $('ringDefs').innerHTML = defs.join('');
@@ -662,11 +700,11 @@ function detectPromotions(main, later) {
 function settle(e, k) {
   const scale = R / R_LATER;
   const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  p.setAttribute('d', arcPath(e.cs, e.ce, R_LATER));
+  p.setAttribute('d', arcPath(e.cs, e.ce, R_LATER, 4));
   $('fx').appendChild(p);
   p.getBoundingClientRect();                      // commit the start state before transitioning
   p.style.transform = `scale(${scale})`;
-  p.style.stroke = 'color-mix(in srgb, #ffb547 var(--arc-pct), #000)';
+  p.style.stroke = 'color-mix(in srgb, var(--c-event) var(--arc-pct), #000)';
   p.style.strokeWidth = `${12 / scale}px`;
   arriving.set(k, setTimeout(() => { arriving.delete(k); p.remove(); renderAll(); }, PROMOTE_MS()));
 }
@@ -849,8 +887,9 @@ function renderSelArc(list) {
   // Main-ring selection thickens inward (22 px centered at R − 5) so it stays on screen.
   const live = isLive(e), r = e.lane === 'later' ? R_LATER : R - 5;
   $('selArc').classList.toggle('later', e.lane === 'later');
-  $('selArcPast').setAttribute('d', live ? arcPath(e.cs, nowMin, r) : '');
-  $('selArc').setAttribute('d', arcPath(live ? nowMin : e.cs, e.ce, r));
+  const sw = e.lane === 'later' ? 8 : 22;     // the selected stroke width (grown by CSS), for the round caps
+  $('selArcPast').setAttribute('d', live ? arcPath(e.cs, nowMin, r, sw) : '');
+  $('selArc').setAttribute('d', arcPath(live ? nowMin : e.cs, e.ce, r, sw));
   // Private: striped on the main ring, dashed on the lane (R10).
   const stripes = e.private && e.lane === 'main';
   const rot = `rotate(${(angleOf((e.cs + e.ce) / 2) + 45).toFixed(1)})`;
@@ -1151,6 +1190,82 @@ $('calibCancel').onclick = closeCalib;
 // Zoom changes devicePixelRatio, which changes which calibration applies.
 addEventListener('resize', applyDevice);
 
+// ---------- Colour themes ----------
+// Every colour the face draws with comes from one token set. A theme is a full set of tokens; "Custom" keeps
+// whatever you edit. WFF: each theme is a colour configuration (UserConfigurations) of the same elements.
+const TOKENS = [   // [token, CSS variable, label]
+  ['event', '--c-event', 'Meeting arcs'], ['past', '--c-past', 'Elapsed part'],
+  ['selected', '--c-selected', 'Selected arc'], ['selectedPast', '--c-selected-past', 'Selected, elapsed'],
+  ['later', '--c-later', 'Later lane'], ['selectedLater', '--c-selected-later', 'Selected, lane'],
+  ['laterText', '--c-later-text', 'Later / tomorrow text'], ['clash', '--c-clash', 'Double booking'],
+  ['clashPast', '--c-clash-past', 'Double booking, elapsed'], ['private', '--c-private', 'Private stripes'],
+  ['privateSel', '--c-private-sel', 'Private, selected'], ['privateSelPast', '--c-private-sel-past', 'Private, sel. elapsed'],
+  ['text', '--c-text', 'Clock and title'], ['muted', '--c-muted', 'Secondary text'], ['track', '--c-track', 'Ring track'],
+];
+const AMBER = { event: '#ffb547', past: '#6e4f22', selected: '#ffd27f', selectedPast: '#8a6a35', selectedLater: '#c3d0f2',
+  later: '#8fa3d6', laterText: '#a9b8e0', clash: '#ff7a59', clashPast: '#7a3b2c', private: '#8e8e93', privateSel: '#c7c7cc',
+  privateSelPast: '#6a6a70', text: '#f2f2f2', muted: '#8e8e93', track: '#1c1c1f' };
+// The first is the real design; the others are examples of the mechanism, to be replaced with your colours.
+const THEMES = {
+  Amber: AMBER,
+  Mint: { ...AMBER, event: '#5fd4a0', past: '#2c5f49', selected: '#a8f0d0', selectedPast: '#3f7f64', later: '#8fb4d6', selectedLater: '#c3dcf2', laterText: '#a9c8e0' },
+  Violet: { ...AMBER, event: '#b48cff', past: '#4e3a7a', selected: '#d6c0ff', selectedPast: '#6a529e', later: '#7fd3e0', selectedLater: '#bfeaf2', laterText: '#a6e0ea', clash: '#ff7a8a', clashPast: '#7a3b44' },
+  Rose: { ...AMBER, event: '#ff7a9c', past: '#7a3a4c', selected: '#ffb3c6', selectedPast: '#9a4c63', later: '#ffc27a', selectedLater: '#ffe0b5', laterText: '#ffd5a6' },
+};
+let themeName = 'Amber', custom = null;
+function applyColors(t) {
+  Object.assign(C, t);
+  for (const [k, v] of TOKENS) document.documentElement.style.setProperty(v, t[k]);
+  // Pieces that read C when they are built or updated
+  $('track').setAttribute('stroke', t.track);
+  svg.classList.add('scrubbing');                    // colours change at once on the swatch, then ease normally
+  renderAll();
+  requestAnimationFrame(() => requestAnimationFrame(() => svg.classList.remove('scrubbing')));
+}
+function currentTheme() { return themeName === 'Custom' ? custom : THEMES[themeName]; }
+function buildThemeUI() { buildChips(); buildGrid(); }
+function buildChips() {
+  const box = $('themes'); box.innerHTML = '';
+  const names = [...Object.keys(THEMES), ...(custom ? ['Custom'] : [])];
+  for (const n of names) {
+    const b = document.createElement('button');
+    const t = n === 'Custom' ? custom : THEMES[n];
+    b.innerHTML = `<i style="background:${t.event}"></i>${n}`;
+    b.setAttribute('aria-pressed', n === themeName);
+    b.onclick = () => selectTheme(n);
+    box.appendChild(b);
+  }
+}
+function buildGrid() {
+  const grid = $('colorGrid'); grid.innerHTML = '';
+  for (const [k, , label] of TOKENS) {
+    const l = document.createElement('label'), inp = document.createElement('input');
+    inp.type = 'color'; inp.value = currentTheme()[k]; inp.setAttribute('aria-label', label);
+    inp.oninput = () => {                           // any edit turns the current theme into Custom
+      custom = { ...currentTheme(), [k]: inp.value };
+      themeName = 'Custom';
+      store.set('sc.customTheme', JSON.stringify(custom)); store.set('sc.theme', 'Custom');
+      applyColors(custom);
+      buildChips();                                  // the pickers stay as they are, so a drag isn't interrupted
+    };
+    l.append(label, inp); grid.appendChild(l);
+  }
+}
+function selectTheme(n) {
+  themeName = n; store.set('sc.theme', n);
+  applyColors(currentTheme()); buildThemeUI();
+}
+$('themeCopy').onclick = async () => {
+  const text = JSON.stringify({ name: themeName, ...currentTheme() }, null, 2);
+  try { await navigator.clipboard.writeText(text); $('themeCopy').textContent = 'Copied'; }
+  catch { prompt('Copy this theme:', text); }
+  setTimeout(() => { $('themeCopy').textContent = 'Copy theme'; }, 1500);
+};
+$('themeReset').onclick = () => { custom = null; store.set('sc.customTheme', null); selectTheme('Amber'); };
+try { custom = JSON.parse(store.get('sc.customTheme')) || null; } catch { custom = null; }
+{ const saved = store.get('sc.theme'); themeName = saved === 'Custom' && custom ? 'Custom' : THEMES[saved] ? saved : 'Amber'; }
+buildThemeUI();
+
 // Dial-only mode: hides every control so the watch can be studied or shown on its own.
 // F toggles it; #dial in the URL opens straight into it, so it can be shared as a link.
 function setFocus(on) {
@@ -1168,7 +1283,7 @@ addEventListener('keydown', ev => {
 if (location.hash === '#dial') setFocus(true);
 
 applyDevice();
-renderAll();
+applyColors(currentTheme());
 // Re-measure once the clock font has loaded (its width drives the AM/PM position).
 document.fonts.load('88px "Anta"').then(renderAll);
 </script>
