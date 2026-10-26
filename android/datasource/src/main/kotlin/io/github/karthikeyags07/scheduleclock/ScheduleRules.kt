@@ -19,7 +19,7 @@ data class Meeting(
 enum class Lane { MAIN, LATER }
 
 /** A meeting placed on the dial: [cs, ce) is the part drawn (clipped to the window). */
-data class Placed(val meeting: Meeting, val lane: Lane, val cs: Int, val ce: Int)
+data class Placed(val meeting: Meeting, val lane: Lane, val cs: Int, val ce: Int, val allDay: List<Meeting> = emptyList())
 
 object ScheduleRules {
     private const val WINDOW_MIN = 12 * 60
@@ -32,18 +32,21 @@ object ScheduleRules {
      * end past it; everything else, including past meetings, is not shown. Chronological (W10).
      */
     fun place(meetings: List<Meeting>, now: Int): List<Placed> {
-        val all = meetings.filter { !it.allDay }.sortedBy { it.startMin }   // W9: all-day events never reach the face
+        val all = meetings.filter { !it.allDay }.sortedBy { it.startMin }   // W9: all-day events are never drawn…
+        val allDays = meetings.filter { it.allDay }                         // …but every meeting on their day clashes with them
         val winStart = minOf(now, all.filter { it.startMin < now && it.endMin > now }.minOfOrNull { it.startMin } ?: now)
         val winEnd = winStart + WINDOW_MIN
         return all.mapNotNull { m ->
             when {
-                m.endMin > now && m.endMin <= winEnd -> Placed(m, Lane.MAIN, maxOf(m.startMin, winStart), m.endMin)
+                m.endMin > now && m.endMin <= winEnd -> Placed(m, Lane.MAIN, maxOf(m.startMin, winStart), m.endMin, overlapping(allDays, m))
                 m.endMin > winEnd && m.startMin > now && (m.startMin < DAY_MIN || m.startMin < winEnd) ->
-                    Placed(m, Lane.LATER, m.startMin, if (m.startMin < DAY_MIN) minOf(m.endMin, DAY_MIN) else m.endMin)
+                    Placed(m, Lane.LATER, m.startMin, if (m.startMin < DAY_MIN) minOf(m.endMin, DAY_MIN) else m.endMin, overlapping(allDays, m))
                 else -> null
             }
         }
     }
+
+    private fun overlapping(allDays: List<Meeting>, m: Meeting) = allDays.filter { it.startMin < m.endMin && m.startMin < it.endMin }
 
     fun isLive(p: Placed, now: Int) = p.meeting.startMin <= now && p.meeting.endMin > now
 
@@ -57,15 +60,17 @@ object ScheduleRules {
     fun showsArrow(list: List<Placed>, index: Int, now: Int) =
         index >= 0 && !isLive(list[index], now) && list.any { isLive(it, now) } && index == defaultIndex(list, now)
 
-    /** Other main-ring meetings overlapping this one (R4, C7). */
-    fun clashesFor(list: List<Placed>, p: Placed): List<Placed> =
-        if (p.lane != Lane.MAIN) emptyList()
+    /** What this meeting clashes with (R4, C7): other main-ring meetings overlapping it, then the day's all-day events (W9). */
+    fun clashesFor(list: List<Placed>, p: Placed): List<Meeting> =
+        (if (p.lane != Lane.MAIN) emptyList()
         else list.filter { it !== p && it.lane == Lane.MAIN && it.meeting.startMin < p.meeting.endMin && p.meeting.startMin < it.meeting.endMin }
+            .map { it.meeting }) + p.allDay
 
-    /** Merged minute ranges where two or more main-ring meetings overlap (R4). */
+    /** Merged minute ranges where two or more main-ring meetings overlap, or one sits on an all-day event (R4, W9). */
     fun clashRanges(list: List<Placed>): List<Pair<Int, Int>> {
         val main = list.filter { it.lane == Lane.MAIN }
         val pairs = buildList {
+            main.filter { it.allDay.isNotEmpty() }.forEach { add(it.cs to it.ce) }
             for (i in main.indices) for (j in i + 1 until main.size) {
                 val a = maxOf(main[i].cs, main[j].cs)
                 val b = minOf(main[i].ce, main[j].ce)

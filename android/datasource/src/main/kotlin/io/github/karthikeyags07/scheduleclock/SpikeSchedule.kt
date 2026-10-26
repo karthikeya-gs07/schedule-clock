@@ -202,7 +202,7 @@ object SpikeSchedule {
         val p = list[i]
         val clashes = ScheduleRules.clashesFor(list, p)
         val (kind, raw) = when {
-            clashes.isNotEmpty() -> 1 to (clashes[0].meeting.let { if (it.private) "Private" else it.title } +
+            clashes.isNotEmpty() -> 1 to (clashes[0].let { if (it.private) "Private" else it.title } +
                 if (clashes.size > 1) " +${clashes.size - 1}" else "")
             p.meeting.private -> 3 to "Details hidden"
             p.meeting.startMin >= 24 * 60 -> 2 to "Tomorrow · ${p.meeting.where}"

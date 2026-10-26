@@ -178,6 +178,7 @@
                 stroke var(--promote) ease, stroke-opacity var(--promote) ease, stroke-width var(--promote) ease;
   }
   #face.selected #fx { opacity: .35; }
+  #ringAll path.later.allclash { stroke: var(--c-clash); stroke: color-mix(in srgb, var(--c-clash) var(--arc-pct-hi), #000); }   /* lane meeting on an all-day event */
   #ringAll path.later.private { stroke-dasharray: 4 3; stroke: var(--c-private); stroke-linecap: butt; }
   #ringAll path.clash-mask { stroke: #3f1f17; stroke: color-mix(in srgb, var(--c-clash) 25%, #000); stroke-width: 14px; stroke-opacity: 1; stroke-linecap: butt; }   /* dark coral between the two stripes */
   #ringAll path.clash { stroke: var(--c-clash); stroke: color-mix(in srgb, var(--c-clash) var(--arc-pct-hi), #000); stroke-width: 5px; }
@@ -426,13 +427,18 @@ function upcoming() {
 const keyOf = e => `${e.start}|${e.title}`;
 const isLive = e => e.s <= nowMin && e.e > nowMin;
 
-// Other main-lane meetings that overlap e (double bookings).
-const clashesFor = (list, e) => e.lane !== 'main' ? [] :
-  list.filter(o => o !== e && o.lane === 'main' && o.s < e.e && e.s < o.e);
+// All-day events (W9) overlapping e: they cover their whole day, so every meeting that day clashes with them.
+const allDayFor = e => events().filter(a => a.allDay && a.s < e.e && e.s < a.e);
+// Everything e clashes with: other main-lane meetings (double bookings), then the day's all-day events.
+const clashesFor = (list, e) => [
+  ...(e.lane !== 'main' ? [] : list.filter(o => o !== e && o.lane === 'main' && o.s < e.e && e.s < o.e)),
+  ...allDayFor(e),
+];
 
-// Merged minute ranges where two or more main-lane meetings overlap.
+// Merged minute ranges where two or more main-lane meetings overlap, or a meeting sits on an all-day event.
 function clashRanges(list) {
   const main = list.filter(e => e.lane === 'main'), out = [];
+  for (const e of main) if (allDayFor(e).length) out.push([e.cs, e.ce]);
   for (let i = 0; i < main.length; i++)
     for (let j = i + 1; j < main.length; j++) {
       const a = Math.max(main[i].cs, main[j].cs), b = Math.min(main[i].ce, main[j].ce);
@@ -660,7 +666,7 @@ function renderBase(list) {
       add(`${k}:now`, hide.trim(), arcPath(nowMin, e.ce, R, wMain), fillFor(e, `${id}n`, C.private, '#9a9a9a'));
     } else add(`${k}:arc`, hide.trim(), arcPath(e.cs, e.ce, R, wMain), fillFor(e, `${id}n`, C.private, '#9a9a9a'));
   }
-  for (const e of later) add(`${keyOf(e)}:lane`, `later${e.private ? ' private' : ''}`, arcPath(e.cs, e.ce, R_LATER, ambient ? 3 : 4));
+  for (const e of later) add(`${keyOf(e)}:lane`, `later${e.private ? ' private' : ''}${allDayFor(e).length ? ' allclash' : ''}`, arcPath(e.cs, e.ce, R_LATER, ambient ? 3 : 4));
   // Double booking: blank the band over the overlap, then draw two thin coral stripes.
   clashRanges(list).forEach(([a, b], n) => {
     const parts = a < nowMin && b > nowMin ? [[a, nowMin, 'past'], [nowMin, b, '']] : [[a, b, b <= nowMin ? 'past' : '']];

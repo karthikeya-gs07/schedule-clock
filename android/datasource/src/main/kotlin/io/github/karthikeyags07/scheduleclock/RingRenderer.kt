@@ -80,7 +80,7 @@ object RingRenderer {
         stroke.shader = null
         stroke.strokeCap = Paint.Cap.ROUND; stroke.strokeWidth = 4f
         for (p in shown.filter { it.lane == Lane.LATER }) {
-            stroke.color = if (p.meeting.private) PRIVATE else LATER
+            stroke.color = if (p.allDay.isNotEmpty()) CLASH else if (p.meeting.private) PRIVATE else LATER   // coral on an all-day event (W9)
             stroke.pathEffect = if (p.meeting.private) DashPathEffect(floatArrayOf(4f, 3f), 0f) else null
             arc(canvas, p.cs, p.ce, R_LATER, stroke)
         }
