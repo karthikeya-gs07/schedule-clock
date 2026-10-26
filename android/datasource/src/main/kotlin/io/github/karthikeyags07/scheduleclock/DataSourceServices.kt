@@ -31,11 +31,6 @@ class RingImageDataSourceService : SlotDataSourceService("ring image", Complicat
     override fun data() = SpikeSchedule.ringImage(this)
 }
 
-/** Slot 2 `ring_selected` (R9): the selected arc, drawn by the face on top of the image. */
-class SelectedDataSourceService : SlotDataSourceService("selected", ComplicationType.RANGED_VALUE) {
-    override fun data() = SpikeSchedule.selectedArc(this)
-}
-
 /** Slot 4 `status`: VALUE = selected (0/1); the date, clock, title and time range live inside this slot. */
 class StatusDataSourceService : SlotDataSourceService("status", ComplicationType.RANGED_VALUE) {
     override fun data() = SpikeSchedule.status(this)

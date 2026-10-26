@@ -15,7 +15,7 @@ All sizes are in px on the **450 × 450 face canvas** (≈ 2 px per dp on a typi
 | P1 | **Glance first** | Time and the next meeting must be readable in under 2 seconds. Everything else is secondary. |
 | P2 | **One layout, many sizes** | There are no separate screens. The same elements resize and move between states (default, selected, empty). |
 | P3 | **Position = time** | Meetings sit at their real positions on a 12-hour dial. 1–2 PM is always between the 1 and the 2. |
-| P4 | **One question per visual channel** | **Lane / radius** = when (soon vs later) · **thickness** = emphasis (selected) · **color** = state (amber normal, coral clash, blue later, dim = elapsed) · **shape** (split band) = double booking. A channel never means two things. |
+| P4 | **One question per visual channel** | **Lane / radius** = when (soon vs later) · **contrast** = emphasis (the selected meeting stays at full strength, everything else dims) · **color** = state (amber normal, coral clash, blue later, dim = elapsed) · **shape** (split band) = double booking. A channel never means two things. |
 | P5 | **Never color alone** | Every color meaning is paired with a shape or position difference (coral is also split; blue is also thin and on its own lane). |
 | P6 | **Nothing collides with "now"** | No meeting is ever drawn at the same dial position as the now dot, its trail, or an elapsed meeting. |
 | P7 | **24 px minimum text** | No text below 24 px (≈ 12 sp). Long text gets an ellipsis rather than shrinking. |
@@ -47,7 +47,7 @@ All sizes are in px on the **450 × 450 face canvas** (≈ 2 px per dp on a typi
 | # | When | Then | Why |
 |---|---|---|---|
 | R1 | Always | **Dial:** 0° = 12 o'clock, clockwise, 12 hours per turn. **Track:** 12 px, `#1c1c1f`, radius **R = 219**, so the band (213–225) is **flush with the screen edge**. | Familiar clock geometry (P3). Using the very edge gives the center content the most room and makes the ring read as the watch's own bezel. |
-| R1a | Always | **Every arc has round ends** (main ring, elapsed and remaining parts, later lane, double-booking stripes, selected arc). A round cap reaches half the stroke width past the path, so each path is shortened by that angle (about 1.6° on the 12 px band, 0.55° on the 4 px lane, 2.9° on the 22 px selected arc): the visible rounded ends stay at the meeting's start and end, and a very short meeting becomes a dot. The back-to-back gap (R2) is unchanged. The dashed private lane and the double-booking mask stay square. | Softer look; the geometry stays honest. |
+| R1a | Always | **Every arc has round ends** (main ring, elapsed and remaining parts, later lane, double-booking stripes). A round cap reaches half the stroke width past the path, so each path is shortened by that angle (about 1.6° on the 12 px band, 0.55° on the 4 px lane): the visible rounded ends stay at the meeting's start and end, and a very short meeting becomes a dot. The back-to-back gap (R2) is unchanged. The dashed private lane and the double-booking mask stay square. | Softer look; the geometry stays honest. |
 | R2 | Two meetings are back to back | **1° gap** at each arc end. | Adjacent meetings read as separate (WFF: `discreteGap`). |
 | R3 | A meeting is in progress | **Elapsed** part (start → now) is dim amber `#6e4f22`; the **remaining** part is amber `#ffb547`; the now dot sits between them. | Shows how far into the meeting you are. |
 | R4 | Two or more main-ring meetings **overlap** | Only the **overlapping minutes** become **two 5 px coral stripes** (`#ff7a59`) at R ± 4.5, with a 4 px black gap, inside the normal 12 px band (the outer stripe's last ~1 px falls past the screen edge). Elapsed overlap is dim coral `#7a3b2c`. The non-overlapping parts stay amber. 3+ overlaps still use two stripes. | Shape (split = "two things here") plus color (coral = attention) (P4, P5). It stays in the band's footprint, so it never reads as the later lane. |
@@ -56,8 +56,8 @@ All sizes are in px on the **450 × 450 face canvas** (≈ 2 px per dp on a typi
 | R6 | Always (not ambient) | **Now marker:** white dot with a soft halo on the main ring. **Illuminated trail:** a fixed ring of 240 thin dashes (every 1.5°, 20 per hour, 1.2 px wide) across the band. Dashes never move; each lights up (10 % → 90 % white) as the dot reaches it and fades back over the next 60° (ease-out curve). Drawn **under** meeting arcs. | Shows time sweeping through the day; the trail only shows over free time. |
 | R7 | Always | **Ticks** every 15 min, inside the later lane: hour (10 px, `#8e8e93`, 2.5 px wide), half-hour (6 px, `#4a4a50`), quarter (3 px, `#33333a`). | Three marks between each pair of hours for fine reading, faint enough not to compete. |
 | R8 | Always | **Hour numbers** 1–12, 24 px **Anta** (T5), radius R − 40. 12/3/6/9 `#8e8e93`, others `#5c5c62`. | Readable at the 24 px minimum (P7); cardinal hours stand out for orientation. |
-| R10 | A meeting is marked **private** in the calendar | Its arc is a **grey caution band**: 5 px `#8e8e93` stripes / 5 px gaps at **45° to the arc**, instead of solid amber (elapsed part: `#48484c` stripes). Same position and thickness as any meeting, so free/busy stays readable. On the later lane: grey dashed (4 on / 3 off). When selected: 22 px band of `#c7c7cc` stripes (elapsed `#6a6a70`; lane: grey dashed 8 px). Ambient: grey stripes. | Shows "busy, but not for display" at a glance, without color alone (P5): the stripe pattern is the cue. Grey (not amber) keeps private time quiet and visually separate from meetings you can act on (changed 2026-10-24). |
-| R9 | A meeting is selected | Selected arc: main ring → **22 px** `#ffd27f` (elapsed part `#8a6a35`), centered at R − 5 so it **grows inward** (203–225) and isn't cut off by the screen edge; later lane → **8 px** `#c3d0f2`. All other arcs → **35 % opacity**. | Thickness = emphasis (P4). Dimming the rest isolates the selection. |
+| R10 | A meeting is marked **private** in the calendar | Its arc is a **grey caution band**: 5 px `#8e8e93` stripes / 5 px gaps at **45° to the arc**, instead of solid amber (elapsed part: `#48484c` stripes). Same position and thickness as any meeting, so free/busy stays readable. On the later lane: grey dashed (4 on / 3 off). When selected: unchanged, at full strength (R9). Ambient: grey stripes. | Shows "busy, but not for display" at a glance, without color alone (P5): the stripe pattern is the cue. Grey (not amber) keeps private time quiet and visually separate from meetings you can act on (changed 2026-10-24). |
+| R9 | A meeting is selected | The selected meeting keeps **its normal look**: same width (12 px on the ring, 4 px on the lane), same colours, elapsed part and private stripes, at **full strength**, drawn above any double-booking stripes. **Everything else** on the ring (other meetings, clash stripes, the later lane) → **35 %**. No thickening. | Contrast alone isolates the selection; the arc doesn't change shape, so the dial's geometry stays steady (changed 2026-10-27). |
 
 **Color tokens**
 
@@ -65,7 +65,6 @@ All sizes are in px on the **450 × 450 face canvas** (≈ 2 px per dp on a typi
 |---|---|---|
 | event | `#ffb547` | Main-ring meeting |
 | past | `#6e4f22` | Elapsed part of a live meeting |
-| selected / selectedPast | `#ffd27f` / `#8a6a35` | Selected main-ring arc |
 | later / laterSelected | `#8fa3d6` / `#c3d0f2` | Later lane |
 | laterText | `#a9b8e0` | "Tomorrow ·" text and the time-of-day icons |
 | clash / clashPast | `#ff7a59` / `#7a3b2c` | Double-booking stripes, overlap icon and its text |
@@ -131,7 +130,7 @@ All sizes are in px on the **450 × 450 face canvas** (≈ 2 px per dp on a typi
 
 | # | When | Then |
 |---|---|---|
-| M1 | **Select / release** (520 ms, `cubic-bezier(.4,0,.2,1)`, an S-curve; release = reverse) | Time → 55 %, up 10 px · Date → 90 %, stays put (moving it would hit the 11 and 1) · Divider up 32 px, 60 % wide · Details (incl. the C12 arrow) → 115 %, up 30 px · Selected arc 12 → 22 px and fades in · Other arcs → 35 %. |
+| M1 | **Select / release** (520 ms, `cubic-bezier(.4,0,.2,1)`, an S-curve; release = reverse) | Time → 55 %, up 10 px · Date → 90 %, stays put (moving it would hit the 11 and 1) · Divider up 32 px, 60 % wide · Details (incl. the C12 arrow) → 115 %, up 30 px · Everything but the selected meeting → 35 % (R9; on the watch the ring image switches at once). |
 | M2 | The **shown meeting changes** (selecting a meeting other than "next", or switching A → B) | Text fades out and drops 6 px over **170 ms**, the content swaps, and it fades back in over **280 ms**. The layout keeps scaling, with no second screen (P2). Selecting the meeting that's already shown doesn't dip. |
 | M3 | **Lane → main ring** (W8) | The blue arc grows outward from R − 10 to R about the center, 4 → 12 px, blue → amber, **900 ms**, eased with no overshoot (`cubic-bezier(.22,1,.36,1)`), so it "sits down" into the band. |
 | M4 | Meetings ↔ **empty** (C3) | Date and clock move down to the center (clock 115 %) and the divider fades, with the M1 timing. |
@@ -158,13 +157,12 @@ All sizes are in px on the **450 × 450 face canvas** (≈ 2 px per dp on a typi
 
 | Slot | Type | Carries | Drawn as |
 |---|---|---|---|
-| 1 `ring` | SMALL_IMAGE (PHOTO style) | **The whole ring as one image** drawn by the data source: main-ring meetings, elapsed parts, later lane, double-booking stripes, private caution stripes (R1–R10). Grey variant in the ambient image field (A1) | Full-face `PartImage` |
-| 2 `ring_selected` | RANGED_VALUE | MIN/MAX = the selected arc's start/end angle (degrees from 12 o'clock); VALUE = MAX when shown, MIN when hidden (keeps the last position so it fades out in place) | Arc on top: thickness (12 → 22 px, inward) and alpha animated (M1); angles **jump, never animate** (animating them made the arc sweep across the dial). Switching meetings: fade out in place, then the new arc fades in (M2), stepped by the data source ~400 ms apart. Never hidden under clash stripes |
+| 1 `ring` | SMALL_IMAGE (PHOTO style) | **The whole ring as one image** drawn by the data source: main-ring meetings, elapsed parts, later lane, double-booking stripes, private caution stripes (R1–R10), and the selection (R9: everything else at 35 %, the selected meeting on top). Grey variant in the ambient image field (A1) | Full-face `PartImage` |
 | 3 `details` | RANGED_VALUE | TEXT = the line under the time range: place, the clashing meeting (C7), "Tomorrow · place" (C6) or "Details hidden" (C13). VALUE = selected (0/1) so it moves with the layout; MAX = 1 + measured width + 10000 × kind (0 place · 1 clash · 2 tomorrow · 3 private) | Muted / coral with the overlap icon / blue; a clash line moves up under the title |
 | 4 `status` | RANGED_VALUE | VALUE = `selected` (0/1); TEXT = title (or "Private"); TITLE = time range; MAX = 1 + measured title width + 10000 × flags (1 arrow C12, 2 lock C13, 4 clash C7, 8 title scrolls C9a). **Date, clock, divider, title and time range are drawn inside this slot** so their Transforms can read VALUE (spike 1) | Drives every M1 `Transform`; the arrow and lock are drawn just before the centered title using the width |
 | 5 `ring_promote` | RANGED_VALUE | The promoting meeting: MIN/MAX = its angles, VALUE = progress lane → ring; no data otherwise. Stepped by the data source: on the lane → moving → handed to the image | Arc scaled R − 10 → R, 4 → 12 px, blue → amber over 0.9 s (M3) |
 | 6 `title_scroll`, 7 `title_scroll_arrow` | RANGED_VALUE | **Long title (C9a).** The full title in TEXT; the face's BoundingBox crops it to a window (x 95–355, or 125–355 beside the arrow) and a time-based `Transform` scrolls it. VALUE = selected (0/1); MAX = 1 + overflow px + 10000 × scrolling. Only the slot matching the arrow state sends data. The status slot's TEXT stays the shortened title (ambient, A2a) and gets flag 8 (title scrolls) to hide itself. | Used by the face as slot ids 4 and 6. |
-| 8 | — | Free | Weather, battery… later |
+| 2, 8 | — | Free | Weather, battery… later. Slot 2 was the thick selected arc until 2026-10-27 (R9) |
 
 **Why widths travel in MAX:** WFF can't measure text, and one line can't mix colors (a second `Font` run is ignored), so icons can't be inline glyphs. The data source measures each line with the watch's own default typeface at the face's sizes, shortens it with an ellipsis (C9) and sends the width; the face draws the icon as shapes at `225 − (width + icon space) / 2` and nudges the text right by half the icon space. A slot's bounding area also crops its drawing, so text slots use a full-face bounding oval.
 
@@ -182,6 +180,7 @@ Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.sched
 
 | Date | Change | Rules |
 |---|---|---|
+| 2026-10-27 | Selecting a meeting no longer thickens its arc: it keeps its normal width and colours at full strength, and everything else dims to 35 %. On the watch the ring image draws this, and the selected-arc slot is removed (6 of 8 slots used). | R9, R10, R1a, M1, §8 |
 | 2026-10-25 | Watch build gains the date, time range, place line, look-ahead arrow, lock and overlap line (C1, C4, C7, C12, C13), driven by a first port of the rules engine; `details` becomes a RANGED_VALUE slot with packed width/kind. | §8 slots 3–4 |
 | 2026-10-25 | Selected arc no longer slides between meetings (it swept across the face): angles jump, the old arc fades out in place and the new one fades in. The ring image only dims the others; the highlight comes from the arc. | §8 slot 2, R9, M2 |
 | 2026-10-25 | Spike 3: selected and settle slots are `RANGED_VALUE` (angles in MIN/MAX, state in VALUE); trail and now dot are face-side. | §8, R6, R9, M3 |
@@ -209,7 +208,7 @@ Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.sched
 
 ## 9. Colour themes
 
-Every colour the face draws with is a token (the table in §2: meeting arcs, elapsed part, selected arc and its elapsed/lane variants, later lane, later/tomorrow text, double booking and its elapsed part, private stripes and their selected variants, clock/title text, secondary text, ring track). A **theme** is one complete set of tokens. The prototype's **Colors** section lists the themes, lets you edit any token with a colour picker (this becomes the "Custom" theme, saved in the browser) and **Copy theme** exports the tokens as JSON. Amber is the real design; Mint, Violet and Rose are examples of the mechanism, to be replaced with your colours. Ambient mode stays monochrome whatever the theme (A1), and Dim and Tactical red (A4, A5) apply on top of a theme.
+Every colour the face draws with is a token (the table in §2: meeting arcs, elapsed part, later lane, later/tomorrow text, double booking and its elapsed part, private stripes, clock/title text, secondary text, ring track). A **theme** is one complete set of tokens. The prototype's **Colors** section lists the themes, lets you edit any token with a colour picker (this becomes the "Custom" theme, saved in the browser) and **Copy theme** exports the tokens as JSON. Amber is the real design; Mint, Violet and Rose are examples of the mechanism, to be replaced with your colours. Ambient mode stays monochrome whatever the theme (A1), and Dim and Tactical red (A4, A5) apply on top of a theme.
 
 On the watch each theme becomes one option of a WFF colour configuration (`UserConfigurations`), so it appears in the watch's customize screen. The ring image drawn by the data source (arcs, lane, stripes) must receive the chosen theme too, since its colours are drawn in the image, not in the face XML.
 

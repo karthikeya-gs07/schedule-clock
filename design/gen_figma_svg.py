@@ -19,9 +19,8 @@ DIAL = 720         # minutes per turn
 GAP = 1            # degrees at each arc end (R2)
 NOW = 10 * 60 + 20
 
-AMBER, AMBER_PAST, AMBER_DIM = "#ffb547", "#6e4f22", "#5a4320"
-PRIVATE, PRIVATE_DIM = "#8e8e93", "#48484c"
-LATER, CLASH, SELECTED = "#8fa3d6", "#ff7a59", "#ffd27f"
+AMBER, AMBER_PAST = "#ffb547", "#6e4f22"
+LATER, CLASH = "#8fa3d6", "#ff7a59"
 TEXT, MUTED, TRACK = "#f2f2f2", "#8e8e93", "#1c1c1f"
 SANS = "Roboto"     # stand-in for the watch's system font (SYNC_TO_DEVICE)
 DISPLAY = "Anta"    # clock digits and dial numbers (T5)
@@ -114,10 +113,9 @@ def dial_layers():
             f'<g id="Hour numbers">{"".join(numbers)}</g>')
 
 
-def meetings(dim):
+def meetings():
     """The sample day at 10:20 AM (RULES W1–W8): Standup is past; Roadmap is live; Late sync is on the lane."""
-    amber = AMBER_DIM if dim else AMBER
-    grey = PRIVATE_DIM if dim else PRIVATE
+    amber = AMBER
     parts = [
         arc("Roadmap planning · elapsed", 600, NOW, R, AMBER_PAST, 12),
         arc("Roadmap planning · remaining", NOW, 690, R, amber, 12),
@@ -204,9 +202,9 @@ def selected_center():
 
 
 def face(name, center, dim):
-    ring = meetings(dim)
-    if dim:  # R9: everything else at 35 %, the selected arc on top (22 px, grows inward)
-        ring = f'<g id="Dimmed ring" opacity="0.35">{ring}</g>' + arc("Selected arc", 780, 840, R - 5, SELECTED, 22)
+    ring = meetings()
+    if dim:  # R9: everything else at 35 %, the selected meeting on top exactly as it normally looks
+        ring = f'<g id="Dimmed ring" opacity="0.35">{ring}</g>' + arc("Selected meeting", 780, 840, R, AMBER, 12)
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="450" height="450" viewBox="0 0 450 450">
 <g id="{name}">
 <circle id="Screen" cx="{C}" cy="{C}" r="225" fill="#000000"/>

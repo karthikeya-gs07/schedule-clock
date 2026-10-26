@@ -1,7 +1,7 @@
 """Generates the Phase 1 spike watchface.xml and a preview PNG.
 
 Usage: python3 tools/gen_spike_face.py watchface/src/main/res
-Layers, bottom to top: track, comet trail, ticks + numbers, ring image (slot 0), selected arc (slot 2), settling arc
+Layers, bottom to top: track, comet trail, ticks + numbers, ring image with the selection (slot 0), settling arc
 (slot 5), now dot, date/clock/title/range (status slot 1), place line (slot 3), tap hotspots. Comments name the
 PRD §6.3 risk each block tests; slot numbers follow RULES §8.
 """
@@ -69,27 +69,6 @@ def numeral(h):
     return (f'    <PartText x="{round(x - 22)}" y="{round(y - 16)}" width="44" height="32">'
             f'<Text align="CENTER"><Font family="{FONT}" size="24" color="{color}">'
             f'<Template><![CDATA[{h}]]></Template></Font></Text></PartText>')
-
-# Selected arc offsets (RULES §8 slot 2): MIN = start + 1000 × later-lane + 2000 × private.
-LANE = "(floor([COMPLICATION.RANGED_VALUE_MIN] / 1000) % 2)"
-PRIV = "floor([COMPLICATION.RANGED_VALUE_MIN] / 2000)"
-
-def selected_arc(name, alpha, diameter, color, thick0, thick1):
-    # Round caps (R1a): shorten both ends by the cap's angle, at the full selected thickness, so the visible
-    # ends stay at the meeting's times. clamp keeps a very short meeting from reversing (it becomes a dot).
-    cap = f"{thick1 / 2 / (diameter / 2) * 180 / math.pi:.3f}"
-    start = f"(([COMPLICATION.RANGED_VALUE_MIN] % 1000) + 1 + {cap})"
-    end = f"clamp(([COMPLICATION.RANGED_VALUE_MAX] % 1000) - 1 - {cap}, {start} + 0.01, 100000)"
-    return f'''        <PartDraw name="sel_{name}" x="0" y="0" width="450" height="450" alpha="0">
-          <Transform target="alpha" value="{alpha}">{SELECT_ANIM}</Transform>
-          <Arc centerX="{CX}" centerY="{CY}" width="{diameter}" height="{diameter}" startAngle="0" endAngle="1">
-            <Transform target="startAngle" value="{start}"/>
-            <Transform target="endAngle" value="{end}"/>
-            <Stroke color="{color}" thickness="{thick0}" cap="ROUND">
-              <Transform target="thickness" value="{thick0} + {thick1 - thick0} * {P}">{SELECT_ANIM}</Transform>
-            </Stroke>
-          </Arc>
-        </PartDraw>'''
 
 # Center content (RULES §3, T2, M1), in the prototype's layout. S = selected (0/1).
 # Status MAX = 1 + title width + 10000 × flags (1 arrow, 2 lock, 4 clash, 8 title scrolls); details MAX = 1 + width + 10000 × kind.
@@ -212,19 +191,6 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
       </Complication>
     </ComplicationSlot>
 
-    <!-- Slot 2 `ring_selected` (R9): MIN/MAX = the arc's angles (+1000 later lane, +2000 private), VALUE = MAX
-         shown / MIN hidden. Grows and fades in place; angles jump (animating them swept an arc across the face).
-         Switching meetings: the data source fades the old arc out, then sends the new one (M2). -->
-    <ComplicationSlot slotId="2" name="selected" displayName="@string/slot_selected" x="0" y="0" width="450" height="450"
-        supportedTypes="RANGED_VALUE EMPTY" isCustomizable="FALSE">
-      {provider("SelectedDataSourceService", "RANGED_VALUE")}
-      <BoundingOval x="0" y="0" width="450" height="450"/>
-      <Complication type="RANGED_VALUE">
-{selected_arc("main", f"255 * {P} * (1 - {LANE}) * (1 - {PRIV})", 2*(R-5), "#ffffd27f", 12, 22)}
-{selected_arc("private", f"255 * {P} * (1 - {LANE}) * {PRIV}", 2*(R-5), "#ffc7c7cc", 12, 22)}
-{selected_arc("lane", f"255 * {P} * {LANE}", 2*R_LATER, "#ffc3d0f2", 4, 8)}
-      </Complication>
-    </ComplicationSlot>
 
     <!-- Round caps (R1a): the arc's ends are pulled in by the cap's angle, growing 0.55° → 1.57° with the stroke -->
     <!-- Slot 5 `ring_promote` (risk 4, M3): VALUE runs MIN (on the lane) → MAX (on the ring). The arc grows

@@ -26,17 +26,16 @@ object RingRenderer {
 
     private val AMBER = Color.parseColor("#ffb547")
     private val AMBER_PAST = Color.parseColor("#6e4f22")
-    private val AMBER_DIM = Color.parseColor("#5a4320")
     private val PRIVATE = Color.parseColor("#8e8e93")
     private val PRIVATE_PAST = Color.parseColor("#48484c")
-    private val PRIVATE_DIM = Color.parseColor("#48484c")
     private val LATER = Color.parseColor("#8fa3d6")
     private val CLASH = Color.parseColor("#ff7a59")
     private val CLASH_PAST = Color.parseColor("#7a3b2c")
     private val CLASH_MASK = Color.parseColor("#3f1f17")   // dark coral between the two stripes, never empty (R6a)
+    private const val DIM = 0.35f           // everything but the selected meeting, while one is selected (R9)
 
     /**
-     * @param selectedKey dims every other meeting (R9); the highlight itself is the selected-arc slot.
+     * @param selectedKey dims everything else to 35 % and draws this meeting on top, unchanged (R9).
      * @param hiddenKey left out entirely (a meeting the settle arc is carrying, M3).
      */
     fun renderPng(list: List<Placed>, now: Int, selectedKey: String?, hiddenKey: String? = null): ByteArray {
@@ -44,22 +43,10 @@ object RingRenderer {
         val canvas = Canvas(bitmap)
         val stroke = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeCap = Paint.Cap.BUTT }
         val shown = list.filter { it.meeting.key != hiddenKey }
+        val dim = selectedKey != null
 
-        // Main ring (R3, R9, R10): elapsed part dimmer, private meetings as caution stripes. Round caps (R1a).
-        stroke.strokeCap = Paint.Cap.ROUND
-        for (p in shown.filter { it.lane == Lane.MAIN }) {
-            val m = p.meeting
-            val dim = selectedKey != null && m.key != selectedKey
-            val color = when {
-                m.private -> if (dim) PRIVATE_DIM else PRIVATE
-                else -> if (dim) AMBER_DIM else AMBER
-            }
-            val past = if (m.private) PRIVATE_PAST else AMBER_PAST
-            val split = if (ScheduleRules.isLive(p, now)) now else p.cs
-            stroke.strokeWidth = BAND
-            paintArc(canvas, stroke, p.cs, split, R, past, m.private)
-            paintArc(canvas, stroke, split, p.ce, R, color, m.private)
-        }
+        // Main ring (R3, R10): elapsed part dimmer, private meetings as caution stripes. Round caps (R1a).
+        for (p in shown.filter { it.lane == Lane.MAIN }) drawMain(canvas, stroke, p, now, dim)
 
         // Double bookings (R4): blank the band, then two 5 px coral stripes at R ± 4.5.
         for ((a, b) in ScheduleRules.clashRanges(shown)) {
@@ -67,22 +54,21 @@ object RingRenderer {
                 if (to <= from) continue
                 stroke.shader = null
                 stroke.strokeCap = Paint.Cap.BUTT
-                stroke.color = CLASH_MASK; stroke.strokeWidth = BAND + 2
+                stroke.color = dimmed(CLASH_MASK, dim); stroke.strokeWidth = BAND + 2
                 arc(canvas, from, to, R, stroke)
                 stroke.strokeCap = Paint.Cap.ROUND
-                stroke.color = color; stroke.strokeWidth = 5f
+                stroke.color = dimmed(color, dim); stroke.strokeWidth = 5f
                 arc(canvas, from, to, R - 4.5f, stroke)
                 arc(canvas, from, to, R + 4.5f, stroke)
             }
         }
 
         // Later lane (R5): thin blue, rounded; private ones grey and dashed.
-        stroke.shader = null
-        stroke.strokeCap = Paint.Cap.ROUND; stroke.strokeWidth = 4f
-        for (p in shown.filter { it.lane == Lane.LATER }) {
-            stroke.color = if (p.allDay.isNotEmpty()) CLASH else if (p.meeting.private) PRIVATE else LATER   // coral on an all-day event (W9)
-            stroke.pathEffect = if (p.meeting.private) DashPathEffect(floatArrayOf(4f, 3f), 0f) else null
-            arc(canvas, p.cs, p.ce, R_LATER, stroke)
+        for (p in shown.filter { it.lane == Lane.LATER }) drawLater(canvas, stroke, p, dim)
+
+        // R9: the selected meeting exactly as it normally looks, above the dimmed ring (and any clash stripes).
+        shown.firstOrNull { it.meeting.key == selectedKey }?.let {
+            if (it.lane == Lane.MAIN) drawMain(canvas, stroke, it, now, dim = false) else drawLater(canvas, stroke, it, dim = false)
         }
 
         return ByteArrayOutputStream().use { out ->
@@ -91,6 +77,30 @@ object RingRenderer {
             out.toByteArray()
         }
     }
+
+    private fun drawMain(canvas: Canvas, stroke: Paint, p: Placed, now: Int, dim: Boolean) {
+        val m = p.meeting
+        val split = if (ScheduleRules.isLive(p, now)) now else p.cs
+        stroke.pathEffect = null
+        stroke.strokeCap = Paint.Cap.ROUND
+        stroke.strokeWidth = BAND
+        paintArc(canvas, stroke, p.cs, split, R, dimmed(if (m.private) PRIVATE_PAST else AMBER_PAST, dim), m.private)
+        paintArc(canvas, stroke, split, p.ce, R, dimmed(if (m.private) PRIVATE else AMBER, dim), m.private)
+    }
+
+    private fun drawLater(canvas: Canvas, stroke: Paint, p: Placed, dim: Boolean) {
+        stroke.shader = null
+        stroke.strokeCap = Paint.Cap.ROUND; stroke.strokeWidth = 4f
+        val color = if (p.allDay.isNotEmpty()) CLASH else if (p.meeting.private) PRIVATE else LATER   // coral on an all-day event (W9)
+        stroke.color = dimmed(color, dim)
+        stroke.pathEffect = if (p.meeting.private) DashPathEffect(floatArrayOf(4f, 3f), 0f) else null
+        arc(canvas, p.cs, p.ce, R_LATER, stroke)
+        stroke.pathEffect = null
+    }
+
+    /** 35 % of the color over black: what the prototype's 35 % opacity ring looks like on the black face. */
+    private fun dimmed(color: Int, dim: Boolean) =
+        if (!dim) color else Color.rgb((Color.red(color) * DIM).toInt(), (Color.green(color) * DIM).toInt(), (Color.blue(color) * DIM).toInt())
 
     private fun paintArc(canvas: Canvas, paint: Paint, from: Int, to: Int, r: Float, color: Int, private: Boolean) {
         if (to <= from) return

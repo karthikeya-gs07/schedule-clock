@@ -183,9 +183,11 @@
   #ringAll path.clash-mask { stroke: #3f1f17; stroke: color-mix(in srgb, var(--c-clash) 25%, #000); stroke-width: 14px; stroke-opacity: 1; stroke-linecap: butt; }   /* dark coral between the two stripes */
   #ringAll path.clash { stroke: var(--c-clash); stroke: color-mix(in srgb, var(--c-clash) var(--arc-pct-hi), #000); stroke-width: 5px; }
   #ringAll path.clash.past { stroke: var(--c-clash-past); stroke: color-mix(in srgb, var(--c-clash-past) var(--arc-pct-hi), #000); }
-  .selArc { fill: none; stroke-linecap: round; stroke: var(--c-selected); stroke: color-mix(in srgb, var(--c-selected) var(--arc-pct-hi), #000); stroke-width: 12px; opacity: 0; }
-  .selArc.past { stroke: var(--c-selected-past); stroke: color-mix(in srgb, var(--c-selected-past) var(--arc-pct-hi), #000); }
-  .selArc.later { stroke: var(--c-selected-later); stroke: color-mix(in srgb, var(--c-selected-later) var(--arc-pct-hi), #000); stroke-width: 4px; }
+  /* Selected arc (R9): the meeting exactly as it normally looks (same colour, same width), drawn above the
+     dimmed ring, so it reads as the one meeting at full strength. */
+  .selArc { fill: none; stroke-linecap: round; stroke: var(--c-event); stroke: color-mix(in srgb, var(--c-event) var(--arc-pct), #000); stroke-width: 12px; opacity: 0; }
+  .selArc.past { stroke: var(--c-past); stroke: color-mix(in srgb, var(--c-past) var(--arc-pct), #000); }
+  .selArc.later { stroke: var(--c-later); stroke: color-mix(in srgb, var(--c-later) var(--arc-pct-hi), #000); stroke-width: 4px; }
   #dStatus { fill: var(--accent); }
   /* Status line ("NEXT · IN 1H 30M") hidden for now; title and meta move up to close the gap. */
   #dStatus { display: none; }
@@ -199,8 +201,7 @@
 
   /* Selected: time & date shrink up, details grow up into the space */
   #face.selected #ringAll  { opacity: .35; }
-  #face.selected .selArc   { opacity: 1; stroke-width: 22px; }
-  #face.selected .selArc.later { stroke-width: 8px; }
+  #face.selected .selArc   { opacity: 1; }
   /* Date stays put (moving it up would hit the 11 and 1), time tucks under it, details grow. */
   #face.selected #dDateG   { transform: scale(.9); }
   #face.selected #dClock   { transform: translateY(-10px) scale(.55); }
@@ -210,7 +211,7 @@
   /* Text content change (e.g. selecting a meeting that isn't "next"): brief dip, no layout change */
   #face.swapping #dText   { opacity: 0; transform: translateY(6px);
     transition: opacity var(--swap) ease-in, transform var(--swap) ease-in; }
-  #face.swapping .selArc  { opacity: 0; stroke-width: 12px; transition-duration: var(--swap); }
+  #face.swapping .selArc  { opacity: 0; transition-duration: var(--swap); }
 
   /* Ambient (always-on): outlines only, no selection */
   #face.ambient #ringAll path { stroke: #9a9a9a; stroke-width: 3px; stroke-opacity: 1; }
@@ -225,8 +226,8 @@
   #face #dLock path { stroke: var(--c-muted); }
   #face #dTodIcon { stroke: var(--c-later-text); }
   #face #dClashIcon { stroke: var(--c-clash); }
-  #face #pvSel rect + rect { fill: var(--c-private-sel); }
-  #face #pvSelPast rect + rect { fill: var(--c-private-sel-past); }
+  #face #pvSel rect + rect { fill: var(--c-private); }
+  #face #pvSelPast rect + rect { fill: var(--c-private); fill: color-mix(in srgb, var(--c-private) 50%, #000); }
   #face.ambient #dArrow { stroke: #8e8e93; }
   #face.ambient #ringAll path.later { stroke: #5c5c62; }
   #face.ambient #trail { opacity: 0; }
@@ -916,7 +917,7 @@ function renderSelArc(list) {
   const stripes = e.private && e.lane === 'main';
   const rot = `rotate(${(angleOf((e.cs + e.ce) / 2) + 45).toFixed(1)})`;
   $('pvSel').setAttribute('patternTransform', rot); $('pvSelPast').setAttribute('patternTransform', rot);
-  $('selArc').style.stroke = stripes ? 'url(#pvSel)' : e.private ? C.privateSel : '';
+  $('selArc').style.stroke = stripes ? 'url(#pvSel)' : e.private ? C.private : '';
   $('selArcPast').style.stroke = stripes ? 'url(#pvSelPast)' : '';
   $('selArc').style.strokeDasharray = e.private && e.lane === 'later' ? '6 4' : '';
 }
@@ -1302,11 +1303,9 @@ addEventListener('resize', applyDevice);
 // whatever you edit. WFF: each theme is a colour configuration (UserConfigurations) of the same elements.
 const TOKENS = [   // [token, CSS variable, label]
   ['event', '--c-event', 'Meeting arcs'], ['past', '--c-past', 'Elapsed part'],
-  ['selected', '--c-selected', 'Selected arc'], ['selectedPast', '--c-selected-past', 'Selected, elapsed'],
-  ['later', '--c-later', 'Later lane'], ['selectedLater', '--c-selected-later', 'Selected, lane'],
+  ['later', '--c-later', 'Later lane'],
   ['laterText', '--c-later-text', 'Later / tomorrow text'], ['clash', '--c-clash', 'Double booking'],
   ['clashPast', '--c-clash-past', 'Double booking, elapsed'], ['private', '--c-private', 'Private stripes'],
-  ['privateSel', '--c-private-sel', 'Private, selected'], ['privateSelPast', '--c-private-sel-past', 'Private, sel. elapsed'],
   ['text', '--c-text', 'Clock and title'], ['muted', '--c-muted', 'Secondary text'], ['track', '--c-track', 'Ring track'],
 ];
 const AMBER = { event: '#ffb547', past: '#6e4f22', selected: '#ffd27f', selectedPast: '#8a6a35', selectedLater: '#c3d0f2',

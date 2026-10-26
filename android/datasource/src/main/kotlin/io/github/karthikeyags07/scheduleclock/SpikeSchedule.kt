@@ -47,7 +47,6 @@ object SpikeSchedule {
         Meeting(23 * 60, 23 * 60 + 45, "Late sync", "Zoom"),             // later lane until 11:45 AM
     )
 
-    private const val SWITCH_FADE_MS = 400L  // old arc fades out in place before the new one appears (M2)
     private const val SETTLE_MS = 900L       // M3
 
     private fun prefs(context: Context) = context.getSharedPreferences("spike", Context.MODE_PRIVATE)
@@ -89,27 +88,11 @@ object SpikeSchedule {
         select(context, next)
     }
 
-    /** Switching between two meetings fades the old arc out where it is, then shows the new one (M2). */
+    /** R9: the ring image redraws with the new selection at full strength and every other meeting dimmed. */
     private fun select(context: Context, next: String?) {
-        val app = context.applicationContext
-        val prev = prefs(app).getString("selected", null)
-        prefs(app).edit().putString("selected", next).commit()
-        if (prev != null && next != null && prev != next) {
-            setArc(app, prev, shown = false)
-            requestUpdate(app)
-            Handler(Looper.getMainLooper()).postDelayed({
-                setArc(app, next, shown = true)
-                requestUpdate(app, SelectedDataSourceService::class.java)
-            }, SWITCH_FADE_MS)
-        } else {
-            setArc(app, next ?: prefs(app).getString("arcKey", null), shown = next != null)
-            requestUpdate(app)
-        }
+        prefs(context).edit().putString("selected", next).commit()
+        requestUpdate(context.applicationContext)
         Log.i(TAG, "selected=$next")
-    }
-
-    private fun setArc(context: Context, key: String?, shown: Boolean) {
-        prefs(context).edit().putString("arcKey", key).putBoolean("arcShown", shown).commit()
     }
 
     // ---- Slot data -------------------------------------------------------------------------
@@ -124,17 +107,6 @@ object SpikeSchedule {
         Log.i(TAG, "ring image: ${png.size / 1024} KB PNG, drawn+encoded in ${(SystemClock.elapsedRealtimeNanos() - t0) / 1_000_000} ms")
         val image = SmallImage.Builder(Icon.createWithData(png, 0, png.size), SmallImageType.PHOTO).build()
         return SmallImageComplicationData.Builder(image, text("Today's meetings")).build()
-    }
-
-    /** Slot 2: the selected arc (R9). VALUE = MAX shown, MIN hidden; hidden keeps its last position. */
-    fun selectedArc(context: Context): RangedValueComplicationData {
-        val list = placed(context)
-        val p = list.firstOrNull { it.meeting.key == prefs(context).getString("arcKey", null) }
-            ?: return ranged(0f, 0f, 1f, "", "")
-        val shown = prefs(context).getBoolean("arcShown", false) && selectedIndex(context, list) >= 0
-        val offset = (if (p.lane == Lane.LATER) 1000f else 0f) + (if (p.meeting.private) 2000f else 0f)
-        val (start, end) = degrees(p)
-        return ranged(if (shown) end + offset else start + offset, start + offset, end + offset, p.meeting.title, "")
     }
 
     /**
@@ -241,7 +213,6 @@ object SpikeSchedule {
 
     private val allServices = listOf(
         RingImageDataSourceService::class.java,
-        SelectedDataSourceService::class.java,
         StatusDataSourceService::class.java,
         DetailsDataSourceService::class.java,
         PromoteDataSourceService::class.java,
