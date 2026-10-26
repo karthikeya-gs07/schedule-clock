@@ -137,7 +137,8 @@ def scroll_slot(slot_id, name, service, arrow):
     left = 125 if arrow else 95
     glide = f"(clamp({SC_OVER}, 1, 9999) * {1000 / SPEED:.4f})"
     end = f"({HOLD1} + {glide} + {HOLD2})"
-    t = f"(([MINUTE] * 60000 + [SECOND_MILLISECOND]) % ({end} + {2 * FADE}))"   # ms into the cycle (wraps hourly)
+    # ms into the cycle (wraps hourly). [SECOND_MILLISECOND] is seconds with a fraction (e.g. 44.543), not ms.
+    t = f"((([MINUTE] * 60 + [SECOND_MILLISECOND]) * 1000) % ({end} + {2 * FADE}))"
     u = f"clamp(({t} - {HOLD1}) / {glide}, 0, 1)"
     x = f"{left} - ({t} &lt; {end} + {FADE} ? {SC_OVER} * ({u} * {u} * (3 - 2 * {u})) : 0)"
     alpha = (f"{SC_ON} * 255 * ({t} &lt; {end} ? 1 : ({t} &lt; {end} + {FADE} ? 1 - ({t} - {end}) / {FADE} "

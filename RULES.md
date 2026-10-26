@@ -169,7 +169,7 @@ All sizes are in px on the **450 × 450 face canvas** (≈ 2 px per dp on a typi
 
 Face-side, no slot: comet trail (240 dashes lit by time expressions) and the now dot (R6), verified in spike 3.
 
-Why one image (spike 2, PRD §6.3b): `WEIGHTED_ELEMENTS` is capped at 7 segments (3 meetings), and `PHOTO_IMAGE` is rejected for third-party providers. Free time in any `WEIGHTED_ELEMENTS` slot must be `#10000000`, not fully transparent (`#0` breaks the runtime). `CUBIC_BEZIER` animation `controls` must be space-separated (`"0.4 0 0.2 1"`); commas freeze the renderer (spike 3).
+Why one image (spike 2, PRD §6.3b): `WEIGHTED_ELEMENTS` is capped at 7 segments (3 meetings), and `PHOTO_IMAGE` is rejected for third-party providers. Free time in any `WEIGHTED_ELEMENTS` slot must be `#10000000`, not fully transparent (`#0` breaks the runtime). `CUBIC_BEZIER` animation `controls` must be space-separated (`"0.4 0 0.2 1"`); commas freeze the renderer (spike 3). `[SECOND_MILLISECOND]` is seconds with a fraction (e.g. `44.543`), not milliseconds. Any slot whose drawing reads it makes the face redraw ~10×/s while that slot has data (~8× CPU with the screen on), so such slots send no data unless they're animating (spike 5).
 
 Private titles/places are never in any slot: `details` carries "Private" / "Details hidden", and the ring image only has grey stripes.
 

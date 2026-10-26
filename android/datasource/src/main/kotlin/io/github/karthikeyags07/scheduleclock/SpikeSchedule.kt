@@ -173,17 +173,19 @@ object SpikeSchedule {
      * without the look-ahead arrow, slot 6 the narrower one with it. VALUE = selected (0/1) moves the title up
      * with the details (M1). MAX = 1 + overflow px + 10000 × scrolling (1); idle slots send 1.
      */
-    fun titleScroll(context: Context, withArrow: Boolean): RangedValueComplicationData {
+    fun titleScroll(context: Context, withArrow: Boolean): ComplicationData {
         val now = now(context)
         val list = placed(context, now)
         val selected = selectedIndex(context, list)
         val i = if (selected >= 0) selected else ScheduleRules.defaultIndex(list, now)
-        if (i < 0) return ranged(0f, 0f, 1f, "", "")
+        if (i < 0) return NoDataComplicationData()
         val p = list[i]
         val arrow = ScheduleRules.showsArrow(list, i, now)
         val over = if (arrow == withArrow) scrollOver(p, arrow) else 0
         val value = if (selected >= 0) 1f else 0f
-        return if (over > 0) ranged(value, 0f, 1f + over + 10000f, p.meeting.title, "") else ranged(value, 0f, 1f, "", "")
+        // No data unless this slot is scrolling: its time-driven Transform keeps the face redrawing
+        // ~10×/s while it has data (0.41 → 3.2–3.7 s CPU/min interactive, spike 5).
+        return if (over > 0) ranged(value, 0f, 1f + over + 10000f, p.meeting.title, "") else NoDataComplicationData()
     }
 
     /**

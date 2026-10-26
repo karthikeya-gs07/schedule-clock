@@ -1,6 +1,6 @@
 # Schedule Clock: Product Requirements (living doc)
 
-> Status: **v0.36 — Spikes 1–4 done on the emulator (§6.3a–d): the face shows the prototype's center content and rules with fake meetings. Next: read the real calendar, then real-watch checks.**
+> Status: **v0.40 — Spikes 1–5 verified on the emulator (§6.3a–e): the face shows the prototype's center content, AM/PM and scrolling long titles with fake meetings. Next: read the real calendar, then real-watch checks.**
 > Last updated: 2026-10-25
 >
 > **Documents**
@@ -207,7 +207,7 @@ The data source now runs a first Kotlin port of the prototype's rules engine (`S
 
 **Not yet on the watch:** AM/PM next to the clock, the later-lane time-of-day icon (C5), "Tomorrow ·" styling with real tomorrow data (C6), the empty-day centered clock (C3), ambient variants (A1–A5), precise lane taps (I11).
 
-### 6.3e Spike 5 (2026-10-25): scrolling long titles (C9a), written but **not yet built or run**
+### 6.3e Spike 5 (2026-10-25): scrolling long titles (C9a), written in the cloud, **built and verified 2026-10-26** (results below)
 
 Written without an Android SDK (the session could not download one), so none of it has been compiled or seen on the emulator. Code: `SpikeSchedule.titleScroll`, `TextFit.titleMinWidth`, two new data-source services (slots 4 and 6 of the face; 7 of 8 slots now used), the title blocks in `gen_spike_face.py`, and a fake "Quarterly roadmap and budget alignment with leadership" meeting at 5:30 PM.
 
@@ -225,6 +225,21 @@ Things to check on the emulator, in this order:
 | 6 | Ambient: shortened title only, no scroll (A2a). The rest of the face has no ambient design yet | Ambient is a separate task |
 | 7 | Selected state: the scrolling title moves up 30 px with the details but is not enlarged ×1.15 (the crop window is fixed) | Accept for now |
 | 8 | The title is shrunk 30 → 24 px in the prototype but the watch only truncates at 30 px; a title that fits at 24 but not 30 still shows an ellipsis | Needs a per-meeting font size; a later spike |
+
+**Results on the emulator (2026-10-26):**
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Builds and loads | ✅ Built first time; the face loads and redraws |
+| 2 | `BoundingBox` crops the scroll | ✅ Text clipped to its window |
+| 3 | Smooth scroll | ❌ → ✅ **Fixed.** `[SECOND_MILLISECOND]` is **seconds with a fraction** (on-screen probe read `44.543`), not 0–59999 ms, so the text didn't move (0 px over 12 s). Now `([MINUTE] * 60 + [SECOND_MILLISECOND]) * 1000`; measured 4–9 px every ~140 ms (~30–45 px/s with the ease), moving every frame |
+| 4 | Expression length | ✅ Accepted |
+| 5 | Battery | ⚠️ → ✅ **Fixed.** A scroll slot with data makes the runtime redraw ~10×/s: **0.41 s → 3.2–3.7 s CPU per minute** with the screen on, even when no long title was showing (the slots sent empty text). Now they send **no data** unless they're scrolling: **0.63 s/min** without a long title, ~3.5 s/min only while one is on screen. Ambient unaffected (10–50 ms/min) |
+| 6 | Ambient | ✅ Static "Quarterly roadma…", no scrolling |
+| 7 | Selected state | ✅ The scrolling title sits between the divider and the time range |
+| 8 | 24 vs 30 px | ⚠️ As noted: ambient and non-scrolling titles are 30 px; the scroll is 24 px |
+
+Also verified: the AM/PM label (C11) sits after the time ("11:32 PM"). Debug note: with the `time?offset` deep link active, AM/PM shows the real clock while meetings use the shifted time.
 
 ### 6.4 Minimum OS
 
@@ -294,6 +309,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 - **v0.27:** Tomorrow's meetings stay on the thin lane until the clock passes midnight, then all move to the main ring together. Simulated time now runs past 12 AM into the next day (W5).
 - **v0.28:** Trail dashes doubled to 20 per hour (240, every 1.5°) and thinned to 1.2 px (R6).
 - **v0.29:** Arcs are solid and darker instead of see-through; private stripes and the double-booking gap get a dark fill instead of transparency (R6a).
+- **v0.40:** Spike 5 verified on the emulator: AM/PM label works; scrolling titles fixed (`[SECOND_MILLISECOND]` is seconds, not ms) and made cheap (scroll slots send no data unless scrolling: 0.63 vs 3.5 s CPU/min) (§6.3e).
 - **v0.30:** Prototype control panel redesigned into grouped sections (Time, Day, Display, Behavior) with switches and a segmented day picker; the complication payload view is removed. New **Dial only** mode (button, `F` key, or `#dial` in the URL) hides all controls and shows just the watch.
 - **v0.39:** Watch-face spike 5 written (unbuilt): long titles scroll in their own cropped slots (4 and 6), ambient shows the shortened title; checklist in §6.3e. Fake long-title meeting added.
 - **v0.38:** Long titles scroll slowly through a fixed window instead of ending in an ellipsis; ambient shows the first characters and "…" (C9a, A2a). Prototype only (new "Long titles" demo day). **Not on the watch yet:** WFF has no marquee, so the face needs a cropped title text moved by a seconds-based `Transform` plus a second, truncated title for ambient, which means a new complication field or slot (slot 6 of 8); the data source must send the full title and its width. To spike on the emulator first.
