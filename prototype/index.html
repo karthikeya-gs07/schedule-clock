@@ -249,7 +249,7 @@
   <div class="tabs" id="deviceTabs" role="tablist" aria-label="Watch size"></div>
   <div class="size-info" id="sizeInfo"></div>
   <div class="calib" id="calib" hidden>
-    <p>Hold a bank or ID card against the screen. Drag the slider until the box is exactly as wide as the card's <b>short edge</b> (53.98 mm).</p>
+    <p>Hold a bank or ID card against the screen. Drag the slider until the box is exactly as wide as the card's <b id="calibEdge">short edge (53.98 mm)</b>. Change it again if you fold, unfold or zoom: each screen state is saved separately.</p>
     <div class="card-wrap"><div class="card" id="calibCard"></div></div>
     <input id="calibRange" type="range" min="60" max="260" step="0.5" aria-label="Screen scale">
     <div class="row">
@@ -1158,13 +1158,69 @@ const store = {
 // Calibration is per screen + zoom level.
 const screenKey = () => `sc.cssPerIn.${Math.min(screen.width, screen.height)}x${Math.max(screen.width, screen.height)}@${devicePixelRatio}`;
 
-// CSS px per physical inch = panel ppi ÷ (device px per CSS px).
+// Known displays: native pixels (short × long edge) and the panel's diagonal in inches. The browser reports
+// its screen in CSS px (screen.width × devicePixelRatio = native px), so matching the resolution finds the
+// panel, and CSS px per inch = CSS diagonal ÷ real diagonal. That stays right when the page is zoomed or a
+// foldable changes screen. Only entries whose resolution identifies one panel are listed; common phones are
+// not (their default resolution is shared by different sizes), so they fall back to an estimate.
+const DISPLAYS = [
+  // Samsung foldables (family: fold / flip decides between panels that share a resolution)
+  { name: 'Galaxy Z Fold8 Ultra · inner screen', px: [2256, 2504], inch: 8.0, fam: 'fold' },
+  { name: 'Galaxy Z Fold8 · inner screen',       px: [1848, 2448], inch: 7.6, fam: 'fold' },
+  { name: 'Galaxy Z Fold8 · cover screen',       px: [1248, 1972], inch: 5.5, fam: 'fold' },
+  { name: 'Galaxy Z Fold7 · inner screen',       px: [1968, 2184], inch: 8.0, fam: 'fold' },
+  { name: 'Galaxy Z Fold6 · inner screen',       px: [1856, 2160], inch: 7.6, fam: 'fold' },
+  { name: 'Galaxy Z Fold6 · cover screen',       px: [968, 2376],  inch: 6.3, fam: 'fold' },
+  { name: 'Galaxy Z Fold5 · inner screen',       px: [1812, 2176], inch: 7.6, fam: 'fold' },
+  { name: 'Galaxy Z Fold5 · cover screen',       px: [904, 2316],  inch: 6.2, fam: 'fold' },
+  { name: 'Galaxy Z Fold7 / Fold8 Ultra · cover screen', px: [1080, 2520], inch: 6.5, fam: 'fold' },
+  { name: 'Galaxy Z Flip7 / Flip8 · inner screen',       px: [1080, 2520], inch: 6.9, fam: 'flip' },
+  { name: 'Galaxy Z Flip7 / Flip8 · cover screen',       px: [948, 1048],  inch: 4.1, fam: 'flip' },
+  // Apple
+  { name: 'iPhone 6/7/8 Plus', px: [1080, 1920], inch: 5.5 }, { name: 'iPhone 6/7/8 / SE', px: [750, 1334], inch: 4.7 },
+  { name: 'iPhone X / XS / 11 Pro', px: [1125, 2436], inch: 5.8 }, { name: 'iPhone XR / 11', px: [828, 1792], inch: 6.1 },
+  { name: 'iPhone XS Max / 11 Pro Max', px: [1242, 2688], inch: 6.5 }, { name: 'iPhone 12 / 13 / 14', px: [1170, 2532], inch: 6.1 },
+  { name: 'iPhone 12 / 13 mini', px: [1080, 2340], inch: 5.4 }, { name: 'iPhone 12–14 Pro Max / 14 Plus', px: [1284, 2778], inch: 6.7 },
+  { name: 'iPhone 14 Pro / 15 / 16', px: [1179, 2556], inch: 6.1 }, { name: 'iPhone 14 Pro Max / 15–16 Plus', px: [1290, 2796], inch: 6.7 },
+  { name: 'iPhone 16 Pro', px: [1206, 2622], inch: 6.3 }, { name: 'iPhone 16 Pro Max', px: [1320, 2868], inch: 6.9 },
+  { name: 'iPad mini', px: [1488, 2266], inch: 8.3 }, { name: 'iPad (10.2″)', px: [1620, 2160], inch: 10.2 },
+  { name: 'iPad Air 10.9″', px: [1640, 2360], inch: 10.9 }, { name: 'iPad Pro 11″', px: [1668, 2388], inch: 11 },
+  { name: 'iPad Pro 11″ (M4)', px: [1668, 2420], inch: 11 }, { name: 'iPad Pro 12.9″', px: [2048, 2732], inch: 12.9 },
+  { name: 'iPad Pro 13″ (M4)', px: [2064, 2752], inch: 13 },
+  // Mac laptops at their default scaling
+  { name: 'MacBook Air 13″', px: [1600, 2560], inch: 13.3 }, { name: 'MacBook Air 13.6″', px: [1664, 2560], inch: 13.6 },
+  { name: 'MacBook Air 15″', px: [1864, 2880], inch: 15.3 }, { name: 'MacBook Pro 14″', px: [1964, 3024], inch: 14.2 },
+  { name: 'MacBook Pro 16″', px: [2234, 3456], inch: 16.2 },
+];
+const near = (a, b) => Math.abs(a - b) <= 4;   // only the rounding of CSS width × devicePixelRatio
+let modelHint = '';   // e.g. "SM-F966B": which Samsung model, when the browser reveals it (client hints)
+const famOf = m => /^SM-F9/i.test(m) ? 'fold' : /^SM-F7/i.test(m) ? 'flip' : '';
+try {   // Chrome hides the model in the user agent; client hints give it (HTTPS only)
+  navigator.userAgentData?.getHighEntropyValues(['model']).then(v => { modelHint = v.model || ''; applyDevice(); });
+} catch {}
+
+// CSS px per physical inch.
 function detectScale() {
   const ua = navigator.userAgent, dpr = devicePixelRatio || 1;
-  const w = Math.min(screen.width, screen.height);
-  const iPad = /iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
-  if (/iPhone|iPod/.test(ua)) return { cssPerIn: dpr >= 3 ? 153.3 : 163, source: 'iPhone, auto-detected' };
-  if (iPad) return { cssPerIn: w === 744 ? 163 : 132, source: w === 744 ? 'iPad mini, auto-detected' : 'iPad, auto-detected' };
+  const sw = screen.width, sh = screen.height, cssDiag = Math.hypot(sw, sh);
+  const nat = [Math.min(sw, sh) * dpr, Math.max(sw, sh) * dpr];
+  const fam = famOf(modelHint) || (/SM-F9/i.test(ua) ? 'fold' : /SM-F7/i.test(ua) ? 'flip' : '');
+  const hits = DISPLAYS.filter(d => near(nat[0], d.px[0]) && near(nat[1], d.px[1]));
+  if (hits.length) {
+    const pick = (fam && hits.find(h => h.fam === fam)) || hits[0];
+    const sizes = [...new Set(hits.map(h => h.inch))];
+    if (!fam && sizes.length > 1) {                           // same resolution, different panels: split the difference
+      const inch = sizes.reduce((a, b) => a + b) / sizes.length;
+      return { cssPerIn: cssDiag / inch, source: `${hits.map(h => h.name).join(' or ')}, matched by resolution`, rough: true };
+    }
+    return { cssPerIn: cssDiag / pick.inch, source: `${pick.name}, matched by resolution (${nat.map(Math.round).join('×')})` };
+  }
+  if (fam === 'fold' || fam === 'flip') {                    // a foldable we have no panel for: guess by shape
+    const inner = nat[1] / nat[0] < 1.3;
+    return { cssPerIn: cssDiag / (inner ? 7.8 : fam === 'flip' ? 6.9 : 6.2), source: `Samsung foldable (${inner ? 'inner' : 'cover'} screen), estimated`, rough: true };
+  }
+  if (/iPhone|iPod/.test(ua)) return { cssPerIn: dpr >= 3 ? 153.3 : 163, source: 'iPhone, estimated' };
+  if (/iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return { cssPerIn: 132, source: 'iPad, estimated', rough: true };
   if (/Android/.test(ua)) return { cssPerIn: 160, source: 'Android, estimated', rough: true };
   if (/Macintosh/.test(ua) && dpr >= 2) return { cssPerIn: 120, source: 'Mac, estimated', rough: true };
   return { cssPerIn: 96, source: 'desktop, estimated', rough: true };
@@ -1205,9 +1261,16 @@ DEVICES.forEach(d => {
   $('deviceTabs').appendChild(b);
 });
 
-function drawCalibCard() { $('calibCard').style.width = `${mmToPx(53.98, +$('calibRange').value)}px`; }
+// A bank card is 85.60 × 53.98 mm. The long edge gives a more precise reading, so it is used whenever the
+// screen is wide enough to hold it (about 100 mm), otherwise the short edge.
+let calibMm = 53.98;
+function drawCalibCard() { $('calibCard').style.width = `${mmToPx(calibMm, +$('calibRange').value)}px`; }
 function openCalib() {
-  $('calibRange').value = currentScale().cssPerIn;
+  const est = currentScale().cssPerIn;
+  const shortSideMm = Math.min(screen.width, screen.height) / est * 25.4;
+  calibMm = shortSideMm >= 100 ? 85.6 : 53.98;
+  $('calibEdge').textContent = calibMm > 60 ? 'long edge (85.60 mm)' : 'short edge (53.98 mm)';
+  $('calibRange').value = est;
   drawCalibCard();
   $('calib').hidden = false;
 }
