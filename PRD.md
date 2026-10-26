@@ -272,6 +272,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 | Emulator `Wear_OS_5_Small_Round` | Wear OS 5 (API 34), 384 × 384 round, 320 dpi (oldest supported, small screen) |
 | Command-line env | `export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"` · `export ANDROID_HOME="$HOME/Library/Android/sdk"`. Not added to `~/.zshrc`; Android Studio finds both on its own |
 | Start an emulator | `"$ANDROID_HOME/emulator/emulator" -avd Wear_OS_6_Large_Round`, or Device Manager in Android Studio |
+| Gotcha | **Emulator clock falls behind** after the Mac sleeps (it paused, and doesn't catch up even with automatic time; seen 7 h 50 min behind on 2026-10-27). The image has no root, so the clock can't be set, and `adb reboot` hung. Fix: cold boot: `adb emu kill`, then `"$ANDROID_HOME/emulator/emulator" -avd Wear_OS_6_Large_Round -no-snapshot-load`; the clock then matches the Mac |
 | Gotcha | If an emulator says "Cannot find AVD system path", check `image.sysdir.1` in `~/.android/avd/<name>.avd/config.ini` starts with `system-images/` (no `sdk/` prefix) |
 | Note | `sdkmanager` (CLI) is deprecated in favour of the new `android` CLI and its installed-package list is unreliable; check folders under the SDK instead |
 
