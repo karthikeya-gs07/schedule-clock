@@ -84,7 +84,8 @@ class MainActivity : Activity() {
         val prefs = getSharedPreferences("sync", Context.MODE_PRIVATE)
         val last = prefs.getLong("lastSync", 0L)
         val synced = if (last == 0L) getString(R.string.never_synced)
-            else getString(R.string.last_sync, DateUtils.getRelativeTimeSpanString(last), prefs.getInt("lastCount", 0))
+            else getString(R.string.last_sync, DateUtils.getRelativeTimeSpanString(last), prefs.getInt("lastCount", 0)) +
+                if (prefs.getInt("lastCount", 0) == 0) "\n" + getString(R.string.no_events_hint) else ""
         status.text = synced
         Wearable.getNodeClient(this).connectedNodes.addOnCompleteListener { task ->
             val watches = task.result?.map { it.displayName }.orEmpty()
