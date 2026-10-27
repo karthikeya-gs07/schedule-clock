@@ -9,6 +9,7 @@ import android.util.Log
  * - `app://<package>/select?hour=N`: cycles the meetings in that dial hour (I2–I6).
  * - `app://<package>/promote`: plays the lane → ring settle (spike 3).
  * - `app://<package>/time?offset=M`: debug time shift in minutes for testing.
+ * - `app://<package>/day?name=busy|example`: debug switch of the sample day.
  * Asks for fresh complication data and finishes before anything is shown.
  */
 class TapActivity : Activity() {
@@ -22,6 +23,8 @@ class TapActivity : Activity() {
             SpikeSchedule.runPromotion(this)
         } else if (uri?.path == "/time") {
             SpikeSchedule.setOffset(this, uri.getQueryParameter("offset")?.toIntOrNull() ?: 0)
+        } else if (uri?.path == "/day") {
+            SpikeSchedule.setDay(this, uri.getQueryParameter("name") ?: "busy")
         } else {
             uri?.getQueryParameter("hour")?.toIntOrNull()?.let { SpikeSchedule.tapHour(this, it) }
             Log.i(TAG, "update requested after ${System.currentTimeMillis() - received} ms")

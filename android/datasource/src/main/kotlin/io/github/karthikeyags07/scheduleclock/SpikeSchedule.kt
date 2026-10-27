@@ -28,12 +28,12 @@ internal const val TAG = "ScheduleClockSpike"
  * RANGED_VALUE MAX; VALUE stays 0/1 for "selected"):
  * - status:  MAX = 1 + titleWidth + 10000 × flags, flags = 1 arrow (C12) + 2 lock (C13) + 4 clash (C7)
  * - details: MAX = 1 + lineWidth + 10000 × kind, kind 0 place · 1 clash · 2 tomorrow · 3 private
- * - selected arc: MIN/MAX = angles + 1000 (later lane) + 2000 (private)
  */
 object SpikeSchedule {
 
-    // The prototype's busy day, plus a late meeting that lands on the later lane during the day.
-    private val meetings = listOf(
+    // `app://<package>/day?name=example`: the prototype's busy day at fixed times, plus a late meeting that
+    // lands on the later lane during the day and a night call (W5a).
+    private val exampleDay = listOf(
         Meeting(30, 2 * 60, "Night call", "Zoom"),                        // before 6 AM: on the lane, not the ring (W5a)
         Meeting(9 * 60, 9 * 60 + 30, "Standup", "Google Meet"),
         Meeting(10 * 60, 11 * 60 + 30, "Roadmap planning", "Atlas room"),
@@ -47,6 +47,52 @@ object SpikeSchedule {
         Meeting(19 * 60, 20 * 60, "Client call", "Zoom"),
         Meeting(23 * 60, 23 * 60 + 45, "Late sync", "Zoom"),             // later lane until 11:45 AM
     )
+
+    /**
+     * The default sample (`day?name=busy`): a busy day that rolls with the clock, so a real watch looks busy
+     * at any hour. Minutes from the hour it was made (`anchor`): a live meeting, back-to-back meetings, a
+     * private one, a full and a partial double booking, a long title, and one past the 12 h window. Made
+     * again at the current hour once they've all ended. Past midnight they become tomorrow's (W5, W5a).
+     */
+    private fun busyDay(anchor: Int) = listOf(
+        Meeting(anchor - 30, anchor + 30, "Standup", "Google Meet"),           // live
+        Meeting(anchor + 45, anchor + 105, "Roadmap planning", "Atlas room"),
+        Meeting(anchor + 105, anchor + 135, "Lunch with Sam", "Café Blue", private = true),
+        Meeting(anchor + 150, anchor + 210, "Design review", "Room 4"),
+        Meeting(anchor + 150, anchor + 210, "Vendor call", "Zoom"),            // full double booking
+        Meeting(anchor + 240, anchor + 285, "Candidate interview", "Zoom"),
+        Meeting(anchor + 270, anchor + 300, "Recruiter sync", "Room 2"),       // partial overlap
+        Meeting(anchor + 300, anchor + 360, "Weekly sync", "Google Meet"),
+        Meeting(anchor + 390, anchor + 480, "Quarterly roadmap and budget alignment with leadership", "Atlas room"),  // C9a
+        Meeting(anchor + 510, anchor + 570, "Client call", "Zoom"),
+        Meeting(anchor + 600, anchor + 660, "Product demo", "Room 1"),
+        Meeting(anchor + 780, anchor + 840, "Late sync", "Zoom"),              // past the 12 h window: later lane
+    )
+
+    private fun meetings(context: Context, now: Int): List<Meeting> {
+        if (prefs(context).getString("day", "busy") == "example") return exampleDay
+        // The anchor is kept as a real time, so the day stays put across hours and midnight (and the debug
+        // time offset moves the clock through it rather than moving it along).
+        val made = prefs(context).getLong("busyAt", 0L)
+        busyDay(minutesFromMidnight(made)).let { if (made > 0 && it.any { m -> m.endMin > now }) return it }
+        val hour = Calendar.getInstance().apply { set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }
+        prefs(context).edit().putLong("busyAt", hour.timeInMillis).commit()
+        return busyDay(minutesFromMidnight(hour.timeInMillis))
+    }
+
+    /** Minutes from today's midnight to a real time (negative if it was yesterday). */
+    private fun minutesFromMidnight(millis: Long): Int {
+        val midnight = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        }
+        return Math.floorDiv(millis - midnight.timeInMillis, 60_000L).toInt()
+    }
+
+    /** Debug: switch the sample day ("busy" or "example"); a busy day is made fresh at the current hour. */
+    fun setDay(context: Context, name: String) {
+        prefs(context).edit().putString("day", name).remove("busyAt").remove("selected").commit()
+        requestUpdate(context.applicationContext)
+    }
 
     private const val SETTLE_MS = 900L       // M3
 
@@ -67,7 +113,7 @@ object SpikeSchedule {
         requestUpdate(context.applicationContext)
     }
 
-    private fun placed(context: Context, now: Int = now(context)) = ScheduleRules.place(meetings, now)
+    private fun placed(context: Context, now: Int = now(context)) = ScheduleRules.place(meetings(context, now), now)
 
     /** The selected meeting's index in [list], or -1. A selection that is no longer shown is cleared (I10). */
     private fun selectedIndex(context: Context, list: List<Placed>): Int {
@@ -229,7 +275,7 @@ object SpikeSchedule {
 
     /** Start and end of a placed meeting on the 12 h dial, in degrees clockwise from 12 o'clock. */
     private fun degrees(p: Placed): Pair<Float, Float> {
-        val start = (p.cs % ScheduleRules.DIAL_MIN) / ScheduleRules.DIAL_MIN.toFloat() * 360f
+        val start = Math.floorMod(p.cs, ScheduleRules.DIAL_MIN) / ScheduleRules.DIAL_MIN.toFloat() * 360f
         return start to start + (p.ce - p.cs) / ScheduleRules.DIAL_MIN.toFloat() * 360f
     }
 

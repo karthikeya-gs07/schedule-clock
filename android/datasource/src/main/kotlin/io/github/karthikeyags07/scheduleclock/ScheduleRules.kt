@@ -45,8 +45,10 @@ object ScheduleRules {
             when {
                 now < DAY_START_MIN ->
                     if (m.endMin > now && m.endMin <= laneEnd) Placed(m, Lane.LATER, m.startMin, m.endMin, overlapping(allDays, m)) else null
-                m.endMin > now && m.endMin <= winEnd -> Placed(m, Lane.MAIN, maxOf(m.startMin, winStart), m.endMin, overlapping(allDays, m))
-                m.endMin > winEnd && m.startMin > now && (m.startMin < DAY_MIN || m.startMin < winEnd) ->
+                // W5: tomorrow's meetings (from the next midnight) never take the main ring before midnight.
+                m.endMin > now && m.endMin <= winEnd && m.startMin < DAY_MIN ->
+                    Placed(m, Lane.MAIN, maxOf(m.startMin, winStart), m.endMin, overlapping(allDays, m))
+                (m.endMin > winEnd || m.startMin >= DAY_MIN) && m.startMin > now && (m.startMin < DAY_MIN || m.startMin < winEnd) ->
                     Placed(m, Lane.LATER, m.startMin, if (m.startMin < DAY_MIN) minOf(m.endMin, DAY_MIN) else m.endMin, overlapping(allDays, m))
                 else -> null
             }
@@ -101,13 +103,13 @@ object ScheduleRules {
 
     /** C8: "1:00 – 2:00 PM", or AM/PM on both ends when they differ. */
     fun formatRange(m: Meeting): String {
-        val sameHalf = (m.startMin % DAY_MIN < 720) == (m.endMin % DAY_MIN < 720)
+        val sameHalf = (Math.floorMod(m.startMin, DAY_MIN) < 720) == (Math.floorMod(m.endMin, DAY_MIN) < 720)
         return "${clock(m.startMin, !sameHalf)} – ${clock(m.endMin, true)}"
     }
 
     private fun clock(min: Int, suffix: Boolean): String {
-        val h24 = (min / 60) % 24
-        val text = "${if (h24 % 12 == 0) 12 else h24 % 12}:${(min % 60).toString().padStart(2, '0')}"
+        val h24 = Math.floorMod(Math.floorDiv(min, 60), 24)   // a meeting can start yesterday (min < 0)
+        val text = "${if (h24 % 12 == 0) 12 else h24 % 12}:${Math.floorMod(min, 60).toString().padStart(2, '0')}"
         return if (suffix) "$text ${if (h24 < 12) "AM" else "PM"}" else text
     }
 }
