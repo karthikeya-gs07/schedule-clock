@@ -1030,10 +1030,11 @@ function onRingTap(ev) {
 // One handler for the whole face (a thin ring shrinks to a few px on a small watch, so the
 // zone is everything outside the center area; the center keeps its own action).
 svg.addEventListener('click', ev => { if (tapAt(ev).r >= CENTER_R) onRingTap(ev); });
-// Center tap (I8): opens the calendar app when a private meeting is shown, so details are
-// read there (behind the watch's lock), never on the face. Otherwise nothing.
+// Center tap (I8): releases a selected meeting. With nothing selected it opens the calendar app when
+// a private meeting is shown, so details are read there (behind the watch's lock), never on the face.
 $('centerHit').addEventListener('click', () => {
   if (ambient) return;
+  if (selected >= 0) { lastTap = 'center → release'; setSelection(-1); return; }
   const list = upcoming(), e = list[shownIndex(list, selected)];
   lastTap = e && e.private ? 'center → Launch target="CALENDAR" (private meeting)' : 'center → (nothing)';
   renderPanel(list);

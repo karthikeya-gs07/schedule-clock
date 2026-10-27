@@ -146,6 +146,11 @@ object SpikeSchedule {
         select(context, next)
     }
 
+    /** I8: a tap on the details releases the selected meeting; with nothing selected it does nothing. */
+    fun release(context: Context) {
+        if (prefs(context).getString("selected", null) != null) select(context, null)
+    }
+
     /** R9: the ring image redraws with the new selection at full strength and every other meeting dimmed. */
     private fun select(context: Context, next: String?) {
         prefs(context).edit().putString("selected", next).commit()

@@ -120,7 +120,7 @@ All sizes are in px on the **450 × 450 face canvas** (≈ 2 px per dp on a typi
 | I5 | You tap an **empty** hour | Back to default. | |
 | I6 | A meeting spans several hours | Tapping any of its hours selects it. | |
 | I7 | **8 s** with no tap while selected | Back to default (tunable). | The face returns to its glance state on its own. |
-| I8 | You tap the center | If the shown meeting is **private**: open the **calendar app** (`Launch target="CALENDAR"`) so details are read there, behind the watch's lock. Otherwise nothing. | P10: the face never reveals private details; the app is the only way in. |
+| I8 | You tap the center (the meeting details) | If a meeting is **selected**: back to default (the details shrink back). Otherwise, if the shown meeting is **private**: open the **calendar app** (`Launch target="CALENDAR"`, not built on the watch yet) so details are read there, behind the watch's lock. Otherwise nothing. | The enlarged details are the obvious thing to tap to close them (added 2026-10-27). P10: the face never reveals private details; the app is the only way in. |
 | I9 | Ambient mode | Taps do nothing; no selection. | |
 | I10 | The selected meeting disappears (ended, or day/time changed) | Back to default. | |
 | I11 | You tap **precisely on the thin later lane** (from 6 px inside it to 2 px outside, radius 203–211) in an hour that has a later-lane meeting | Only that hour's **later-lane meetings** are considered: the first tap selects the evening meeting directly (skipping the morning one); tapping it again goes back to default. A tap anywhere else in the band follows I2–I5. | A shortcut for people who can hit it; the double tap (I3) stays the reliable path. The lane zone never extends into the main band, so normal taps aren't stolen. On the watch: 12 extra thin hotspots → `select?hour=N&lane=later`. |
@@ -173,7 +173,7 @@ Why one image (spike 2, PRD §6.3b): `WEIGHTED_ELEMENTS` is capped at 7 segments
 
 Private titles/places are never in any slot: `details` carries "Private" / "Details hidden", and the ring image only has grey stripes.
 
-Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.scheduleclock/select?hour=N` (verified in spike 1: ~0.2–0.5 s to the face), plus 12 thin hotspots on the later lane → `…&lane=later` (I11), and a center hotspot (I8) → the data source's invisible `TapActivity` updates the selection. Feasibility risks are tracked in PRD §6.3, results in §6.3a–b.
+Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.scheduleclock/select?hour=N` (verified in spike 1: ~0.2–0.5 s to the face), plus 12 thin hotspots on the later lane → `…&lane=later` (I11), and a details hotspot (I8, x 105–345, y 205–335, inside the hour hotspots) → `…/release` → the data source's invisible `TapActivity` updates the selection. Feasibility risks are tracked in PRD §6.3, results in §6.3a–b.
 
 ---
 
@@ -181,6 +181,7 @@ Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.sched
 
 | Date | Change | Rules |
 |---|---|---|
+| 2026-10-27 | Tapping the details while a meeting is selected releases it (prototype and watch). | I8, §8 taps |
 | 2026-10-27 | A tomorrow meeting with no place reads "Tomorrow", not "Tomorrow ·". | C6 |
 | 2026-10-27 | Watch: C3 empty state built (status flag 32): with no meetings the date and clock move to the center, clock 115 %, divider fades (M4). It was missing on the watch, which kept the clock up top. No rule change. | §8 slot 4, C3, M4 |
 | 2026-10-27 | Watch: C9's 30 → 24 px title step built (status flag 16); before, a title that fit only at 24 px got an ellipsis. No rule change. | §8 slot 4 |
