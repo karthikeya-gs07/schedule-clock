@@ -244,7 +244,7 @@ object SpikeSchedule {
             clashes.isNotEmpty() -> 1 to (clashes[0].let { if (it.private) "Private" else it.title } +
                 if (clashes.size > 1) " +${clashes.size - 1}" else "")
             p.meeting.private -> 3 to "Details hidden"
-            p.meeting.startMin >= 24 * 60 -> 2 to "Tomorrow · ${p.meeting.where}"
+            p.meeting.startMin >= 24 * 60 -> 2 to if (p.meeting.where.isBlank()) "Tomorrow" else "Tomorrow · ${p.meeting.where}"
             else -> 0 to p.meeting.where
         }
         val (line, width) = TextFit.line(raw, if (kind == 1) 190 else 220)

@@ -85,7 +85,7 @@ All sizes are in px on the **450 × 450 face canvas** (≈ 2 px per dp on a typi
 | C3 | **No meetings** in the window or lane | **Date + time only**, moved down to the center, clock enlarged to **115 %**. **No message.** | P8. (Changed 2026-10-24: "Nothing else today" removed.) |
 | C4 | Details layout | Three lines: **title** (30 px white, shrinks to 24 px, then ellipsis) · **time range** (24 px white) · **place** (24 px muted). | Time and place are on separate lines so neither has to drop below 24 px (P7). |
 | C5 | The meeting is on the later lane and is **today** | Time line: a **time-of-day icon** then **"7:00 – 8:00 PM"** in `#a9b8e0`. Icon by start time: sunrise (5 AM–noon), sun (noon–5 PM), sunset (5–9 PM), moon (9 PM–5 AM). No "Later" word. The icon also precedes the time for tomorrow's lane meetings. | Matches the blue lane; explains why it's not on the main ring. |
-| C6 | The meeting is **tomorrow** | Place line: **"Tomorrow · Café Blue"** in `#a9b8e0`. | "Tomorrow · 8:00 – 8:45 AM" doesn't fit the time line at 24 px, so the qualifier goes on the place line. |
+| C6 | The meeting is **tomorrow** | Place line: **"Tomorrow · Café Blue"** in `#a9b8e0`; just **"Tomorrow"** when it has no place. | "Tomorrow · 8:00 – 8:45 AM" doesn't fit the time line at 24 px, so the qualifier goes on the place line. |
 | C7 | The meeting is **double-booked** | The clash line moves **above the time range** (order: title, clash line, time range). Clash line: a coral **overlap icon** (two intersecting rings, 22 px) followed by the other meeting's name, **"Vendor call"** (or "Vendor call +1" for 3+), in coral; no "Also" word. Takes priority over C6 and the place. | Who you're clashing with matters more than where. |
 | C8 | Time range formatting | AM/PM appears once if both ends are in the same half of the day ("1:00 – 2:00 PM"), otherwise on both ("11:30 AM – 12:30 PM"). | Saves width. |
 | C9 | Text too wide | Title: shrink 30 → 24 px, then scroll (C9a; ellipsis only in ambient, A2a). Time and place: ellipsis at 24 px. Max widths: title 260, time 255, place 220. | Keeps text clear of the hour numbers in both default and selected (×1.15) states. |
@@ -181,6 +181,7 @@ Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.sched
 
 | Date | Change | Rules |
 |---|---|---|
+| 2026-10-27 | A tomorrow meeting with no place reads "Tomorrow", not "Tomorrow ·". | C6 |
 | 2026-10-27 | Watch: C3 empty state built (status flag 32): with no meetings the date and clock move to the center, clock 115 %, divider fades (M4). It was missing on the watch, which kept the clock up top. No rule change. | §8 slot 4, C3, M4 |
 | 2026-10-27 | Watch: C9's 30 → 24 px title step built (status flag 16); before, a title that fit only at 24 px got an ellipsis. No rule change. | §8 slot 4 |
 | 2026-10-27 | Night meetings before 6 AM are held on the lane too: nothing is on the main ring before 6 AM. During the hold the lane reaches the 12 h window (the 14 h look-ahead doesn't apply). | W5a, W5 |

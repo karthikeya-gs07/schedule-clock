@@ -900,7 +900,7 @@ function renderDetails(list) {
   // Double booking: an overlap icon (two intersecting rings) replaces the word "Also".
   const ICON_W = 22, ICON_GAP = 8;
   const place = clash.length ? `${titleOf(clash[0])}${clash.length > 1 ? ` +${clash.length - 1}` : ''}`
-    : tomorrow ? `Tomorrow · ${where}` : where;
+    : tomorrow ? (where ? `Tomorrow · ${where}` : 'Tomorrow') : where;
   const iw = clash.length ? ICON_W + ICON_GAP : 0;
   $('dPlace').setAttribute('x', CX);
   fitText('dPlace', place, 24, 24, 220 - iw);
