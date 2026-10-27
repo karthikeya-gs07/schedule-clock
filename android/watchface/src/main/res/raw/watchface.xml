@@ -440,22 +440,38 @@
           <Transform target="scaleX" value="1 + 0.15 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
           <Transform target="scaleY" value="1 + 0.15 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
           <!-- Live title: hidden while the full title scrolls in slot 4/6 (C9a), and in ambient -->
+          <!-- C9: 30 px, or 24 px when it only fits at that size (flag 16); one of the two is visible -->
           <Group name="title_live" x="0" y="0" width="450" height="60">
             <Variant mode="AMBIENT" target="alpha" value="0"/>
             <PartText x="0" y="5" width="450" height="36">
               <Transform target="x" value="(30 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2) + 25 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 2) % 2)) / 2"/>
-              <Transform target="alpha" value="255 * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 8) % 2))"/>
+              <Transform target="alpha" value="255 * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 8) % 2)) * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 16) % 2))"/>
               <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="30" weight="MEDIUM" color="#fff2f2f2">
+                <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
+            </PartText>
+            <PartText x="0" y="5" width="450" height="36">
+              <Transform target="x" value="(30 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2) + 25 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 2) % 2)) / 2"/>
+              <Transform target="alpha" value="255 * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 8) % 2)) * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 16) % 2)"/>
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="#fff2f2f2">
                 <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
             </PartText>
           </Group>
           <!-- Ambient title (A2a): the shortened title, first characters and an ellipsis; nothing moves -->
-          <PartText name="title_ambient" x="0" y="5" width="450" height="36" alpha="0">
+          <Group name="title_ambient" x="0" y="0" width="450" height="60" alpha="0">
             <Variant mode="AMBIENT" target="alpha" value="255"/>
-            <Transform target="x" value="(30 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2) + 25 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 2) % 2)) / 2"/>
-            <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="30" weight="MEDIUM" color="#fff2f2f2">
-              <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
-          </PartText>
+            <PartText x="0" y="5" width="450" height="36">
+              <Transform target="x" value="(30 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2) + 25 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 2) % 2)) / 2"/>
+              <Transform target="alpha" value="255 * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 16) % 2))"/>
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="30" weight="MEDIUM" color="#fff2f2f2">
+                <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
+            </PartText>
+            <PartText x="0" y="5" width="450" height="36">
+              <Transform target="x" value="(30 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2) + 25 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 2) % 2)) / 2"/>
+              <Transform target="alpha" value="255 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 16) % 2)"/>
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="#fff2f2f2">
+                <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
+            </PartText>
+          </Group>
           <PartDraw name="arrow" x="0" y="13" width="20" height="20" alpha="0">
             <Transform target="x" value="(225 - ((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000) + (30 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2) + 25 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 2) % 2))) / 2)"/>
             <Transform target="alpha" value="255 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2)"/>

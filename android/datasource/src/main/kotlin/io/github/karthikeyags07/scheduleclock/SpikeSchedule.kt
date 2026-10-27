@@ -27,6 +27,7 @@ internal const val TAG = "ScheduleClockSpike"
  * Packed number fields (WFF can't measure text or pass extra fields, so widths and flags ride in
  * RANGED_VALUE MAX; VALUE stays 0/1 for "selected"):
  * - status:  MAX = 1 + titleWidth + 10000 × flags, flags = 1 arrow (C12) + 2 lock (C13) + 4 clash (C7)
+ *            + 8 title scrolls (C9a) + 16 title at 24 px (C9)
  * - details: MAX = 1 + lineWidth + 10000 × kind, kind 0 place · 1 clash · 2 tomorrow · 3 private
  */
 object SpikeSchedule {
@@ -171,13 +172,17 @@ object SpikeSchedule {
         val lock = p.meeting.private
         val clash = ScheduleRules.clashesFor(list, p).isNotEmpty()
         val iconSpace = (if (arrow) 30 else 0) + (if (lock) 25 else 0)
-        // TEXT stays the shortened title with an ellipsis: it is what ambient mode shows (A2a). When the
-        // full title overflows (C9a) the face hides it and the scroll slots draw the full title instead.
-        val (title, fitted) = TextFit.title(if (lock) "Private" else p.meeting.title, 260 - iconSpace)
+        // C9: a title too wide at 30 px is drawn at 24 px (flag 16). TEXT stays the shortened title with an
+        // ellipsis: it is what ambient mode shows (A2a). When the full title still overflows at 24 px (C9a)
+        // the face hides it and the scroll slots draw the full title instead.
+        val shown = if (lock) "Private" else p.meeting.title
+        val (big, bigWidth) = TextFit.title(shown, 260 - iconSpace)
+        val small = big != shown
+        val (title, fitted) = if (small) TextFit.titleSmall(shown, 260 - iconSpace) else big to bigWidth
         val scrolls = scrollOver(p, arrow) > 0
         val width = if (scrolls) 260 - iconSpace else fitted   // icons sit at the edge of the full window
         val (range, _) = TextFit.line(ScheduleRules.formatRange(p.meeting), 255)
-        val flags = (if (arrow) 1 else 0) + (if (lock) 2 else 0) + (if (clash) 4 else 0) + (if (scrolls) 8 else 0)
+        val flags = (if (arrow) 1 else 0) + (if (lock) 2 else 0) + (if (clash) 4 else 0) + (if (scrolls) 8 else 0) + (if (small) 16 else 0)
         return ranged(if (selected >= 0) 1f else 0f, 0f, 1f + width + 10000f * flags, title, range)
     }
 

@@ -79,6 +79,7 @@ ARROW = f"({F} % 2)"
 LOCK = f"(floor({F} / 2) % 2)"
 CLASH = f"(floor({F} / 4) % 2)"
 SCROLL = f"(floor({F} / 8) % 2)"
+SMALL = f"(floor({F} / 16) % 2)"   # C9: the title only fits at 24 px
 EXTRA = f"(30 * {ARROW} + 25 * {LOCK})"
 ICON_X = f"(225 - ({W} + {EXTRA}) / 2)"
 
@@ -295,22 +296,38 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
         <!-- Title with the look-ahead arrow (C12) and private lock (C13) before it, then the time range (C4, C8).
              On a double booking the range moves down a row so the clash line sits under the title (C7). -->
 {details_group("details", f"""          <!-- Live title: hidden while the full title scrolls in slot 4/6 (C9a), and in ambient -->
+          <!-- C9: 30 px, or 24 px when it only fits at that size (flag 16); one of the two is visible -->
           <Group name="title_live" x="0" y="0" width="450" height="60">
             <Variant mode="AMBIENT" target="alpha" value="0"/>
             <PartText x="0" y="5" width="450" height="36">
               <Transform target="x" value="{EXTRA} / 2"/>
-              <Transform target="alpha" value="255 * (1 - {SCROLL})"/>
+              <Transform target="alpha" value="255 * (1 - {SCROLL}) * (1 - {SMALL})"/>
               <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="30" weight="MEDIUM" color="#fff2f2f2">
+                <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
+            </PartText>
+            <PartText x="0" y="5" width="450" height="36">
+              <Transform target="x" value="{EXTRA} / 2"/>
+              <Transform target="alpha" value="255 * (1 - {SCROLL}) * {SMALL}"/>
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="#fff2f2f2">
                 <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
             </PartText>
           </Group>
           <!-- Ambient title (A2a): the shortened title, first characters and an ellipsis; nothing moves -->
-          <PartText name="title_ambient" x="0" y="5" width="450" height="36" alpha="0">
+          <Group name="title_ambient" x="0" y="0" width="450" height="60" alpha="0">
             <Variant mode="AMBIENT" target="alpha" value="255"/>
-            <Transform target="x" value="{EXTRA} / 2"/>
-            <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="30" weight="MEDIUM" color="#fff2f2f2">
-              <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
-          </PartText>
+            <PartText x="0" y="5" width="450" height="36">
+              <Transform target="x" value="{EXTRA} / 2"/>
+              <Transform target="alpha" value="255 * (1 - {SMALL})"/>
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="30" weight="MEDIUM" color="#fff2f2f2">
+                <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
+            </PartText>
+            <PartText x="0" y="5" width="450" height="36">
+              <Transform target="x" value="{EXTRA} / 2"/>
+              <Transform target="alpha" value="255 * {SMALL}"/>
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="#fff2f2f2">
+                <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
+            </PartText>
+          </Group>
           <PartDraw name="arrow" x="0" y="13" width="20" height="20" alpha="0">
             <Transform target="x" value="{ICON_X}"/>
             <Transform target="alpha" value="255 * {ARROW}"/>

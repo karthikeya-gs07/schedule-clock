@@ -23,6 +23,7 @@ object TextFit {
     }
 
     fun title(text: String, maxWidth: Int) = fit(title, text, maxWidth)
+    fun titleSmall(text: String, maxWidth: Int) = fit(titleMin, text, maxWidth)
     fun line(text: String, maxWidth: Int) = fit(line, text, maxWidth)
 
     /** Full width in px of a title at the 24 px minimum size. */
