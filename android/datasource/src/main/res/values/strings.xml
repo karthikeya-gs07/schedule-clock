@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Calen-Time data</string>
+    <string name="app_name">Calen-Time</string>
     <string name="ring_label">Schedule ring</string>
     <string name="status_label">Schedule details</string>
     <string name="details_label">Meeting place</string>
     <string name="promote_label">Settling meeting</string>
     <string name="title_scroll_label">Scrolling title</string>
+    <string name="permission_label">Calen-Time</string>
+    <string name="permission_why">Calen-Time shows today\'s meetings on your watch face. It reads your calendar on the watch only; nothing leaves the watch.</string>
+    <string name="permission_denied">Calendar access is off, so the face can\'t show your meetings. Tap here to turn it on.</string>
 </resources>

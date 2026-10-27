@@ -121,6 +121,7 @@ Full detail in [RULES.md](RULES.md). In short:
 | 15 | **Private stripes in WFF:** `WeightedStroke` draws solid segments only. Options: a `Stroke` with dash intervals (perpendicular bars rather than 45°), a pre-rendered striped ring image masked by the `ring_private` arc, or encoding stripes as many tiny weighted elements (may exceed the element limit). This uses the **last free slot** (8 of 8) | Spike XML |
 | 17 | **Precise lane taps (I11):** the lane tap zone is ~8 px (≈ 4 dp), far below the usual 48 dp touch target. Check it's hittable at all on a real watch, that touch slop doesn't misroute taps, and how WFF resolves overlapping `Launch` hotspots (lane vs band). If unreliable, drop I11; I3 still covers it | Real watch |
 | 16 | Calendar "private" flag is available on the watch (`Events.ACCESS_LEVEL` / visibility via the watch calendar provider) | Real Galaxy Watch |
+| 18 | **Calendar access on Galaxy watches:** events live in Samsung Calendar's private provider; the standard and Wear OS calendar providers are empty (§6.3f) | Real Galaxy Watch: ❌ confirmed 2026-10-27 |
 | 14 | ~~Font license~~ **Resolved:** the clock now uses Anta (SIL Open Font License), which may be bundled in a published app | — |
 | 13 | Edge-flush ring on real hardware: some round screens are slightly cropped by the case or bezel; check that the outer few px of the band are visible on Galaxy Watch and Pixel Watch | Real watch + emulator |
 
@@ -241,6 +242,17 @@ Things to check on the emulator, in this order:
 
 Also verified: the AM/PM label (C11) sits after the time ("11:32 PM"). Debug note: with the `time?offset` deep link active, AM/PM shows the real clock while meetings use the shifted time.
 
+### 6.3f Phase 2 start (2026-10-27): reading the calendar on the watch
+
+`CalendarSource` reads two providers, merges them and drops duplicates (same start, end, title). It skips declined and cancelled events, marks private/confidential events private (C13), and reads all-day events by their UTC date (W9). The face defaults to the real calendar (`day?name=calendar`); `busy` and `example` remain for testing. Without access the details read **"Allow calendar · Tap the ring to set up"**, and a ring tap opens Android's permission request (`PermissionActivity`, also in the app list as "Calen-Time"). Refresh: every 5 min (the slots' update period) and on taps; calendar edits are not pushed yet.
+
+| Where | Result |
+|---|---|
+| Emulator (Wear OS 6) | ✅ Permission prompt, then 4 test events on the face (live, double booking, private; the cancelled one left out); W5a lane hold before 6 AM |
+| Galaxy Watch8 (SM-L320) | ❌ **No calendar data reachable.** The standard provider (`com.android.calendar`) has no calendars; Wear OS's phone-calendar copy (`com.google.android.wearable.provider.calendar`) is empty, because Galaxy watches sync through Galaxy Wearable, not Google's companion; Samsung Calendar keeps events in its own provider (`com.samsung.android.calendar.watch`), which refuses other apps (SecurityException) |
+
+**Decision needed (risk 18):** how events reach a Galaxy watch. Options: (a) a **phone companion app** that reads the phone's calendar and sends the next two days over the Wearable Data Layer: works with any Android phone and any Wear OS watch, but adds a phone app and its listing/privacy work; (b) **Google Calendar on the watch**, if it fills the standard provider (to test); (c) Samsung-only access: not available to third parties.
+
 ### 6.4 Minimum OS
 
 Wear OS 5+ (WFF v2, needed for `WeightedStroke` on `Arc`): Galaxy Watch 4 and later on current software, and Pixel Watch 1 and later.
@@ -314,6 +326,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 - **v0.29:** Arcs are solid and darker instead of see-through; private stripes and the double-booking gap get a dark fill instead of transparency (R6a).
 - **v0.30:** Prototype control panel redesigned into grouped sections (Time, Day, Display, Behavior) with switches and a segmented day picker; the complication payload view is removed. New **Dial only** mode (button, `F` key, or `#dial` in the URL) hides all controls and shows just the watch.
 - **v0.44:** True-size scale now comes from the screen's resolution: native pixels (CSS size × pixel ratio) are matched to a table of known panels (Galaxy Z Fold5–8 Ultra and Flip7/8 inner and cover screens, iPhones, iPads, MacBooks), and CSS px per inch = CSS diagonal ÷ real diagonal, so it follows browser zoom and folding/unfolding. The Android model comes from client hints when Chrome hides it; a shared resolution (Fold7 cover vs Flip inner) without a model averages and says "may be off". Unlisted phones still use an estimate. Calibration uses the card's long edge on screens wide enough. Fold8 / Fold8 Ultra sizes are from press listings, not yet checked on a device.
+- **v0.52:** Phase 2 started: the face reads the watch's calendar (standard + Wear OS providers), asks for calendar access from the face, and defaults to the real calendar; sample days stay as debug options. Verified on the emulator. **On the Galaxy Watch8 there is nothing to read:** Samsung keeps calendar events in a private provider (§6.3f, risk 18); the watch stays on the busy sample until that's decided.
 - **v0.51:** Watch titles now shrink 30 → 24 px before scrolling (C9): "→ Roadmap planning" shows in full instead of "Roadmap plan…". Verified on the Galaxy Watch8 with a 24 px title, a scrolling long title and a 30 px short one.
 - **v0.50:** First run on a real watch (Galaxy Watch8 40 mm, Wear OS 6): installs, sets, taps work. The watch's sample is now a **busy day that rolls with the clock** (live meeting, back-to-back, private, full and partial double booking, long title, one past the window) so it looks busy at any hour; the fixed-time day stays as `day?name=example` (§7.0a). Fixed the Kotlin rules missing W5 (tomorrow's meetings took the main ring before midnight) and times before today's midnight. Known gap: the watch ellipsizes a title that would fit at 24 px instead of shrinking it (C9's 30 → 24 px step isn't built).
 - **v0.49:** Night meetings before 6 AM are held on the lane too, so nothing is on the main ring from 12 to 6 AM (W5a). Watch sample day gains a 12:30–2:00 AM "Night call" to test it; verified on the emulator at 1:25 AM (live night call on the lane, look-ahead arrow to Standup).

@@ -2,12 +2,25 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-feature android:name="android.hardware.type.watch" />
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
 
     <application android:label="@string/app_name">
 
         <meta-data
             android:name="com.google.android.wearable.standalone"
             android:value="true" />
+
+        <!-- Calendar access (READ_CALENDAR): opened by a ring tap while it's missing, or from the app list. -->
+        <activity
+            android:name=".PermissionActivity"
+            android:exported="true"
+            android:label="@string/permission_label"
+            android:theme="@android:style/Theme.DeviceDefault">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <!-- Slot `ring`: the whole ring drawn as one image (spike 2, PRD §6.3a risk 9). -->
         <service

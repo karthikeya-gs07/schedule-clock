@@ -1,6 +1,7 @@
 package io.github.karthikeyags07.scheduleclock
 
 import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 
@@ -10,7 +11,8 @@ import android.util.Log
  * - `app://<package>/promote`: plays the lane → ring settle (spike 3).
  * - `app://<package>/time?offset=M`: debug time shift in minutes for testing.
  * - `app://<package>/day?name=busy|example`: debug switch of the sample day.
- * Asks for fresh complication data and finishes before anything is shown.
+ * Asks for fresh complication data and finishes before anything is shown. Without calendar access,
+ * any tap on the ring opens [PermissionActivity] instead.
  */
 class TapActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,7 +21,9 @@ class TapActivity : Activity() {
         val uri = intent?.data
         Log.i(TAG, "tap received: $uri t=$received")
 
-        if (uri?.path == "/promote") {
+        if (uri?.path == "/select" && SpikeSchedule.needsCalendarPermission(this)) {
+            startActivity(Intent(this, PermissionActivity::class.java))
+        } else if (uri?.path == "/promote") {
             SpikeSchedule.runPromotion(this)
         } else if (uri?.path == "/time") {
             SpikeSchedule.setOffset(this, uri.getQueryParameter("offset")?.toIntOrNull() ?: 0)

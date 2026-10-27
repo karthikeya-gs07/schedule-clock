@@ -70,8 +70,13 @@ object SpikeSchedule {
         Meeting(anchor + 780, anchor + 840, "Late sync", "Zoom"),              // past the 12 h window: later lane
     )
 
+    /** The day shown: the real calendar (default), or a sample (`day?name=busy|example`) for testing. */
     private fun meetings(context: Context, now: Int): List<Meeting> {
-        if (prefs(context).getString("day", "busy") == "example") return exampleDay
+        when (prefs(context).getString("day", "calendar")) {
+            "example" -> return exampleDay
+            "busy" -> {}
+            else -> return CalendarSource.meetings(context)
+        }
         // The anchor is kept as a real time, so the day stays put across hours and midnight (and the debug
         // time offset moves the clock through it rather than moving it along).
         val made = prefs(context).getLong("busyAt", 0L)
@@ -89,7 +94,11 @@ object SpikeSchedule {
         return Math.floorDiv(millis - midnight.timeInMillis, 60_000L).toInt()
     }
 
-    /** Debug: switch the sample day ("busy" or "example"); a busy day is made fresh at the current hour. */
+    /** Debug: switch the day ("calendar", "busy" or "example"); a busy day is made fresh at the current hour. */
+    /** True while the face should ask for calendar access instead of showing meetings. */
+    fun needsCalendarPermission(context: Context) =
+        prefs(context).getString("day", "calendar") == "calendar" && !CalendarSource.hasPermission(context)
+
     fun setDay(context: Context, name: String) {
         prefs(context).edit().putString("day", name).remove("busyAt").remove("selected").commit()
         requestUpdate(context.applicationContext)
@@ -164,6 +173,11 @@ object SpikeSchedule {
     fun status(context: Context): RangedValueComplicationData {
         val now = now(context)
         val list = placed(context, now)
+        if (needsCalendarPermission(context)) {
+            // No calendar access yet: ask in the details area; a tap on the ring opens the request.
+            val (title, width) = TextFit.titleSmall("Allow calendar", 260)
+            return ranged(0f, 0f, 1f + width + 10000f * 16, title, "Tap the ring to set up")
+        }
         val selected = selectedIndex(context, list)
         val i = if (selected >= 0) selected else ScheduleRules.defaultIndex(list, now)
         if (i < 0) return ranged(0f, 0f, 1f, "", "")
