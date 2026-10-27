@@ -146,7 +146,7 @@ object SpikeSchedule {
         select(context, next)
     }
 
-    /** I8: a tap on the details releases the selected meeting; with nothing selected it does nothing. */
+    /** I8: a tap on the details goes back to the normal view; with nothing selected it does nothing. */
     fun release(context: Context) {
         if (prefs(context).getString("selected", null) != null) select(context, null)
     }

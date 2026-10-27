@@ -627,7 +627,7 @@
       <Rectangle x="0" y="0" width="72" height="72"><Fill color="#00000000"/></Rectangle>
       <Launch target="app://io.github.karthikeyags07.scheduleclock/select?hour=11"/>
     </PartDraw>
-    <!-- I8: the details area (inside the hour hotspots). A tap while a meeting is selected releases it. -->
+    <!-- I8: the details area (inside the hour hotspots). A tap while a meeting is selected goes back to the normal view. -->
     <PartDraw name="details_tap" x="105" y="205" width="240" height="130">
       <Rectangle x="0" y="0" width="240" height="130"><Fill color="#00000000"/></Rectangle>
       <Launch target="app://io.github.karthikeyags07.scheduleclock/release"/>

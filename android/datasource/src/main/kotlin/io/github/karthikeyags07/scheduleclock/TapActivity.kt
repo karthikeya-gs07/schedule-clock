@@ -8,7 +8,7 @@ import android.util.Log
 /**
  * Invisible handler for the face's deep links (PRD §6.3 risk 1):
  * - `app://<package>/select?hour=N`: cycles the meetings in that dial hour (I2–I6).
- * - `app://<package>/release`: a tap on the details; releases the selected meeting (I8).
+ * - `app://<package>/release`: a tap on the details; back to the normal view (I8).
  * - `app://<package>/promote`: plays the lane → ring settle (spike 3).
  * - `app://<package>/time?offset=M`: debug time shift in minutes for testing.
  * - `app://<package>/day?name=busy|example`: debug switch of the sample day.

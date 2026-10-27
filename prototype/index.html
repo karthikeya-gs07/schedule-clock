@@ -22,7 +22,7 @@
     --c-text: #f2f2f2; --c-muted: #8e8e93; --c-track: #1c1c1f;   /* overwritten by the colour theme */
     --arc-pct: 60%;       /* meeting arcs: solid but darker, so the time stays the focus */
     --arc-pct-hi: 90%;    /* thin lane, clash stripes, selection: a little brighter */
-    --d: 520ms;           /* select / release */
+    --d: 520ms;           /* select / back to the normal view */
     --swap: 170ms;        /* text fades out ... */
     --swap-in: 280ms;     /* ... and back in */
     --promote: 900ms;     /* later-today arc settling onto the main ring */
@@ -1030,11 +1030,11 @@ function onRingTap(ev) {
 // One handler for the whole face (a thin ring shrinks to a few px on a small watch, so the
 // zone is everything outside the center area; the center keeps its own action).
 svg.addEventListener('click', ev => { if (tapAt(ev).r >= CENTER_R) onRingTap(ev); });
-// Center tap (I8): releases a selected meeting. With nothing selected it opens the calendar app when
+// Center tap (I8): goes back to the normal view when a meeting is selected. With nothing selected it opens the calendar app when
 // a private meeting is shown, so details are read there (behind the watch's lock), never on the face.
 $('centerHit').addEventListener('click', () => {
   if (ambient) return;
-  if (selected >= 0) { lastTap = 'center → release'; setSelection(-1); return; }
+  if (selected >= 0) { lastTap = 'center → back to the normal view'; setSelection(-1); return; }
   const list = upcoming(), e = list[shownIndex(list, selected)];
   lastTap = e && e.private ? 'center → Launch target="CALENDAR" (private meeting)' : 'center → (nothing)';
   renderPanel(list);

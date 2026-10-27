@@ -131,7 +131,7 @@ All sizes are in px on the **450 × 450 face canvas** (≈ 2 px per dp on a typi
 
 | # | When | Then |
 |---|---|---|
-| M1 | **Select / release** (520 ms, `cubic-bezier(.4,0,.2,1)`, an S-curve; release = reverse) | Time → 55 %, up 10 px · Date → 90 %, stays put (moving it would hit the 11 and 1) · Divider up 32 px, 60 % wide · Details (incl. the C12 arrow) → 115 %, up 30 px · Everything but the selected meeting → 35 % (R9; on the watch the ring image switches at once). |
+| M1 | **Select / back to the normal view** (520 ms, `cubic-bezier(.4,0,.2,1)`, an S-curve; going back is the reverse) | Time → 55 %, up 10 px · Date → 90 %, stays put (moving it would hit the 11 and 1) · Divider up 32 px, 60 % wide · Details (incl. the C12 arrow) → 115 %, up 30 px · Everything but the selected meeting → 35 % (R9; on the watch the ring image switches at once). |
 | M2 | The **shown meeting changes** (selecting a meeting other than "next", or switching A → B) | Text fades out and drops 6 px over **170 ms**, the content swaps, and it fades back in over **280 ms**. The layout keeps scaling, with no second screen (P2). Selecting the meeting that's already shown doesn't dip. |
 | M3 | **Lane → main ring** (W8) | The blue arc grows outward from R − 10 to R about the center, 4 → 12 px, blue → amber, **900 ms**, eased with no overshoot (`cubic-bezier(.22,1,.36,1)`), so it "sits down" into the band. |
 | M4 | Meetings ↔ **empty** (C3) | Date and clock move down to the center (clock 115 %) and the divider fades, with the M1 timing. |
@@ -173,7 +173,7 @@ Why one image (spike 2, PRD §6.3b): `WEIGHTED_ELEMENTS` is capped at 7 segments
 
 Private titles/places are never in any slot: `details` carries "Private" / "Details hidden", and the ring image only has grey stripes.
 
-Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.scheduleclock/select?hour=N` (verified in spike 1: ~0.2–0.5 s to the face), plus 12 thin hotspots on the later lane → `…&lane=later` (I11), and a details hotspot (I8, x 105–345, y 205–335, inside the hour hotspots) → `…/release` → the data source's invisible `TapActivity` updates the selection. Feasibility risks are tracked in PRD §6.3, results in §6.3a–b.
+Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.scheduleclock/select?hour=N` (verified in spike 1: ~0.2–0.5 s to the face), plus 12 thin hotspots on the later lane → `…&lane=later` (I11), and a details hotspot (I8, x 105–345, y 205–335, inside the hour hotspots) → `…/release` (back to the normal view) → the data source's invisible `TapActivity` updates the selection. Feasibility risks are tracked in PRD §6.3, results in §6.3a–b.
 
 ---
 
@@ -181,7 +181,7 @@ Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.sched
 
 | Date | Change | Rules |
 |---|---|---|
-| 2026-10-27 | Tapping the details while a meeting is selected releases it (prototype and watch). | I8, §8 taps |
+| 2026-10-27 | Tapping the details while a meeting is selected goes back to the normal view (prototype and watch). | I8, §8 taps |
 | 2026-10-27 | A tomorrow meeting with no place reads "Tomorrow", not "Tomorrow ·". | C6 |
 | 2026-10-27 | Watch: C3 empty state built (status flag 32): with no meetings the date and clock move to the center, clock 115 %, divider fades (M4). It was missing on the watch, which kept the clock up top. No rule change. | §8 slot 4, C3, M4 |
 | 2026-10-27 | Watch: C9's 30 → 24 px title step built (status flag 16); before, a title that fit only at 24 px got an ellipsis. No rule change. | §8 slot 4 |
