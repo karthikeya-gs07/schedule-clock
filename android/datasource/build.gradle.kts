@@ -24,4 +24,5 @@ android {
 
 dependencies {
     implementation(libs.wear.complications.data.source.ktx)
+    implementation(libs.play.services.wearable)   // events from the phone app (Data Layer)
 }

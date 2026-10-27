@@ -95,9 +95,10 @@ object SpikeSchedule {
     }
 
     /** Debug: switch the day ("calendar", "busy" or "example"); a busy day is made fresh at the current hour. */
-    /** True while the face should ask for calendar access instead of showing meetings. */
-    fun needsCalendarPermission(context: Context) =
-        prefs(context).getString("day", "calendar") == "calendar" && !CalendarSource.hasPermission(context)
+    /** True while the face has no calendar at all: nothing from the phone app and no access on the watch. */
+    fun needsCalendarSetup(context: Context) =
+        prefs(context).getString("day", "calendar") == "calendar" &&
+            !CalendarSource.hasPhoneData(context) && !CalendarSource.hasPermission(context)
 
     fun setDay(context: Context, name: String) {
         prefs(context).edit().putString("day", name).remove("busyAt").remove("selected").commit()
@@ -173,10 +174,11 @@ object SpikeSchedule {
     fun status(context: Context): RangedValueComplicationData {
         val now = now(context)
         val list = placed(context, now)
-        if (needsCalendarPermission(context)) {
-            // No calendar access yet: ask in the details area; a tap on the ring opens the request.
-            val (title, width) = TextFit.titleSmall("Allow calendar", 260)
-            return ranged(0f, 0f, 1f + width + 10000f * 16, title, "Tap the ring to set up")
+        if (needsCalendarSetup(context)) {
+            // No calendar yet: point to the phone app. A tap on the ring asks for the watch's own calendar
+            // instead (watches whose calendar apps share their events, PRD §6.3f).
+            val (title, width) = TextFit.title("Open Calen-Time", 260)
+            return ranged(0f, 0f, 1f + width, title, "on your phone to sync")
         }
         val selected = selectedIndex(context, list)
         val i = if (selected >= 0) selected else ScheduleRules.defaultIndex(list, now)

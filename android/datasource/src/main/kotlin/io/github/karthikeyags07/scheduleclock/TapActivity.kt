@@ -11,8 +11,8 @@ import android.util.Log
  * - `app://<package>/promote`: plays the lane → ring settle (spike 3).
  * - `app://<package>/time?offset=M`: debug time shift in minutes for testing.
  * - `app://<package>/day?name=busy|example`: debug switch of the sample day.
- * Asks for fresh complication data and finishes before anything is shown. Without calendar access,
- * any tap on the ring opens [PermissionActivity] instead.
+ * Asks for fresh complication data and finishes before anything is shown. With no calendar yet
+ * (nothing from the phone, no access on the watch), any tap on the ring opens [PermissionActivity].
  */
 class TapActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,7 +21,7 @@ class TapActivity : Activity() {
         val uri = intent?.data
         Log.i(TAG, "tap received: $uri t=$received")
 
-        if (uri?.path == "/select" && SpikeSchedule.needsCalendarPermission(this)) {
+        if (uri?.path == "/select" && SpikeSchedule.needsCalendarSetup(this)) {
             startActivity(Intent(this, PermissionActivity::class.java))
         } else if (uri?.path == "/promote") {
             SpikeSchedule.runPromotion(this)

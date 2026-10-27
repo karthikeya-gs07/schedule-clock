@@ -84,13 +84,19 @@ Full detail in [RULES.md](RULES.md). In short:
 - `BoundingArc` gives arc-shaped tap areas, but the bounding area also crops drawing.
 - `Transform` + `Animation` ease a property whenever its value changes.
 
-### 6.2 Architecture (two packages)
+### 6.2 Architecture (three packages)
 
 ```
+┌───────────────────────────┐  Data Layer item `/calendar`
+│ Calen-Time phone app      │  (yesterday → end of tomorrow;
+│ (Kotlin, Android phone)   │   private events without title/place)
+│ • reads the phone calendar│ ─────────────────────────────┐
+│ • syncs on change + 15 min│                              ▼
+└───────────────────────────┘
 ┌───────────────────────────┐   complication data (7 slots)   ┌──────────────────────────┐
 │ Calen-Time data source    │ ──────────────────────────────▶ │ Calen-Time face (WFF)    │
 │ (Kotlin, runs on watch)   │                                 │ (XML only, no code)      │
-│ • reads calendar on watch │                                 │ • ring, lane, clash arcs │
+│ • phone events + watch cal│                                 │ • ring, lane, clash arcs │
 │ • applies RULES.md W/C    │ ◀────────────────────────────── │ • clock, date, details   │
 │ • tracks selection        │   12 Launch deep links (taps)   │ • Transforms keyed on    │
 └───────────────────────────┘                                 │   `selected`             │
@@ -98,6 +104,7 @@ Full detail in [RULES.md](RULES.md). In short:
 ```
 
 - **Data source app** computes lanes, overlaps, the next meeting and text qualifiers (RULES §1, §3), and pushes them as complication data. It uses complication **timelines** to move the elapsed edge and lane changes forward without waking up constantly.
+- **Phone app** (added 2026-10-27, §6.3f): Galaxy watches keep calendar events private to Samsung Calendar, so the phone sends them. Same application id and signing key as the data source app (the Data Layer requires both). It syncs when opened, a few seconds after any calendar change (WorkManager content trigger) and every 15 minutes. The watch keeps the latest copy in a file, and also reads its own calendar when that's allowed (Pixel and other watches).
 - **Face** draws everything from those slots (slot plan: RULES §8) and animates on the `selected` value.
 - **Taps:** 12 invisible `PartDraw` hotspots with `<Launch target="app://scheduleclock/select?hour=N">`. An invisible activity in the data source app updates the selection and finishes immediately.
 - **Fallbacks** if tap handling via `Launch` is too slow or flashes: (A) six 2-hour sections as complication slots with `BoundingArc`; (B) tap anywhere to cycle.
@@ -121,7 +128,7 @@ Full detail in [RULES.md](RULES.md). In short:
 | 15 | **Private stripes in WFF:** `WeightedStroke` draws solid segments only. Options: a `Stroke` with dash intervals (perpendicular bars rather than 45°), a pre-rendered striped ring image masked by the `ring_private` arc, or encoding stripes as many tiny weighted elements (may exceed the element limit). This uses the **last free slot** (8 of 8) | Spike XML |
 | 17 | **Precise lane taps (I11):** the lane tap zone is ~8 px (≈ 4 dp), far below the usual 48 dp touch target. Check it's hittable at all on a real watch, that touch slop doesn't misroute taps, and how WFF resolves overlapping `Launch` hotspots (lane vs band). If unreliable, drop I11; I3 still covers it | Real watch |
 | 16 | Calendar "private" flag is available on the watch (`Events.ACCESS_LEVEL` / visibility via the watch calendar provider) | Real Galaxy Watch |
-| 18 | **Calendar access on Galaxy watches:** events live in Samsung Calendar's private provider; the standard and Wear OS calendar providers are empty (§6.3f) | Real Galaxy Watch: ❌ confirmed 2026-10-27 |
+| 18 | **Calendar access on Galaxy watches:** events live in Samsung Calendar's private provider; the standard and Wear OS calendar providers are empty (§6.3f) | Real Galaxy Watch: ❌ confirmed 2026-10-27 → phone companion app (§6.2) |
 | 14 | ~~Font license~~ **Resolved:** the clock now uses Anta (SIL Open Font License), which may be bundled in a published app | — |
 | 13 | Edge-flush ring on real hardware: some round screens are slightly cropped by the case or bezel; check that the outer few px of the band are visible on Galaxy Watch and Pixel Watch | Real watch + emulator |
 
@@ -251,7 +258,7 @@ Also verified: the AM/PM label (C11) sits after the time ("11:32 PM"). Debug not
 | Emulator (Wear OS 6) | ✅ Permission prompt, then 4 test events on the face (live, double booking, private; the cancelled one left out); W5a lane hold before 6 AM |
 | Galaxy Watch8 (SM-L320) | ❌ **No calendar data reachable.** The standard provider (`com.android.calendar`) has no calendars; Wear OS's phone-calendar copy (`com.google.android.wearable.provider.calendar`) is empty, because Galaxy watches sync through Galaxy Wearable, not Google's companion; Samsung Calendar keeps events in its own provider (`com.samsung.android.calendar.watch`), which refuses other apps (SecurityException) |
 
-**Decision needed (risk 18):** how events reach a Galaxy watch. Options: (a) a **phone companion app** that reads the phone's calendar and sends the next two days over the Wearable Data Layer: works with any Android phone and any Wear OS watch, but adds a phone app and its listing/privacy work; (b) **Google Calendar on the watch**, if it fills the standard provider (to test); (c) Samsung-only access: not available to third parties.
+**Decided 2026-10-27: (a) phone companion app** (§6.2). Options considered: Options: (a) a **phone companion app** that reads the phone's calendar and sends the next two days over the Wearable Data Layer: works with any Android phone and any Wear OS watch, but adds a phone app and its listing/privacy work; (b) **Google Calendar on the watch**, if it fills the standard provider (to test); (c) Samsung-only access: not available to third parties.
 
 ### 6.4 Minimum OS
 
@@ -326,6 +333,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 - **v0.29:** Arcs are solid and darker instead of see-through; private stripes and the double-booking gap get a dark fill instead of transparency (R6a).
 - **v0.30:** Prototype control panel redesigned into grouped sections (Time, Day, Display, Behavior) with switches and a segmented day picker; the complication payload view is removed. New **Dial only** mode (button, `F` key, or `#dial` in the URL) hides all controls and shows just the watch.
 - **v0.44:** True-size scale now comes from the screen's resolution: native pixels (CSS size × pixel ratio) are matched to a table of known panels (Galaxy Z Fold5–8 Ultra and Flip7/8 inner and cover screens, iPhones, iPads, MacBooks), and CSS px per inch = CSS diagonal ÷ real diagonal, so it follows browser zoom and folding/unfolding. The Android model comes from client hints when Chrome hides it; a shared resolution (Fold7 cover vs Flip inner) without a model averages and says "may be off". Unlisted phones still use an estimate. Calibration uses the card's long edge on screens wide enough. Fold8 / Fold8 Ultra sizes are from press listings, not yet checked on a device.
+- **v0.53:** **Phone companion app** (new `phone` module): reads the phone's calendar and sends yesterday → tomorrow to the watch over the Wear OS Data Layer, on open, on calendar changes and every 15 min; private events are sent without title or place. The watch receives them (`PhoneCalendarListener`), keeps a copy, and merges them with its own calendar. With no calendar at all the face says "Open Calen-Time on your phone to sync". Watch side installed on the Galaxy Watch8; phone side built, not yet installed or tested.
 - **v0.52:** Phase 2 started: the face reads the watch's calendar (standard + Wear OS providers), asks for calendar access from the face, and defaults to the real calendar; sample days stay as debug options. Verified on the emulator. **On the Galaxy Watch8 there is nothing to read:** Samsung keeps calendar events in a private provider (§6.3f, risk 18); the watch stays on the busy sample until that's decided.
 - **v0.51:** Watch titles now shrink 30 → 24 px before scrolling (C9): "→ Roadmap planning" shows in full instead of "Roadmap plan…". Verified on the Galaxy Watch8 with a 24 px title, a scrolling long title and a 30 px short one.
 - **v0.50:** First run on a real watch (Galaxy Watch8 40 mm, Wear OS 6): installs, sets, taps work. The watch's sample is now a **busy day that rolls with the clock** (live meeting, back-to-back, private, full and partial double booking, long title, one past the window) so it looks busy at any hour; the fixed-time day stays as `day?name=example` (§7.0a). Fixed the Kotlin rules missing W5 (tomorrow's meetings took the main ring before midnight) and times before today's midnight. Known gap: the watch ellipsizes a title that would fit at 24 px instead of shrinking it (C9's 30 → 24 px step isn't built).

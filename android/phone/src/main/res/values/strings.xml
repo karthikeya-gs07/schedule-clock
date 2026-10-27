@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Calen-Time</string>
+    <string name="intro">Sends today\'s and tomorrow\'s meetings from this phone\'s calendar to the Calen-Time watch face. Private events go without their title or place. Your calendar is sent only to your watch.</string>
+    <string name="no_permission">Calendar access is off, so there\'s nothing to send to the watch.</string>
+    <string name="allow">Allow calendar access</string>
+    <string name="sync_now">Sync now</string>
+    <string name="never_synced">Not synced yet.</string>
+    <string name="last_sync">Last sync %1$s · %2$d events</string>
+    <string name="sync_failed">Sync failed: %1$s</string>
+    <string name="no_watch">No watch connected. Open Galaxy Wearable or Wear OS on this phone and check the watch is paired.</string>
+    <string name="watch_connected">Watch connected: %1$s</string>
+</resources>
