@@ -80,6 +80,7 @@ LOCK = f"(floor({F} / 2) % 2)"
 CLASH = f"(floor({F} / 4) % 2)"
 SCROLL = f"(floor({F} / 8) % 2)"
 SMALL = f"(floor({F} / 16) % 2)"   # C9: the title only fits at 24 px
+EMPTY = f"(floor({F} / 32) % 2)"   # C3: no meetings, the clock takes the center
 EXTRA = f"(30 * {ARROW} + 25 * {LOCK})"
 ICON_X = f"(225 - ({W} + {EXTRA}) / 2)"
 
@@ -245,8 +246,9 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
       {provider("StatusDataSourceService", "RANGED_VALUE")}
       <BoundingOval x="0" y="0" width="450" height="450"/>
       <Complication type="RANGED_VALUE">
-        <!-- Day + date (C1, T1): 24 px, muted; shrinks to 90 % in place when selected -->
+        <!-- Day + date (C1, T1): 24 px, muted; shrinks to 90 % in place when selected; down 55 px when empty (C3) -->
         <Group name="date" x="0" y="98" width="450" height="30" pivotX="0.5" pivotY="0.5">
+          <Transform target="y" value="98 + 55 * {EMPTY}">{SELECT_ANIM}</Transform>
           <Transform target="scaleX" value="1 - 0.1 * {S}">{SELECT_ANIM}</Transform>
           <Transform target="scaleY" value="1 - 0.1 * {S}">{SELECT_ANIM}</Transform>
           <PartText x="0" y="0" width="450" height="30">
@@ -257,11 +259,11 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
             </Text>
           </PartText>
         </Group>
-        <!-- Clock (T5): Anta 88 px; selected: 55 %, up 10 px -->
+        <!-- Clock (T5): Anta 88 px; selected: 55 %, up 10 px; empty (C3): 115 %, down 60 px to the center -->
         <Group name="clock" x="0" y="119" width="450" height="110" pivotX="0.5" pivotY="0.5">
-          <Transform target="y" value="119 - 10 * {S}">{SELECT_ANIM}</Transform>
-          <Transform target="scaleX" value="1 - 0.45 * {S}">{SELECT_ANIM}</Transform>
-          <Transform target="scaleY" value="1 - 0.45 * {S}">{SELECT_ANIM}</Transform>
+          <Transform target="y" value="119 - 10 * {S} + 60 * {EMPTY}">{SELECT_ANIM}</Transform>
+          <Transform target="scaleX" value="1 - 0.45 * {S} + 0.15 * {EMPTY}">{SELECT_ANIM}</Transform>
+          <Transform target="scaleY" value="1 - 0.45 * {S} + 0.15 * {EMPTY}">{SELECT_ANIM}</Transform>
           <!-- AM/PM (C11): WFF can't measure text, so time + AM/PM are centered as a unit with fixed widths. The time is
                right-aligned to a seam; AM/PM starts 8 px after it. A two-digit hour (10-12) is ~32 px wider, so both
                move 16 px right (half the extra width). Widths measured from the prototype's Anta render: 1-digit
@@ -285,8 +287,9 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
             </PartText>
           </Group>
         </Group>
-        <!-- Divider (T2): selected: up 32 px, 60 % wide -->
+        <!-- Divider (T2): selected: up 32 px, 60 % wide; fades out when empty (C3) -->
         <Group name="divider" x="{CX - 70}" y="236" width="140" height="4" pivotX="0.5" pivotY="0.5">
+          <Transform target="alpha" value="255 * (1 - {EMPTY})">{SELECT_ANIM}</Transform>
           <Transform target="y" value="236 - 32 * {S}">{SELECT_ANIM}</Transform>
           <Transform target="scaleX" value="1 - 0.4 * {S}">{SELECT_ANIM}</Transform>
           <PartDraw x="0" y="0" width="140" height="4">

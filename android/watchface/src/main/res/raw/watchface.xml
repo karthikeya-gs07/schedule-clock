@@ -385,8 +385,9 @@
           primaryProvider="io.github.karthikeyags07.scheduleclock/io.github.karthikeyags07.scheduleclock.StatusDataSourceService" primaryProviderType="RANGED_VALUE"/>
       <BoundingOval x="0" y="0" width="450" height="450"/>
       <Complication type="RANGED_VALUE">
-        <!-- Day + date (C1, T1): 24 px, muted; shrinks to 90 % in place when selected -->
+        <!-- Day + date (C1, T1): 24 px, muted; shrinks to 90 % in place when selected; down 55 px when empty (C3) -->
         <Group name="date" x="0" y="98" width="450" height="30" pivotX="0.5" pivotY="0.5">
+          <Transform target="y" value="98 + 55 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 32) % 2)"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
           <Transform target="scaleX" value="1 - 0.1 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
           <Transform target="scaleY" value="1 - 0.1 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
           <PartText x="0" y="0" width="450" height="30">
@@ -397,11 +398,11 @@
             </Text>
           </PartText>
         </Group>
-        <!-- Clock (T5): Anta 88 px; selected: 55 %, up 10 px -->
+        <!-- Clock (T5): Anta 88 px; selected: 55 %, up 10 px; empty (C3): 115 %, down 60 px to the center -->
         <Group name="clock" x="0" y="119" width="450" height="110" pivotX="0.5" pivotY="0.5">
-          <Transform target="y" value="119 - 10 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
-          <Transform target="scaleX" value="1 - 0.45 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
-          <Transform target="scaleY" value="1 - 0.45 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
+          <Transform target="y" value="119 - 10 * [COMPLICATION.RANGED_VALUE_VALUE] + 60 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 32) % 2)"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
+          <Transform target="scaleX" value="1 - 0.45 * [COMPLICATION.RANGED_VALUE_VALUE] + 0.15 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 32) % 2)"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
+          <Transform target="scaleY" value="1 - 0.45 * [COMPLICATION.RANGED_VALUE_VALUE] + 0.15 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 32) % 2)"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
           <!-- AM/PM (C11): WFF can't measure text, so time + AM/PM are centered as a unit with fixed widths. The time is
                right-aligned to a seam; AM/PM starts 8 px after it. A two-digit hour (10-12) is ~32 px wider, so both
                move 16 px right (half the extra width). Widths measured from the prototype's Anta render: 1-digit
@@ -425,8 +426,9 @@
             </PartText>
           </Group>
         </Group>
-        <!-- Divider (T2): selected: up 32 px, 60 % wide -->
+        <!-- Divider (T2): selected: up 32 px, 60 % wide; fades out when empty (C3) -->
         <Group name="divider" x="155" y="236" width="140" height="4" pivotX="0.5" pivotY="0.5">
+          <Transform target="alpha" value="255 * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 32) % 2))"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
           <Transform target="y" value="236 - 32 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
           <Transform target="scaleX" value="1 - 0.4 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
           <PartDraw x="0" y="0" width="140" height="4">

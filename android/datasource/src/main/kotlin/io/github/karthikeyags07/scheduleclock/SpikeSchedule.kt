@@ -27,7 +27,7 @@ internal const val TAG = "ScheduleClockSpike"
  * Packed number fields (WFF can't measure text or pass extra fields, so widths and flags ride in
  * RANGED_VALUE MAX; VALUE stays 0/1 for "selected"):
  * - status:  MAX = 1 + titleWidth + 10000 × flags, flags = 1 arrow (C12) + 2 lock (C13) + 4 clash (C7)
- *            + 8 title scrolls (C9a) + 16 title at 24 px (C9)
+ *            + 8 title scrolls (C9a) + 16 title at 24 px (C9) + 32 no meetings (C3)
  * - details: MAX = 1 + lineWidth + 10000 × kind, kind 0 place · 1 clash · 2 tomorrow · 3 private
  */
 object SpikeSchedule {
@@ -182,7 +182,7 @@ object SpikeSchedule {
         }
         val selected = selectedIndex(context, list)
         val i = if (selected >= 0) selected else ScheduleRules.defaultIndex(list, now)
-        if (i < 0) return ranged(0f, 0f, 1f, "", "")
+        if (i < 0) return ranged(0f, 0f, 1f + 10000f * 32, "", "")   // C3: no meetings, flag 32 centers the clock
         val p = list[i]
         val arrow = ScheduleRules.showsArrow(list, i, now)
         val lock = p.meeting.private
