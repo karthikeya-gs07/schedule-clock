@@ -6,4 +6,9 @@
     <string name="slot_details">Meeting place</string>
     <string name="slot_promote">Settling meeting</string>
     <string name="slot_title">Scrolling title</string>
+    <string name="theme_label">Colours</string>
+    <string name="theme_amber">Amber</string>
+    <string name="theme_mint">Mint</string>
+    <string name="theme_violet">Violet</string>
+    <string name="theme_rose">Rose</string>
 </resources>

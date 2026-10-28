@@ -181,6 +181,7 @@ Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.sched
 
 | Date | Change | Rules |
 |---|---|---|
+| 2026-10-28 | Colour themes on the watch: Amber, Mint, Violet, Rose in the customize screen (Colours). | §9 |
 | 2026-10-28 | Meeting buzzes: 2 min before start, halfway, 5 min before end (watch only). | §11 H1–H5 |
 | 2026-10-27 | Tapping the details while a meeting is selected goes back to the normal view (prototype and watch). | I8, §8 taps |
 | 2026-10-27 | A tomorrow meeting with no place reads "Tomorrow", not "Tomorrow ·". | C6 |
@@ -218,7 +219,7 @@ Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.sched
 
 Every colour the face draws with is a token (the table in §2: meeting arcs, elapsed part, later lane, later/tomorrow text, double booking and its elapsed part, private stripes, clock/title text, secondary text, ring track). A **theme** is one complete set of tokens. The prototype's **Colors** section lists the themes, lets you edit any token with a colour picker (this becomes the "Custom" theme, saved in the browser) and **Copy theme** exports the tokens as JSON. Amber is the real design; Mint, Violet and Rose are examples of the mechanism, to be replaced with your colours. Ambient mode stays monochrome whatever the theme (A1), and Dim and Tactical red (A4, A5) apply on top of a theme.
 
-On the watch each theme becomes one option of a WFF colour configuration (`UserConfigurations`), so it appears in the watch's customize screen. The ring image drawn by the data source (arcs, lane, stripes) must receive the chosen theme too, since its colours are drawn in the image, not in the face XML.
+**On the watch (built 2026-10-28):** the four themes are one **Colours** option (WFF `ColorConfiguration`) in the watch's customize screen; each carries three colours: meeting arcs, later lane, later/tomorrow text. The watch app can't see the chosen theme, so the ring image is three 450 px panels side by side and the face draws it three times, shifted so one panel is on screen each time. The face multiplies each copy by a tint: panel 0 (meeting arcs in white, elapsed parts at 45 % grey) × the arc colour, panel 1 (the later lane in white) × the lane colour, panel 2 untinted (private stripes, double bookings, coral lane). The look-ahead arrow, the settle animation and the "Tomorrow" text use the theme colours directly. Differences from the prototype: the elapsed shade is always 45 % of the arc colour (the prototype's are within a few points of that); double bookings stay coral in every theme (Violet's pink-coral isn't used); there is no Custom theme (the customize screen offers a fixed list).
 
 ## 10. Time-Shift face
 
