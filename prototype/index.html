@@ -887,15 +887,17 @@ function sunFor(dayIndex) {
   return sunCache.get(key);
 }
 
-// The day's colours (S3), anchored to sunrise (SR), solar noon and sunset (SS), in minutes:
-// deep night blue → pre-dawn blue → dawn violet → dawn rose → sunrise apricot → morning gold → pale noon →
-// afternoon gold → golden-hour orange → sunset coral → dusk pink → twilight violet → night blue.
+// The day's colours (S3, revised 2026-10-28 so each part of the day is its own colour), anchored to sunrise (SR),
+// solar noon and sunset (SS), and at night to clock times (CLOCK), in minutes: indigo midnight → cobalt (3 AM) →
+// pre-dawn azure → dawn lavender → dawn rose → sunrise apricot → warm gold → bright lemon → pale cream noon → honey →
+// amber → tangerine → red-orange → sunset coral-red → hot pink → purple → blue-violet → royal blue (9 PM) → indigo.
 const SUN_STOPS = [
-  ['SR', -80, '#4a5fd0'], ['SR', -40, '#8b6fd6'], ['SR', -12, '#e58ab0'], ['SR', 15, '#ffa86b'], ['SR', 80, '#ffd27a'],
-  ['NOON', 0, '#ffe7a3'],
-  ['SS', -90, '#ffbf5a'], ['SS', -25, '#ff9447'], ['SS', 0, '#ff6a5a'], ['SS', 20, '#e0608f'], ['SS', 45, '#9a68d8'], ['SS', 85, '#4a5fd0'],
+  ['CLOCK', 180, '#2f72cf'], ['SR', -80, '#3a9ad0'], ['SR', -40, '#8f7ad8'], ['SR', -12, '#e88ab2'], ['SR', 15, '#ffa86b'],
+  ['SR', 70, '#ffcc5c'], ['SR', 180, '#fff06a'], ['NOON', 0, '#fff6cc'], ['NOON', 105, '#ffe08a'],
+  ['SS', -150, '#ffbb4d'], ['SS', -80, '#ff983c'], ['SS', -30, '#ff7438'], ['SS', 0, '#ff5257'], ['SS', 20, '#ec4f92'],
+  ['SS', 45, '#a957dc'], ['SS', 80, '#6c5ae8'], ['CLOCK', 21 * 60, '#3f66e6'],
 ];
-const NIGHT = '#3550c8';
+const NIGHT = '#4a3ccf';   // midnight
 // Interpolate in OKLab so the blends stay vivid (no muddy midpoints between orange and violet).
 const toLin = c => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4, toSrgb = c => c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055;
 function hexToLab(h) {
@@ -911,8 +913,8 @@ function labToHex([L, a, b]) {
 // Colour of the light at an absolute simulated minute (today 0–1439, tomorrow 1440+).
 function sunColor(t) {
   const dayIndex = Math.floor(t / 1440), x = ((t % 1440) + 1440) % 1440, sun = sunFor(dayIndex);
-  if (isNaN(sun.rise)) return sun.polar === 'day' ? '#ffe7a3' : NIGHT;
-  const at = { SR: sun.rise, SS: sun.set, NOON: sun.noon };
+  if (isNaN(sun.rise)) return sun.polar === 'day' ? '#fff6cc' : NIGHT;
+  const at = { SR: sun.rise, SS: sun.set, NOON: sun.noon, CLOCK: 0 };
   const stops = [[0, NIGHT], ...SUN_STOPS.map(([k, off, c]) => [at[k] + off, c]).filter(([m]) => m > 0 && m < 1440).sort((p, q) => p[0] - q[0]), [1440, NIGHT]];
   let i = 1; while (i < stops.length - 1 && stops[i][0] < x) i++;
   const [m0, c0] = stops[i - 1], [m1, c1] = stops[i], f = m1 > m0 ? (x - m0) / (m1 - m0) : 0;

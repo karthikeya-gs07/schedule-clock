@@ -65,24 +65,28 @@ object SunColors {
         return Sun(local(noon - (set - noon)), local(set), local(noon), false)
     }
 
-    // S3: deep night blue → pre-dawn blue → dawn violet → dawn rose → sunrise apricot → morning gold → pale noon →
-    // afternoon gold → golden-hour orange → sunset coral → dusk pink → twilight violet → night blue.
-    private enum class Anchor { SR, NOON, SS }
+    // S3 (revised 2026-10-28 so each part of the day is its own colour): indigo midnight → cobalt (3 AM) →
+    // pre-dawn azure → dawn lavender → dawn rose → sunrise apricot → warm gold → bright lemon (mid-morning) →
+    // pale cream noon → honey → amber → tangerine → red-orange → sunset coral-red → hot pink → purple →
+    // blue-violet → royal blue (9 PM) → indigo midnight. The night stops are clock times, the rest follow the sun.
+    private enum class Anchor { SR, NOON, SS, CLOCK }
     private val STOPS = listOf(
-        Triple(Anchor.SR, -80, "#4a5fd0"), Triple(Anchor.SR, -40, "#8b6fd6"), Triple(Anchor.SR, -12, "#e58ab0"),
-        Triple(Anchor.SR, 15, "#ffa86b"), Triple(Anchor.SR, 80, "#ffd27a"), Triple(Anchor.NOON, 0, "#ffe7a3"),
-        Triple(Anchor.SS, -90, "#ffbf5a"), Triple(Anchor.SS, -25, "#ff9447"), Triple(Anchor.SS, 0, "#ff6a5a"),
-        Triple(Anchor.SS, 20, "#e0608f"), Triple(Anchor.SS, 45, "#9a68d8"), Triple(Anchor.SS, 85, "#4a5fd0"),
+        Triple(Anchor.CLOCK, 180, "#2f72cf"), Triple(Anchor.SR, -80, "#3a9ad0"), Triple(Anchor.SR, -40, "#8f7ad8"),
+        Triple(Anchor.SR, -12, "#e88ab2"), Triple(Anchor.SR, 15, "#ffa86b"), Triple(Anchor.SR, 70, "#ffcc5c"),
+        Triple(Anchor.SR, 180, "#fff06a"), Triple(Anchor.NOON, 0, "#fff6cc"), Triple(Anchor.NOON, 105, "#ffe08a"),
+        Triple(Anchor.SS, -150, "#ffbb4d"), Triple(Anchor.SS, -80, "#ff983c"), Triple(Anchor.SS, -30, "#ff7438"),
+        Triple(Anchor.SS, 0, "#ff5257"), Triple(Anchor.SS, 20, "#ec4f92"), Triple(Anchor.SS, 45, "#a957dc"),
+        Triple(Anchor.SS, 80, "#6c5ae8"), Triple(Anchor.CLOCK, 21 * 60, "#3f66e6"),
     )
-    private const val NIGHT = "#3550c8"
-    private const val POLAR_DAY = "#ffe7a3"
+    private const val MIDNIGHT = "#4a3ccf"
+    private const val POLAR_DAY = "#fff6cc"
 
-    /** The day's colour stops as (minute, OKLab), night blue at both midnights. */
+    /** The day's colour stops as (minute, OKLab), indigo at both midnights. */
     fun stops(sun: Sun): List<Pair<Double, DoubleArray>> {
-        if (sun.rise.isNaN()) return listOf(0.0 to lab(if (sun.polarDay) POLAR_DAY else NIGHT), 1440.0 to lab(if (sun.polarDay) POLAR_DAY else NIGHT))
-        val at = mapOf(Anchor.SR to sun.rise, Anchor.NOON to sun.noon, Anchor.SS to sun.set)
+        if (sun.rise.isNaN()) return listOf(0.0 to lab(if (sun.polarDay) POLAR_DAY else MIDNIGHT), 1440.0 to lab(if (sun.polarDay) POLAR_DAY else MIDNIGHT))
+        val at = mapOf(Anchor.SR to sun.rise, Anchor.NOON to sun.noon, Anchor.SS to sun.set, Anchor.CLOCK to 0.0)
         val inner = STOPS.map { (a, off, c) -> at.getValue(a) + off to lab(c) }.filter { it.first > 0 && it.first < 1440 }.sortedBy { it.first }
-        return listOf(0.0 to lab(NIGHT)) + inner + listOf(1440.0 to lab(NIGHT))
+        return listOf(0.0 to lab(MIDNIGHT)) + inner + listOf(1440.0 to lab(MIDNIGHT))
     }
 
     /** The colour of the light at a minute of the day (0–1440), from [stops]. */
