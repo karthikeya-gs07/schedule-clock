@@ -3,6 +3,10 @@
 
     <uses-feature android:name="android.hardware.type.watch" />
     <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <!-- Meeting buzzes (RULES §11): exact alarms (allowed for calendar apps), vibration, re-arm after restart. -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application android:label="@string/app_name">
 
@@ -21,6 +25,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Meeting buzzes: the next buzz's alarm, and re-arming after a restart or a clock change. -->
+        <receiver android:name=".BuzzReceiver" android:exported="false" />
+        <receiver android:name=".BuzzRearmReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
 
         <!-- Calendar from the phone app (Data Layer item `/calendar`), kept for the face. -->
         <service

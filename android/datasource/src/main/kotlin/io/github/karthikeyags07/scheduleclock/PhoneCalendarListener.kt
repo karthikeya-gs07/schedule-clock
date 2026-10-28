@@ -12,6 +12,7 @@ class PhoneCalendarListener : WearableListenerService() {
             if (event.type == DataEvent.TYPE_CHANGED && event.dataItem.uri.path == "/calendar") {
                 CalendarSource.savePhone(this, DataMapItem.fromDataItem(event.dataItem).dataMap)
                 SpikeSchedule.requestUpdate(applicationContext)
+                MeetingBuzz.schedule(this)
             }
         }
     }

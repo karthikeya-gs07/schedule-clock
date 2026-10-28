@@ -95,6 +95,9 @@ object SpikeSchedule {
     }
 
     /** Debug: switch the day ("calendar", "busy" or "example"); a busy day is made fresh at the current hour. */
+    /** True when the face shows the real calendar (not a sample day). */
+    fun usesCalendar(context: Context) = prefs(context).getString("day", "calendar") == "calendar"
+
     /** True while the face has no calendar at all: nothing from the phone app and no access on the watch. */
     fun needsCalendarSetup(context: Context) =
         prefs(context).getString("day", "calendar") == "calendar" &&
@@ -103,6 +106,7 @@ object SpikeSchedule {
     fun setDay(context: Context, name: String) {
         prefs(context).edit().putString("day", name).remove("busyAt").remove("selected").commit()
         requestUpdate(context.applicationContext)
+        MeetingBuzz.schedule(context)
     }
 
     private const val SETTLE_MS = 900L       // M3
@@ -167,6 +171,7 @@ object SpikeSchedule {
         val list = placed(context, now)
         val selected = selectedIndex(context, list).takeIf { it >= 0 }?.let { list[it].meeting.key }
         val png = RingRenderer.renderPng(list, now, selected, hiddenKey = prefs(context).getString("settling", null))
+        MeetingBuzz.schedule(context)   // the ring redraws every 5 min and on changes: keep the next buzz set
         Log.i(TAG, "ring image: ${png.size / 1024} KB PNG, drawn+encoded in ${(SystemClock.elapsedRealtimeNanos() - t0) / 1_000_000} ms")
         val image = SmallImage.Builder(Icon.createWithData(png, 0, png.size), SmallImageType.PHOTO).build()
         return SmallImageComplicationData.Builder(image, text("Today's meetings")).build()

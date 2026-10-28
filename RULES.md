@@ -181,6 +181,7 @@ Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.sched
 
 | Date | Change | Rules |
 |---|---|---|
+| 2026-10-28 | Meeting buzzes: 2 min before start, halfway, 5 min before end (watch only). | §11 H1–H5 |
 | 2026-10-27 | Tapping the details while a meeting is selected goes back to the normal view (prototype and watch). | I8, §8 taps |
 | 2026-10-27 | A tomorrow meeting with no place reads "Tomorrow", not "Tomorrow ·". | C6 |
 | 2026-10-27 | Watch: C3 empty state built (status flag 32): with no meetings the date and clock move to the center, clock 115 %, divider fades (M4). It was missing on the watch, which kept the clock up top. No rule change. | §8 slot 4, C3, M4 |
@@ -231,4 +232,18 @@ A second face, picked in the prototype's **Face** control (Calen-Time / Time-Shi
 | S4 | Unchanged by Time-Shift | Private meetings keep their grey caution stripes (R10); double bookings and all-day clashes keep their coral stripes on top (R4, W9); the later lane stays blue (R5); ambient is outlines only (A1); Dim and Tactical red apply on top (A4, A5). | Meaning beats mood: those markings carry information. |
 
 On the watch (not built yet): the data source would compute the sun times the same way and draw the gradient into the ring image (§8 slot 1), so the face XML barely changes.
+
+## 11. Meeting buzzes (haptics)
+
+The watch vibrates at three moments of every meeting from the real calendar, screen on or off. Built in the watch's data source app (not the face): one exact alarm for the next buzz, re-armed when the calendar changes, every 5 min with the ring, after a restart and after a clock or time-zone change. The prototype doesn't simulate them.
+
+| # | When | What | Why |
+|---|---|---|---|
+| H1 | **2 min before** a meeting starts | **One sharp buzz, 0.75 s**, full strength. | Time to wrap up and join. |
+| H2 | **5 min before** a meeting ends | **Two buzzes, 0.75 s each**, 0.4 s apart. | Time to wrap up; the double buzz tells it apart from the start. |
+| H3 | **Halfway** through a meeting | **One long buzz, 1.5 s**. | A pacing check, felt as different from both. |
+| H4 | Short meetings | No halfway buzz under **15 min**; no end warning under **10 min** (they would land on top of the others). All-day events never buzz; nor do the sample days. Declined and cancelled events aren't in the calendar data at all. | Each buzz should mean one thing. |
+| H5 | Several buzzes fall at the same moment (back-to-back or double-booked meetings) | Only the most important plays: end warning, then start, then halfway. A buzz delayed by up to 2 min (watch asleep) still plays; later than that it's skipped. | One clear signal, never a pile-up. |
+
+Vibrations use the alarm channel, so they play with the screen off and in Do Not Disturb (to revisit: Bedtime). Debug: `app://io.github.karthikeyags07.scheduleclock/buzz?kind=start|middle|end` plays a pattern now.
 

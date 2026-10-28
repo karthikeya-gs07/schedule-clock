@@ -9,6 +9,7 @@ import android.util.Log
  * Invisible handler for the face's deep links (PRD §6.3 risk 1):
  * - `app://<package>/select?hour=N`: cycles the meetings in that dial hour (I2–I6).
  * - `app://<package>/release`: a tap on the details; back to the normal view (I8).
+ * - `app://<package>/buzz?kind=start|middle|end`: debug, plays a meeting buzz pattern now.
  * - `app://<package>/promote`: plays the lane → ring settle (spike 3).
  * - `app://<package>/time?offset=M`: debug time shift in minutes for testing.
  * - `app://<package>/day?name=busy|example`: debug switch of the sample day.
@@ -26,6 +27,9 @@ class TapActivity : Activity() {
             startActivity(Intent(this, PermissionActivity::class.java))
         } else if (uri?.path == "/release") {
             SpikeSchedule.release(this)
+        } else if (uri?.path == "/buzz") {
+            MeetingBuzz.Kind.entries.firstOrNull { it.name.equals(uri.getQueryParameter("kind"), true) }
+                ?.let { MeetingBuzz.play(this, it) }
         } else if (uri?.path == "/promote") {
             SpikeSchedule.runPromotion(this)
         } else if (uri?.path == "/time") {
