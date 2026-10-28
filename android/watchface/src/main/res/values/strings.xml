@@ -6,6 +6,9 @@
     <string name="slot_details">Meeting place</string>
     <string name="slot_promote">Settling meeting</string>
     <string name="slot_title">Scrolling title</string>
+    <string name="style_label">Style</string>
+    <string name="style_calen">Calen-Time</string>
+    <string name="style_shift">Time-Shift</string>
     <string name="theme_label">Colours</string>
     <string name="theme_amber">Amber</string>
     <string name="theme_mint">Mint</string>

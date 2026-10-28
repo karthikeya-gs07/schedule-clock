@@ -9,6 +9,9 @@ import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Shader
+import android.graphics.SweepGradient
+import java.time.LocalDate
+import java.time.ZoneId
 import java.io.ByteArrayOutputStream
 
 /**
@@ -20,11 +23,13 @@ import java.io.ByteArrayOutputStream
  * three times, shifted so one panel lands on the screen each time (the rest is off-screen):
  * - panel 0, tinted with the theme's meeting colour: main-ring meetings in white, elapsed parts grey;
  * - panel 1, tinted with the theme's lane colour: the later lane in white;
- * - panel 2, untinted: fixed colours (private stripes, double bookings, coral lane on an all-day event).
+ * - panel 2, untinted: fixed colours (private stripes, double bookings, coral lane on an all-day event);
+ * - panel 3, untinted: the Time-Shift face's main-ring meetings (RULES §10), coloured by the light at each
+ *   minute. The face's Style option shows panel 3 instead of panel 0.
  */
 object RingRenderer {
     const val SIZE = 450
-    const val PANELS = 3
+    const val PANELS = 4
     private const val C = SIZE / 2f
     private const val R = 219f              // band 213–225, flush with the edge (R1)
     private const val R_LATER = R - 10f     // later lane (R5)
@@ -32,6 +37,7 @@ object RingRenderer {
     private const val GAP_DEG = 1f          // back-to-back gap (R2)
 
     private const val THEMED = Color.WHITE                 // × the theme colour on the face
+    private const val PAST_FACTOR = 0.45f
     private val THEMED_PAST = Color.rgb(115, 115, 115)      // × 0.45: the elapsed part (amber → #73511f ≈ #6e4f22)
     private val PRIVATE = Color.parseColor("#8e8e93")
     private val PRIVATE_PAST = Color.parseColor("#48484c")
@@ -61,6 +67,10 @@ object RingRenderer {
 
         // Panel 1: the later lane (R5), thin and rounded.
         panel(1) { for (p in last(shown.filter { it.lane == Lane.LATER && !fixed(it) })) drawLater(canvas, stroke, p, dim && p !== selected) }
+
+        // Panel 3: Time-Shift (S2), the same meetings as panel 0, drawn through the day's colour sweep.
+        val sweep = SunSweep(shown, now)
+        panel(3) { for (p in last(shown.filter { it.lane == Lane.MAIN && !fixed(it) })) drawShift(canvas, stroke, p, now, sweep, dim && p !== selected) }
 
         panel(2) {
             // Private meetings as caution stripes (R10), dashed on the lane; coral lane arcs on an all-day event (W9).
@@ -94,6 +104,56 @@ object RingRenderer {
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
             bitmap.recycle()
             out.toByteArray()
+        }
+    }
+
+    private fun drawShift(canvas: Canvas, stroke: Paint, p: Placed, now: Int, sweep: SunSweep, dim: Boolean) {
+        val split = if (ScheduleRules.isLive(p, now)) now else p.cs
+        stroke.pathEffect = null
+        stroke.strokeCap = Paint.Cap.ROUND
+        stroke.strokeWidth = BAND
+        stroke.color = Color.WHITE
+        val d = if (dim) DIM else 1f
+        for ((from, to, f) in listOf(Triple(p.cs, split, PAST_FACTOR * d), Triple(split, p.ce, d))) {
+            if (to <= from) continue
+            stroke.shader = sweep.shader(f)
+            arc(canvas, from, to, R, stroke)
+        }
+        stroke.shader = null
+    }
+
+    /**
+     * The day's colours around the dial (S2): each degree is coloured for the time it shows inside the visible
+     * 12 h window (from now, or a live meeting's start, W2), so morning and evening never mix. Darker copies
+     * for elapsed parts and dimmed meetings.
+     */
+    private class SunSweep(shown: List<Placed>, now: Int) {
+        private val colors: IntArray
+        private val cache = HashMap<Float, Shader>()
+
+        init {
+            val winStart = minOf(now, shown.filter { ScheduleRules.isLive(it, now) }.minOfOrNull { it.meeting.startMin } ?: now)
+            val zone = ZoneId.systemDefault()
+            val today = LocalDate.now(zone)
+            val place = SunColors.place(zone)
+            val days = HashMap<Int, List<Pair<Double, DoubleArray>>>()
+            colors = IntArray(361) { i ->
+                val m = i * 2                                                   // dial minute (720 per turn)
+                val t = winStart + Math.floorMod(m - winStart, ScheduleRules.DIAL_MIN)   // the time this angle shows
+                val day = Math.floorDiv(t, 1440)
+                val stops = days.getOrPut(day) { SunColors.stops(SunColors.sunTimes(today.plusDays(day.toLong()), place, zone)) }
+                SunColors.colorAt(stops, Math.floorMod(t, 1440).toDouble())
+            }
+        }
+
+        fun shader(factor: Float): Shader = cache.getOrPut(factor) {
+            val c = IntArray(colors.size) { i ->
+                val x = colors[i]
+                Color.rgb((Color.red(x) * factor).toInt(), (Color.green(x) * factor).toInt(), (Color.blue(x) * factor).toInt())
+            }
+            SweepGradient(C, C, c, FloatArray(c.size) { it / 360f }).apply {
+                setLocalMatrix(Matrix().apply { setRotate(-90f, C, C) })   // 0 at 12 o'clock
+            }
         }
     }
 
