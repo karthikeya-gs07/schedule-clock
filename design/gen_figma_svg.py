@@ -1,12 +1,17 @@
 """Generates Figma-friendly SVGs of the Calen-Time watch face.
 
-Usage: python3 design/gen_figma_svg.py   (writes design/watchface-default.svg and design/watchface-selected.svg)
+Usage: python3 design/gen_figma_svg.py   (writes design/watchface-default.svg, watchface-selected.svg and
+watchface-timeshift.svg)
 
 Geometry, colors and type follow RULES.md §2–§4 on the 450 × 450 canvas, using the watch build's sample
 day (android/…/SpikeSchedule.kt) at 10:20 AM. Built for editing in Figma: named groups (`id` becomes the
 layer name), real text (Anta for the clock and numbers, Roboto standing in for the watch's system font),
 plain shapes with inline attributes, no CSS. Private stripes are lines inside a clip path, which Figma
 imports as a mask group.
+
+The Time-Shift file (RULES §10) is the watch's rolling busy day at 10:13 AM in the Time-Shift colourway. SVG has
+no sweep gradient, so each meeting arc gets a linear gradient from its start to its end, sampled every few
+minutes from the day's colours (S3) and projected onto that chord; Figma imports it as an editable gradient.
 """
 import math
 from pathlib import Path
@@ -85,9 +90,9 @@ def text(name, x, y, size, color, content, family=SANS, weight=400, anchor="midd
             f'font-weight="{weight}" fill="{color}" text-anchor="{anchor}" letter-spacing="{spacing:g}">{content}</text>')
 
 
-def dial_layers():
+def dial_layers(now=NOW):
     trail = []
-    now_deg = deg(NOW)
+    now_deg = deg(now)
     for i in range(240):
         d_deg = i * 1.5
         behind = (now_deg - d_deg + 360) % 360
@@ -133,18 +138,18 @@ def meetings():
     return f'<g id="Meetings">{"".join(parts)}</g>'
 
 
-def now_dot():
-    x, y = pt(deg(NOW), R)
+def now_dot(now=NOW):
+    x, y = pt(deg(now), R)
     return (f'<g id="Now dot"><circle cx="{x:.2f}" cy="{y:.2f}" r="11" fill="#ffffff" fill-opacity="0.18"/>'
             f'<circle cx="{x:.2f}" cy="{y:.2f}" r="7" fill="#000000"/>'
             f'<circle cx="{x:.2f}" cy="{y:.2f}" r="4.5" fill="#ffffff"/></g>')
 
 
-def arrow(x, y, s=1.0):
+def arrow(x, y, s=1.0, color=AMBER):
     """Look-ahead arrow (C12): 20 × 20, 3 px amber, drawn from its left edge x and vertical center y."""
     def ln(x1, y1, x2, y2):
         return (f'<line x1="{x + x1 * s:.2f}" y1="{y + y1 * s:.2f}" x2="{x + x2 * s:.2f}" y2="{y + y2 * s:.2f}" '
-                f'stroke="{AMBER}" stroke-width="{3 * s:g}" stroke-linecap="round"/>')
+                f'stroke="{color}" stroke-width="{3 * s:g}" stroke-linecap="round"/>')
     return f'<g id="Arrow (next)">{ln(1.5, 0, 18.5, 0)}{ln(12, -6.5, 18.5, 0)}{ln(12, 6.5, 18.5, 0)}</g>'
 
 
@@ -201,6 +206,149 @@ def selected_center():
             + "</g></g>")
 
 
+# ---- Time-Shift (RULES §10) ----------------------------------------------------------------------
+
+def sun_times(lat=20.59, lon=78.96, y=2026, mo=10, d=27, tz=5.5):
+    """Sunrise, solar noon, sunset in local minutes (S1; same formula as the watch's SunColors)."""
+    rad, j1970, j2000 = math.pi / 180, 2440588, 2451545
+    import datetime
+    noon_utc = datetime.datetime(y, mo, d, 12, tzinfo=datetime.timezone(datetime.timedelta(hours=tz))).timestamp()
+    to_days = noon_utc / 86400 - 0.5 + j1970 - j2000
+    lw, phi = rad * -lon, rad * lat
+    n = round(to_days - 0.0009 - lw / (2 * math.pi))
+    ds = 0.0009 + lw / (2 * math.pi) + n
+    m = rad * (357.5291 + 0.98560028 * ds)
+    l = m + rad * (1.9148 * math.sin(m) + 0.02 * math.sin(2 * m) + 0.0003 * math.sin(3 * m)) + rad * 102.9372 + math.pi
+    dec = math.asin(math.sin(rad * 23.4397) * math.sin(l))
+    transit = lambda j: j2000 + j + 0.0053 * math.sin(m) - 0.0069 * math.sin(2 * l)
+    w = math.acos((math.sin(-0.833 * rad) - math.sin(phi) * math.sin(dec)) / (math.cos(phi) * math.cos(dec)))
+    noon = transit(ds)
+    sset = transit(0.0009 + (w + lw) / (2 * math.pi) + n)
+    local = lambda j: ((j + 0.5 - j1970) * 86400 / 60 + tz * 60) % 1440
+    return local(noon - (sset - noon)), local(noon), local(sset)
+
+
+SR, SUN_NOON, SS = sun_times()
+SUN_STOPS = sorted([(180, "#2f72cf"), (SR - 80, "#3a9ad0"), (SR - 40, "#8f7ad8"), (SR - 12, "#e88ab2"), (SR + 15, "#ffa86b"),
+                    (SR + 70, "#ffcc5c"), (SR + 180, "#fff06a"), (SUN_NOON, "#fff6cc"), (SUN_NOON + 105, "#ffe08a"),
+                    (SS - 150, "#ffbb4d"), (SS - 80, "#ff983c"), (SS - 30, "#ff7438"), (SS, "#ff5257"), (SS + 20, "#ec4f92"),
+                    (SS + 45, "#a957dc"), (SS + 80, "#6c5ae8"), (21 * 60, "#3f66e6")])
+SUN_STOPS = [(0, "#4a3ccf")] + SUN_STOPS + [(1440, "#4a3ccf")]
+
+
+def _lab(h):
+    lin = lambda c: c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+    r, g, b = (lin(int(h[i:i + 2], 16) / 255) for i in (1, 3, 5))
+    l = (0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b) ** (1 / 3)
+    m = (0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b) ** (1 / 3)
+    s_ = (0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b) ** (1 / 3)
+    return (0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s_, 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s_,
+            0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s_)
+
+
+def _hex(lab, factor=1.0):
+    L, a, b = lab
+    l, m, s_ = ((L + 0.3963377774 * a + 0.2158037573 * b) ** 3, (L - 0.1055613458 * a - 0.0638541728 * b) ** 3,
+                (L - 0.0894841775 * a - 1.2914855480 * b) ** 3)
+    srgb = lambda c: 12.92 * c if c <= 0.0031308 else 1.055 * c ** (1 / 2.4) - 0.055
+    rgb = (4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s_, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s_,
+           -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s_)
+    return "#" + "".join(f"{round(min(1, max(0, srgb(max(0, c)))) * 255 * factor):02x}" for c in rgb)
+
+
+def sun_color(t, factor=1.0):
+    """The light's colour at minute t of the day (S3), blended in OKLab; factor darkens (elapsed parts)."""
+    t %= 1440
+    i = 1
+    while i < len(SUN_STOPS) - 1 and SUN_STOPS[i][0] < t:
+        i += 1
+    (m0, c0), (m1, c1) = SUN_STOPS[i - 1], SUN_STOPS[i]
+    f = (t - m0) / (m1 - m0) if m1 > m0 else 0
+    a, b = _lab(c0), _lab(c1)
+    return _hex(tuple(a[k] + (b[k] - a[k]) * f for k in range(3)), factor)
+
+
+def sun_arc(name, from_min, to_min, factor=1.0):
+    """A meeting arc (12 px, round ends, R1a) painted with the day's colours from its start to its end."""
+    cap = math.degrees(6 / R)                                     # round cap reaches 6 px past the path
+    a0 = deg(from_min) + GAP + cap
+    a1 = max(a0 + 0.01, deg(from_min) + (to_min - from_min) / DIAL * 360 - GAP - cap)
+    (x0, y0), (x1, y1) = pt(a0, R), pt(a1, R)
+    gid = "g" + "".join(ch for ch in name if ch.isalnum())
+    vx, vy = x1 - x0, y1 - y0
+    vv = vx * vx + vy * vy or 1
+    stops = []
+    steps = max(2, int((to_min - from_min) / 5))
+    for k in range(steps + 1):
+        t = from_min + (to_min - from_min) * k / steps
+        px, py = pt(deg(t), R)
+        off = min(1, max(0, ((px - x0) * vx + (py - y0) * vy) / vv))
+        stops.append(f'<stop offset="{off:.3f}" stop-color="{sun_color(t, factor)}"/>')
+    grad = (f'<linearGradient id="{gid}" gradientUnits="userSpaceOnUse" x1="{x0:.2f}" y1="{y0:.2f}" x2="{x1:.2f}" '
+            f'y2="{y1:.2f}">{"".join(stops)}</linearGradient>')
+    d = f"M{x0:.2f} {y0:.2f} A{R} {R} 0 {1 if a1 - a0 > 180 else 0} 1 {x1:.2f} {y1:.2f}"
+    return grad + f'<path id="{name}" d="{d}" fill="none" stroke="url(#{gid})" stroke-width="12" stroke-linecap="round"/>'
+
+
+TS_NOW = 10 * 60 + 13
+TS_ACCENT = "#ff9447"     # Time-Shift colourway's arrow (golden-hour orange)
+
+
+def timeshift_meetings():
+    """The watch's rolling busy day made at 10 AM, seen at 10:13 (Standup live; window 9:30 AM–9:30 PM)."""
+    parts = [
+        sun_arc("Standup · elapsed", 570, TS_NOW, 0.45),
+        sun_arc("Standup · remaining", TS_NOW, 630),
+        sun_arc("Roadmap planning", 645, 705),
+        private_arc("Lunch with Sam (private)", 705, 735, MUTED, "clipLunch"),
+        sun_arc("Design review", 750, 810),
+        sun_arc("Vendor call", 750, 810),
+        sun_arc("Candidate interview", 840, 885),
+        sun_arc("Recruiter sync", 870, 900),
+        sun_arc("Weekly sync", 900, 960),
+        sun_arc("Quarterly roadmap and budget alignment with leadership", 990, 1080),
+        sun_arc("Client call", 1110, 1170),
+        sun_arc("Product demo", 1200, 1260),
+        clash("Double booking 12:30–1:30 PM", 750, 810),
+        clash("Double booking 2:30–2:45 PM", 870, 885),
+        arc("Late sync (later lane)", 1380, 1440, R_LATER, LATER, 4, cap="round"),
+    ]
+    return f'<g id="Meetings">{"".join(parts)}</g>'
+
+
+def timeshift_center():
+    """Default layout: Standup is live, so the next meeting gets the arrow; its title fits at 24 px (C9)."""
+    title_w, extra = 200, 30              # "Roadmap planning" at 24 px Roboto Medium (measured on the watch); arrow space
+    icons_x = C - (title_w + extra) / 2
+    return ('<g id="Center">'
+            + text("Date", C, 122, 24, MUTED, "TUE · OCT 27", weight=500, spacing=2)
+            + '<g id="Clock">'
+            + text("Time", 203, 206, 88, TEXT, "10:13", family=DISPLAY)
+            + text("AM/PM", 322, 206, 24, MUTED, "AM", weight=500, anchor="start") + "</g>"
+            + f'<line id="Divider" x1="155" y1="238" x2="295" y2="238" stroke="#2a2a2e" stroke-width="2" stroke-linecap="round"/>'
+            + '<g id="Details">'
+            + arrow(icons_x, 273.5, color=TS_ACCENT)
+            + text("Title", C + extra / 2, 282, 24, TEXT, "Roadmap planning", weight=500)
+            + text("Time range", C, 318, 24, TEXT, "10:45 – 11:45 AM")
+            + text("Place", C, 348, 24, MUTED, "Atlas room")
+            + "</g></g>")
+
+
+def timeshift_face():
+    sun = lambda m: f"{int(m // 60) % 12 or 12}:{int(m % 60):02d}"
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="450" height="450" viewBox="0 0 450 450">
+<!-- Time-Shift colours for central India on Oct 27: sunrise {sun(SR)} AM, solar noon {sun(SUN_NOON)}, sunset {sun(SS)} PM -->
+<g id="Calen-Time · Time-Shift 10:13 AM">
+<circle id="Screen" cx="{C}" cy="{C}" r="225" fill="#000000"/>
+{dial_layers(TS_NOW)}
+{timeshift_meetings()}
+{now_dot(TS_NOW)}
+{timeshift_center()}
+</g>
+</svg>
+'''
+
+
 def face(name, center, dim):
     ring = meetings()
     if dim:  # R9: everything else at 35 %, the selected meeting on top exactly as it normally looks
@@ -219,4 +367,5 @@ def face(name, center, dim):
 
 (OUT / "watchface-default.svg").write_text(face("Calen-Time · default 10:20 AM", default_center(), dim=False))
 (OUT / "watchface-selected.svg").write_text(face("Calen-Time · selected Design review", selected_center(), dim=True))
-print("wrote", OUT / "watchface-default.svg", "and", OUT / "watchface-selected.svg")
+(OUT / "watchface-timeshift.svg").write_text(timeshift_face())
+print("wrote", OUT / "watchface-default.svg", OUT / "watchface-selected.svg", "and", OUT / "watchface-timeshift.svg")
