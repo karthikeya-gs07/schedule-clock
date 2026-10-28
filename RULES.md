@@ -245,5 +245,5 @@ The watch vibrates at three moments of every meeting from the real calendar, scr
 | H4 | Short meetings | No halfway buzz under **15 min**; no end warning under **10 min** (they would land on top of the others). All-day events never buzz; nor do the sample days. Declined and cancelled events aren't in the calendar data at all. | Each buzz should mean one thing. |
 | H5 | Several buzzes fall at the same moment (back-to-back or double-booked meetings) | Only the most important plays: end warning, then start, then halfway. A buzz delayed by up to 2 min (watch asleep) still plays; later than that it's skipped. | One clear signal, never a pile-up. |
 
-Vibrations use the alarm channel, so they play with the screen off and in Do Not Disturb (to revisit: Bedtime). Debug: `app://io.github.karthikeyags07.scheduleclock/buzz?kind=start|middle|end` plays a pattern now.
+Vibrations use the alarm channel, so they play with the screen off and **even in Do Not Disturb** (decided 2026-10-28: people often turn DND on during meetings, which is when the end warning matters). Debug: `app://io.github.karthikeyags07.scheduleclock/buzz?kind=start|middle|end` plays a pattern now.
 
