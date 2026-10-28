@@ -134,6 +134,13 @@
   .color-grid label { flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); }
   .color-grid input[type=color] { width: 34px; height: 26px; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: none; flex: none; }
   .row-btns { display: flex; gap: 8px; }
+  .daybar { position: relative; height: 14px; border-radius: 7px; margin-top: 2px; }
+  .daybar b { position: absolute; top: -3px; width: 2px; height: 20px; margin-left: -1px; background: #fff; border-radius: 1px; opacity: .85; }
+  .daybar i { position: absolute; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px #000; }
+  .daybar-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .sun-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+  #sunPanel[hidden] { display: none; }
+  #sunPanel { display: flex; flex-direction: column; gap: 6px; }
   /* Dial-only mode: everything but the watch is hidden */
   body.focus { display: grid; place-items: center; }
   body.focus .panel, body.focus .tabs, body.focus .size-info, body.focus .hint, body.focus .calib { display: none; }
@@ -212,6 +219,23 @@
   #face.swapping #dText   { opacity: 0; transform: translateY(6px);
     transition: opacity var(--swap) ease-in, transform var(--swap) ease-in; }
   #face.swapping .selArc  { opacity: 0; transition-duration: var(--swap); }
+
+  /* ---------- Time-Shift face (S1–S4) ----------
+     A colour wheel for the visible 12 h, set by the day's sunrise and sunset, sits under the ring. It shows only
+     through the meeting arcs (an SVG mask built from the same arc paths), so meetings carry the colour of the
+     light at their hour and the free time stays dark. */
+  #tsWheel, #tsSelWheel { display: none; }
+  #face.timeshift:not(.ambient) #tsWheel, #face.timeshift:not(.ambient) #tsSelWheel { display: inline; }
+  /* The ring's own arcs become an opaque black backing, so the gradient on top is solid, not see-through (R6a) */
+  #face.timeshift:not(.ambient) #ringAll path.tsgrad, #face.timeshift:not(.ambient) .selArc.tsHide { stroke: #000; }
+  #tsWheel { transition: opacity var(--d) var(--ease); }
+  #face.selected #tsWheel { opacity: .35; }
+  .tsm { fill: none; stroke: #fff; stroke-width: 12px; stroke-linecap: round; stroke-opacity: var(--arc-pct); }
+  .tsm.past { stroke-opacity: calc(var(--arc-pct) * .45); }
+  .tsSel { fill: none; stroke: #fff; stroke-width: 12px; stroke-linecap: round; stroke-opacity: var(--arc-pct); opacity: 0; }
+  .tsSel.past { stroke-opacity: calc(var(--arc-pct) * .45); }
+  #face.selected .tsSel { opacity: 1; }
+  #face.swapping .tsSel { opacity: 0; transition-duration: var(--swap); }
 
   /* Ambient (always-on): outlines only, no selection */
   #face.ambient #ringAll path { stroke: #9a9a9a; stroke-width: 3px; stroke-opacity: 1; }
@@ -294,6 +318,20 @@
   </div>
 
   <div class="sect">
+    <h2>Face</h2>
+    <div class="seg" id="faces">
+      <button data-face="calen" aria-pressed="true">Calen-Time</button>
+      <button data-face="timeshift" aria-pressed="false">Time-Shift</button>
+    </div>
+    <div id="sunPanel" hidden>
+      <div class="daybar" id="dayBar"><i id="dayNow"></i></div>
+      <div class="daybar-labels"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>12 AM</span></div>
+      <div class="sun-row"><span id="sunInfo"></span><button class="linkish" id="sunLocate">Use my location</button></div>
+      <div class="note" id="sunWhere"></div>
+    </div>
+  </div>
+
+  <div class="sect">
     <h2>Display</h2>
     <div class="toggles">
       <button class="toggle" id="ambient" aria-pressed="false"><span>Ambient<small>Always-on outlines</small></span><i></i></button>
@@ -355,6 +393,13 @@ const PRESETS = {
     { start: '11:00', end: '12:00', title: 'Standup', where: 'Google Meet' },
     { start: '13:00', end: '14:00', title: 'Customer discovery interview: onboarding pain points', where: 'Zoom' },
     { start: '15:00', end: '16:00', title: 'Design critique', where: 'Room 4' },
+  ],
+  'Around sunset': [   // Time-Shift demo: dawn, midday, a meeting across sunset, evening, night
+    { start: '06:00', end: '06:45', title: 'Morning run', where: 'Lake path' },
+    { start: '12:30', end: '13:30', title: 'Lunch with Sam', where: 'Café Blue' },
+    { start: '17:00', end: '18:00', title: 'Design sync', where: 'Room 4' },
+    { start: '19:30', end: '20:30', title: 'Dinner', where: 'Home' },
+    { start: '22:00', end: '22:30', title: 'Late call', where: 'Zoom' },
   ],
   'Empty': [],
 };
@@ -564,7 +609,14 @@ svg.innerHTML = `
   <circle id="track" cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${C.track}" stroke-width="12"/>
   <g id="trail" fill="none" stroke="#fff" stroke-width="1.2"></g>
   <defs id="ringDefs"></defs>
+  <defs>
+    <mask id="tsMask" maskUnits="userSpaceOnUse" x="0" y="0" width="450" height="450"><g id="tsMaskArcs"></g></mask>
+    <mask id="tsSelMask" maskUnits="userSpaceOnUse" x="0" y="0" width="450" height="450">
+      <path id="tsSelPast" class="m tsSel past"/><path id="tsSelNow" class="m tsSel"/>
+    </mask>
+  </defs>
   <g id="ringAll" class="m"></g>
+  <g id="tsWheel" mask="url(#tsMask)" fill="none" stroke-width="14"></g>
   <g id="fx" class="m"></g>
   <defs>
     <pattern id="pvSel" patternUnits="userSpaceOnUse" width="12" height="12"><rect width="12" height="12" fill="#3a3a40"/><rect width="12" height="6" fill="${C.privateSel}"/></pattern>
@@ -572,6 +624,7 @@ svg.innerHTML = `
   </defs>
   <path id="selArcPast" class="m selArc past"/>
   <path id="selArc" class="m selArc"/>
+  <g id="tsSelWheel" mask="url(#tsSelMask)" fill="none" stroke-width="26"></g>
   <g id="nowDot"><circle r="11" fill="#fff" opacity=".18"/><circle r="7" fill="#000"/><circle r="4.5" fill="#fff"/></g>
 
   <g id="defaultUI">
@@ -667,13 +720,25 @@ function renderBase(list) {
     defs.push(stripePattern(id, ambient ? grey : color, angleOf((e.cs + e.ce) / 2)));
     return `stroke:url(#${id})`;
   };
+  // Time-Shift (S2): non-private main-ring arcs are drawn by the sun wheel through a mask of the same paths.
+  const ts = faceId === 'timeshift' && !ambient, maskArcs = [];
   for (const e of main) {
     const k = keyOf(e), hide = arriving.has(k) ? ' arriving' : '', id = 'pv' + k.replace(/\W/g, '_');
+    const grad = ts && !e.private && !arriving.has(k) ? ' tsgrad' : '';
+    const seg = (key, cls, from, to, style) => {
+      const d = arcPath(from, to, R, wMain);
+      add(key, (cls + hide + grad).trim(), d, style);
+      if (grad) maskArcs.push(`<path class="tsm${cls ? ' ' + cls : ''}" d="${d}"/>`);
+    };
     if (isLive(e)) {
-      add(`${k}:past`, `past${hide}`, arcPath(e.cs, nowMin, R, wMain), fillFor(e, `${id}p`, C.privatePast, '#4a4a4a'));
-      add(`${k}:now`, hide.trim(), arcPath(nowMin, e.ce, R, wMain), fillFor(e, `${id}n`, C.private, '#9a9a9a'));
-    } else add(`${k}:arc`, hide.trim(), arcPath(e.cs, e.ce, R, wMain), fillFor(e, `${id}n`, C.private, '#9a9a9a'));
+      seg(`${k}:past`, 'past', e.cs, nowMin, fillFor(e, `${id}p`, C.privatePast, '#4a4a4a'));
+      seg(`${k}:now`, '', nowMin, e.ce, fillFor(e, `${id}n`, C.private, '#9a9a9a'));
+    } else seg(`${k}:arc`, '', e.cs, e.ce, fillFor(e, `${id}n`, C.private, '#9a9a9a'));
   }
+  // Double bookings keep their coral stripes: the gradient is cut out over them.
+  if (ts) for (const [a, b] of clashRanges(list)) maskArcs.push(`<path d="${arcPath(a, b, R, 0)}" fill="none" stroke="#000" stroke-width="16"/>`);
+  $('tsMaskArcs').innerHTML = maskArcs.join('');
+  if (ts) paintSunWheels();
   for (const e of later) add(`${keyOf(e)}:lane`, `later${e.private ? ' private' : ''}${allDayFor(e).length ? ' allclash' : ''}`, arcPath(e.cs, e.ce, R_LATER, ambient ? 3 : 4));
   // Double booking: blank the band over the overlap, then draw two thin coral stripes.
   clashRanges(list).forEach(([a, b], n) => {
@@ -768,6 +833,134 @@ function renderTrail() {
     if (ahead < DASH_STEP * 1.5) v = Math.max(v, .5 * (1 - ahead / (DASH_STEP * 1.5)));
     d.el.style.strokeOpacity = (DASH_BASE + (DASH_PEAK - DASH_BASE) * v).toFixed(3);
   }
+}
+
+// ---------- Time-Shift face: sunrise/sunset and the day's colours (RULES §10, S1–S4) ----------
+// Sunrise and sunset are computed on the device for the simulated day and the user's location (no network): the
+// standard solar formula (NOAA / SunCalc), accurate to about a minute. Recomputed whenever the day changes.
+const SUN_RAD = Math.PI / 180, SUN_E = SUN_RAD * 23.4397, J1970 = 2440588, J2000 = 2451545, DAY_MS = 864e5;
+function sunTimes(date, lat, lon) {
+  const toDays = d => d.valueOf() / DAY_MS - 0.5 + J1970 - J2000;
+  const lw = SUN_RAD * -lon, phi = SUN_RAD * lat;
+  const n = Math.round(toDays(date) - 0.0009 - lw / (2 * Math.PI));
+  const ds = 0.0009 + lw / (2 * Math.PI) + n;
+  const M = SUN_RAD * (357.5291 + 0.98560028 * ds);
+  const L = M + SUN_RAD * (1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M)) + SUN_RAD * 102.9372 + Math.PI;
+  const dec = Math.asin(Math.sin(SUN_E) * Math.sin(L));
+  const transit = j => J2000 + j + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L);
+  const noon = transit(ds);
+  const w = Math.acos((Math.sin(-0.833 * SUN_RAD) - Math.sin(phi) * Math.sin(dec)) / (Math.cos(phi) * Math.cos(dec)));
+  const set = transit(0.0009 + (w + lw) / (2 * Math.PI) + n), rise = noon - (set - noon);
+  const local = j => { const d = new Date((j + 0.5 - J1970) * DAY_MS); return d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60; };
+  // Polar day or night: no rise/set (w is NaN)
+  return isNaN(w) ? { rise: NaN, set: NaN, noon: local(noon), polar: Math.sin(phi) * Math.sin(dec) > 0 ? 'day' : 'night' }
+    : { rise: local(rise), set: local(set), noon: local(noon) };
+}
+
+// Where the user is: their location once they allow it (rounded to 0.01°), otherwise a guess from the time zone.
+const TZ_PLACES = {
+  'Asia/Kolkata': [20.59, 78.96, 'central India'], 'Asia/Calcutta': [20.59, 78.96, 'central India'],
+  'America/New_York': [40.71, -74.01, 'New York'], 'America/Chicago': [41.88, -87.63, 'Chicago'],
+  'America/Denver': [39.74, -104.99, 'Denver'], 'America/Los_Angeles': [34.05, -118.24, 'Los Angeles'],
+  'Europe/London': [51.51, -0.13, 'London'], 'Europe/Berlin': [52.52, 13.40, 'Berlin'], 'Europe/Paris': [48.86, 2.35, 'Paris'],
+  'Asia/Dubai': [25.20, 55.27, 'Dubai'], 'Asia/Singapore': [1.35, 103.82, 'Singapore'], 'Asia/Tokyo': [35.68, 139.69, 'Tokyo'],
+  'Australia/Sydney': [-33.87, 151.21, 'Sydney'],
+};
+function guessPlace() {
+  let tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch {}
+  const p = TZ_PLACES[tz];
+  if (p) return { lat: p[0], lon: p[1], label: `${p[2]} (from your time zone)`, exact: false };
+  return { lat: 30, lon: -new Date().getTimezoneOffset() / 4, label: 'estimated from your time zone', exact: false };
+}
+let sunPlace = null;   // loaded on first use (the storage helper is defined further down)
+function place() {
+  if (!sunPlace) { try { const v = JSON.parse(store.get('sc.sunPlace')); if (v && isFinite(v.lat)) sunPlace = v; } catch {} }
+  return sunPlace || (sunPlace = guessPlace());
+}
+
+// Sun times for the simulated day (0 = today, 1 = tomorrow), cached per date.
+const sunCache = new Map();
+function sunFor(dayIndex) {
+  const d = new Date(); d.setDate(d.getDate() + dayIndex); d.setHours(12, 0, 0, 0);
+  const pl = place(), key = `${d.toDateString()}|${pl.lat}|${pl.lon}`;
+  if (!sunCache.has(key)) sunCache.set(key, sunTimes(d, pl.lat, pl.lon));
+  return sunCache.get(key);
+}
+
+// The day's colours (S3), anchored to sunrise (SR), solar noon and sunset (SS), in minutes:
+// deep night blue → pre-dawn blue → dawn violet → dawn rose → sunrise apricot → morning gold → pale noon →
+// afternoon gold → golden-hour orange → sunset coral → dusk pink → twilight violet → night blue.
+const SUN_STOPS = [
+  ['SR', -80, '#4a5fd0'], ['SR', -40, '#8b6fd6'], ['SR', -12, '#e58ab0'], ['SR', 15, '#ffa86b'], ['SR', 80, '#ffd27a'],
+  ['NOON', 0, '#ffe7a3'],
+  ['SS', -90, '#ffbf5a'], ['SS', -25, '#ff9447'], ['SS', 0, '#ff6a5a'], ['SS', 20, '#e0608f'], ['SS', 45, '#9a68d8'], ['SS', 85, '#4a5fd0'],
+];
+const NIGHT = '#3550c8';
+// Interpolate in OKLab so the blends stay vivid (no muddy midpoints between orange and violet).
+const toLin = c => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4, toSrgb = c => c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055;
+function hexToLab(h) {
+  const [r, g, b] = [1, 3, 5].map(i => toLin(parseInt(h.slice(i, i + 2), 16) / 255));
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b), m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b), s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  return [0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s, 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s, 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s];
+}
+function labToHex([L, a, b]) {
+  const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3, m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3, s = (L - 0.0894841775 * a - 1.2914855480 * b) ** 3;
+  const rgb = [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s, -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s];
+  return '#' + rgb.map(c => Math.round(Math.min(1, Math.max(0, toSrgb(Math.max(0, c)))) * 255).toString(16).padStart(2, '0')).join('');
+}
+// Colour of the light at an absolute simulated minute (today 0–1439, tomorrow 1440+).
+function sunColor(t) {
+  const dayIndex = Math.floor(t / 1440), x = ((t % 1440) + 1440) % 1440, sun = sunFor(dayIndex);
+  if (isNaN(sun.rise)) return sun.polar === 'day' ? '#ffe7a3' : NIGHT;
+  const at = { SR: sun.rise, SS: sun.set, NOON: sun.noon };
+  const stops = [[0, NIGHT], ...SUN_STOPS.map(([k, off, c]) => [at[k] + off, c]).filter(([m]) => m > 0 && m < 1440).sort((p, q) => p[0] - q[0]), [1440, NIGHT]];
+  let i = 1; while (i < stops.length - 1 && stops[i][0] < x) i++;
+  const [m0, c0] = stops[i - 1], [m1, c1] = stops[i], f = m1 > m0 ? (x - m0) / (m1 - m0) : 0;
+  const A = hexToLab(c0), B = hexToLab(c1);
+  return labToHex(A.map((v, k) => v + (B[k] - v) * f));
+}
+
+// Two wheels of short segments (1.5° each, overlapping so no seams): one on the ring, one under the selected arc.
+// Each angle is coloured for the time it stands for inside the visible 12 h window, so AM and PM never mix.
+const WHEEL_STEP = 1.5, wheelSegs = { tsWheel: [], tsSelWheel: [] };
+for (const [id, r] of [['tsWheel', R], ['tsSelWheel', R - 3]]) {
+  for (let a = 0; a < 360; a += WHEEL_STEP) {
+    const [x0, y0] = polar(a, r), [x1, y1] = polar(a + WHEEL_STEP + 0.6, r);
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('d', `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`);
+    $(id).appendChild(p);
+    wheelSegs[id].push({ p, a: a + WHEEL_STEP / 2 });
+  }
+}
+let wheelKey = '';
+function paintSunWheels() {
+  const live = events().filter(e => !e.allDay && e.s < nowMin && e.e > nowMin);
+  const winStart = Math.min(nowMin, ...live.map(e => e.s));
+  const key = `${winStart}|${place().lat}|${place().lon}|${new Date().toDateString()}`;
+  if (key === wheelKey) return;
+  wheelKey = key;
+  for (const segs of Object.values(wheelSegs)) for (const { p, a } of segs) {
+    const m = a * 2;                                                  // dial minute (720 per turn)
+    const t = winStart + ((m - winStart) % 720 + 720) % 720;          // the time this angle shows in the window
+    p.setAttribute('stroke', sunColor(t));
+  }
+}
+
+// Panel: the day's colour bar, sunrise/sunset and where they were computed for.
+function renderSunPanel() {
+  if (faceId !== 'timeshift') return;
+  const dayIndex = Math.floor(nowMin / 1440), sun = sunFor(dayIndex), base = dayIndex * 1440;
+  const stops = []; for (let m = 0; m <= 1440; m += 20) stops.push(`${sunColor(base + Math.min(m, 1439))} ${(m / 14.4).toFixed(2)}%`);
+  const bar = $('dayBar');
+  bar.style.background = `linear-gradient(90deg, ${stops.join(', ')})`;
+  bar.querySelectorAll('b').forEach(b => b.remove());
+  for (const m of [sun.rise, sun.set]) if (isFinite(m)) { const b = document.createElement('b'); b.style.left = `${m / 14.4}%`; bar.appendChild(b); }
+  $('dayNow').style.left = `${(nowMin % 1440) / 14.4}%`;
+  const f = m => isFinite(m) ? fmtClock(Math.round(m)) : '—';
+  $('sunInfo').textContent = isNaN(sun.rise) ? `No sunrise or sunset today (${sun.polar === 'day' ? 'midnight sun' : 'polar night'})`
+    : `Sunrise ${f(sun.rise)} · Sunset ${f(sun.set)}`;
+  const pl = place();
+  $('sunWhere').textContent = pl.exact ? `For your location (${pl.lat.toFixed(2)}, ${pl.lon.toFixed(2)})` : `For ${pl.label}`;
 }
 
 // Default meeting for the details: the next one that hasn't started. While a meeting is in
@@ -927,6 +1120,11 @@ function renderSelArc(list) {
   $('selArc').style.stroke = stripes ? 'url(#pvSel)' : e.private ? C.private : '';
   $('selArcPast').style.stroke = stripes ? 'url(#pvSelPast)' : '';
   $('selArc').style.strokeDasharray = e.private && e.lane === 'later' ? '6 4' : '';
+  // Time-Shift (S2): a non-private main-ring selection shows the sun gradient at full strength.
+  const tsSel = faceId === 'timeshift' && !ambient && e.lane === 'main' && !e.private;
+  $('selArc').classList.toggle('tsHide', tsSel); $('selArcPast').classList.toggle('tsHide', tsSel);
+  $('tsSelNow').setAttribute('d', tsSel ? $('selArc').getAttribute('d') : '');
+  $('tsSelPast').setAttribute('d', tsSel ? $('selArcPast').getAttribute('d') || '' : '');
 }
 
 // Change selection: the layout only scales; text content swaps with a brief dip when it changes.
@@ -980,6 +1178,7 @@ function renderPanel(list) {
   if (nowMin >= 1440 || live) { const n = document.createElement('small'); n.textContent = live ? 'live' : 'next day'; t.appendChild(n); }
   $('stateLabel').textContent = ambient ? 'AMBIENT'
     : selected < 0 ? 'DEFAULT' : `SELECTED ${selected + 1}/${list.length}`;
+  renderSunPanel();
   const hidden = events().filter(e => e.allDay).length;
   $('allDayNote').textContent = hidden ? `${hidden} all-day event${hidden > 1 ? 's' : ''} not shown on the watch` : '';
 }
@@ -1380,6 +1579,30 @@ try { custom = JSON.parse(store.get('sc.customTheme')) || null; } catch { custom
 { const saved = store.get('sc.theme'); themeName = saved === 'Custom' && custom ? 'Custom' : THEMES[saved] ? saved : 'Amber'; }
 buildThemeUI();
 
+// ---------- Face picker ----------
+let faceId = store.get('sc.face') === 'timeshift' ? 'timeshift' : 'calen';
+function applyFace() {
+  svg.classList.toggle('timeshift', faceId === 'timeshift');
+  $('faces').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.face === faceId));
+  $('sunPanel').hidden = faceId !== 'timeshift';
+  wheelKey = '';
+  renderAll();
+  if (selected >= 0) renderSelArc(upcoming());
+}
+$('faces').querySelectorAll('button').forEach(b => b.onclick = () => { faceId = b.dataset.face; store.set('sc.face', faceId); applyFace(); });
+$('sunLocate').onclick = () => {
+  if (!navigator.geolocation) { $('sunWhere').textContent = "This browser can't share a location."; return; }
+  $('sunWhere').textContent = 'Finding your location…';
+  navigator.geolocation.getCurrentPosition(pos => {
+    const r2 = v => Math.round(v * 100) / 100;                        // ~1 km: enough for sun times, kept private
+    sunPlace = { lat: r2(pos.coords.latitude), lon: r2(pos.coords.longitude), exact: true };
+    store.set('sc.sunPlace', JSON.stringify(sunPlace));
+    sunCache.clear(); wheelKey = '';
+    renderAll();
+  }, err => { $('sunWhere').textContent = `Location not available (${err.message || 'denied'}). Using ${place().label || 'the last location'}.`; },
+  { maximumAge: 6 * 3600e3, timeout: 15000 });
+};
+
 // Dial-only mode: hides every control so the watch can be studied or shown on its own.
 // F toggles it; #dial in the URL opens straight into it, so it can be shared as a link.
 function setFocus(on) {
@@ -1399,6 +1622,7 @@ if (location.hash === '#dial') setFocus(true);
 $('time').value = nowMin;
 applyDevice();
 applyColors(currentTheme());
+applyFace();
 // Re-measure once the clock font has loaded (its width drives the AM/PM position).
 document.fonts.load('88px "Anta"').then(renderAll);
 </script>

@@ -219,3 +219,16 @@ Every colour the face draws with is a token (the table in §2: meeting arcs, ela
 
 On the watch each theme becomes one option of a WFF colour configuration (`UserConfigurations`), so it appears in the watch's customize screen. The ring image drawn by the data source (arcs, lane, stripes) must receive the chosen theme too, since its colours are drawn in the image, not in the face XML.
 
+## 10. Time-Shift face
+
+A second face, picked in the prototype's **Face** control (Calen-Time / Time-Shift). Everything else (rules, layout, motion) is the same as Calen-Time; only the colour of the main-ring meetings changes.
+
+| # | When | What | Why |
+|---|---|---|---|
+| S1 | Every day | **Sunrise and sunset** are computed on the device for the user's location and the day shown (the standard solar formula, accurate to about a minute; no network). Location: the user's position once they allow it (rounded to 0.01°, about 1 km, and kept on the device), otherwise a guess from the time zone (India → central India). Recomputed when the day changes. | The colours follow the real light where the user is. Computing locally works offline and on the watch. |
+| S2 | Time-Shift, not ambient | Each **main-ring meeting** (and the selected arc) is coloured by the light at its minutes, so an arc spanning sunset grades through it. The colour wheel for the visible 12 h sits under the ring and shows **only through the meeting arcs**; free time stays dark. The arcs stay solid (an opaque backing under the gradient, R6a) at the arc brightness setting; elapsed parts are dimmer. | One standard colour for every minute of the day; meetings reveal it. |
+| S3 | The day's colours | Anchored to sunrise (SR), solar noon and sunset (SS): deep night blue `#3550c8` · SR −80 min pre-dawn blue `#4a5fd0` · SR −40 dawn violet `#8b6fd6` · SR −12 dawn rose `#e58ab0` · SR +15 sunrise apricot `#ffa86b` · SR +80 morning gold `#ffd27a` · noon pale gold `#ffe7a3` · SS −90 afternoon gold `#ffbf5a` · SS −25 golden-hour orange `#ff9447` · SS sunset coral `#ff6a5a` · SS +20 dusk pink `#e0608f` · SS +45 twilight violet `#9a68d8` · SS +85 night blue `#4a5fd0` · midnight `#3550c8`. Blended in OKLab so mixes stay vivid. Polar day: pale gold all day; polar night: night blue. | Example: a 5–6 PM meeting with sunset at 5:43 runs golden orange → sunset coral → dusk pink. |
+| S4 | Unchanged by Time-Shift | Private meetings keep their grey caution stripes (R10); double bookings and all-day clashes keep their coral stripes on top (R4, W9); the later lane stays blue (R5); ambient is outlines only (A1); Dim and Tactical red apply on top (A4, A5). | Meaning beats mood: those markings carry information. |
+
+On the watch (not built yet): the data source would compute the sun times the same way and draw the gradient into the ring image (§8 slot 1), so the face XML barely changes.
+

@@ -320,6 +320,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 
 ## 8. Changelog
 
+- **v0.20:** New **Time-Shift** face in the prototype (Face picker): main-ring meetings take the colour of the light at their hour, from sunrise/sunset computed on the device for the user's location (or the time-zone guess), with a day colour bar and "Use my location" in the panel; demo day "Around sunset" (RULES §10, S1–S4). Prototype only; watch to follow once approved.
 - **v0.19:** Prototype shows the face at true physical size: tabs for Galaxy Watch8/Watch9 40 mm and 44 mm, Watch8 Classic 46 mm and Watch Ultra 2 47 mm (display diameter + case outline), plus a "Large" tab that fills the screen. Scale is auto-detected on iPhone/iPad, estimated elsewhere, and can be calibrated against a bank card.
 - **v0.20:** Double-booking line drops the word "Also": a coral overlap icon (two intersecting rings) precedes the other meeting's name (C7, C13).
 - **v0.21:** "Tomorrow look-ahead 14 h" toggle (default on): tomorrow's meetings start showing on the later lane 14 h ahead, so tomorrow 8 AM appears from 6 PM; further out stays hidden. Off = 12 h window only (W6).
