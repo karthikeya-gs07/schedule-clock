@@ -415,6 +415,7 @@ const CX = 225, CY = 225, R = 219;   // band 213–225: flush with the screen ed
 const R_LATER = R - 10;      // thin inner lane for meetings later today, beyond the 12 h window
 const CLASH_OFFSET = 4.5;    // double booking: two 5 px stripes at R ± 4.5 inside the 12 px band
 const WINDOW_MIN = 12 * 60;
+const PROMOTE_GAP_MIN = 30;   // W8: a lane meeting moves to the ring 30 min after the now dot passes its slot
 const LOOKAHEAD_MIN = 14 * 60;   // tomorrow's meetings show up this far ahead (on the lane)
 const DAY_START_MIN = 6 * 60;    // W5a: before 6 AM the day's meetings wait on the lane
 const AUTO_RETURN_MS = 8000;
@@ -466,13 +467,16 @@ function upcoming() {
   // included, stays on the lane once it ends within the window (never past 6 PM, so lane arcs never share
   // an angle, and never a clipped sliver). At 6 AM they settle onto the ring.
   const laneEnd = Math.min(winEnd, dayStart + WINDOW_MIN);
+  // W8: breathing space. A meeting takes the main ring only once it ends 30 min inside the window, i.e. 30 min
+  // after the now dot has passed its slot (the 7–8 PM call moves at 8:30 AM, not 8:00).
+  const ringEnd = winEnd - PROMOTE_GAP_MIN;
   return all.flatMap(e => {
     if (nowMin < dayStart) return e.e > nowMin && e.e <= laneEnd ? [{ ...e, lane: 'later', cs: e.s, ce: e.e }] : [];
     // Tomorrow's meetings (start at or after the next midnight) never take the main ring early:
     // they wait on the lane until the clock passes midnight, when they become today's (W5).
-    if (e.e > nowMin && e.e <= winEnd && e.s < dayEnd) return [{ ...e, lane: 'main', cs: Math.max(e.s, winStart), ce: e.e }];
+    if (e.e > nowMin && e.e <= ringEnd && e.s < dayEnd) return [{ ...e, lane: 'main', cs: Math.max(e.s, winStart), ce: e.e }];
     // Rest of today that doesn't fit yet, plus tomorrow's within the 14 h look-ahead (or the window).
-    if ((e.e > winEnd || e.s >= dayEnd) && e.s > nowMin && (e.s < dayEnd || e.s < winEnd || (lookAhead && e.s <= nowMin + LOOKAHEAD_MIN)))
+    if ((e.e > ringEnd || e.s >= dayEnd) && e.s > nowMin && (e.s < dayEnd || e.s < winEnd || (lookAhead && e.s <= nowMin + LOOKAHEAD_MIN)))
       return [{ ...e, lane: 'later', cs: e.s, ce: e.s < dayEnd ? Math.min(e.e, dayEnd) : e.e }];
     return [];
   });
