@@ -181,6 +181,7 @@ Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.sched
 
 | Date | Change | Rules |
 |---|---|---|
+| 2026-10-30 | Watchface previews show a fixed busy sample day at 10:13 AM instead of the live calendar. | §12 A5 |
 | 2026-10-30 | Buzz switches and Buzz in Do Not Disturb from the phone app; the watch follows them. | §11 H6, A6 |
 | 2026-10-30 | Colourways chosen in the phone app only: one face per colourway, swapped by the watch app (Watch Face Push); watch Customize → Colours removed. | §9 |
 | 2026-10-30 | Setup: back button to return to earlier steps, beside the main button. | §12 A1 |
@@ -271,6 +272,6 @@ The phone app is where people set Calen-Time up and change it. Design prototype:
 | A2 | Today | A live preview of the watch face (the real face, never a simplified drawing) in the chosen colourway, the watch's connection, the last sync, **Sync now**, and the rest of today's meetings as they'll appear on the watch (private ones marked, clashes tagged). | Shows what the watch shows, so people trust the sync. |
 | A3 | Today | Problems show as a banner above the preview, with one action: calendar access off (Allow access), face not installed (Install on watch), watch too old (needs Wear OS 6, no action). | One clear fix per problem. |
 | A4 | Calendars | Every calendar on the phone, grouped by account (Outlook, Google, Samsung…), each with a switch. Only switched-on calendars are sent. A help panel explains Outlook's **Sync calendars** for work and Teams meetings. | People choose what reaches their wrist; Outlook keeps its calendar hidden unless that's on. |
-| A5 | Watchface | The five colourways (§9) as watch previews; Solaris first and full width, with a one-line description. Tapping one changes the watch straight away. Disabled while the watch isn't connected or the face isn't installed. | The same choice as the watch's Customize screen, with a bigger preview. |
+| A5 | Watchface | The five colourways (§9) as watch previews of a **fixed busy sample day at 10:13 AM** (not the live calendar, so every colourway shows its arcs even on an empty day); Solaris first and full width, with a one-line description. Tapping one changes the watch straight away. Disabled while the watch isn't connected or the face isn't installed. | The same choice as the watch's Customize screen, with a bigger preview. |
 | A6 | Settings | Each meeting buzz (H1–H3) has its own switch, plus **Buzz in Do Not Disturb**. Defaults: all on. Sync is described, not configurable. | Buzzes are personal; sync should just work. |
 | A7 | Everywhere | The app's accent colour follows the chosen colourway (Solaris: the colour of the light now). | The phone and the watch feel like one product. |

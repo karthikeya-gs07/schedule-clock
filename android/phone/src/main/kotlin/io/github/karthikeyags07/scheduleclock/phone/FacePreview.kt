@@ -35,8 +35,11 @@ import java.time.ZoneId
  */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-fun WatchFacePreview(colourway: String, meetings: List<Meeting>, size: Dp, interactive: Boolean = false, onTap: (() -> Unit)? = null) {
-    val url = previewUrl(colourway, meetings)
+fun WatchFacePreview(
+    colourway: String, meetings: List<Meeting>, size: Dp, interactive: Boolean = false,
+    atMinute: Int? = null, onTap: (() -> Unit)? = null,
+) {
+    val url = previewUrl(colourway, meetings, atMinute)
     val onTapState = rememberUpdatedState(onTap)
     Box(Modifier.size(size).clip(CircleShape).background(androidx.compose.ui.graphics.Color.Black)) {
         AndroidView(
@@ -71,8 +74,11 @@ fun WatchFacePreview(colourway: String, meetings: List<Meeting>, size: Dp, inter
     }
 }
 
-/** index.html?embed&theme=…&face=…&v=…#<meetings>. Live time; `v` changes with the meetings so a change reloads. */
-private fun previewUrl(colourway: String, meetings: List<Meeting>): String {
+/**
+ * index.html?embed&theme=…&face=…&v=…#<meetings>. Live time unless [atMinute] fixes it (minutes from midnight);
+ * `v` changes with the meetings so a change reloads.
+ */
+private fun previewUrl(colourway: String, meetings: List<Meeting>, atMinute: Int?): String {
     val zone = ZoneId.systemDefault()
     val midnight = LocalDate.now(zone).atStartOfDay(zone).toInstant().toEpochMilli()
     fun hhmm(minutes: Long) = "%02d:%02d".format(minutes / 60, minutes % 60)
@@ -96,6 +102,32 @@ private fun previewUrl(colourway: String, meetings: List<Meeting>): String {
     val theme = if (colourway == "solaris") "Amber" else colourway.replaceFirstChar(Char::uppercase)
     val face = if (colourway == "solaris") "timeshift" else "calen"
     return "https://appassets.androidplatform.net/assets/face/index.html?embed&theme=$theme&face=$face" +
+        (atMinute?.let { "&time=$it" } ?: "") +
         "&v=${json.hashCode()}#${URLEncoder.encode(json, "UTF-8").replace("+", "%20")}"
 }
 
+
+/**
+ * A busy sample day for showing what each colourway looks like (RULES A5), the same day as the design
+ * prototype: shown at [SAMPLE_MINUTE] (10:13 AM), whatever is in the real calendar.
+ */
+object SampleDay {
+    const val SAMPLE_MINUTE = 10 * 60 + 13
+
+    fun meetings(): List<Meeting> {
+        val zone = ZoneId.systemDefault()
+        val midnight = LocalDate.now(zone).atStartOfDay(zone).toInstant().toEpochMilli()
+        fun m(start: Int, end: Int, title: String, where: String, private: Boolean = false) =
+            Meeting(midnight + start * 60_000L, midnight + end * 60_000L, title, where, allDay = false, private = private, calendarId = -1)
+        return listOf(
+            m(540, 570, "Standup", "Google Meet"),
+            m(645, 705, "Roadmap planning", "Atlas room"),
+            m(750, 810, "Lunch with Priya", "", private = true),
+            m(840, 885, "Candidate interview", "Teams"),
+            m(855, 885, "Recruiter sync", "Teams"),
+            m(960, 1020, "Design review", "Figma"),
+            m(1080, 1110, "Gym", "Cult, Indiranagar"),
+            m(1140, 1200, "Client call", "Zoom"),
+        )
+    }
+}

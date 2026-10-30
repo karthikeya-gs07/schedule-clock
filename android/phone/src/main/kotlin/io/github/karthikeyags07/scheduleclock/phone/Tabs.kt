@@ -206,6 +206,7 @@ fun WatchfaceScreen(m: AppModel) {
 @Composable
 private fun LookCard(id: String, name: String, text: String?, m: AppModel, enabled: Boolean, alpha: Float, modifier: Modifier = Modifier, wide: Boolean = false) {
     val selected = m.colourway == id
+    val sample = remember { SampleDay.meetings() }   // a busy sample day, so every colourway shows its arcs
     val accent = LocalAccent.current
     val shape = RoundedCornerShape(20.dp)
     val box = modifier.fillMaxWidth().clip(shape).background(Palette.surface)
@@ -218,10 +219,10 @@ private fun LookCard(id: String, name: String, text: String?, m: AppModel, enabl
         }
     }
     if (wide) Row(box.padding(15.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-        WatchFacePreview(id, m.meetings, 120.dp) { if (enabled) m.pickColourway(id) }
+        WatchFacePreview(id, sample, 120.dp, atMinute = SampleDay.SAMPLE_MINUTE) { if (enabled) m.pickColourway(id) }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) { title(); text?.let { Text(it, style = HintStyle) } }
     } else Column(box.padding(top = 15.dp, bottom = 13.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        WatchFacePreview(id, m.meetings, 136.dp) { if (enabled) m.pickColourway(id) }
+        WatchFacePreview(id, sample, 136.dp, atMinute = SampleDay.SAMPLE_MINUTE) { if (enabled) m.pickColourway(id) }
         title()
     }
 }
