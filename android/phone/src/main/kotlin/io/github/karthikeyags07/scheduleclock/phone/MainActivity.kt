@@ -28,6 +28,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -90,7 +91,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
     // Android stops asking after a second "Don't allow"; then the button opens the app's settings instead.
     val allow: () -> Unit = { if (deniedOnce && !m.hasPermission) openAppSettings() else permission.launch(Manifest.permission.READ_CALENDAR) }
 
-    CompositionLocalProvider(LocalAccent provides animatedAccent(m.colourway)) {
+    CompositionLocalProvider(LocalAccent provides animatedAccent(m.colourway), LocalTextStyle provides BodyStyle) {   // Google Sans Flex everywhere
         Box(Modifier.fillMaxSize().background(Palette.screen).statusBarsPadding().navigationBarsPadding()) {
             if (!m.setupDone) SetupFlow(m, setupStep, allow)
             else Column(Modifier.fillMaxSize()) {
@@ -128,6 +129,6 @@ private fun NavBar(current: Tab, onSelect: (Tab) -> Unit) = Row(
 
 @Composable
 private fun Toast(text: String, modifier: Modifier) = Text(
-    text, color = Color(0xFF111111), fontSize = 14.sp,
+    text, color = Color(0xFF111111), fontSize = 14.sp, fontFamily = GoogleSans,
     modifier = modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFFE8E8EA)).padding(horizontal = 16.dp, vertical = 12.dp),
 )

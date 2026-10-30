@@ -181,6 +181,7 @@ Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.sched
 
 | Date | Change | Rules |
 |---|---|---|
+| 2026-10-30 | Phone app font: Google Sans Flex for all text (Anta stays on the watch face). | §12 A8 |
 | 2026-10-30 | Watch app missing: **Get the watch app** opens its Play page on the watch. | §12 A1, A3 |
 | 2026-10-30 | Watchface previews show a fixed busy sample day at 10:13 AM instead of the live calendar. | §12 A5 |
 | 2026-10-30 | Buzz switches and Buzz in Do Not Disturb from the phone app; the watch follows them. | §11 H6, A6 |
@@ -276,3 +277,4 @@ The phone app is where people set Calen-Time up and change it. Design prototype:
 | A5 | Watchface | The five colourways (§9) as watch previews of a **fixed busy sample day at 10:13 AM** (not the live calendar, so every colourway shows its arcs even on an empty day); Solaris first and full width, with a one-line description. Tapping one changes the watch straight away. Disabled while the watch isn't connected or the face isn't installed. | The same choice as the watch's Customize screen, with a bigger preview. |
 | A6 | Settings | Each meeting buzz (H1–H3) has its own switch, plus **Buzz in Do Not Disturb**. Defaults: all on. Sync is described, not configurable. | Buzzes are personal; sync should just work. |
 | A7 | Everywhere | The app's accent colour follows the chosen colourway (Solaris: the colour of the light now). | The phone and the watch feel like one product. |
+| A8 | Everywhere | All of the app's text is **Google Sans Flex** (Google's open-source version of Google Sans, SIL Open Font License; the licence ships in the app and Settings names it). Headings 28 sp Medium, body 15 sp, secondary 13–14 sp. The watch face, including its previews in the app, keeps **Anta**. | Matches Android's own look; the original Google Sans isn't licensed for other apps, Flex is. |

@@ -6,7 +6,7 @@
 <title>Calen-Time Phone App</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anta&family=Roboto:wght@400;500;600&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@400..700&display=block" rel="stylesheet">
 <style>
   /* Phone companion app, design prototype (PRD §6.5). Same dark language as the watch prototype; the
      accent follows the colourway picked on the Watchface screen. */
@@ -32,7 +32,7 @@
   * { box-sizing: border-box; }
   body {
     margin: 0; background: var(--bg); color: var(--text);
-    font: 15px/1.45 Roboto, system-ui, sans-serif;
+    font: 15px/1.45 "Google Sans Flex", system-ui, sans-serif;   /* the app's font; the watch face keeps Anta */
     padding: 28px 16px 48px; min-height: 100vh;
   }
   button { font: inherit; color: inherit; cursor: pointer; }
@@ -40,7 +40,7 @@
 
   /* ---------- Prototype controls (not part of the app) ---------- */
   .controls { width: 300px; max-width: 100%; display: flex; flex-direction: column; gap: 18px; }
-  .controls h1 { font: 26px Anta, sans-serif; margin: 0; letter-spacing: .5px; }
+  .controls h1 { font: 500 26px "Google Sans Flex", sans-serif; margin: 0; }
   .controls p { margin: 0; color: var(--muted); font-size: 13px; }
   .group { display: flex; flex-direction: column; gap: 8px; }
   .group-title { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
@@ -89,7 +89,7 @@
   .nav svg { width: 24px; height: 24px; }
 
   /* ---------- Shared pieces ---------- */
-  .title { font: 28px/1.15 Anta, sans-serif; margin: 14px 0 4px; letter-spacing: .3px; }
+  .title { font: 500 28px/1.2 "Google Sans Flex", sans-serif; margin: 14px 0 4px; }
   .sub { color: var(--muted); margin: 0 0 18px; font-size: 14px; }
   .card { background: var(--surface); border-radius: var(--r-card); padding: 18px; margin-bottom: 14px; }
   .section { font-size: 13px; color: var(--muted); margin: 22px 4px 10px; display: flex; justify-content: space-between; align-items: baseline; }

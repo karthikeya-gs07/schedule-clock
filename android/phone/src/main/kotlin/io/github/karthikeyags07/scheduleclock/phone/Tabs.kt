@@ -258,6 +258,8 @@ fun SettingsScreen(m: AppModel, onRunSetup: () -> Unit) {
         InfoRow("Run setup again", null) { onRunSetup() }
         RowDivider()
         InfoRow("Privacy", "Your calendar stays on your phone and watch. Calen-Time has no internet access.")
+        RowDivider()
+        InfoRow("Fonts", "Google Sans Flex and Anta, under the SIL Open Font License")
     }
 }
 
