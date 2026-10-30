@@ -160,13 +160,13 @@
   /* Look */
   .looks { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .look {
-    background: var(--surface); border: 2px solid transparent; border-radius: var(--r-card); padding: 14px 10px 12px;
+    background: var(--surface); border: 1px solid transparent; border-radius: var(--r-card); padding: 15px 11px 13px;
     display: flex; flex-direction: column; align-items: center; gap: 8px; transition: border-color var(--d) var(--ease);
   }
   .look .name svg { color: var(--accent); }
   .look .name { font-weight: 500; display: flex; align-items: center; gap: 6px; }
-  .look[aria-checked=true] { border-color: var(--accent); }
-  .look.wide { grid-column: span 2; flex-direction: row; gap: 14px; padding: 14px; text-align: left; }
+  .look[aria-checked=true] { border-color: color-mix(in srgb, var(--accent) 35%, transparent); }   /* subtle: the tick carries the selection */
+  .look.wide { grid-column: span 2; flex-direction: row; gap: 14px; padding: 15px; text-align: left; }
   .look.wide .copy { flex: 1; display: flex; flex-direction: column; gap: 4px; }
   .look.wide .copy span { color: var(--muted); font-size: 13px; }
 
