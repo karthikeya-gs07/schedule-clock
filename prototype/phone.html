@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Anta&family=Roboto:wght@400;500;600&display=block" rel="stylesheet">
 <style>
   /* Phone companion app, design prototype (PRD §6.5). Same dark language as the watch prototype; the
-     accent follows the colourway picked on the Look screen. */
+     accent follows the colourway picked on the Watchface screen. */
   :root {
     --bg: #0e0f11;          /* page behind the phone */
     --screen: #0b0b0d;      /* app background */
@@ -157,7 +157,7 @@
   details.help ol { margin: 0; padding: 0 0 16px 20px; color: #c9c9ce; font-size: 14px; }
   details.help li + li { margin-top: 6px; }
 
-  /* Look */
+  /* Watchface */
   .looks { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .look {
     background: var(--surface); border: 1px solid transparent; border-radius: var(--r-card); padding: 15px 11px 13px;
@@ -244,7 +244,7 @@
       <div class="seg" data-state="perm"><button data-v="on">Allowed</button><button data-v="off">Off</button></div></div>
     <div class="group"><span class="group-title">Today</span>
       <div class="seg" data-state="day"><button data-v="busy">Meetings</button><button data-v="empty">No meetings</button></div></div>
-    <p>Screens: setup (5 steps), Home, Calendars, Look and Settings. The watch previews are the real watch face (the watch prototype), showing the sample day at 10:13 AM.</p>
+    <p>Screens: setup (5 steps), Home, Calendars, Watchface and Settings. The watch previews are the real watch face (the watch prototype), showing the sample day at 10:13 AM.</p>
   </aside>
 </div>
 
@@ -408,7 +408,7 @@ function lookScreen() {
     return `<button class="look" role="radio" aria-checked="${sel}" data-look="${l.id}">${face(l.id, { size: 136 })}<span class="name">${l.name}${sel ? icon('check', 18) : ''}</span></button>`;
   };
   const disabled = state.watch !== 'connected' || state.face === 'off';
-  return `<h2 class="title">Look</h2><p class="sub">${disabled ? 'Connect your watch with the watch face on it to change its colours.' : 'Pick a colourway. Your watch changes straight away.'}</p>
+  return `<h2 class="title">Watchface</h2><p class="sub">${disabled ? 'Connect your watch with the watch face on it to change its colours.' : 'Pick a colourway. Your watch changes straight away.'}</p>
     <div class="looks" role="radiogroup" aria-label="Colourway" ${disabled ? 'style="opacity:.45;pointer-events:none"' : ''}>${LOOKS.filter(l => l.id === 'timeshift').map(card).join('')}${LOOKS.filter(l => l.id !== 'timeshift').map(card).join('')}</div>
     <p class="sub" style="margin-top:16px">You can also change it on the watch: touch and hold the watch face, then tap Customize.</p>`;
 }
@@ -481,7 +481,7 @@ function setupScreen() {
 }
 
 /* ---------- Render ---------- */
-const TABS = [['home', 'Today', 'home'], ['cal', 'Calendars', 'cal'], ['look', 'Look', 'look'], ['settings', 'Settings', 'gear']];
+const TABS = [['home', 'Today', 'home'], ['cal', 'Calendars', 'cal'], ['look', 'Watchface', 'look'], ['settings', 'Settings', 'gear']];
 function render() {
   const accent = accentOf(state.look);
   document.documentElement.style.setProperty('--accent', accent);
