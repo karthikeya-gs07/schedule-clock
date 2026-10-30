@@ -294,10 +294,12 @@ Open: Wear OS 5 watches can't use Watch Face Push; decide whether to also keep a
 - Note: installing the watch app already puts the default (amber) face into our slot, so the first install from setup logs as a swap, not an add.
 - **Fixed during the test:** (1) previews were blank: inside Android's WebView, `vmin` came out as 0, so the embed now sizes the face in % (`prototype/index.html`); (2) tapping a colourway's preview did nothing, as the WebView swallowed the tap; previews now pass taps to the card; (3) calendar groups: Samsung accounts are `com.osp.app.signin` and local calendars `LOCAL`, now grouped as **Google · Samsung · On this phone** (by provider and account email).
 
-**Phase 3 (2026-10-30): the watch follows the phone. Built; real-watch test pending (the watch went to sleep mid-install).**
+**Phase 3 (2026-10-30): the watch follows the phone. ✅ Tested on the Galaxy Watch8 with the Fold7.**
 - The watch app's `PhoneCalendarListener` now also takes `/settings` (`PhoneSettings.kt`): buzz switches (RULES H6), Buzz in Do Not Disturb, colourway.
 - `MeetingBuzz` leaves out switched-off buzzes when it schedules, and skips a due buzz while the watch is in Do Not Disturb if the phone says not to buzz through it.
 - Colourway catch-up: if the phone changed colourway while the watch was away, the `/settings` item arrives later and the watch swaps to it then (the instant swap still goes by request).
+- **Tested:** with "2 min before it starts" switched off on the Fold, the watch re-armed with 14 buzzes instead of 21 (7 meetings × the start buzz); switched back on, 21. The watch's stored settings matched the phone (all buzzes on, Buzz in DND on, amber). Not exercised live: a buzz falling during Do Not Disturb with that switch off (needs a meeting and DND at the same moment).
+- Seen while testing: updating the watch app briefly made the phone report "Calen-Time isn't your watch face" (the watch re-applied it a moment later; reopening the app cleared the banner). Worth a softer check later, e.g. asking twice before showing that banner.
 
 ## 7. Tooling requirements
 
@@ -377,7 +379,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 - **v0.70:** Phone app: the Look tab is now **Watchface**; the selected colourway card has a subtle 1 px border; more space between each preview and its name.
 - **v0.71:** Phone app tidy-up and setup fallback: Calendars and Watchface lose their subtitles and the account letter circles; the confirm step shows the real face with the watch's question below it; a new **It didn't show up** path explains how to pick the face on the watch and offers **Send it again** (RULES A1).
 - **v0.72:** Setup has a round back button beside the main button on steps 2–4 (RULES A1).
-- **v0.76:** Phase 3: the watch follows the phone's buzz switches, Buzz in Do Not Disturb and colourway (RULES H6, §6.5). Built; real-watch test pending.
+- **v0.76:** Phase 3: the watch follows the phone's buzz switches, Buzz in Do Not Disturb and colourway (RULES H6, §6.5). Tested on the Galaxy Watch8: switching a buzz off on the phone changes what the watch schedules.
 - **v0.75:** Phase 2 tested on the Fold7 and Galaxy Watch8: setup installs and activates the face, colourway swaps work, previews match the watch. Fixed blank previews (WebView `vmin`), preview taps, and calendar grouping (§6.5).
 - **v0.74:** Phase 2 of the build: the phone app in Jetpack Compose (setup, Today, Calendars, Watchface, Settings) with live previews of the real face, a calendar picker and the watch link for installing and recolouring the face (§6.5). Built; not yet tested on a phone.
 - **v0.73:** Phase 1 of the build: Watch Face Push works on the Wear OS 6 emulator. Five validated colourway faces bundled in the watch app; install, make active (with permission) and swap colourways all verified; complications and taps work on the pushed face (§6.5).
