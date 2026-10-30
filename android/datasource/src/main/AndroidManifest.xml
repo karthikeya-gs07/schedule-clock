@@ -62,13 +62,14 @@
             </intent-filter>
         </service>
 
-        <!-- Calendar from the phone app (Data Layer item `/calendar`), kept for the face. -->
+        <!-- From the phone app: the calendar (`/calendar`) and its settings (`/settings`: buzzes, colourway). -->
         <service
             android:name=".PhoneCalendarListener"
             android:exported="true">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
                 <data android:scheme="wear" android:host="*" android:pathPrefix="/calendar" />
+                <data android:scheme="wear" android:host="*" android:pathPrefix="/settings" />
             </intent-filter>
         </service>
 

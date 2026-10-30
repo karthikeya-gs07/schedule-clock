@@ -181,6 +181,7 @@ Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.sched
 
 | Date | Change | Rules |
 |---|---|---|
+| 2026-10-30 | Buzz switches and Buzz in Do Not Disturb from the phone app; the watch follows them. | §11 H6, A6 |
 | 2026-10-30 | Colourways chosen in the phone app only: one face per colourway, swapped by the watch app (Watch Face Push); watch Customize → Colours removed. | §9 |
 | 2026-10-30 | Setup: back button to return to earlier steps, beside the main button. | §12 A1 |
 | 2026-10-30 | Setup: fallback when the watch's "use this watch face?" prompt doesn't appear. | §12 A1 |
@@ -255,6 +256,7 @@ The watch vibrates at three moments of every meeting from the real calendar, scr
 | H3 | **Halfway** through a meeting | **One long buzz, 1.5 s**. | A pacing check, felt as different from both. |
 | H4 | Short meetings | No halfway buzz under **15 min**; no end warning under **10 min** (they would land on top of the others). All-day events never buzz; nor do the sample days. Declined and cancelled events aren't in the calendar data at all. | Each buzz should mean one thing. |
 | H5 | Several buzzes fall at the same moment (back-to-back or double-booked meetings) | Only the most important plays: end warning, then start, then halfway. A buzz delayed by up to 2 min (watch asleep) still plays; later than that it's skipped. | One clear signal, never a pile-up. |
+| H6 | The phone app's Settings (A6) | Each of H1–H3 can be **switched off**; a switched-off buzz isn't scheduled at all. With **Buzz in Do Not Disturb** off, a buzz that falls while the watch is in Do Not Disturb is skipped (not delayed). All on by default. | Buzzes are personal; some people only want the start warning. |
 
 Vibrations use the alarm channel, so they play with the screen off and **even in Do Not Disturb** (decided 2026-10-28: people often turn DND on during meetings, which is when the end warning matters). Debug: `app://io.github.karthikeyags07.scheduleclock/buzz?kind=start|middle|end` plays a pattern now.
 

@@ -13,7 +13,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 /**
- * Meeting buzzes (RULES §11, H1–H5): the watch vibrates 2 min before each meeting starts, halfway
+ * Meeting buzzes (RULES §11, H1–H6): the watch vibrates 2 min before each meeting starts, halfway
  * through it, and 5 min before it ends. One exact alarm is set for the next buzz; when it fires, the
  * buzz plays and the one after is set. Re-armed whenever the calendar changes, the ring redraws,
  * the watch restarts or the clock changes.
@@ -50,7 +50,7 @@ object MeetingBuzz {
                 if (length >= MIDDLE_MIN_LENGTH) add(Buzz(ms(m.startMin) + length * 30_000L, Kind.MIDDLE))
                 if (length >= END_MIN_LENGTH) add(Buzz(ms(m.endMin - END_BEFORE_MIN), Kind.END))
             }
-        }
+        }.filter { PhoneSettings.buzzOn(context, it.kind) }   // H6: the phone app's switches
     }
 
     /** Sets one exact alarm for the next buzz (or clears it when there is none). */
@@ -76,7 +76,8 @@ object MeetingBuzz {
         val last = prefs.getLong("lastAt", 0L)
         val due = buzzes(context).filter { it.at in (now - LATE_MS)..(now + 5_000) && it.at > last }
         due.maxByOrNull { it.kind.priority }?.let {
-            play(context, it.kind)
+            if (PhoneSettings.buzzAllowedNow(context)) play(context, it.kind)
+            else Log.i(TAG, "buzz: ${it.kind} held back (Do Not Disturb, and the phone app says not to buzz through it)")
             prefs.edit().putLong("lastAt", due.maxOf { b -> b.at }).apply()
         }
         schedule(context)
