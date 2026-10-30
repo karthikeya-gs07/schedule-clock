@@ -161,9 +161,9 @@ def hotspot(h):
 selected = "[COMPLICATION.RANGED_VALUE_VALUE]"
 
 # Colourways (RULES §9, §10): the watch's customize screen lists them as "Colours". Each option carries
-# [meeting-arc tint (panel 0), later lane, later/tomorrow text, Time-Shift tint (panel 3), accent].
+# [meeting-arc tint (panel 0), later lane, later/tomorrow text, Solaris tint (panel 3), accent].
 # The ring image's panels are tinted with these (RingRenderer); a fully transparent tint hides a panel, so
-# Time-Shift shows panel 3 (the light's colours) and hides panel 0, and the others the reverse.
+# Solaris shows panel 3 (the light's colours) and hides panel 0, and the others the reverse.
 HIDE = "#00000000"
 THEMES = [
     ("amber", "theme_amber", ("#ffffb547", "#ff8fa3d6", "#ffa9b8e0", HIDE, "#ffffb547")),
@@ -208,7 +208,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
       <BoundingOval x="0" y="0" width="450" height="450"/>
       <Complication type="SMALL_IMAGE">
         <!-- Four panels side by side (RingRenderer): each copy puts one on screen; the face multiplies by the tint.
-             Meeting arcs: panel 0 tinted with the colourway, or panel 3 in the light's colours (Time-Shift);
+             Meeting arcs: panel 0 tinted with the colourway, or panel 3 in the light's colours (Solaris);
              the colourway hides the other with a transparent tint. -->
         <PartImage x="0" y="0" width="1800" height="450" tintColor="{ARC_TINT}">
           <Image resource="[COMPLICATION.SMALL_IMAGE]"/>

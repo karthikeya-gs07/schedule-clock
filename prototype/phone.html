@@ -276,13 +276,13 @@ const MEETINGS = [
   { s: 1080, e: 1110, title: 'Gym', where: 'Cult, Indiranagar', cal: 'samsung' },
   { s: 1140, e: 1200, title: 'Client call', where: 'Zoom', cal: 'work' },
 ];
-// Watch colourways (RULES §9): ring, later lane. Time-Shift draws each minute in the colour of the light.
+// Watch colourways (RULES §9): ring, later lane. Solaris draws each minute in the colour of the light.
 const LOOKS = [
   { id: 'amber', name: 'Amber', ring: '#ffb547', lane: '#8fa3d6' },
   { id: 'mint', name: 'Mint', ring: '#5fd4a0', lane: '#8fb4d6' },
   { id: 'violet', name: 'Violet', ring: '#b48cff', lane: '#7fd3e0' },
   { id: 'rose', name: 'Rose', ring: '#ff7a9c', lane: '#ffc27a' },
-  { id: 'timeshift', name: 'Time-Shift', ring: null, lane: '#8fa3d6' },
+  { id: 'timeshift', name: 'Solaris', ring: null, lane: '#8fa3d6' },
 ];
 // Day colours for central India, Oct 27 (sunrise 6:14, noon 11:59, sunset 5:43), from the watch's S3 stops.
 const SUN = [[0,'#4a3ccf'],[180,'#2f72cf'],[294,'#3a9ad0'],[334,'#8f7ad8'],[362,'#e88ab2'],[389,'#ffa86b'],[444,'#ffcc5c'],
@@ -307,7 +307,7 @@ function sunAt(m) {
   return mix(a, b, (m - m0) / (m1 - m0));
 }
 const lookOf = id => LOOKS.find(l => l.id === id);
-const accentOf = id => lookOf(id).ring || sunAt(NOW);   // Time-Shift: the colour of the light now
+const accentOf = id => lookOf(id).ring || sunAt(NOW);   // Solaris: the colour of the light now
 
 /* ---------- Meetings shown ---------- */
 const enabledCals = () => new Set(CALS.flatMap(a => a.items).filter(c => c.on).map(c => c.id));
@@ -404,7 +404,7 @@ function lookScreen() {
   const card = l => {
     const sel = state.look === l.id;
     if (l.id === 'timeshift') return `<button class="look wide" role="radio" aria-checked="${sel}" data-look="${l.id}">${face(l.id, { size: 120 })}
-      <span class="copy"><b class="name">${l.name}${sel ? icon('check', 18) : ''}</b><span>The ring takes the colour of the light at each hour: dawn rose, noon gold, sunset coral, night indigo.</span><span>Follows today’s sunrise and sunset where you are</span></span></button>`;
+      <span class="copy"><b class="name">${l.name}${sel ? icon('check', 18) : ''}</b><span>Colours that follow the sun through your day.</span></span></button>`;
     return `<button class="look" role="radio" aria-checked="${sel}" data-look="${l.id}">${face(l.id, { size: 136 })}<span class="name">${l.name}${sel ? icon('check', 18) : ''}</span></button>`;
   };
   const disabled = state.watch !== 'connected' || state.face === 'off';

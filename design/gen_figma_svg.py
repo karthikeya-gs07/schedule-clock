@@ -9,7 +9,7 @@ layer name), real text (Anta for the clock and numbers, Roboto standing in for t
 plain shapes with inline attributes, no CSS. Private stripes are lines inside a clip path, which Figma
 imports as a mask group.
 
-The Time-Shift file (RULES §10) is the watch's rolling busy day at 10:13 AM in the Time-Shift colourway. SVG has
+The Solaris file (RULES §10) is the watch's rolling busy day at 10:13 AM in the Solaris colourway. SVG has
 no sweep gradient, so each meeting arc gets a linear gradient from its start to its end, sampled every few
 minutes from the day's colours (S3) and projected onto that chord; Figma imports it as an editable gradient.
 """
@@ -206,7 +206,7 @@ def selected_center():
             + "</g></g>")
 
 
-# ---- Time-Shift (RULES §10) ----------------------------------------------------------------------
+# ---- Solaris (RULES §10) ----------------------------------------------------------------------
 
 def sun_times(lat=20.59, lon=78.96, y=2026, mo=10, d=27, tz=5.5):
     """Sunrise, solar noon, sunset in local minutes (S1; same formula as the watch's SunColors)."""
@@ -291,7 +291,7 @@ def sun_arc(name, from_min, to_min, factor=1.0):
 
 
 TS_NOW = 10 * 60 + 13
-TS_ACCENT = "#ff9447"     # Time-Shift colourway's arrow (golden-hour orange)
+TS_ACCENT = "#ff9447"     # Solaris colourway's arrow (golden-hour orange)
 
 
 def timeshift_meetings():
@@ -337,8 +337,8 @@ def timeshift_center():
 def timeshift_face():
     sun = lambda m: f"{int(m // 60) % 12 or 12}:{int(m % 60):02d}"
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="450" height="450" viewBox="0 0 450 450">
-<!-- Time-Shift colours for central India on Oct 27: sunrise {sun(SR)} AM, solar noon {sun(SUN_NOON)}, sunset {sun(SS)} PM -->
-<g id="Calen-Time · Time-Shift 10:13 AM">
+<!-- Solaris colours for central India on Oct 27: sunrise {sun(SR)} AM, solar noon {sun(SUN_NOON)}, sunset {sun(SS)} PM -->
+<g id="Calen-Time · Solaris 10:13 AM">
 <circle id="Screen" cx="{C}" cy="{C}" r="225" fill="#000000"/>
 {dial_layers(TS_NOW)}
 {timeshift_meetings()}

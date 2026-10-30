@@ -227,7 +227,7 @@
     transition: opacity var(--swap) ease-in, transform var(--swap) ease-in; }
   #face.swapping .selArc  { opacity: 0; transition-duration: var(--swap); }
 
-  /* ---------- Time-Shift face (S1–S4) ----------
+  /* ---------- Solaris face (S1–S4) ----------
      A colour wheel for the visible 12 h, set by the day's sunrise and sunset, sits under the ring. It shows only
      through the meeting arcs (an SVG mask built from the same arc paths), so meetings carry the colour of the
      light at their hour and the free time stays dark. */
@@ -328,7 +328,7 @@
     <h2>Face</h2>
     <div class="seg" id="faces">
       <button data-face="calen" aria-pressed="true">Calen-Time</button>
-      <button data-face="timeshift" aria-pressed="false">Time-Shift</button>
+      <button data-face="timeshift" aria-pressed="false">Solaris</button>
     </div>
     <div id="sunPanel" hidden>
       <div class="daybar" id="dayBar"><i id="dayNow"></i></div>
@@ -401,7 +401,7 @@ const PRESETS = {
     { start: '13:00', end: '14:00', title: 'Customer discovery interview: onboarding pain points', where: 'Zoom' },
     { start: '15:00', end: '16:00', title: 'Design critique', where: 'Room 4' },
   ],
-  'Around sunset': [   // Time-Shift demo: dawn, midday, a meeting across sunset, evening, night
+  'Around sunset': [   // Solaris demo: dawn, midday, a meeting across sunset, evening, night
     { start: '06:00', end: '06:45', title: 'Morning run', where: 'Lake path' },
     { start: '12:30', end: '13:30', title: 'Lunch with Sam', where: 'Café Blue' },
     { start: '17:00', end: '18:00', title: 'Design sync', where: 'Room 4' },
@@ -731,7 +731,7 @@ function renderBase(list) {
     defs.push(stripePattern(id, ambient ? grey : color, angleOf((e.cs + e.ce) / 2)));
     return `stroke:url(#${id})`;
   };
-  // Time-Shift (S2): non-private main-ring arcs are drawn by the sun wheel through a mask of the same paths.
+  // Solaris (S2): non-private main-ring arcs are drawn by the sun wheel through a mask of the same paths.
   const ts = faceId === 'timeshift' && !ambient, maskArcs = [];
   for (const e of main) {
     const k = keyOf(e), hide = arriving.has(k) ? ' arriving' : '', id = 'pv' + k.replace(/\W/g, '_');
@@ -846,7 +846,7 @@ function renderTrail() {
   }
 }
 
-// ---------- Time-Shift face: sunrise/sunset and the day's colours (RULES §10, S1–S4) ----------
+// ---------- Solaris face: sunrise/sunset and the day's colours (RULES §10, S1–S4) ----------
 // Sunrise and sunset are computed on the device for the simulated day and the user's location (no network): the
 // standard solar formula (NOAA / SunCalc), accurate to about a minute. Recomputed whenever the day changes.
 const SUN_RAD = Math.PI / 180, SUN_E = SUN_RAD * 23.4397, J1970 = 2440588, J2000 = 2451545, DAY_MS = 864e5;
@@ -1133,7 +1133,7 @@ function renderSelArc(list) {
   $('selArc').style.stroke = stripes ? 'url(#pvSel)' : e.private ? C.private : '';
   $('selArcPast').style.stroke = stripes ? 'url(#pvSelPast)' : '';
   $('selArc').style.strokeDasharray = e.private && e.lane === 'later' ? '6 4' : '';
-  // Time-Shift (S2): a non-private main-ring selection shows the sun gradient at full strength.
+  // Solaris (S2): a non-private main-ring selection shows the sun gradient at full strength.
   const tsSel = faceId === 'timeshift' && !ambient && e.lane === 'main' && !e.private;
   $('selArc').classList.toggle('tsHide', tsSel); $('selArcPast').classList.toggle('tsHide', tsSel);
   $('tsSelNow').setAttribute('d', tsSel ? $('selArc').getAttribute('d') : '');

@@ -24,7 +24,7 @@ import java.io.ByteArrayOutputStream
  * - panel 0, tinted with the theme's meeting colour: main-ring meetings in white, elapsed parts grey;
  * - panel 1, tinted with the theme's lane colour: the later lane in white;
  * - panel 2, untinted: fixed colours (private stripes, double bookings, coral lane on an all-day event);
- * - panel 3, untinted: the Time-Shift face's main-ring meetings (RULES §10), coloured by the light at each
+ * - panel 3, untinted: the Solaris face's main-ring meetings (RULES §10), coloured by the light at each
  *   minute. The face's Style option shows panel 3 instead of panel 0.
  */
 object RingRenderer {
@@ -68,7 +68,7 @@ object RingRenderer {
         // Panel 1: the later lane (R5), thin and rounded.
         panel(1) { for (p in last(shown.filter { it.lane == Lane.LATER && !fixed(it) })) drawLater(canvas, stroke, p, dim && p !== selected) }
 
-        // Panel 3: Time-Shift (S2), the same meetings as panel 0, drawn through the day's colour sweep.
+        // Panel 3: Solaris (S2), the same meetings as panel 0, drawn through the day's colour sweep.
         val sweep = SunSweep(shown, now)
         panel(3) { for (p in last(shown.filter { it.lane == Lane.MAIN && !fixed(it) })) drawShift(canvas, stroke, p, now, sweep, dim && p !== selected) }
 

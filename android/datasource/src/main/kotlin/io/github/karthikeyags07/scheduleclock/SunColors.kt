@@ -13,7 +13,7 @@ import kotlin.math.roundToLong
 import kotlin.math.sin
 
 /**
- * Time-Shift face (RULES §10, S1–S3), ported from the prototype: sunrise, solar noon and sunset for the
+ * Solaris face (RULES §10, S1–S3), ported from the prototype: sunrise, solar noon and sunset for the
  * day (the standard solar formula, NOAA / SunCalc, about a minute accurate, no network), and the colour
  * of the light at any minute, blended in OKLab between colour stops anchored to those times.
  */
