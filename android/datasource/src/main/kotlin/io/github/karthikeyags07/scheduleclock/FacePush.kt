@@ -6,6 +6,8 @@ import android.os.ParcelFileDescriptor
 import android.util.Log
 import androidx.wear.watchfacepush.WatchFacePushManager
 import androidx.wear.watchfacepush.WatchFacePushManagerFactory
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.json.JSONObject
 import java.io.File
 
@@ -39,18 +41,31 @@ object FacePush {
         if (!supported()) return Status(supported = false)
         val slot = manager(context).listWatchFaces().installedWatchFaceDetails.firstOrNull()
         val prefs = prefs(context)
+        // Just after a swap the active check can fail for a moment (Google's docs say not to ask then); a swap
+        // keeps the face active, so the last known answer stands in.
+        val active = slot != null && try {
+            manager(context).isWatchFaceActive(slot.packageName).also { prefs.edit().putBoolean("active", it).apply() }
+        } catch (e: Exception) {
+            prefs.getBoolean("active", false)
+        }
         return Status(
             supported = true,
             installed = slot != null,
-            active = slot != null && manager(context).isWatchFaceActive(slot.packageName),
+            active = active,
             colourway = if (slot != null) prefs.getString("colourway", null) else null,
             activateUsed = prefs.getBoolean("activateUsed", false),
         )
     }
 
+    // One change at a time: two swaps at once (the phone's instant swap and the /settings catch-up) left one
+    // of them never answering, which stuck the phone listener and every calendar update behind it.
+    private val busy = Mutex()
+
     /** Puts the face in [colourway] on the watch: added the first time, swapped into our slot after that. */
-    suspend fun install(context: Context, colourway: String): Status {
+    suspend fun install(context: Context, colourway: String): Status = busy.withLock {
         require(colourway in COLOURWAYS) { "unknown colourway $colourway" }
+        if (prefs(context).getString("colourway", null) == colourway &&
+            manager(context).listWatchFaces().installedWatchFaceDetails.isNotEmpty()) return@withLock status(context)   // already showing it
         val manager = manager(context)
         val slot = manager.listWatchFaces().installedWatchFaceDetails.firstOrNull()
         val token = JSONObject(context.assets.open("faces/tokens.json").bufferedReader().readText()).getString(colourway)
@@ -59,7 +74,9 @@ object FacePush {
         }
         prefs(context).edit().putString("colourway", colourway).apply()
         Log.i(TAG, "face push: ${if (slot == null) "added" else "swapped to"} $colourway")
-        return status(context)
+        if (slot == null) status(context)
+        else Status(supported = true, installed = true, active = prefs(context).getBoolean("active", false), colourway = colourway,
+            activateUsed = prefs(context).getBoolean("activateUsed", false))   // no active check right after a swap
     }
 
     fun canActivate(context: Context) =
@@ -75,6 +92,7 @@ object FacePush {
         if (prefs.getBoolean("activateUsed", false) || !canActivate(context)) return false
         return try {
             manager(context).setWatchFaceAsActive(slot.slotId)
+            prefs.edit().putBoolean("active", true).apply()
             true
         } catch (e: WatchFacePushManager.SetWatchFaceAsActiveException) {
             Log.w(TAG, "face push: couldn't make it the watch face (${e.errorCode})")

@@ -85,23 +85,29 @@ abstract class BundleFacesTask : DefaultTask() {
     }
 }
 
-val bundleFaces = tasks.register<BundleFacesTask>("bundleFaces") {
+// Debug builds carry debug-signed faces and release builds faces signed with the faces key. A face can only be
+// swapped for one with the same signer, so a watch set up from a debug build keeps working with debug builds.
+fun bundleFaces(buildType: String) = tasks.register<BundleFacesTask>("bundleFaces${buildType.replaceFirstChar(Char::uppercase)}") {
     val faceProject = project(":watchface")
     names.set(colourways)
     clientPackage.set(android.defaultConfig.applicationId)
     validator.from(faceValidator)
     colourways.forEach { c ->
-        dependsOn(":watchface:assemble${c.replaceFirstChar(Char::uppercase)}Release")
-        faceApks.from(faceProject.layout.buildDirectory.file("outputs/apk/$c/release/watchface-$c-release.apk"))
+        val variant = c + buildType.replaceFirstChar(Char::uppercase)
+        dependsOn(":watchface:assemble${variant.replaceFirstChar(Char::uppercase)}")
+        faceApks.from(faceProject.layout.buildDirectory.file("outputs/apk/$c/$buildType/watchface-$c-$buildType.apk"))
     }
-    assetsDir.set(layout.buildDirectory.dir("generated/faces/assets"))
-    resDir.set(layout.buildDirectory.dir("generated/faces/res"))
+    assetsDir.set(layout.buildDirectory.dir("generated/faces/$buildType/assets"))
+    resDir.set(layout.buildDirectory.dir("generated/faces/$buildType/res"))
 }
+val bundleFacesDebug = bundleFaces("debug")
+val bundleFacesRelease = bundleFaces("release")
 
 androidComponents {
     onVariants { variant ->
-        variant.sources.assets?.addGeneratedSourceDirectory(bundleFaces, BundleFacesTask::assetsDir)
-        variant.sources.res?.addGeneratedSourceDirectory(bundleFaces, BundleFacesTask::resDir)
+        val faces = if (variant.buildType == "release") bundleFacesRelease else bundleFacesDebug
+        variant.sources.assets?.addGeneratedSourceDirectory(faces, BundleFacesTask::assetsDir)
+        variant.sources.res?.addGeneratedSourceDirectory(faces, BundleFacesTask::resDir)
     }
 }
 

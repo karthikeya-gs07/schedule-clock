@@ -6,6 +6,7 @@ import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.WearableListenerService
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Receives what the phone app sends over the Data Layer:
@@ -33,12 +34,16 @@ class PhoneCalendarListener : WearableListenerService() {
         }
     }
 
-    // onDataChanged runs on a background thread, so waiting for the swap here is fine.
+    // onDataChanged runs on a background thread, so waiting for the swap is fine, but never for long: every
+    // later calendar update waits behind this call.
     private fun catchUpColourway() = runBlocking {
         val wanted = PhoneSettings.colourway(applicationContext) ?: return@runBlocking
+        if (!FacePush.supported()) return@runBlocking
         try {
-            val status = if (FacePush.supported()) FacePush.status(applicationContext) else return@runBlocking
-            if (status.installed && status.colourway != wanted) FacePush.install(applicationContext, wanted)
+            val done = withTimeoutOrNull(20_000) {
+                if (FacePush.status(applicationContext).installed) FacePush.install(applicationContext, wanted)
+            }
+            if (done == null) Log.w(TAG, "settings: swap to $wanted took too long; left for the next sync")
         } catch (e: Exception) {
             Log.w(TAG, "settings: couldn't swap to $wanted", e)
         }
