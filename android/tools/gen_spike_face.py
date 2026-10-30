@@ -264,10 +264,10 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
     <!-- Now dot (R6): rotates with the clock; above the ring layers -->
     <Group name="now" x="0" y="0" width="450" height="450" pivotX="0.5" pivotY="0.5">
       <Transform target="angle" value="{NOW_DEG}"/>
-      <PartDraw x="{CX - 14}" y="{CY - R - 14}" width="28" height="28">
-        <Ellipse x="3" y="3" width="22" height="22"><Fill color="#2effffff"/></Ellipse>
-        <Ellipse x="7" y="7" width="14" height="14"><Fill color="#ff000000"/></Ellipse>
-        <Ellipse x="9.5" y="9.5" width="9" height="9"><Fill color="#ffffffff"/></Ellipse>
+      <PartDraw x="{CX - 16}" y="{CY - R - 16}" width="32" height="32">
+        <Ellipse x="2" y="2" width="28" height="28"><Fill color="#2effffff"/></Ellipse>
+        <Ellipse x="6.5" y="6.5" width="19" height="19"><Fill color="#ff000000"/></Ellipse>
+        <Ellipse x="9.5" y="9.5" width="13" height="13"><Fill color="#ffffffff"/></Ellipse>
       </PartDraw>
     </Group>
 

@@ -140,9 +140,9 @@ def meetings():
 
 def now_dot(now=NOW):
     x, y = pt(deg(now), R)
-    return (f'<g id="Now dot"><circle cx="{x:.2f}" cy="{y:.2f}" r="11" fill="#ffffff" fill-opacity="0.18"/>'
-            f'<circle cx="{x:.2f}" cy="{y:.2f}" r="7" fill="#000000"/>'
-            f'<circle cx="{x:.2f}" cy="{y:.2f}" r="4.5" fill="#ffffff"/></g>')
+    return (f'<g id="Now dot"><circle cx="{x:.2f}" cy="{y:.2f}" r="14" fill="#ffffff" fill-opacity="0.18"/>'
+            f'<circle cx="{x:.2f}" cy="{y:.2f}" r="9.5" fill="#000000"/>'
+            f'<circle cx="{x:.2f}" cy="{y:.2f}" r="6.5" fill="#ffffff"/></g>')
 
 
 def arrow(x, y, s=1.0, color=AMBER):
