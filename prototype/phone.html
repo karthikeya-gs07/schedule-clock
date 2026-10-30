@@ -203,8 +203,9 @@
   .confirm { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; }
   .confirm .hero { margin: 14px 0 6px; }
   .confirm .q { font-size: 16px; font-weight: 500; }
-  .confirm .ok { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; }
-  .confirm .sub { margin: 0; }
+  .howto { margin: 0 0 16px; padding: 16px 18px 16px 38px; background: var(--surface); border-radius: var(--r-card); color: #c9c9ce; font-size: 14px; }
+  .howto li + li { margin-top: 10px; }
+  .howto b { color: var(--text); font-weight: 500; }
   .footer-actions { display: flex; flex-direction: column; gap: 8px; padding-top: 18px; }
 </style>
 </head>
@@ -470,13 +471,21 @@ function setupScreen() {
         : !watchOk ? 'Your watch isn’t connected. Open Galaxy Wearable and check it’s paired and nearby.'
         : 'Calen-Time installs its watch face on your Galaxy Watch8. You’ll confirm it on the watch.'}</p>
       ${st === 0 ? `<div class="hero">${face(state.look, { size: 200 })}</div>` : ''}
-      ${st >= 1 ? `<div class="progress"><i style="width:${st === 1 ? 60 : 100}%"></i></div><p class="sub">${st === 1 ? 'Sending to your watch…' : 'Installed. Confirm on your watch.'}</p>` : ''}
-      ${st >= 2 ? `<div class="confirm"><div class="hero">${face(state.look, { size: 200 })}</div>
-        <span class="q">Use Calen-Time as your watch face?</span><span class="ok">${icon('check', 20)}</span>
-        <p class="sub">Tap ✓ on your watch</p></div>` : ''}`;
+      ${st === 1 || st === 2 ? `<div class="progress"><i style="width:${st === 1 ? 60 : 100}%"></i></div><p class="sub">${st === 1 ? 'Sending to your watch…' : 'Installed. Confirm on your watch.'}</p>` : ''}
+      ${st === 2 ? `<div class="confirm"><div class="hero">${face(state.look, { size: 200 })}</div>
+        <span class="q">Use Calen-Time as your watch face?</span></div>` : ''}
+      ${st === 3 ? `<div class="banner info"><span style="color:var(--accent)">${icon('watch')}</span><div><b>No prompt on your watch?</b>
+        <p>Calen-Time is already on your watch. You can pick it yourself:</p></div></div>
+        <ol class="howto">
+          <li>Wake your watch, then <b>touch and hold</b> the watch face.</li>
+          <li>Swipe to <b>Calen-Time</b>. Not there? Swipe to the end, tap <b>+ Add</b> and pick it from the list.</li>
+          <li>Tap it to make it your watch face.</li>
+        </ol>
+        <p class="sub">Still nothing? Keep the watch close to your phone with Bluetooth on, then send it again.</p>` : ''}`;
     actions = st === 0 ? `<button class="btn block" data-act="install" ${watchOk ? '' : 'disabled'}>Install on watch</button><button class="btn text" data-act="next">Do this later</button>`
       : st === 1 ? `<button class="btn block" disabled><span class="spinner"></span>Installing</button>`
-      : `<button class="btn block" data-act="confirm">I’ve confirmed it</button>`;
+      : st === 2 ? `<button class="btn block" data-act="confirm">I’ve confirmed it</button><button class="btn text" data-act="noprompt">It didn’t show up</button>`
+      : `<button class="btn block" data-act="confirm">It’s on my watch now</button><button class="btn tonal block" data-act="install">Send it again</button><button class="btn text" data-act="next">Do this later</button>`;
   } else {
     body = `<div class="hero">${face(state.look, { size: 230 })}</div><h2 class="title">You’re set</h2>
       <p class="sub">Your meetings are on your watch and stay in sync on their own. Change colours and buzzes in the app any time.</p>`;
@@ -529,6 +538,7 @@ document.addEventListener('click', e => {
       requestAnimationFrame(() => requestAnimationFrame(() => { const bar = document.querySelector('.progress i'); if (bar) bar.style.width = '60%'; }));
       break;
     case 'confirm': state.face = 'on'; state.installing = 0; state.step = 4; render(); break;
+    case 'noprompt': state.installing = 3; render(); break;
     case 'sync':
       state.syncing = true; state.keepScroll = true; render();
       setTimeout(() => { state.syncing = false; state.synced = 0; state.keepScroll = true; render(); toast('8 meetings sent to your watch'); }, 1200);
