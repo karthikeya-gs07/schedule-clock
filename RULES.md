@@ -181,6 +181,7 @@ Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.sched
 
 | Date | Change | Rules |
 |---|---|---|
+| 2026-10-30 | W8 30-minute wait before a lane meeting moves to the main ring, now on the watch as well as the prototype. | W8 |
 | 2026-10-30 | Now dot about 40 % larger (13 px dot, 19 px ring, 28 px halo; was 9 / 14 / 22) so it reads clearly. | R6 |
 | 2026-10-28 | Time-Shift day colours revised: distinct colours through midday and the night (night stops at clock times). | S3 |
 | 2026-10-28 | Time-Shift on the watch, as a fifth colourway under Colours (first built as a separate Style option); time-zone location only. | §9, §10 |

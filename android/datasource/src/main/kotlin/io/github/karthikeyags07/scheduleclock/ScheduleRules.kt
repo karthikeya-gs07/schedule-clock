@@ -26,6 +26,7 @@ object ScheduleRules {
     private const val DAY_MIN = 24 * 60
     const val DIAL_MIN = 12 * 60
     private const val DAY_START_MIN = 6 * 60   // W5a: before 6 AM the day's meetings wait on the lane
+    private const val PROMOTE_GAP_MIN = 30      // W8: a lane meeting moves to the ring 30 min after the now dot passes its slot
 
     /**
      * W1–W7: main ring = meetings that end within the 12 h window (which starts at a live meeting's
@@ -34,6 +35,8 @@ object ScheduleRules {
      * W5a: from 12 to 6 AM the day hasn't started, so nothing takes the main ring: every meeting, night ones
      * included, stays on the lane once it ends within the window (never a clipped sliver; never past 6 PM,
      * so lane arcs never share an angle), and they settle onto the ring at 6 AM.
+     * W8: a meeting takes the main ring only once it ends 30 min inside the window, i.e. 30 min after the now
+     * dot has passed its slot (the 7–8 PM call moves at 8:30 AM, not 8:00).
      */
     fun place(meetings: List<Meeting>, now: Int): List<Placed> {
         val all = meetings.filter { !it.allDay }.sortedBy { it.startMin }   // W9: all-day events are never drawn…
@@ -41,14 +44,15 @@ object ScheduleRules {
         val winStart = minOf(now, all.filter { it.startMin < now && it.endMin > now }.minOfOrNull { it.startMin } ?: now)
         val winEnd = winStart + WINDOW_MIN
         val laneEnd = minOf(winEnd, DAY_START_MIN + WINDOW_MIN)
+        val ringEnd = winEnd - PROMOTE_GAP_MIN
         return all.mapNotNull { m ->
             when {
                 now < DAY_START_MIN ->
                     if (m.endMin > now && m.endMin <= laneEnd) Placed(m, Lane.LATER, m.startMin, m.endMin, overlapping(allDays, m)) else null
                 // W5: tomorrow's meetings (from the next midnight) never take the main ring before midnight.
-                m.endMin > now && m.endMin <= winEnd && m.startMin < DAY_MIN ->
+                m.endMin > now && m.endMin <= ringEnd && m.startMin < DAY_MIN ->
                     Placed(m, Lane.MAIN, maxOf(m.startMin, winStart), m.endMin, overlapping(allDays, m))
-                (m.endMin > winEnd || m.startMin >= DAY_MIN) && m.startMin > now && (m.startMin < DAY_MIN || m.startMin < winEnd) ->
+                (m.endMin > ringEnd || m.startMin >= DAY_MIN) && m.startMin > now && (m.startMin < DAY_MIN || m.startMin < winEnd) ->
                     Placed(m, Lane.LATER, m.startMin, if (m.startMin < DAY_MIN) minOf(m.endMin, DAY_MIN) else m.endMin, overlapping(allDays, m))
                 else -> null
             }
