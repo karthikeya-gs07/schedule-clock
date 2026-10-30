@@ -1,6 +1,17 @@
+import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
+}
+
+// Release signing (PRD §6.5): the keys live outside the repo; keystore.properties (not in git) says where.
+// Without it, release builds fall back to the debug key so they still build anywhere.
+val keystore = Properties().apply {
+    rootProject.file("keystore.properties").takeIf { it.exists() }?.inputStream()?.use(::load)
+}
+fun signingKey(name: String, block: (file: File, password: String, alias: String) -> Unit) {
+    val file = keystore.getProperty("${name}StoreFile") ?: return
+    block(file(file), file(keystore.getProperty("${name}PasswordFile")).readText().trim(), keystore.getProperty("${name}Alias"))
 }
 
 android {
@@ -13,16 +24,23 @@ android {
         applicationId = "io.github.karthikeyags07.scheduleclock"
         minSdk = 29
         targetSdk = 36
-        versionCode = 2
-        versionName = "0.2.0"
+        // Phone and watch apps share one Play listing, so their version codes must differ: phone 1xxx, watch 2xxx.
+        versionCode = 1001
+        versionName = "0.9.0"
     }
 
     buildFeatures { compose = true }
 
+    signingConfigs {
+        signingKey("upload") { f, password, alias ->
+            create("upload") { storeFile = f; storePassword = password; keyAlias = alias; keyPassword = password }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("upload") ?: signingConfigs.getByName("debug")
         }
     }
 }

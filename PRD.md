@@ -301,6 +301,17 @@ Open: Wear OS 5 watches can't use Watch Face Push; decide whether to also keep a
 - **Tested:** with "2 min before it starts" switched off on the Fold, the watch re-armed with 14 buzzes instead of 21 (7 meetings × the start buzz); switched back on, 21. The watch's stored settings matched the phone (all buzzes on, Buzz in DND on, amber). Not exercised live: a buzz falling during Do Not Disturb with that switch off (needs a meeting and DND at the same moment).
 - Seen while testing: updating the watch app briefly made the phone report "Calen-Time isn't your watch face" (the watch re-applied it a moment later; reopening the app cleared the banner). Worth a softer check later, e.g. asking twice before showing that banner.
 
+**Phase 4 (2026-10-30): Play preparation, our side done; your side pending.**
+- **Signing:** an upload key (`~/.android/calen-time/upload.jks`) signs the phone and watch apps; a separate key (`faces.jks`) signs the five watch faces, as Google advises for pushed faces. Both live outside the repo (it's public); `android/keystore.properties` (git-ignored) points to them. Without that file, release builds fall back to the debug key. **Back up `~/.android/calen-time/`**: losing the upload key means asking Google to reset it.
+- **Release bundles:** `phone-release.aab` (0.9.0, code 1001) and `datasource-release.aab` (0.9.0, code 2001; phone 1xxx, watch 2xxx so they never clash in one listing). R8-minified; verified signers; the faces inside are validated with tokens.
+- **Permissions checked:** phone: calendar, wake lock, network state (from Google Play services' connection), boot, foreground service (WorkManager); **no internet**. Watch: calendar, exact alarm, vibrate, boot, push and activate watch face.
+- **Watch app missing:** setup's install step and Today now offer **Get the watch app / Install on watch**, which opens Calen-Time's Play page on the watch and waits for it (RULES A1).
+- **Softer "not your watch face":** the phone asks again after 3 s before showing that banner (the flicker seen while updating).
+- **Icons:** adaptive launcher icon (ring, three amber arcs, now dot; themed-icon layer) for both apps; Play icon and feature graphic from `store/make_assets.py`.
+- **Privacy policy:** `docs/privacy.html` (needs a contact email and publishing, e.g. GitHub Pages from `docs/`). **Listing, data safety, content rating and Console steps:** `store/LISTING.md`.
+- **Still to do:** phone and Wear OS screenshots; trying the release builds on your devices (they're signed with a different key, so the debug apps have to be uninstalled first, which removes the face and settings once); your Play developer account and upload.
+- **Note for the next watch install:** the faces are now signed with the faces key, not the debug key. Swapping a face with a different signer may be refused, so the current face may need removing once.
+
 ## 7. Tooling requirements
 
 This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setup done 2026-10-25** (see 7.0a).
@@ -379,6 +390,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 - **v0.70:** Phone app: the Look tab is now **Watchface**; the selected colourway card has a subtle 1 px border; more space between each preview and its name.
 - **v0.71:** Phone app tidy-up and setup fallback: Calendars and Watchface lose their subtitles and the account letter circles; the confirm step shows the real face with the watch's question below it; a new **It didn't show up** path explains how to pick the face on the watch and offers **Send it again** (RULES A1).
 - **v0.72:** Setup has a round back button beside the main button on steps 2–4 (RULES A1).
+- **v0.78:** Phase 4 (our side): release signing (upload key + separate faces key, outside the repo), Play bundles, Get the watch app via Play on the watch, launcher icons, Play graphics, privacy policy page and listing draft (§6.5).
 - **v0.77:** Phone app: the Watchface tab's previews show a fixed busy sample day at 10:13 AM (the design's sample day), so each colourway's arcs are visible even when the real calendar is empty (RULES A5). Today keeps the live face.
 - **v0.76:** Phase 3: the watch follows the phone's buzz switches, Buzz in Do Not Disturb and colourway (RULES H6, §6.5). Tested on the Galaxy Watch8: switching a buzz off on the phone changes what the watch schedules.
 - **v0.75:** Phase 2 tested on the Fold7 and Galaxy Watch8: setup installs and activates the face, colourway swaps work, previews match the watch. Fixed blank previews (WebView `vmin`), preview taps, and calendar grouping (§6.5).

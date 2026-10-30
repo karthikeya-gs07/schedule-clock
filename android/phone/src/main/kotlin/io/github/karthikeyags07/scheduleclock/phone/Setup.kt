@@ -123,7 +123,7 @@ fun SetupFlow(m: AppModel, startStep: Int, onAllow: () -> Unit) {
                     Text(
                         when {
                             m.link.watch == null -> "Your watch isn't connected. Open Galaxy Wearable and check it's paired and nearby."
-                            face == null -> "Install the Calen-Time app on your watch from the Play Store first."
+                            face == null -> "First, get the Calen-Time watch app: tap below, then tap Install on your watch."
                             !face.supported -> "Your watch needs Wear OS 6 or newer. Check for a watch update in Galaxy Wearable."
                             else -> "Calen-Time installs its watch face on your ${m.link.watch?.name ?: "watch"}. You'll confirm it on the watch."
                         }, style = SubStyle,
@@ -178,7 +178,8 @@ fun SetupFlow(m: AppModel, startStep: Int, onAllow: () -> Unit) {
                          else PrimaryButton("Allow access", main) { asked = true; onAllow() }
                     2 -> PrimaryButton("Continue", main) { step = 3 }
                     3 -> when (install) {
-                        Install.IDLE -> PrimaryButton("Install on watch", main, enabled = watchOk) { sendToWatch() }
+                        Install.IDLE -> if (m.link.watch != null && face == null) PrimaryButton("Get the watch app", main) { m.getWatchApp() }
+                            else PrimaryButton("Install on watch", main, enabled = watchOk) { sendToWatch() }
                         Install.SENDING -> PrimaryButton("Installing", main, busy = true) {}
                         Install.CONFIRM -> PrimaryButton("I've confirmed it", main) { scope.launch { m.refreshWatch().join(); install = Install.IDLE; step = 4 } }
                         Install.NO_PROMPT -> PrimaryButton("It's on my watch now", main) { scope.launch { m.refreshWatch().join(); install = Install.IDLE; step = 4 } }

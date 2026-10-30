@@ -52,7 +52,8 @@ fun TodayScreen(m: AppModel, onAllow: () -> Unit, onInstall: () -> Unit) {
     when {
         !m.linkChecked -> {}
         m.link.watch == null -> Banner("Watch not connected", "Open Galaxy Wearable and check your watch is paired and nearby.")
-        face == null -> Banner("Calen-Time isn't on your watch", "Install the Calen-Time app on your watch from the Play Store, then come back here.")
+        face == null -> Banner("Calen-Time isn't on your watch", "Install the Calen-Time watch app from the Play Store on your watch.", info = true,
+            action = "Install on watch", onAction = { m.getWatchApp() })
         !face.supported -> Banner("This watch needs an update", "Calen-Time needs Wear OS 6 or newer. Check for a watch update in Galaxy Wearable.")
         !face.installed -> Banner("Watch face isn't on your watch", "Install it, then confirm on the watch to make it your watch face.", info = true, action = "Install on watch", onAction = onInstall)
         !face.active -> Banner("Calen-Time isn't your watch face", "Touch and hold your watch face, then swipe to Calen-Time and tap it.", info = true)

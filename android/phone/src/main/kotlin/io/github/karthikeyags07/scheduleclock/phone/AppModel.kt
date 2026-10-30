@@ -41,7 +41,13 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
     }
 
     fun refreshWatch() = scope.launch {
-        link = WatchLink.state(context)
+        var next = WatchLink.state(context)
+        // Right after the watch app updates, the face reads as not active for a moment; ask again before saying so.
+        if (next.face?.installed == true && next.face?.active == false && link.face?.active != false) {
+            delay(3000)
+            next = WatchLink.state(context)
+        }
+        link = next
         linkChecked = true
     }
 
@@ -92,6 +98,17 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
         setupDone = true
         AppPrefs.sendSettings(context)
         if (hasPermission) SyncWorker.schedule(context)
+    }
+
+    /** Watch app missing: opens its Play page on the watch, then keeps checking until it answers. */
+    fun getWatchApp() = scope.launch {
+        if (!WatchLink.openPlayOnWatch(context)) { say("Couldn't reach your watch"); return@launch }
+        say("Tap Install on your watch")
+        repeat(40) {   // ~2 min
+            delay(3000)
+            link = WatchLink.state(context)
+            if (link.face != null) return@launch
+        }
     }
 
     fun restartSetup() { AppPrefs.setSetupDone(context, false); setupDone = false }

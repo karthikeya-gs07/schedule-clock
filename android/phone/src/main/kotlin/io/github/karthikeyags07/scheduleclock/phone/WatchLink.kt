@@ -61,6 +61,20 @@ object WatchLink {
         }
     }
 
+    /** Opens Calen-Time's Play Store page on the watch, for when the watch app isn't installed there. */
+    suspend fun openPlayOnWatch(context: Context): Boolean {
+        val watch = watch(context) ?: return false
+        val intent = Intent(Intent.ACTION_VIEW)
+            .addCategory(Intent.CATEGORY_BROWSABLE)
+            .setData(Uri.parse("market://details?id=${context.packageName}"))
+        return try {
+            RemoteActivityHelper(context).startRemoteActivity(intent, watch.id).await()
+            true
+        } catch (e: Exception) {
+            Log.w(TAG, "couldn't open the Play Store on the watch: ${e.message}"); false
+        }
+    }
+
     private suspend fun request(context: Context, watch: Watch, path: String, body: ByteArray): FaceStatus? = try {
         val bytes = withTimeout(8_000) { Wearable.getMessageClient(context).sendRequest(watch.id, path, body).await() }
         val j = JSONObject(bytes.decodeToString())

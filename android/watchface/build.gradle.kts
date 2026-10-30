@@ -1,5 +1,16 @@
+import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
+}
+
+// Release signing (PRD §6.5): the keys live outside the repo; keystore.properties (not in git) says where.
+// Without it, release builds fall back to the debug key so they still build anywhere.
+val keystore = Properties().apply {
+    rootProject.file("keystore.properties").takeIf { it.exists() }?.inputStream()?.use(::load)
+}
+fun signingKey(name: String, block: (file: File, password: String, alias: String) -> Unit) {
+    val file = keystore.getProperty("${name}StoreFile") ?: return
+    block(file(file), file(keystore.getProperty("${name}PasswordFile")).readText().trim(), keystore.getProperty("${name}Alias"))
 }
 
 android {
@@ -29,6 +40,12 @@ android {
         create("solaris") { dimension = "colourway" }
     }
 
+    signingConfigs {
+        signingKey("faces") { f, password, alias ->
+            create("faces") { storeFile = f; storePassword = password; keyAlias = alias; keyPassword = password }
+        }
+    }
+
     buildTypes {
         debug {
             isMinifyEnabled = true
@@ -37,7 +54,7 @@ android {
             isMinifyEnabled = true
             // Keep every resource: the system reads them from watchface.xml, not code.
             isShrinkResources = false
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("faces") ?: signingConfigs.getByName("debug")
         }
     }
 }
