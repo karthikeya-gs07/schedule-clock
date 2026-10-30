@@ -181,6 +181,7 @@ Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.sched
 
 | Date | Change | Rules |
 |---|---|---|
+| 2026-10-30 | Setup: back arrow to return to earlier steps. | §12 A1 |
 | 2026-10-30 | Setup: fallback when the watch's "use this watch face?" prompt doesn't appear. | §12 A1 |
 | 2026-10-30 | Phone app's Look tab renamed **Watchface**. | §12 A5 |
 | 2026-10-30 | Time-Shift renamed **Solaris**. | §9, §10, §12 |
@@ -263,7 +264,7 @@ The phone app is where people set Calen-Time up and change it. Design prototype:
 
 | # | Where | Rule | Why |
 |---|---|---|---|
-| A1 | Setup | Five steps: welcome → allow calendar access → choose calendars → install on the watch (confirm on the watch) → done. If the watch's prompt doesn't appear (**It didn't show up**), the app explains how to pick Calen-Time on the watch (touch and hold the face → swipe to it, or **+ Add**) and offers **Send it again**. In the built app the phone also notices on its own once the face is active. Calendar access and the install can both be skipped and done later from Today. | One pass gets everything working; nothing blocks someone who says no. |
+| A1 | Setup | Five steps: welcome → allow calendar access → choose calendars → install on the watch (confirm on the watch) → done. If the watch's prompt doesn't appear (**It didn't show up**), the app explains how to pick Calen-Time on the watch (touch and hold the face → swipe to it, or **+ Add**) and offers **Send it again**. In the built app the phone also notices on its own once the face is active. A **back arrow** beside the step bar goes back one step (inside the install step: help → confirm → start); it's hidden on the first and last steps and while the face is being sent. Calendar access and the install can both be skipped and done later from Today. | One pass gets everything working; nothing blocks someone who says no. |
 | A2 | Today | A live preview of the watch face (the real face, never a simplified drawing) in the chosen colourway, the watch's connection, the last sync, **Sync now**, and the rest of today's meetings as they'll appear on the watch (private ones marked, clashes tagged). | Shows what the watch shows, so people trust the sync. |
 | A3 | Today | Problems show as a banner above the preview, with one action: calendar access off (Allow access), face not installed (Install on watch), watch too old (needs Wear OS 6, no action). | One clear fix per problem. |
 | A4 | Calendars | Every calendar on the phone, grouped by account (Outlook, Google, Samsung…), each with a switch. Only switched-on calendars are sent. A help panel explains Outlook's **Sync calendars** for work and Teams meetings. | People choose what reaches their wrist; Outlook keeps its calendar hidden unless that's on. |
