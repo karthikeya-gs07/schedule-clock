@@ -83,9 +83,9 @@
     background: #121316; border-top: 1px solid #1c1d21;
   }
   .nav button { background: none; border: 0; display: flex; align-items: center; justify-content: center; height: 68px; padding: 0; color: var(--muted); }   /* whole cell is the tap area */
-  .nav .pill { width: 68px; height: 40px; border-radius: 20px; display: grid; place-items: center; transition: background var(--d) var(--ease); }
+  .nav .pill { width: 68px; height: 40px; border-radius: 20px; display: grid; place-items: center; transition: color var(--d) var(--ease); }
   .nav button[aria-current=page] { color: var(--text); font-weight: 500; }
-  .nav button[aria-current=page] .pill { background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--accent); }
+  .nav button[aria-current=page] .pill { color: var(--accent); }   /* selected: just the icon in the accent colour */
   .nav svg { width: 24px; height: 24px; }
 
   /* ---------- Shared pieces ---------- */
