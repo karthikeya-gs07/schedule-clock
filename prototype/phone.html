@@ -190,12 +190,12 @@
   /* Setup */
   .setup { display: flex; flex-direction: column; min-height: 100%; }
   .setup .grow { flex: 1; }
-  .setup-top { display: flex; align-items: center; gap: 10px; margin: 4px 0 6px -10px; }
-  .back { width: 44px; height: 44px; border-radius: 22px; border: 0; background: none; color: var(--text); display: grid; place-items: center; flex-shrink: 0; }
-  .back:hover { background: var(--surface); }
+  .steps { display: flex; gap: 6px; margin: 10px 0 6px; }
+  /* Back sits beside the main button: a round tonal button, the main one takes the rest of the row */
+  .primary-row { display: flex; gap: 10px; }
+  .primary-row .btn.block { flex: 1; width: auto; }
+  .back { width: 48px; height: 48px; border-radius: 24px; border: 0; background: var(--surface-2); color: var(--text); display: grid; place-items: center; flex-shrink: 0; }
   .back:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .back[hidden] { display: grid; visibility: hidden; }   /* keeps the bar in place on the first and last step */
-  .steps { display: flex; gap: 6px; flex: 1; }
   .steps i { height: 4px; flex: 1; border-radius: 2px; background: #2a2c31; }
   .steps i.done { background: var(--accent); }
   .hero { display: grid; place-items: center; margin: 22px 0 6px; }
@@ -452,8 +452,7 @@ function setupScreen() {
   const s = state.step;
   // Back on every step but the first and the last, and not while the face is being sent.
   const canBack = s > 0 && s < STEPS - 1 && state.installing !== 1;
-  const bar = `<div class="setup-top"><button class="back" data-act="back" aria-label="Back" ${canBack ? '' : 'hidden'}>${icon('back')}</button>
-    <div class="steps" aria-label="Step ${s + 1} of ${STEPS}">${Array.from({ length: STEPS }, (_, i) => `<i class="${i <= s ? 'done' : ''}"></i>`).join('')}</div></div>`;
+  const bar = `<div class="steps" aria-label="Step ${s + 1} of ${STEPS}">${Array.from({ length: STEPS }, (_, i) => `<i class="${i <= s ? 'done' : ''}"></i>`).join('')}</div>`;
   const bullet = (k, t) => `<li>${icon(k, 20)}<span>${t}</span></li>`;
   let body = '', actions = '';
   if (s === 0) {
@@ -501,7 +500,10 @@ function setupScreen() {
       <p class="sub">Your meetings are on your watch and stay in sync on their own. Change colours and buzzes in the app any time.</p>`;
     actions = `<button class="btn block" data-act="app">Open Calen-Time</button>`;
   }
-  return `<div class="setup">${bar}<div class="grow">${body}</div><div class="footer-actions">${actions}</div></div>`;
+  // The first button is the main one; Back goes beside it, any others stay below.
+  const cut = actions.indexOf('</button>') + '</button>'.length;
+  const main = `<div class="primary-row">${canBack ? `<button class="back" data-act="back" aria-label="Back">${icon('back')}</button>` : ''}${actions.slice(0, cut)}</div>`;
+  return `<div class="setup">${bar}<div class="grow">${body}</div><div class="footer-actions">${main}${actions.slice(cut)}</div></div>`;
 }
 
 /* ---------- Render ---------- */
