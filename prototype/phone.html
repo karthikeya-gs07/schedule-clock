@@ -124,7 +124,9 @@
 
   /* Home */
   .watch-card { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 22px 18px 18px; }
-  .watch-card .face { width: 196px; height: 196px; margin-bottom: 14px; }
+  .watch-card .face { margin-bottom: 14px; }
+  .face-frame { display: block; border-radius: 50%; background: #000; overflow: hidden; flex-shrink: 0; }
+  .face-frame iframe { width: 100%; height: 100%; border: 0; display: block; background: #000; color-scheme: dark; }
   .status-line { display: flex; align-items: center; gap: 8px; justify-content: center; font-weight: 500; }
   .meta { color: var(--muted); font-size: 13px; margin: 2px 0 16px; }
   .banner { display: flex; gap: 12px; align-items: flex-start; background: color-mix(in srgb, var(--danger) 12%, var(--surface)); border-radius: var(--r-card); padding: 16px 18px; margin-bottom: 14px; }
@@ -160,8 +162,6 @@
     background: var(--surface); border: 2px solid transparent; border-radius: var(--r-card); padding: 14px 10px 12px;
     display: flex; flex-direction: column; align-items: center; gap: 8px; transition: border-color var(--d) var(--ease);
   }
-  .look > svg { width: 128px; height: 128px; flex-shrink: 0; }
-  .look.wide > svg { width: 112px; height: 112px; }
   .look .name svg { color: var(--accent); }
   .look .name { font-weight: 500; display: flex; align-items: center; gap: 6px; }
   .look[aria-checked=true] { border-color: var(--accent); }
@@ -192,7 +192,6 @@
   .steps i { height: 4px; flex: 1; border-radius: 2px; background: #2a2c31; }
   .steps i.done { background: var(--accent); }
   .hero { display: grid; place-items: center; margin: 22px 0 6px; }
-  .hero svg { width: 230px; height: 230px; }
   .bullets { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
   .bullets li { display: flex; gap: 12px; color: #c9c9ce; font-size: 14px; }
   .bullets svg { flex-shrink: 0; color: var(--accent); margin-top: 1px; }
@@ -244,7 +243,7 @@
       <div class="seg" data-state="perm"><button data-v="on">Allowed</button><button data-v="off">Off</button></div></div>
     <div class="group"><span class="group-title">Today</span>
       <div class="seg" data-state="day"><button data-v="busy">Meetings</button><button data-v="empty">No meetings</button></div></div>
-    <p>Screens: setup (5 steps), Home, Calendars, Look and Settings. The watch previews use the sample day at 10:13 AM.</p>
+    <p>Screens: setup (5 steps), Home, Calendars, Look and Settings. The watch previews are the real watch face (the watch prototype), showing the sample day at 10:13 AM.</p>
   </aside>
 </div>
 
@@ -300,7 +299,6 @@ const state = {
 const hex2rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 const rgb2hex = c => '#' + c.map(v => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join('');
 const mix = (a, b, f) => rgb2hex(hex2rgb(a).map((v, i) => v + (hex2rgb(b)[i] - v) * f));
-const dark = (h, pct) => mix('#000000', h, pct);   // R6a: arcs solid but darker
 function sunAt(m) {
   m = ((m % 1440) + 1440) % 1440;
   let i = 1; while (i < SUN.length - 1 && SUN[i][0] < m) i++;
@@ -308,67 +306,24 @@ function sunAt(m) {
   return mix(a, b, (m - m0) / (m1 - m0));
 }
 const lookOf = id => LOOKS.find(l => l.id === id);
-const accentOf = id => lookOf(id).ring || sunAt(NOW);
+const accentOf = id => lookOf(id).ring || sunAt(NOW);   // Time-Shift: the colour of the light now
 
-/* ---------- Watch face preview (SVG) ---------- */
+/* ---------- Meetings shown ---------- */
 const enabledCals = () => new Set(CALS.flatMap(a => a.items).filter(c => c.on).map(c => c.id));
 const todays = () => state.day === 'empty' || state.perm === 'off' ? [] : MEETINGS.filter(m => enabledCals().has(m.cal));
 const fmt = m => { const h = Math.floor(m / 60) % 24, mm = String(m % 60).padStart(2, '0'); return `${(h + 11) % 12 + 1}:${mm}`; };
 const ampm = m => (Math.floor(m / 60) % 24) < 12 ? 'AM' : 'PM';
 const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-function face(lookId, { size = 200, details = true } = {}) {
-  const L = lookOf(lookId), C = 100, R = 84, W = 10;
-  const ang = m => ((m % 720) / 720) * 2 * Math.PI - Math.PI / 2;
-  const pt = (m, r) => [C + r * Math.cos(ang(m)), C + r * Math.sin(ang(m))];
-  const arc = (a, b, r) => {
-    const [x0, y0] = pt(a, r), [x1, y1] = pt(b, r);
-    return `M${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 ${b - a > 360 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
-  };
-  const colorAt = m => L.ring || sunAt(m);
-  const seg = (a, b, r, w, col) => {
-    if (L.ring || !col.sun) return `<path d="${arc(a, b, r)}" stroke="${col.c}" stroke-width="${w}" fill="none"/>`;
-    let out = ''; for (let m = a; m < b; m += 5) out += `<path d="${arc(m, Math.min(b, m + 5.6), r)}" stroke="${dark(colorAt(m), col.f)}" stroke-width="${w}" fill="none"/>`;
-    return out;
-  };
-  let g = `<circle cx="${C}" cy="${C}" r="${R}" stroke="#1c1c1f" stroke-width="${W}" fill="none"/>`;
-  for (let h = 0; h < 12; h++) {
-    const [x0, y0] = pt(h * 60, R + 9), [x1, y1] = pt(h * 60, R + 13);
-    g += `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="#55565c" stroke-width="1.4"/>`;
-  }
-  const list = todays();
-  const winEnd = NOW + 720 - 30;   // W8: a meeting joins the ring 30 min after the dot passes its slot
-  list.forEach((m, i) => {
-    if (m.e <= NOW) return;
-    const clash = list.some((o, j) => j !== i && o.s < m.e && m.s < o.e);
-    if (m.e > winEnd) {
-      g += `<path d="${arc(m.s, Math.min(m.e, NOW + 720), R - W / 2 - 4)}" stroke="${L.lane}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
-      return;
-    }
-    const s = Math.max(m.s, NOW);
-    if (m.s < NOW) g += seg(m.s, NOW, R, W, { c: dark(L.ring || '#888888', .45), sun: true, f: .3 });
-    if (m.priv) {
-      g += `<path d="${arc(s, m.e, R)}" stroke="#2a2a2e" stroke-width="${W}" fill="none"/>`;
-      g += `<path d="${arc(s, m.e, R)}" stroke="#8e8e93" stroke-width="${W}" fill="none" stroke-dasharray="2 3"/>`;
-    } else if (clash) {
-      g += `<path d="${arc(s, m.e, R)}" stroke="#3f1f17" stroke-width="${W}" fill="none"/>`;
-      g += `<path d="${arc(s, m.e, R + 3)}" stroke="#ff7a59" stroke-width="3" fill="none"/><path d="${arc(s, m.e, R - 3)}" stroke="#ff7a59" stroke-width="3" fill="none"/>`;
-    } else {
-      g += seg(s, m.e, R, W, { c: dark(L.ring || '#888888', .6), sun: true, f: .6 });
-    }
-  });
-  const [nx, ny] = pt(NOW, R);
-  g += `<circle cx="${nx}" cy="${ny}" r="7" fill="#fff" fill-opacity=".18"/><circle cx="${nx}" cy="${ny}" r="4.7" fill="#000"/><circle cx="${nx}" cy="${ny}" r="3.2" fill="#fff"/>`;
-  const next = list.find(m => m.s > NOW);
-  const accent = accentOf(lookId);
-  g += `<text x="${C}" y="${details ? 70 : 82}" text-anchor="middle" fill="#8e8e93" font-family="Anta" font-size="9" letter-spacing=".5">TUE · OCT 27</text>`;
-  g += `<text x="${C}" y="${details ? 104 : 120}" text-anchor="middle" fill="#f2f2f2" font-family="Anta" font-size="${details ? 34 : 40}">10:13</text>`;
-  if (details && next) {
-    g += `<line x1="72" y1="116" x2="128" y2="116" stroke="#2a2c31"/>`;
-    g += `<text x="${C}" y="132" text-anchor="middle" fill="#f2f2f2" font-family="Roboto" font-size="10" font-weight="500">${esc(next.priv ? 'Private' : next.title)}</text>`;
-    g += `<text x="${C}" y="145" text-anchor="middle" fill="${accent}" font-family="Roboto" font-size="9">${fmt(next.s)} – ${fmt(next.e)} ${ampm(next.e)}</text>`;
-  }
-  return `<svg viewBox="0 0 200 200" width="${size}" height="${size}" role="img" aria-label="${L.name} watch face preview"><circle cx="100" cy="100" r="100" fill="#000"/>${g}</svg>`;
+// The real watch face: the watch prototype (index.html) in embed mode, showing these meetings at 10:13 AM
+// in the chosen colourway. Taps go through to it on Today (select a meeting); previews elsewhere are static.
+const hhmm = m => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+function face(lookId, { size = 200, interactive = false } = {}) {
+  const L = lookOf(lookId);
+  const events = todays().map(m => ({ start: hhmm(m.s), end: hhmm(m.e), title: m.title, where: m.where, private: !!m.priv }));
+  const q = `embed&time=${NOW}&theme=${lookId === 'timeshift' ? 'Amber' : L.name}&face=${lookId === 'timeshift' ? 'timeshift' : 'calen'}`;
+  return `<span class="face-frame" style="width:${size}px;height:${size}px"><iframe src="index.html?${q}#${encodeURIComponent(JSON.stringify(events))}"
+    title="${L.name} watch face preview" tabindex="${interactive ? 0 : -1}" style="pointer-events:${interactive ? 'auto' : 'none'}"></iframe></span>`;
 }
 
 /* ---------- Icons ---------- */
@@ -412,9 +367,9 @@ function homeScreen() {
       <div class="w">${m.priv ? 'Shown as “Private” on the watch' : esc(m.where || '')}</div></div></div>`;
   }).join('') : `<div class="empty">${state.perm === 'off' ? 'Allow calendar access to see your meetings here.' : 'Nothing else today. The watch shows a clear day.'}</div>`;
 
-  return `<h2 class="title">Today</h2><p class="sub">Tuesday, October 27</p>${banners}
+  return `<h2 class="title">Today</h2><p class="sub">${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>${banners}
     <section class="card watch-card" aria-label="Your watch">
-      <div class="face">${face(state.look, { size: 196 })}</div>
+      <div class="face">${face(state.look, { size: 220, interactive: true })}</div>
       <div class="status-line"><span class="dot" style="background:${statusDot}"></span>${statusText}</div>
       <div class="meta">${meta}</div>
       <button class="btn tonal" data-act="sync" ${!watchOk || state.syncing ? 'disabled' : ''}>${syncLabel}</button>
@@ -447,9 +402,9 @@ function calendarsScreen(compact) {
 function lookScreen() {
   const card = l => {
     const sel = state.look === l.id;
-    if (l.id === 'timeshift') return `<button class="look wide" role="radio" aria-checked="${sel}" data-look="${l.id}">${face(l.id, { size: 112, details: false })}
-      <span class="copy"><b class="name">${l.name}${sel ? icon('check', 18) : ''}</b><span>The ring takes the colour of the light at each hour: dawn rose, noon gold, sunset coral, night indigo.</span><span>Sunrise 6:14 · sunset 5:43 (from your time zone)</span></span></button>`;
-    return `<button class="look" role="radio" aria-checked="${sel}" data-look="${l.id}">${face(l.id, { size: 128, details: false })}<span class="name">${l.name}${sel ? icon('check', 18) : ''}</span></button>`;
+    if (l.id === 'timeshift') return `<button class="look wide" role="radio" aria-checked="${sel}" data-look="${l.id}">${face(l.id, { size: 120 })}
+      <span class="copy"><b class="name">${l.name}${sel ? icon('check', 18) : ''}</b><span>The ring takes the colour of the light at each hour: dawn rose, noon gold, sunset coral, night indigo.</span><span>Follows today’s sunrise and sunset where you are</span></span></button>`;
+    return `<button class="look" role="radio" aria-checked="${sel}" data-look="${l.id}">${face(l.id, { size: 136 })}<span class="name">${l.name}${sel ? icon('check', 18) : ''}</span></button>`;
   };
   const disabled = state.watch !== 'connected' || state.face === 'off';
   return `<h2 class="title">Look</h2><p class="sub">${disabled ? 'Connect your watch with the watch face on it to change its colours.' : 'Pick a colourway. Your watch changes straight away.'}</p>

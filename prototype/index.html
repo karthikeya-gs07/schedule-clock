@@ -79,6 +79,13 @@
     .device.large .watch { --large: min(100vw - 54px, max(240px, min(100svh - 200px, 760px))); }
   }
   .watch svg { width: 100%; height: 100%; display: block; }
+  /* Embedded in the phone app prototype (?embed): only the dial, filling the frame */
+  body.embed { padding: 0; min-height: 0; background: transparent; overflow: hidden; }
+  body.embed .layout, body.embed .stage { display: block; }
+  body.embed .panel, body.embed .tabs, body.embed .size-info, body.embed .hint, body.embed .calib, body.embed .focus-exit { display: none !important; }
+  body.embed .device { width: 100vmin !important; height: 100vmin !important; background: none; box-shadow: none; }
+  body.embed .device::before { display: none; }
+  body.embed .device .watch { width: 100vmin !important; height: 100vmin !important; box-shadow: none; }
   .hint { color: var(--muted); font-size: 13px; text-align: center; }
 
   /* Calibration: match a bank card's short edge (53.98 mm) on screen */
@@ -1624,6 +1631,29 @@ addEventListener('keydown', ev => {
   else if (ev.key === 'Escape') setFocus(false);
 });
 if (location.hash === '#dial') setFocus(true);
+
+// ---------- Embedded in the phone app prototype (phone.html) ----------
+// index.html?embed&time=613&theme=Mint&face=timeshift#<meetings> shows only the dial, filling the frame,
+// and saves nothing. Meetings come as JSON in the hash ({ start, end, title, where, private }); the phone
+// page can also update a frame with postMessage({ calentime: { events, theme, face, time } }).
+const EMBED = new URLSearchParams(location.search);
+if (EMBED.has('embed')) {
+  document.body.classList.add('embed');
+  try { PRESETS.Phone = JSON.parse(decodeURIComponent(location.hash.slice(1))); } catch { PRESETS.Phone = []; }
+  preset = 'Phone';
+  const apply = o => {
+    if (o.events) PRESETS.Phone = o.events;
+    if (o.time != null) { setLive(false); nowMin = +o.time; }
+    if (o.theme) themeName = THEMES[o.theme] ? o.theme : 'Amber';   // never saved
+    if (o.face) faceId = o.face === 'timeshift' ? 'timeshift' : 'calen';
+  };
+  apply({ time: EMBED.get('time'), theme: EMBED.get('theme') || 'Amber', face: EMBED.get('face') || 'calen' });
+  addEventListener('message', ev => {
+    const o = ev.data && ev.data.calentime;
+    if (!o) return;
+    apply(o); resetPromotions(); setSelection(-1); applyColors(currentTheme()); applyFace();
+  });
+}
 
 $('time').value = nowMin;
 applyDevice();
