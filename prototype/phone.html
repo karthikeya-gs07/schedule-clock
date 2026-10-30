@@ -199,9 +199,12 @@
   .bullets svg { flex-shrink: 0; color: var(--accent); margin-top: 1px; }
   .progress { height: 6px; border-radius: 3px; background: #2a2c31; overflow: hidden; margin: 14px 0 8px; }
   .progress i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 1.6s var(--ease); }
-  .mini-watch { width: 150px; height: 150px; border-radius: 50%; background: #000; box-shadow: 0 0 0 8px #1b1c20; margin: 26px auto 10px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 10px; padding: 18px; font-size: 12px; }
-  .mini-watch .ok { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; }
+  /* Confirm on the watch: the real face, with the watch's question under it */
+  .confirm { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; }
+  .confirm .hero { margin: 14px 0 6px; }
+  .confirm .q { font-size: 16px; font-weight: 500; }
+  .confirm .ok { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; }
+  .confirm .sub { margin: 0; }
   .footer-actions { display: flex; flex-direction: column; gap: 8px; padding-top: 18px; }
 </style>
 </head>
@@ -468,7 +471,9 @@ function setupScreen() {
         : 'Calen-Time installs its watch face on your Galaxy Watch8. You’ll confirm it on the watch.'}</p>
       ${st === 0 ? `<div class="hero">${face(state.look, { size: 200 })}</div>` : ''}
       ${st >= 1 ? `<div class="progress"><i style="width:${st === 1 ? 60 : 100}%"></i></div><p class="sub">${st === 1 ? 'Sending to your watch…' : 'Installed. Confirm on your watch.'}</p>` : ''}
-      ${st >= 2 ? `<div class="mini-watch"><span>Use Calen-Time as your watch face?</span><span class="ok">${icon('check', 20)}</span></div><p class="sub" style="text-align:center">Tap ✓ on your watch</p>` : ''}`;
+      ${st >= 2 ? `<div class="confirm"><div class="hero">${face(state.look, { size: 200 })}</div>
+        <span class="q">Use Calen-Time as your watch face?</span><span class="ok">${icon('check', 20)}</span>
+        <p class="sub">Tap ✓ on your watch</p></div>` : ''}`;
     actions = st === 0 ? `<button class="btn block" data-act="install" ${watchOk ? '' : 'disabled'}>Install on watch</button><button class="btn text" data-act="next">Do this later</button>`
       : st === 1 ? `<button class="btn block" disabled><span class="spinner"></span>Installing</button>`
       : `<button class="btn block" data-act="confirm">I’ve confirmed it</button>`;
