@@ -85,9 +85,10 @@
   body.embed { padding: 0; min-height: 0; background: transparent; overflow: hidden; }
   body.embed .layout, body.embed .stage { display: block; }
   body.embed .panel, body.embed .tabs, body.embed .size-info, body.embed .hint, body.embed .calib, body.embed .focus-exit { display: none !important; }
-  body.embed .device { width: 100vmin !important; height: 100vmin !important; background: none; box-shadow: none; }
+  /* Sized in % (not vmin: Android's WebView can report a 0 viewport while it lays out) */
+  body.embed .device { width: 100% !important; height: auto !important; aspect-ratio: 1; background: none; box-shadow: none; }
   body.embed .device::before { display: none; }
-  body.embed .device .watch { width: 100vmin !important; height: 100vmin !important; box-shadow: none; }
+  body.embed .device .watch { width: 100% !important; height: 100% !important; box-shadow: none; }
   .hint { color: var(--muted); font-size: 13px; text-align: center; }
 
   /* Calibration: match a bank card's short edge (53.98 mm) on screen */

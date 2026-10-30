@@ -2,6 +2,10 @@ package io.github.karthikeyags07.scheduleclock.phone
 
 import android.annotation.SuppressLint
 import android.graphics.Color
+import android.util.Log
+import android.view.MotionEvent
+import android.webkit.ConsoleMessage
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -11,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
@@ -30,8 +35,9 @@ import java.time.ZoneId
  */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-fun WatchFacePreview(colourway: String, meetings: List<Meeting>, size: Dp, interactive: Boolean = false) {
+fun WatchFacePreview(colourway: String, meetings: List<Meeting>, size: Dp, interactive: Boolean = false, onTap: (() -> Unit)? = null) {
     val url = previewUrl(colourway, meetings)
+    val onTapState = rememberUpdatedState(onTap)
     Box(Modifier.size(size).clip(CircleShape).background(androidx.compose.ui.graphics.Color.Black)) {
         AndroidView(
             modifier = Modifier.size(size),
@@ -48,7 +54,14 @@ fun WatchFacePreview(colourway: String, meetings: List<Meeting>, size: Dp, inter
                         override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =
                             assets.shouldInterceptRequest(request.url)
                     }
-                    if (!interactive) setOnTouchListener { _, _ -> true }
+                    webChromeClient = object : WebChromeClient() {   // the face's console errors, in logcat
+                        override fun onConsoleMessage(message: ConsoleMessage): Boolean {
+                            Log.i(TAG, "face preview: ${message.message()} (${message.sourceId()}:${message.lineNumber()})")
+                            return true
+                        }
+                    }
+                    // Not interactive: the WebView would still swallow taps, so it hands them to [onTap] instead.
+                    if (!interactive) setOnTouchListener { _, e -> if (e.action == MotionEvent.ACTION_UP) onTapState.value?.invoke(); true }
                     loadUrl(url)
                     tag = url
                 }

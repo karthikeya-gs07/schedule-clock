@@ -131,10 +131,13 @@ fun CalendarsList(m: AppModel, onAllow: () -> Unit) {
         Spacer(Modifier.height(12.dp))
         Banner("Calendar access is off", "Allow access to choose which calendars go to your watch.", action = "Allow access", onAction = onAllow)
     }
-    m.calendars.groupBy { it.accountType to it.account }.forEach { (key, cals) ->
+    // One group per provider and account: "Google · you@gmail.com", "Samsung · …", "On this phone".
+    m.calendars.groupBy { accountLabel(it.accountType) to it.account.takeIf { a -> '@' in a }.orEmpty() }
+        .toList().sortedBy { (key, _) -> PROVIDER_ORDER.indexOf(key.first) }
+        .forEach { (key, cals) ->
         Column(Modifier.padding(start = 4.dp, top = 22.dp, bottom = 10.dp)) {
-            Text(accountLabel(key.first, key.second), style = BodyStyle, fontWeight = FontWeight.Medium)
-            if (key.second.contains('@')) Text(key.second, style = HintStyle)
+            Text(key.first, style = BodyStyle, fontWeight = FontWeight.Medium)
+            if (key.second.isNotEmpty()) Text(key.second, style = HintStyle)
         }
         Rows {
             cals.forEachIndexed { i, c ->
@@ -147,11 +150,15 @@ fun CalendarsList(m: AppModel, onAllow: () -> Unit) {
     OutlookHelp()
 }
 
-private fun accountLabel(type: String, account: String) = when {
+private val PROVIDER_ORDER = listOf("Google", "Outlook", "Samsung", "On this phone", "Other")
+
+/** Calendar providers by Android account type: Samsung accounts are `com.osp.app.signin`, local ones `LOCAL`. */
+private fun accountLabel(type: String) = when {
     type.contains("google", true) -> "Google"
     type.contains("outlook", true) || type.contains("exchange", true) || type.contains("microsoft", true) -> "Outlook"
-    type.contains("samsung", true) || type.contains("local", true) -> "Samsung"
-    else -> account.ifEmpty { "This phone" }
+    type.contains("samsung", true) || type == "com.osp.app.signin" -> "Samsung"
+    type.equals("LOCAL", true) -> "On this phone"
+    else -> "Other"
 }
 
 @Composable
@@ -211,10 +218,10 @@ private fun LookCard(id: String, name: String, text: String?, m: AppModel, enabl
         }
     }
     if (wide) Row(box.padding(15.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-        WatchFacePreview(id, m.meetings, 120.dp)
+        WatchFacePreview(id, m.meetings, 120.dp) { if (enabled) m.pickColourway(id) }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) { title(); text?.let { Text(it, style = HintStyle) } }
     } else Column(box.padding(top = 15.dp, bottom = 13.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        WatchFacePreview(id, m.meetings, 136.dp)
+        WatchFacePreview(id, m.meetings, 136.dp) { if (enabled) m.pickColourway(id) }
         title()
     }
 }
