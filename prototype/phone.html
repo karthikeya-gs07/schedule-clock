@@ -383,7 +383,6 @@ function banner(kind, title, text, action, act) {
 }
 
 function calendarsScreen(compact) {
-  const total = CALS.flatMap(a => a.items).filter(c => c.on).length;
   const groups = CALS.map(a => `
     <div class="account"><span class="who"><b>${a.account}</b>${esc(a.who)}</span></div>
     <div class="rows">${a.items.map(c => `
@@ -392,7 +391,7 @@ function calendarsScreen(compact) {
         <span class="grow"><span class="label">${esc(c.name)}</span>${c.hint ? `<span class="hint">${c.hint}</span>` : ''}</span>${sw(c.on)}
       </button>`).join('')}</div>`).join('');
   const off = state.perm === 'off' ? banner('warn', 'Calendar access is off', 'Allow access to choose which calendars go to your watch.', 'Allow access', 'perm') : '';
-  return `${compact ? '' : `<h2 class="title">Calendars</h2><p class="sub">${total} of ${CALS.flatMap(a => a.items).length} calendars go to your watch. Only today’s and tomorrow’s meetings are sent.</p>`}${off}${groups}
+  return `${compact ? '' : `<h2 class="title">Calendars</h2>`}${off}${groups}
     <details class="help"><summary>Don’t see your work or Teams calendar? ${icon('chev', 20)}</summary>
       <ol><li>Open the <b>Outlook</b> app and tap your profile picture.</li><li>Tap <b>Settings</b>, then your work account.</li>
       <li>Turn on <b>Sync calendars</b>.</li><li>Come back here. It shows up under Outlook within a minute.</li></ol></details>
