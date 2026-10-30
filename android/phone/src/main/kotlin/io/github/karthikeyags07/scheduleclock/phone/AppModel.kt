@@ -1,0 +1,106 @@
+package io.github.karthikeyags07.scheduleclock.phone
+
+import android.content.Context
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+/** Everything the screens show, refreshed from the calendar and the watch. Lives as long as the activity. */
+class AppModel(private val context: Context, private val scope: CoroutineScope) {
+    var setupDone by mutableStateOf(AppPrefs.setupDone(context))
+    var hasPermission by mutableStateOf(CalendarSync.hasPermission(context))
+    var calendars by mutableStateOf(emptyList<PhoneCalendar>())
+    var enabled by mutableStateOf<Set<Long>?>(null)
+    var meetings by mutableStateOf(emptyList<Meeting>())
+    var colourway by mutableStateOf(AppPrefs.colourway(context))
+    var link by mutableStateOf(WatchLink.State(null, null))
+    var linkChecked by mutableStateOf(false)
+    var syncing by mutableStateOf(false)
+    var lastSync by mutableStateOf(0L)
+    var lastCount by mutableStateOf(0)
+    var buzz by mutableStateOf(AppPrefs.Buzz.entries.associateWith { AppPrefs.buzz(context, it) })
+    var toast by mutableStateOf<String?>(null)
+
+    fun isOn(c: PhoneCalendar) = enabled?.contains(c.id) ?: true
+
+    /** Re-reads calendars, meetings and the last sync; call when the app opens or calendar access changes. */
+    fun reload() = scope.launch {
+        hasPermission = CalendarSync.hasPermission(context)
+        val (cals, list) = withContext(Dispatchers.IO) { CalendarSync.calendars(context) to CalendarSync.meetings(context) }
+        calendars = cals
+        meetings = list
+        enabled = AppPrefs.enabledCalendars(context)
+        val prefs = context.getSharedPreferences("sync", Context.MODE_PRIVATE)
+        lastSync = prefs.getLong("lastSync", 0L)
+        lastCount = prefs.getInt("lastCount", 0)
+    }
+
+    fun refreshWatch() = scope.launch {
+        link = WatchLink.state(context)
+        linkChecked = true
+    }
+
+    fun permissionChanged() {
+        reload()
+        if (CalendarSync.hasPermission(context)) SyncWorker.schedule(context)
+    }
+
+    fun toggleCalendar(c: PhoneCalendar, on: Boolean) {
+        AppPrefs.setCalendarEnabled(context, calendars, c.id, on)
+        enabled = AppPrefs.enabledCalendars(context)
+        if (setupDone) say(if (on) "${c.name} will sync to your watch" else "${c.name} removed from your watch")
+        scope.launch {
+            meetings = withContext(Dispatchers.IO) { CalendarSync.meetings(context) }
+            if (setupDone) syncNow(quiet = true)
+        }
+    }
+
+    fun syncNow(quiet: Boolean = false) = scope.launch {
+        syncing = true
+        val sent = withContext(Dispatchers.IO) { runCatching { CalendarSync.send(context) } }
+        syncing = false
+        sent.onSuccess { n ->
+            lastSync = System.currentTimeMillis(); lastCount = n
+            if (!quiet) say(if (n == 1) "1 meeting sent to your watch" else "$n meetings sent to your watch")
+        }.onFailure { if (!quiet) say("Couldn't reach your watch") }
+    }
+
+    fun pickColourway(c: String) {
+        colourway = c
+        AppPrefs.setColourway(context, c)
+        AppPrefs.sendSettings(context)
+        scope.launch {
+            val status = WatchLink.setColourway(context, c)
+            if (status != null) link = link.copy(face = status)
+            say(if (status?.installed == true) "${lookName(c)} is on your watch" else "Saved. It's used when the face is on your watch")
+        }
+    }
+
+    fun setBuzz(b: AppPrefs.Buzz, on: Boolean) {
+        AppPrefs.setBuzz(context, b, on)
+        buzz = buzz + (b to on)
+        AppPrefs.sendSettings(context)
+    }
+
+    fun finishSetup() {
+        AppPrefs.setSetupDone(context, true)
+        setupDone = true
+        AppPrefs.sendSettings(context)
+        if (hasPermission) SyncWorker.schedule(context)
+    }
+
+    fun restartSetup() { AppPrefs.setSetupDone(context, false); setupDone = false }
+
+    fun say(text: String) = scope.launch {
+        toast = text
+        delay(1800)
+        if (toast == text) toast = null
+    }
+}
+
+fun lookName(c: String) = c.replaceFirstChar(Char::uppercase)

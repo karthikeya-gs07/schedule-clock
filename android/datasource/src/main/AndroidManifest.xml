@@ -52,6 +52,16 @@
             </intent-filter>
         </receiver>
 
+        <!-- The phone app asks about the face and switches its colourway (Data Layer requests `/face/...`). -->
+        <service
+            android:name=".FaceRequestService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.REQUEST_RECEIVED" />
+                <data android:scheme="wear" android:host="*" android:pathPrefix="/face" />
+            </intent-filter>
+        </service>
+
         <!-- Calendar from the phone app (Data Layer item `/calendar`), kept for the face. -->
         <service
             android:name=".PhoneCalendarListener"

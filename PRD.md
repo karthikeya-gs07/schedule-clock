@@ -284,6 +284,14 @@ Open: Wear OS 5 watches can't use Watch Face Push; decide whether to also keep a
 - Verified: add amber → Android's "Allow Calen-Time to change the active watch face?" prompt → Allow → active; swap to mint, then Solaris, stays active; complications (ring, details, title) and ring taps all work on the pushed face. Status after: installed, active, activate used.
 - Not yet on the real watch (that's phase 4). Still to check there: Galaxy Watch's Wear OS 6 behaves the same.
 
+**Phase 2 (2026-10-30): phone app built, not yet tested on a phone.**
+- Rewritten in **Jetpack Compose** (Material 3, Compose 1.11 via BOM 2026.06.01: Compose 1.12 needs Android SDK 37, which isn't installed; Kotlin 2.2.10 Compose compiler to match AGP 9.4.1). Screens follow `prototype/phone.html`: setup (5 steps, back beside the main button, "It didn't show up" help), Today, Calendars, Watchface, Settings; icon-only nav; accent follows the colourway.
+- **Previews are the real face:** `prototype/index.html` (embed mode) and Anta are copied into the app's assets at build time and shown in a WebView through `WebViewAssetLoader`, with today's and tomorrow's meetings and the chosen colourway; the Today preview takes taps. The app has **no internet permission**, so the prototype now bundles Anta (`prototype/anta.ttf`) instead of relying on Google Fonts.
+- **Calendar picker:** every visible calendar grouped by account (Google, Outlook, Samsung…); only switched-on calendars are read and sent (`AppPrefs.enabledCalendars`, all on until changed). Changing one re-syncs.
+- **Watch link** (`WatchLink.kt`): the connected watch (Data Layer nodes); the face's status and colourway swaps by request/reply to the watch app's new `FaceRequestService` (`/face/status`, `/face/colour`); the first install opens the watch's `FaceSetupActivity` with `RemoteActivityHelper`, and setup checks every 2 s until the face is active, then moves on by itself.
+- Colourway and buzz choices are saved and sent as the Data Layer item `/settings`; the watch starts following them in phase 3.
+- **To test:** needs the phone (Fold7) and the watch connected, with the phase-1 watch app on the watch (which replaces the old face once).
+
 ## 7. Tooling requirements
 
 This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setup done 2026-10-25** (see 7.0a).
@@ -362,6 +370,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 - **v0.70:** Phone app: the Look tab is now **Watchface**; the selected colourway card has a subtle 1 px border; more space between each preview and its name.
 - **v0.71:** Phone app tidy-up and setup fallback: Calendars and Watchface lose their subtitles and the account letter circles; the confirm step shows the real face with the watch's question below it; a new **It didn't show up** path explains how to pick the face on the watch and offers **Send it again** (RULES A1).
 - **v0.72:** Setup has a round back button beside the main button on steps 2–4 (RULES A1).
+- **v0.74:** Phase 2 of the build: the phone app in Jetpack Compose (setup, Today, Calendars, Watchface, Settings) with live previews of the real face, a calendar picker and the watch link for installing and recolouring the face (§6.5). Built; not yet tested on a phone.
 - **v0.73:** Phase 1 of the build: Watch Face Push works on the Wear OS 6 emulator. Five validated colourway faces bundled in the watch app; install, make active (with permission) and swap colourways all verified; complications and taps work on the pushed face (§6.5).
 - **v0.63:** Time-Shift day colours revised (RULES S3) so each part of the day is distinct: midday goes cream → honey → amber instead of one gold, and the night goes purple → royal blue (9 PM) → indigo (midnight) → cobalt (3 AM) → azure instead of one blue; night stops are clock times. Prototype and watch; installed on the Galaxy Watch8.
 - **v0.62:** Time-Shift is now a **colourway** (Colours → Time-Shift) instead of a separate Style option: each colourway tints the theme arcs panel and the Time-Shift panel, hiding the unused one with a transparent tint. Verified on the emulator (Amber and Time-Shift); installed on the Galaxy Watch8.

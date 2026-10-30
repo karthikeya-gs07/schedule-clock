@@ -1,98 +1,133 @@
 package io.github.karthikeyags07.scheduleclock.phone
 
 import android.Manifest
-import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
-import android.text.format.DateUtils
-import android.util.TypedValue
-import android.view.Gravity
-import android.widget.Button
-import android.widget.LinearLayout
-import android.widget.TextView
-import com.google.android.gms.wearable.Wearable
-import kotlin.concurrent.thread
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
 
 /**
- * The phone app's only screen: asks for calendar access, starts the background sync, and shows whether
- * it's working (last sync, events sent, watch connected). Most people open it once.
+ * The phone app (PRD §6.5, RULES §12): first-run setup, then Today, Calendars, Watchface and Settings.
+ * Calendar sync to the watch runs in the background ([SyncWorker]); the face on the watch is handled
+ * through [WatchLink].
  */
-class MainActivity : Activity() {
-    private lateinit var status: TextView
-    private lateinit var action: Button
+class MainActivity : ComponentActivity() {
+    private lateinit var model: AppModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val pad = dp(24)
-        status = TextView(this).apply { setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f); setLineSpacing(0f, 1.3f) }
-        action = Button(this)
-        setContentView(LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(pad, pad, pad, pad)
-            addView(TextView(context).apply { text = getString(R.string.app_name); setTextSize(TypedValue.COMPLEX_UNIT_SP, 28f) })
-            addView(TextView(context).apply {
-                text = getString(R.string.intro)
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
-                setPadding(0, dp(8), 0, dp(24))
-            })
-            addView(status)
-            addView(action, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(24) })
-        })
-        if (!CalendarSync.hasPermission(this)) requestPermissions(arrayOf(Manifest.permission.READ_CALENDAR), 1)
+        enableEdgeToEdge(SystemBarStyle.dark(android.graphics.Color.TRANSPARENT), SystemBarStyle.dark(android.graphics.Color.TRANSPARENT))
+        model = AppModel(applicationContext, lifecycleScope)
+        setContent { CalenTimeApp(model, ::openAppSettings) }
     }
 
     override fun onResume() {
         super.onResume()
-        if (CalendarSync.hasPermission(this)) SyncWorker.schedule(this)
-        refresh()
+        model.reload()
+        model.refreshWatch()
+        if (model.setupDone && CalendarSync.hasPermission(this)) SyncWorker.schedule(this)
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        if (CalendarSync.hasPermission(this)) SyncWorker.schedule(this)
-        refresh()
-    }
-
-    private fun refresh() {
-        if (!CalendarSync.hasPermission(this)) {
-            status.text = getString(R.string.no_permission)
-            action.text = getString(R.string.allow)
-            action.setOnClickListener {
-                if (shouldShowRequestPermissionRationale(Manifest.permission.READ_CALENDAR)) {
-                    requestPermissions(arrayOf(Manifest.permission.READ_CALENDAR), 1)
-                } else {
-                    startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)))
-                }
-            }
-            return
-        }
-        action.text = getString(R.string.sync_now)
-        action.setOnClickListener {
-            action.isEnabled = false
-            thread {
-                val result = runCatching { CalendarSync.send(this) }
-                runOnUiThread {
-                    action.isEnabled = true
-                    if (result.isFailure) status.text = getString(R.string.sync_failed, result.exceptionOrNull()?.message)
-                    else refresh()
-                }
-            }
-        }
-        val prefs = getSharedPreferences("sync", Context.MODE_PRIVATE)
-        val last = prefs.getLong("lastSync", 0L)
-        val synced = if (last == 0L) getString(R.string.never_synced)
-            else getString(R.string.last_sync, DateUtils.getRelativeTimeSpanString(last), prefs.getInt("lastCount", 0)) +
-                if (prefs.getInt("lastCount", 0) == 0) "\n" + getString(R.string.no_events_hint) else ""
-        status.text = synced
-        Wearable.getNodeClient(this).connectedNodes.addOnCompleteListener { task ->
-            val watches = task.result?.map { it.displayName }.orEmpty()
-            status.text = synced + "\n" + if (watches.isEmpty()) getString(R.string.no_watch)
-                else getString(R.string.watch_connected, watches.joinToString())
-        }
-    }
-
-    private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
+    private fun openAppSettings() =
+        startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)))
 }
+
+private enum class Tab(val label: String, val icon: ImageVector) {
+    TODAY("Today", Icons.home), CALENDARS("Calendars", Icons.calendar), WATCHFACE("Watchface", Icons.look), SETTINGS("Settings", Icons.settings)
+}
+
+@Composable
+private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
+    var tab by rememberSaveable { mutableStateOf(Tab.TODAY) }
+    var setupStep by rememberSaveable { mutableStateOf(0) }
+    var deniedOnce by rememberSaveable { mutableStateOf(false) }
+    val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (!granted) deniedOnce = true
+        m.permissionChanged()
+    }
+    // Android stops asking after a second "Don't allow"; then the button opens the app's settings instead.
+    val allow: () -> Unit = { if (deniedOnce && !m.hasPermission) openAppSettings() else permission.launch(Manifest.permission.READ_CALENDAR) }
+
+    CompositionLocalProvider(LocalAccent provides animatedAccent(m.colourway)) {
+        Box(Modifier.fillMaxSize().background(Palette.screen).statusBarsPadding().navigationBarsPadding()) {
+            if (!m.setupDone) SetupFlow(m, setupStep, allow)
+            else Column(Modifier.fillMaxSize()) {
+                BackHandler(enabled = tab != Tab.TODAY) { tab = Tab.TODAY }
+                Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp)) {
+                    when (tab) {
+                        Tab.TODAY -> TodayScreen(m, allow) { setupStep = 3; m.restartSetup() }
+                        Tab.CALENDARS -> { ScreenTitle("Calendars"); CalendarsList(m, allow) }
+                        Tab.WATCHFACE -> WatchfaceScreen(m)
+                        Tab.SETTINGS -> SettingsScreen(m) { setupStep = 0; m.restartSetup() }
+                    }
+                }
+                NavBar(tab) { tab = it }
+            }
+            m.toast?.let { Toast(it, Modifier.align(Alignment.BottomCenter).padding(bottom = 96.dp)) }
+        }
+    }
+}
+
+/** Icons only (RULES §12): the selected one in the accent colour, each a large tap area. */
+@Composable
+private fun NavBar(current: Tab, onSelect: (Tab) -> Unit) = Row(
+    Modifier.fillMaxWidth().background(Palette.nav).padding(horizontal = 8.dp, vertical = 6.dp),
+) {
+    Tab.entries.forEach { t ->
+        val selected = t == current
+        Box(
+            Modifier.weight(1f).height(68.dp).clip(RoundedCornerShape(20.dp))
+                .clickable(role = Role.Tab) { onSelect(t) }
+                .semantics { contentDescription = t.label; this.selected = selected },
+            contentAlignment = Alignment.Center,
+        ) { Icon(t.icon, null, tint = if (selected) LocalAccent.current else Palette.muted, modifier = Modifier.size(24.dp)) }
+    }
+}
+
+@Composable
+private fun Toast(text: String, modifier: Modifier) = Text(
+    text, color = Color(0xFF111111), fontSize = 14.sp,
+    modifier = modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFFE8E8EA)).padding(horizontal = 16.dp, vertical = 12.dp),
+)

@@ -5,12 +5,13 @@
 
     <application
         android:label="@string/app_name"
-        android:theme="@android:style/Theme.DeviceDefault.DayNight">
+        android:theme="@android:style/Theme.Material.NoActionBar">
 
-        <!-- The one screen: calendar access, sync status, Sync now. -->
+        <!-- Setup, then Today, Calendars, Watchface and Settings (RULES §12). -->
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
