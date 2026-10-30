@@ -79,14 +79,14 @@
 
   /* ---------- Bottom navigation (Material 3 style) ---------- */
   .nav {
-    flex-shrink: 0; display: grid; grid-template-columns: repeat(4, 1fr); padding: 12px 8px 8px;   /* icons only; names are for screen readers */
+    flex-shrink: 0; display: grid; grid-template-columns: repeat(4, 1fr); padding: 6px 8px;   /* icons only; names are for screen readers */
     background: #121316; border-top: 1px solid #1c1d21;
   }
-  .nav button { background: none; border: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0; font-size: 12px; color: var(--muted); }
-  .nav .pill { width: 60px; height: 30px; border-radius: 15px; display: grid; place-items: center; transition: background var(--d) var(--ease); }
+  .nav button { background: none; border: 0; display: flex; align-items: center; justify-content: center; height: 68px; padding: 0; color: var(--muted); }   /* whole cell is the tap area */
+  .nav .pill { width: 68px; height: 40px; border-radius: 20px; display: grid; place-items: center; transition: background var(--d) var(--ease); }
   .nav button[aria-current=page] { color: var(--text); font-weight: 500; }
   .nav button[aria-current=page] .pill { background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--accent); }
-  .nav svg { width: 22px; height: 22px; }
+  .nav svg { width: 24px; height: 24px; }
 
   /* ---------- Shared pieces ---------- */
   .title { font: 28px/1.15 Anta, sans-serif; margin: 14px 0 4px; letter-spacing: .3px; }
