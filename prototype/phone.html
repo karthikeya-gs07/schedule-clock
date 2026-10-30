@@ -406,7 +406,7 @@ function lookScreen() {
     return `<button class="look" role="radio" aria-checked="${sel}" data-look="${l.id}">${face(l.id, { size: 136 })}<span class="name">${l.name}${sel ? icon('check', 18) : ''}</span></button>`;
   };
   const disabled = state.watch !== 'connected' || state.face === 'off';
-  return `<h2 class="title">Watchface</h2><p class="sub">${disabled ? 'Connect your watch with the watch face on it to change its colours.' : 'Pick a colourway. Your watch changes straight away.'}</p>
+  return `<h2 class="title">Watchface</h2>${disabled ? '<p class="sub">Connect your watch with the watch face on it to change its colours.</p>' : '<div class="top-gap"></div>'}
     <div class="looks" role="radiogroup" aria-label="Colourway" ${disabled ? 'style="opacity:.45;pointer-events:none"' : ''}>${LOOKS.filter(l => l.id === 'timeshift').map(card).join('')}${LOOKS.filter(l => l.id !== 'timeshift').map(card).join('')}</div>
     <p class="sub" style="margin-top:16px">You can also change it on the watch: touch and hold the watch face, then tap Customize.</p>`;
 }
