@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calen-Time Phone App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anta&family=Roboto:wght@400;500;600&display=block" rel="stylesheet">
+<style>
+  /* Phone companion app, design prototype (PRD §6.5). Same dark language as the watch prototype; the
+     accent follows the colourway picked on the Look screen. */
+  :root {
+    --bg: #0e0f11;          /* page behind the phone */
+    --screen: #0b0b0d;      /* app background */
+    --surface: #17181b;     /* cards */
+    --surface-2: #202125;   /* raised rows, inputs */
+    --line: #2a2c31;
+    --text: #f2f2f2;
+    --muted: #8e8e93;
+    --faint: #5c5e64;
+    --accent: #ffb547;      /* overwritten by the colourway */
+    --on-accent: #1a1206;
+    --danger: #ff7a59;
+    --ok: #5fd4a0;
+    --r-card: 20px;
+    --r-row: 14px;
+    --ease: cubic-bezier(.4, 0, .2, 1);
+    --d: 220ms;
+  }
+  @media (prefers-reduced-motion: reduce) { :root { --d: 1ms; } }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.45 Roboto, system-ui, sans-serif;
+    padding: 28px 16px 48px; min-height: 100vh;
+  }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  .layout { display: flex; flex-wrap: wrap; gap: 40px; justify-content: center; align-items: flex-start; }
+
+  /* ---------- Prototype controls (not part of the app) ---------- */
+  .controls { width: 300px; max-width: 100%; display: flex; flex-direction: column; gap: 18px; }
+  .controls h1 { font: 26px Anta, sans-serif; margin: 0; letter-spacing: .5px; }
+  .controls p { margin: 0; color: var(--muted); font-size: 13px; }
+  .group { display: flex; flex-direction: column; gap: 8px; }
+  .group-title { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .seg { display: flex; flex-wrap: wrap; gap: 6px; }
+  .seg button {
+    border: 1px solid var(--line); background: #17181b; border-radius: 8px; padding: 6px 10px; font-size: 13px;
+  }
+  .seg button[aria-pressed=true] { border-color: var(--accent); color: var(--accent); }
+
+  /* ---------- Phone frame ---------- */
+  .phone {
+    width: 390px; height: 844px; max-width: 100%; border-radius: 46px; padding: 10px;
+    background: #050506; box-shadow: inset 0 0 0 1px #1d1e22, 0 30px 80px rgba(0,0,0,.5);
+    flex-shrink: 0;
+  }
+  @media (max-width: 440px) {
+    body { padding: 0; }
+    .layout { gap: 24px; }
+    .phone { width: 100%; height: 100dvh; border-radius: 0; padding: 0; box-shadow: none; }
+    .controls { padding: 0 16px 32px; }
+  }
+  .screen {
+    position: relative; width: 100%; height: 100%; border-radius: 38px; overflow: hidden;
+    background: var(--screen); display: flex; flex-direction: column;
+  }
+  @media (max-width: 440px) { .screen { border-radius: 0; } }
+  .statusbar {
+    height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 26px; font-size: 14px; font-weight: 500;
+  }
+  .statusbar .icons { display: flex; gap: 6px; align-items: center; }
+  .content { flex: 1; overflow-y: auto; padding: 4px 20px 24px; scrollbar-width: none; }
+  .content::-webkit-scrollbar { display: none; }
+  .gesture { height: 22px; flex-shrink: 0; display: flex; justify-content: center; align-items: center; }
+  .gesture i { width: 110px; height: 4px; border-radius: 2px; background: #4a4b50; }
+
+  /* ---------- Bottom navigation (Material 3 style) ---------- */
+  .nav {
+    flex-shrink: 0; display: grid; grid-template-columns: repeat(4, 1fr); padding: 10px 8px 4px;
+    background: #121316; border-top: 1px solid #1c1d21;
+  }
+  .nav button { background: none; border: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0; font-size: 12px; color: var(--muted); }
+  .nav .pill { width: 60px; height: 30px; border-radius: 15px; display: grid; place-items: center; transition: background var(--d) var(--ease); }
+  .nav button[aria-current=page] { color: var(--text); font-weight: 500; }
+  .nav button[aria-current=page] .pill { background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--accent); }
+  .nav svg { width: 22px; height: 22px; }
+
+  /* ---------- Shared pieces ---------- */
+  .title { font: 28px/1.15 Anta, sans-serif; margin: 14px 0 4px; letter-spacing: .3px; }
+  .sub { color: var(--muted); margin: 0 0 18px; font-size: 14px; }
+  .card { background: var(--surface); border-radius: var(--r-card); padding: 18px; margin-bottom: 14px; }
+  .section { font-size: 13px; color: var(--muted); margin: 22px 4px 10px; display: flex; justify-content: space-between; align-items: baseline; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 48px; padding: 0 22px;
+    border-radius: 24px; border: 0; background: var(--accent); color: var(--on-accent); font-weight: 600; font-size: 15px;
+    transition: opacity var(--d) var(--ease), background var(--d) var(--ease);
+  }
+  .btn.block { width: 100%; }
+  .btn.tonal { background: var(--surface-2); color: var(--text); }
+  .btn.text { background: none; color: var(--accent); padding: 0 8px; height: 40px; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .btn:focus-visible, .nav button:focus-visible, .row:focus-visible, .look:focus-visible, .seg button:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+  .spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+
+  /* Rows with a switch */
+  .rows { background: var(--surface); border-radius: var(--r-card); overflow: hidden; margin-bottom: 14px; }
+  .row { display: flex; align-items: center; gap: 14px; padding: 14px 18px; min-height: 60px; width: 100%; background: none; border: 0; text-align: left; }
+  .row + .row { border-top: 1px solid #222327; }
+  .row .grow { flex: 1; min-width: 0; }
+  .row .label { display: block; }
+  .row .hint { display: block; color: var(--muted); font-size: 13px; }
+  .switch { width: 52px; height: 32px; border-radius: 16px; background: #34353a; position: relative; flex-shrink: 0; transition: background var(--d) var(--ease); }
+  .switch::after { content: ""; position: absolute; top: 8px; left: 8px; width: 16px; height: 16px; border-radius: 50%; background: #8e8e93; transition: all var(--d) var(--ease); }
+  .switch.on { background: var(--accent); }
+  .switch.on::after { left: 24px; top: 4px; width: 24px; height: 24px; background: var(--on-accent); }
+  .row[aria-disabled=true] { opacity: .45; }
+
+  /* Home */
+  .watch-card { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 22px 18px 18px; }
+  .watch-card .face { width: 196px; height: 196px; margin-bottom: 14px; }
+  .status-line { display: flex; align-items: center; gap: 8px; justify-content: center; font-weight: 500; }
+  .meta { color: var(--muted); font-size: 13px; margin: 2px 0 16px; }
+  .banner { display: flex; gap: 12px; align-items: flex-start; background: color-mix(in srgb, var(--danger) 12%, var(--surface)); border-radius: var(--r-card); padding: 16px 18px; margin-bottom: 14px; }
+  .banner.info { background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+  .banner b { display: block; margin-bottom: 2px; }
+  .banner p { margin: 0 0 10px; color: #c9c9ce; font-size: 14px; }
+  .banner svg { flex-shrink: 0; margin-top: 2px; }
+  .meeting { display: grid; grid-template-columns: 62px 1fr; gap: 12px; padding: 12px 18px; align-items: start; }
+  .meeting + .meeting { border-top: 1px solid #222327; }
+  .meeting time { font-size: 13px; color: var(--muted); padding-top: 1px; font-variant-numeric: tabular-nums; }
+  .meeting .t { display: flex; align-items: center; gap: 8px; }
+  .meeting .w { color: var(--muted); font-size: 13px; margin-left: 16px; }
+  .meeting.now time { color: var(--accent); }
+  .tag { font-size: 11px; padding: 1px 7px; border-radius: 8px; background: var(--surface-2); color: var(--muted); margin-left: 6px; }
+  .tag.clash { color: #ff9d82; background: rgba(255,122,89,.14); }
+  .empty { text-align: center; color: var(--muted); padding: 26px 18px; font-size: 14px; }
+
+  /* Calendars */
+  .account { display: flex; align-items: center; gap: 12px; margin: 22px 4px 10px; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 600; font-size: 13px; color: #111; }
+  .account .who { font-size: 13px; color: var(--muted); line-height: 1.3; }
+  .account .who b { color: var(--text); font-weight: 500; display: block; font-size: 14px; }
+  details.help { background: var(--surface); border-radius: var(--r-card); padding: 0 18px; margin: 18px 0 14px; }
+  details.help summary { list-style: none; padding: 16px 0; cursor: pointer; display: flex; justify-content: space-between; font-weight: 500; }
+  details.help summary::-webkit-details-marker { display: none; }
+  details.help[open] summary svg { transform: rotate(180deg); }
+  details.help ol { margin: 0; padding: 0 0 16px 20px; color: #c9c9ce; font-size: 14px; }
+  details.help li + li { margin-top: 6px; }
+
+  /* Look */
+  .looks { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .look {
+    background: var(--surface); border: 2px solid transparent; border-radius: var(--r-card); padding: 14px 10px 12px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px; transition: border-color var(--d) var(--ease);
+  }
+  .look > svg { width: 128px; height: 128px; flex-shrink: 0; }
+  .look.wide > svg { width: 112px; height: 112px; }
+  .look .name svg { color: var(--accent); }
+  .look .name { font-weight: 500; display: flex; align-items: center; gap: 6px; }
+  .look[aria-checked=true] { border-color: var(--accent); }
+  .look.wide { grid-column: span 2; flex-direction: row; gap: 14px; padding: 14px; text-align: left; }
+  .look.wide .copy { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+  .look.wide .copy span { color: var(--muted); font-size: 13px; }
+
+  /* Toast */
+  .toast {
+    position: absolute; left: 50%; bottom: 96px; transform: translate(-50%, 16px); opacity: 0; pointer-events: none;
+    background: #e8e8ea; color: #111; border-radius: 12px; padding: 12px 16px; font-size: 14px; white-space: nowrap;
+    transition: all var(--d) var(--ease);
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* System permission dialog */
+  .scrim { position: absolute; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: flex-end; padding: 16px; }
+  .scrim.show { display: flex; }
+  .dialog { width: 100%; background: #2b2c30; border-radius: 28px; padding: 24px; text-align: center; }
+  .dialog .ico { width: 40px; height: 40px; margin: 0 auto 12px; color: #aecbfa; }
+  .dialog h3 { margin: 0 0 20px; font-weight: 400; font-size: 18px; line-height: 1.35; }
+  .dialog button { display: block; width: 100%; height: 48px; border-radius: 24px; border: 0; margin-top: 8px; background: #3a3b40; color: #e8e8ea; font-weight: 500; }
+
+  /* Setup */
+  .setup { display: flex; flex-direction: column; min-height: 100%; }
+  .setup .grow { flex: 1; }
+  .steps { display: flex; gap: 6px; margin: 10px 0 6px; }
+  .steps i { height: 4px; flex: 1; border-radius: 2px; background: #2a2c31; }
+  .steps i.done { background: var(--accent); }
+  .hero { display: grid; place-items: center; margin: 22px 0 6px; }
+  .hero svg { width: 230px; height: 230px; }
+  .bullets { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+  .bullets li { display: flex; gap: 12px; color: #c9c9ce; font-size: 14px; }
+  .bullets svg { flex-shrink: 0; color: var(--accent); margin-top: 1px; }
+  .progress { height: 6px; border-radius: 3px; background: #2a2c31; overflow: hidden; margin: 14px 0 8px; }
+  .progress i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 1.6s var(--ease); }
+  .mini-watch { width: 150px; height: 150px; border-radius: 50%; background: #000; box-shadow: 0 0 0 8px #1b1c20; margin: 26px auto 10px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 10px; padding: 18px; font-size: 12px; }
+  .mini-watch .ok { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; }
+  .footer-actions { display: flex; flex-direction: column; gap: 8px; padding-top: 18px; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="phone"><div class="screen" id="screen">
+    <div class="statusbar"><span>10:13</span>
+      <span class="icons" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21 1 8.5a17 17 0 0 1 22 0z"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2z"/></svg>
+        <svg width="20" height="16" viewBox="0 0 28 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="1" y="2" width="22" height="12" rx="3"/><rect x="3.5" y="4.5" width="14" height="7" rx="1.5" fill="currentColor" stroke="none"/><path d="M25.5 6v4"/></svg>
+      </span>
+    </div>
+    <main class="content" id="content"></main>
+    <nav class="nav" id="nav" aria-label="Main"></nav>
+    <div class="gesture" aria-hidden="true"><i></i></div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="scrim" id="scrim">
+      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+        <svg class="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 16H5V9h14z"/></svg>
+        <h3 id="dlgTitle">Allow <b>Calen-Time</b> to access your calendar?</h3>
+        <button data-perm="allow">Allow</button>
+        <button data-perm="deny">Don't allow</button>
+      </div>
+    </div>
+  </div></div>
+
+  <aside class="controls">
+    <div>
+      <h1>Calen-Time phone app</h1>
+      <p>Design prototype. Tap through the app on the left; use these switches to see each state.</p>
+    </div>
+    <div class="group"><span class="group-title">Start</span>
+      <div class="seg"><button data-act="setup">Show first-run setup</button><button data-act="app">Skip to the app</button></div></div>
+    <div class="group"><span class="group-title">Watch</span>
+      <div class="seg" data-state="watch">
+        <button data-v="connected">Connected</button><button data-v="away">Not connected</button><button data-v="old">Wear OS 5</button></div></div>
+    <div class="group"><span class="group-title">Watch face</span>
+      <div class="seg" data-state="face"><button data-v="on">On the watch</button><button data-v="off">Not installed</button></div></div>
+    <div class="group"><span class="group-title">Calendar access</span>
+      <div class="seg" data-state="perm"><button data-v="on">Allowed</button><button data-v="off">Off</button></div></div>
+    <div class="group"><span class="group-title">Today</span>
+      <div class="seg" data-state="day"><button data-v="busy">Meetings</button><button data-v="empty">No meetings</button></div></div>
+    <p>Screens: setup (5 steps), Home, Calendars, Look and Settings. The watch previews use the sample day at 10:13 AM.</p>
+  </aside>
+</div>
+
+<script>
+/* ---------- Data ---------- */
+const NOW = 10 * 60 + 13;
+const CALS = [
+  { id: 'work', account: 'Outlook', who: 'karthik@company.com', avatar: '#4f8ff7', initial: 'O',
+    items: [{ id: 'work', name: 'Calendar', hint: 'Work meetings, including Teams', color: '#4f8ff7', on: true }] },
+  { id: 'google', account: 'Google', who: 'karthikeya0798@gmail.com', avatar: '#5fd4a0', initial: 'G',
+    items: [
+      { id: 'personal', name: 'Personal', color: '#5fd4a0', on: true },
+      { id: 'holidays', name: 'Holidays in India', hint: 'All-day events aren’t drawn on the ring', color: '#9aa0a6', on: false },
+    ] },
+  { id: 'samsung', account: 'Samsung', who: 'This phone', avatar: '#b48cff', initial: 'S',
+    items: [
+      { id: 'samsung', name: 'My calendar', color: '#b48cff', on: true },
+      { id: 'birthdays', name: 'Birthdays', color: '#ff7a9c', on: false },
+    ] },
+];
+// s/e in minutes from midnight. cal = calendar id; private meetings reach the watch without title or place.
+const MEETINGS = [
+  { s: 540, e: 570, title: 'Standup', where: 'Google Meet', cal: 'work' },
+  { s: 645, e: 705, title: 'Roadmap planning', where: 'Atlas room', cal: 'work' },
+  { s: 750, e: 810, title: 'Lunch with Priya', where: '', cal: 'personal', priv: true },
+  { s: 840, e: 885, title: 'Candidate interview', where: 'Teams', cal: 'work' },
+  { s: 855, e: 885, title: 'Recruiter sync', where: 'Teams', cal: 'work' },
+  { s: 960, e: 1020, title: 'Design review', where: 'Figma', cal: 'work' },
+  { s: 1080, e: 1110, title: 'Gym', where: 'Cult, Indiranagar', cal: 'samsung' },
+  { s: 1140, e: 1200, title: 'Client call', where: 'Zoom', cal: 'work' },
+];
+// Watch colourways (RULES §9): ring, later lane. Time-Shift draws each minute in the colour of the light.
+const LOOKS = [
+  { id: 'amber', name: 'Amber', ring: '#ffb547', lane: '#8fa3d6' },
+  { id: 'mint', name: 'Mint', ring: '#5fd4a0', lane: '#8fb4d6' },
+  { id: 'violet', name: 'Violet', ring: '#b48cff', lane: '#7fd3e0' },
+  { id: 'rose', name: 'Rose', ring: '#ff7a9c', lane: '#ffc27a' },
+  { id: 'timeshift', name: 'Time-Shift', ring: null, lane: '#8fa3d6' },
+];
+// Day colours for central India, Oct 27 (sunrise 6:14, noon 11:59, sunset 5:43), from the watch's S3 stops.
+const SUN = [[0,'#4a3ccf'],[180,'#2f72cf'],[294,'#3a9ad0'],[334,'#8f7ad8'],[362,'#e88ab2'],[389,'#ffa86b'],[444,'#ffcc5c'],
+  [554,'#fff06a'],[719,'#fff6cc'],[824,'#ffe08a'],[913,'#ffbb4d'],[983,'#ff983c'],[1033,'#ff7438'],[1063,'#ff5257'],
+  [1083,'#ec4f92'],[1108,'#a957dc'],[1143,'#6c5ae8'],[1260,'#3f66e6'],[1440,'#4a3ccf']];
+
+const state = {
+  screen: 'setup', step: 0, tab: 'home',
+  watch: 'connected', face: 'on', perm: 'on', day: 'busy',
+  look: 'amber', synced: 2, syncing: false, installing: 0,
+  buzz: { start: true, middle: true, end: true, dnd: true },
+};
+
+/* ---------- Colour helpers ---------- */
+const hex2rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const rgb2hex = c => '#' + c.map(v => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join('');
+const mix = (a, b, f) => rgb2hex(hex2rgb(a).map((v, i) => v + (hex2rgb(b)[i] - v) * f));
+const dark = (h, pct) => mix('#000000', h, pct);   // R6a: arcs solid but darker
+function sunAt(m) {
+  m = ((m % 1440) + 1440) % 1440;
+  let i = 1; while (i < SUN.length - 1 && SUN[i][0] < m) i++;
+  const [m0, a] = SUN[i - 1], [m1, b] = SUN[i];
+  return mix(a, b, (m - m0) / (m1 - m0));
+}
+const lookOf = id => LOOKS.find(l => l.id === id);
+const accentOf = id => lookOf(id).ring || sunAt(NOW);
+
+/* ---------- Watch face preview (SVG) ---------- */
+const enabledCals = () => new Set(CALS.flatMap(a => a.items).filter(c => c.on).map(c => c.id));
+const todays = () => state.day === 'empty' || state.perm === 'off' ? [] : MEETINGS.filter(m => enabledCals().has(m.cal));
+const fmt = m => { const h = Math.floor(m / 60) % 24, mm = String(m % 60).padStart(2, '0'); return `${(h + 11) % 12 + 1}:${mm}`; };
+const ampm = m => (Math.floor(m / 60) % 24) < 12 ? 'AM' : 'PM';
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function face(lookId, { size = 200, details = true } = {}) {
+  const L = lookOf(lookId), C = 100, R = 84, W = 10;
+  const ang = m => ((m % 720) / 720) * 2 * Math.PI - Math.PI / 2;
+  const pt = (m, r) => [C + r * Math.cos(ang(m)), C + r * Math.sin(ang(m))];
+  const arc = (a, b, r) => {
+    const [x0, y0] = pt(a, r), [x1, y1] = pt(b, r);
+    return `M${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 ${b - a > 360 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+  };
+  const colorAt = m => L.ring || sunAt(m);
+  const seg = (a, b, r, w, col) => {
+    if (L.ring || !col.sun) return `<path d="${arc(a, b, r)}" stroke="${col.c}" stroke-width="${w}" fill="none"/>`;
+    let out = ''; for (let m = a; m < b; m += 5) out += `<path d="${arc(m, Math.min(b, m + 5.6), r)}" stroke="${dark(colorAt(m), col.f)}" stroke-width="${w}" fill="none"/>`;
+    return out;
+  };
+  let g = `<circle cx="${C}" cy="${C}" r="${R}" stroke="#1c1c1f" stroke-width="${W}" fill="none"/>`;
+  for (let h = 0; h < 12; h++) {
+    const [x0, y0] = pt(h * 60, R + 9), [x1, y1] = pt(h * 60, R + 13);
+    g += `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="#55565c" stroke-width="1.4"/>`;
+  }
+  const list = todays();
+  const winEnd = NOW + 720 - 30;   // W8: a meeting joins the ring 30 min after the dot passes its slot
+  list.forEach((m, i) => {
+    if (m.e <= NOW) return;
+    const clash = list.some((o, j) => j !== i && o.s < m.e && m.s < o.e);
+    if (m.e > winEnd) {
+      g += `<path d="${arc(m.s, Math.min(m.e, NOW + 720), R - W / 2 - 4)}" stroke="${L.lane}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+      return;
+    }
+    const s = Math.max(m.s, NOW);
+    if (m.s < NOW) g += seg(m.s, NOW, R, W, { c: dark(L.ring || '#888888', .45), sun: true, f: .3 });
+    if (m.priv) {
+      g += `<path d="${arc(s, m.e, R)}" stroke="#2a2a2e" stroke-width="${W}" fill="none"/>`;
+      g += `<path d="${arc(s, m.e, R)}" stroke="#8e8e93" stroke-width="${W}" fill="none" stroke-dasharray="2 3"/>`;
+    } else if (clash) {
+      g += `<path d="${arc(s, m.e, R)}" stroke="#3f1f17" stroke-width="${W}" fill="none"/>`;
+      g += `<path d="${arc(s, m.e, R + 3)}" stroke="#ff7a59" stroke-width="3" fill="none"/><path d="${arc(s, m.e, R - 3)}" stroke="#ff7a59" stroke-width="3" fill="none"/>`;
+    } else {
+      g += seg(s, m.e, R, W, { c: dark(L.ring || '#888888', .6), sun: true, f: .6 });
+    }
+  });
+  const [nx, ny] = pt(NOW, R);
+  g += `<circle cx="${nx}" cy="${ny}" r="7" fill="#fff" fill-opacity=".18"/><circle cx="${nx}" cy="${ny}" r="4.7" fill="#000"/><circle cx="${nx}" cy="${ny}" r="3.2" fill="#fff"/>`;
+  const next = list.find(m => m.s > NOW);
+  const accent = accentOf(lookId);
+  g += `<text x="${C}" y="${details ? 70 : 82}" text-anchor="middle" fill="#8e8e93" font-family="Anta" font-size="9" letter-spacing=".5">TUE · OCT 27</text>`;
+  g += `<text x="${C}" y="${details ? 104 : 120}" text-anchor="middle" fill="#f2f2f2" font-family="Anta" font-size="${details ? 34 : 40}">10:13</text>`;
+  if (details && next) {
+    g += `<line x1="72" y1="116" x2="128" y2="116" stroke="#2a2c31"/>`;
+    g += `<text x="${C}" y="132" text-anchor="middle" fill="#f2f2f2" font-family="Roboto" font-size="10" font-weight="500">${esc(next.priv ? 'Private' : next.title)}</text>`;
+    g += `<text x="${C}" y="145" text-anchor="middle" fill="${accent}" font-family="Roboto" font-size="9">${fmt(next.s)} – ${fmt(next.e)} ${ampm(next.e)}</text>`;
+  }
+  return `<svg viewBox="0 0 200 200" width="${size}" height="${size}" role="img" aria-label="${L.name} watch face preview"><circle cx="100" cy="100" r="100" fill="#000"/>${g}</svg>`;
+}
+
+/* ---------- Icons ---------- */
+const I = {
+  home: '<path d="M12 3 3 10v11h6v-6h6v6h6V10z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
+  cal: '<rect x="3.5" y="5" width="17" height="15.5" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+  look: '<circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/>',
+  gear: '<circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.8v2.6M12 18.6v2.6M21.2 12h-2.6M5.4 12H2.8M18.5 5.5l-1.8 1.8M7.3 16.7l-1.8 1.8M18.5 18.5l-1.8-1.8M7.3 7.3 5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+  sync: '<path d="M20 12a8 8 0 0 1-14.3 4.9M4 12A8 8 0 0 1 18.3 7.1M18.5 3v4.3h-4.3M5.5 21v-4.3h4.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+  warn: '<path d="M12 3 2 20h20zM12 10v4.5M12 17.2v.1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
+  lock: '<rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="currentColor" stroke-width="1.8"/>',
+  buzz: '<rect x="8" y="4" width="8" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 9v6M19.5 9v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+  watch: '<circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 6.5 9.6 3h4.8l.6 3.5M9 17.5l.6 3.5h4.8l.6-3.5M12 9.5V12l1.6 1.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>',
+  chev: '<path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+};
+const icon = (k, s = 22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true">${I[k]}</svg>`;
+const sw = on => `<span class="switch${on ? ' on' : ''}" aria-hidden="true"></span>`;
+
+/* ---------- Screens ---------- */
+function homeScreen() {
+  const watchOk = state.watch === 'connected';
+  let banners = '';
+  if (state.perm === 'off') banners += banner('warn', 'Calendar access is off', 'Calen-Time can’t see your meetings, so the watch shows an empty day.', 'Allow access', 'perm');
+  if (state.watch === 'old') banners += banner('warn', 'This watch needs an update', 'Calen-Time needs Wear OS 6 or newer. Check for a watch update in Galaxy Wearable.', null);
+  else if (watchOk && state.face === 'off') banners += banner('info', 'Watch face isn’t on your watch', 'Install it, then confirm on the watch to make it your watch face.', 'Install on watch', 'install');
+
+  const syncLabel = state.syncing ? '<span class="spinner"></span>Syncing…' : `${icon('sync', 18)}Sync now`;
+  const meta = !watchOk ? 'Meetings will sync when the watch is back'
+    : state.synced === 0 ? 'Synced just now' : `Synced ${state.synced} min ago · updates every 15 min`;
+  const statusDot = watchOk ? 'var(--ok)' : 'var(--faint)';
+  const statusText = state.watch === 'away' ? 'Galaxy Watch8 · Not connected' : 'Galaxy Watch8 · Connected';
+
+  const list = todays().filter(m => m.e > NOW);
+  const rows = list.length ? list.map(m => {
+    const live = m.s <= NOW && m.e > NOW;
+    const clash = list.some(o => o !== m && o.s < m.e && m.s < o.e);
+    const cal = CALS.flatMap(a => a.items).find(c => c.id === m.cal);
+    return `<div class="meeting${live ? ' now' : ''}"><time>${fmt(m.s)} ${ampm(m.s)}</time><div>
+      <div class="t"><span class="dot" style="background:${cal.color}"></span>${esc(m.title)}${m.priv ? `<span class="tag">Private</span>` : ''}${clash ? '<span class="tag clash">Clash</span>' : ''}</div>
+      <div class="w">${m.priv ? 'Shown as “Private” on the watch' : esc(m.where || '')}</div></div></div>`;
+  }).join('') : `<div class="empty">${state.perm === 'off' ? 'Allow calendar access to see your meetings here.' : 'Nothing else today. The watch shows a clear day.'}</div>`;
+
+  return `<h2 class="title">Today</h2><p class="sub">Tuesday, October 27</p>${banners}
+    <section class="card watch-card" aria-label="Your watch">
+      <div class="face">${face(state.look, { size: 196 })}</div>
+      <div class="status-line"><span class="dot" style="background:${statusDot}"></span>${statusText}</div>
+      <div class="meta">${meta}</div>
+      <button class="btn tonal" data-act="sync" ${!watchOk || state.syncing ? 'disabled' : ''}>${syncLabel}</button>
+    </section>
+    <div class="section"><span>Coming up on your watch</span><span>${list.length ? list.length + ' meetings' : ''}</span></div>
+    <section class="rows">${rows}</section>`;
+}
+function banner(kind, title, text, action, act) {
+  return `<div class="banner ${kind === 'info' ? 'info' : ''}" style="color:var(--text)"><span style="color:${kind === 'info' ? 'var(--accent)' : 'var(--danger)'}">${icon(kind === 'info' ? 'watch' : 'warn')}</span>
+    <div><b>${title}</b><p>${text}</p>${action ? `<button class="btn" style="height:40px;padding:0 18px;font-size:14px" data-act="${act}">${action}</button>` : ''}</div></div>`;
+}
+
+function calendarsScreen(compact) {
+  const total = CALS.flatMap(a => a.items).filter(c => c.on).length;
+  const groups = CALS.map(a => `
+    <div class="account"><span class="avatar" style="background:${a.avatar}">${a.initial}</span><span class="who"><b>${a.account}</b>${esc(a.who)}</span></div>
+    <div class="rows">${a.items.map(c => `
+      <button class="row" role="switch" aria-checked="${c.on}" data-cal="${c.id}" ${state.perm === 'off' ? 'aria-disabled="true" disabled' : ''}>
+        <span class="dot" style="background:${c.color};width:12px;height:12px"></span>
+        <span class="grow"><span class="label">${esc(c.name)}</span>${c.hint ? `<span class="hint">${c.hint}</span>` : ''}</span>${sw(c.on)}
+      </button>`).join('')}</div>`).join('');
+  const off = state.perm === 'off' ? banner('warn', 'Calendar access is off', 'Allow access to choose which calendars go to your watch.', 'Allow access', 'perm') : '';
+  return `${compact ? '' : `<h2 class="title">Calendars</h2><p class="sub">${total} of ${CALS.flatMap(a => a.items).length} calendars go to your watch. Only today’s and tomorrow’s meetings are sent.</p>`}${off}${groups}
+    <details class="help"><summary>Don’t see your work or Teams calendar? ${icon('chev', 20)}</summary>
+      <ol><li>Open the <b>Outlook</b> app and tap your profile picture.</li><li>Tap <b>Settings</b>, then your work account.</li>
+      <li>Turn on <b>Sync calendars</b>.</li><li>Come back here. It shows up under Outlook within a minute.</li></ol></details>
+    ${compact ? '' : `<p class="sub" style="display:flex;gap:8px">${icon('lock', 18)}<span>Private events reach the watch as “Private”, without their title or place. Your calendar is only ever sent to your watch.</span></p>`}`;
+}
+
+function lookScreen() {
+  const card = l => {
+    const sel = state.look === l.id;
+    if (l.id === 'timeshift') return `<button class="look wide" role="radio" aria-checked="${sel}" data-look="${l.id}">${face(l.id, { size: 112, details: false })}
+      <span class="copy"><b class="name">${l.name}${sel ? icon('check', 18) : ''}</b><span>The ring takes the colour of the light at each hour: dawn rose, noon gold, sunset coral, night indigo.</span><span>Sunrise 6:14 · sunset 5:43 (from your time zone)</span></span></button>`;
+    return `<button class="look" role="radio" aria-checked="${sel}" data-look="${l.id}">${face(l.id, { size: 128, details: false })}<span class="name">${l.name}${sel ? icon('check', 18) : ''}</span></button>`;
+  };
+  const disabled = state.watch !== 'connected' || state.face === 'off';
+  return `<h2 class="title">Look</h2><p class="sub">${disabled ? 'Connect your watch with the watch face on it to change its colours.' : 'Pick a colourway. Your watch changes straight away.'}</p>
+    <div class="looks" role="radiogroup" aria-label="Colourway" ${disabled ? 'style="opacity:.45;pointer-events:none"' : ''}>${LOOKS.filter(l => l.id === 'timeshift').map(card).join('')}${LOOKS.filter(l => l.id !== 'timeshift').map(card).join('')}</div>
+    <p class="sub" style="margin-top:16px">You can also change it on the watch: touch and hold the watch face, then tap Customize.</p>`;
+}
+
+function settingsScreen() {
+  const b = state.buzz, on = b.start || b.middle || b.end;
+  const row = (k, label, hint) => `<button class="row" role="switch" aria-checked="${b[k]}" data-buzz="${k}"><span class="grow"><span class="label">${label}</span><span class="hint">${hint}</span></span>${sw(b[k])}</button>`;
+  return `<h2 class="title">Settings</h2><p class="sub">Calen-Time 1.0</p>
+    <div class="section"><span style="display:flex;gap:8px;align-items:center">${icon('buzz', 18)}Meeting buzzes</span></div>
+    <div class="rows">
+      ${row('start', '2 min before it starts', 'One short buzz')}
+      ${row('middle', 'Halfway through', 'One long buzz · meetings of 15 min or more')}
+      ${row('end', '5 min before it ends', 'Two short buzzes · meetings of 10 min or more')}
+      <button class="row" role="switch" aria-checked="${b.dnd}" data-buzz="dnd" ${on ? '' : 'aria-disabled="true" disabled'}><span class="grow"><span class="label">Buzz in Do Not Disturb</span><span class="hint">Buzzes still come through when your watch is silenced</span></span>${sw(b.dnd)}</button>
+    </div>
+    <div class="section"><span>Sync</span></div>
+    <div class="rows">
+      <div class="row"><span class="grow"><span class="label">Automatic</span><span class="hint">Every 15 minutes, and as soon as a meeting changes</span></span></div>
+      <div class="row"><span class="grow"><span class="label">What’s sent</span><span class="hint">Yesterday to tomorrow, from the calendars you picked. Private events go without title or place.</span></span></div>
+    </div>
+    <div class="section"><span>About</span></div>
+    <div class="rows">
+      <button class="row" data-act="setup"><span class="grow"><span class="label">Run setup again</span></span></button>
+      <button class="row" data-act="noop"><span class="grow"><span class="label">Privacy policy</span><span class="hint">Your calendar stays on your phone and watch</span></span></button>
+    </div>`;
+}
+
+/* ---------- Setup (first run) ---------- */
+const STEPS = 5;
+function setupScreen() {
+  const s = state.step, bar = `<div class="steps" aria-label="Step ${s + 1} of ${STEPS}">${Array.from({ length: STEPS }, (_, i) => `<i class="${i <= s ? 'done' : ''}"></i>`).join('')}</div>`;
+  const bullet = (k, t) => `<li>${icon(k, 20)}<span>${t}</span></li>`;
+  let body = '', actions = '';
+  if (s === 0) {
+    body = `<div class="hero">${face(state.look, { size: 230 })}</div>
+      <h2 class="title">Your day, around the clock</h2>
+      <p class="sub">Calen-Time draws your meetings as arcs on your watch, so you see how busy the next 12 hours are at a glance.</p>
+      <ul class="bullets">${bullet('cal', 'Reads the calendars you choose on this phone')}${bullet('watch', 'Installs the watch face on your Galaxy Watch')}${bullet('buzz', 'Buzzes before, during and near the end of each meeting')}</ul>`;
+    actions = `<button class="btn block" data-act="next">Get started</button>`;
+  } else if (s === 1) {
+    const denied = state.perm === 'off' && state.asked;
+    body = `<h2 class="title">Allow calendar access</h2>
+      <p class="sub">Calen-Time reads today’s and tomorrow’s meetings so it can send them to your watch.</p>
+      <ul class="bullets">${bullet('lock', 'Only sent to your own watch, never to a server')}${bullet('lock', 'Private events go without their title or place')}${bullet('cal', 'You choose which calendars on the next step')}</ul>
+      ${denied ? banner('warn', 'Access is off', 'Without it the watch shows an empty day. You can allow it in Android settings later.', null) : ''}`;
+    actions = state.perm === 'on' && state.asked ? `<button class="btn block" data-act="next">Continue</button>`
+      : `<button class="btn block" data-act="perm">Allow access</button>${denied ? '<button class="btn text" data-act="next">Skip for now</button>' : ''}`;
+  } else if (s === 2) {
+    body = `<h2 class="title">Choose calendars</h2><p class="sub">Turn on the ones you want on your watch. You can change this any time.</p>${calendarsScreen(true)}`;
+    actions = `<button class="btn block" data-act="next">Continue</button>`;
+  } else if (s === 3) {
+    const st = state.installing;
+    const watchOk = state.watch === 'connected';
+    body = `<h2 class="title">Put it on your watch</h2>
+      <p class="sub">${state.watch === 'old' ? 'Your watch runs Wear OS 5. Calen-Time needs Wear OS 6 or newer: check for a watch update in Galaxy Wearable.'
+        : !watchOk ? 'Your watch isn’t connected. Open Galaxy Wearable and check it’s paired and nearby.'
+        : 'Calen-Time installs its watch face on your Galaxy Watch8. You’ll confirm it on the watch.'}</p>
+      ${st === 0 ? `<div class="hero">${face(state.look, { size: 200 })}</div>` : ''}
+      ${st >= 1 ? `<div class="progress"><i style="width:${st === 1 ? 60 : 100}%"></i></div><p class="sub">${st === 1 ? 'Sending to your watch…' : 'Installed. Confirm on your watch.'}</p>` : ''}
+      ${st >= 2 ? `<div class="mini-watch"><span>Use Calen-Time as your watch face?</span><span class="ok">${icon('check', 20)}</span></div><p class="sub" style="text-align:center">Tap ✓ on your watch</p>` : ''}`;
+    actions = st === 0 ? `<button class="btn block" data-act="install" ${watchOk ? '' : 'disabled'}>Install on watch</button><button class="btn text" data-act="next">Do this later</button>`
+      : st === 1 ? `<button class="btn block" disabled><span class="spinner"></span>Installing</button>`
+      : `<button class="btn block" data-act="confirm">I’ve confirmed it</button>`;
+  } else {
+    body = `<div class="hero">${face(state.look, { size: 230 })}</div><h2 class="title">You’re set</h2>
+      <p class="sub">Your meetings are on your watch and stay in sync on their own. Change colours and buzzes in the app any time.</p>`;
+    actions = `<button class="btn block" data-act="app">Open Calen-Time</button>`;
+  }
+  return `<div class="setup">${bar}<div class="grow">${body}</div><div class="footer-actions">${actions}</div></div>`;
+}
+
+/* ---------- Render ---------- */
+const TABS = [['home', 'Today', 'home'], ['cal', 'Calendars', 'cal'], ['look', 'Look', 'look'], ['settings', 'Settings', 'gear']];
+function render() {
+  const accent = accentOf(state.look);
+  document.documentElement.style.setProperty('--accent', accent);
+  const content = document.getElementById('content'), nav = document.getElementById('nav');
+  const scroll = content.scrollTop;
+  if (state.screen === 'setup') { content.innerHTML = setupScreen(); nav.style.display = 'none'; }
+  else {
+    nav.style.display = '';
+    content.innerHTML = { home: homeScreen, cal: () => calendarsScreen(false), look: lookScreen, settings: settingsScreen }[state.tab]();
+    nav.innerHTML = TABS.map(([id, label, ic]) => `<button data-tab="${id}" ${state.tab === id ? 'aria-current="page"' : ''}><span class="pill">${icon(ic)}</span>${label}</button>`).join('');
+  }
+  if (!state.keepScroll) content.scrollTop = 0; else content.scrollTop = scroll;
+  state.keepScroll = false;
+  document.querySelectorAll('.seg[data-state]').forEach(g => g.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === state[g.dataset.state])));
+}
+function toast(text) {
+  const t = document.getElementById('toast'); t.textContent = text; t.classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1800);
+}
+const scrim = document.getElementById('scrim');
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t || t.disabled) return;
+  const d = t.dataset;
+  if (d.tab) { state.tab = d.tab; render(); return; }
+  if (d.state === undefined && t.parentElement.dataset.state) { state[t.parentElement.dataset.state] = d.v; state.keepScroll = true; render(); return; }
+  if (d.cal) { const c = CALS.flatMap(a => a.items).find(c => c.id === d.cal); c.on = !c.on; state.keepScroll = true; render(); if (state.screen === 'app') toast(c.on ? `${c.name} will sync to your watch` : `${c.name} removed from your watch`); return; }
+  if (d.look) { state.look = d.look; state.keepScroll = true; render(); toast(`${lookOf(d.look).name} is on your watch`); return; }
+  if (d.buzz) { state.buzz[d.buzz] = !state.buzz[d.buzz]; state.keepScroll = true; render(); return; }
+  if (d.perm) { scrim.classList.remove('show'); state.perm = d.perm === 'allow' ? 'on' : 'off'; state.asked = true; render(); return; }
+  switch (d.act) {
+    case 'setup': state.screen = 'setup'; state.step = 0; state.installing = 0; state.asked = false; render(); break;
+    case 'app': state.screen = 'app'; state.tab = 'home'; render(); break;
+    case 'next': state.step = Math.min(STEPS - 1, state.step + 1); render(); break;
+    case 'perm': scrim.classList.add('show'); scrim.querySelector('button').focus(); break;
+    case 'install':
+      if (state.screen === 'app') { state.screen = 'setup'; state.step = 3; }
+      state.installing = 1; render();
+      setTimeout(() => { state.installing = 2; render(); }, 1700);
+      requestAnimationFrame(() => requestAnimationFrame(() => { const bar = document.querySelector('.progress i'); if (bar) bar.style.width = '60%'; }));
+      break;
+    case 'confirm': state.face = 'on'; state.installing = 0; state.step = 4; render(); break;
+    case 'sync':
+      state.syncing = true; state.keepScroll = true; render();
+      setTimeout(() => { state.syncing = false; state.synced = 0; state.keepScroll = true; render(); toast('8 meetings sent to your watch'); }, 1200);
+      break;
+    case 'noop': toast('Opens the privacy policy'); break;
+  }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && scrim.classList.contains('show')) scrim.classList.remove('show'); });
+render();
+</script>
+</body>
+</html>

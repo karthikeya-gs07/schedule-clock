@@ -264,6 +264,16 @@ Also verified: the AM/PM label (C11) sits after the time ("11:32 PM"). Debug not
 
 Wear OS 5+ (WFF v2, needed for `WeightedStroke` on `Arc`): Galaxy Watch 4 and later on current software, and Pixel Watch 1 and later.
 
+### 6.5 Phone app and release (designed 2026-10-30, not built yet)
+
+Plan: release Calen-Time as **one Play listing** with a phone app and a small watch app. The watch app installs the watch face itself through **Watch Face Push** (Wear OS 6+; one face per app, which is enough because the looks are colourways), so the face needs no listing of its own. iPhone is out: Galaxy and Pixel watches only pair with Android, and Apple Watch doesn't allow custom faces.
+
+The phone app (rules in RULES §12) has a first-run setup and four tabs: **Today** (watch preview, connection, Sync now, today's meetings), **Calendars** (pick calendars per account), **Look** (colourways) and **Settings** (buzz switches). Design prototype: `prototype/phone.html`.
+
+Build order: (1) calendar picker, (2) Watch Face Push install on the emulator, (3) colours and buzz settings sent from the phone, (4) Play release (validator token, privacy policy, listing).
+
+Open: Wear OS 5 watches can't use Watch Face Push; decide whether to also keep a normal Play listing for the face.
+
 ## 7. Tooling requirements
 
 This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setup done 2026-10-25** (see 7.0a).
@@ -336,6 +346,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 - **v0.64:** Breathing space on the lane → ring move (W8): a meeting joins the main ring only 30 min after the now dot has passed its slot (the 7–8 PM call moves at 8:30 AM, not 8:00). Prototype first, then on the watch (v0.66).
 - **v0.65:** Now dot about 40 % larger (13 px dot, 19 px ring, 28 px halo; was 9 / 14 / 22) so it's easier to see, on the watch, prototype and Figma SVGs (R6).
 - **v0.66:** The 30-minute wait before a lane meeting moves to the main ring (W8) is now on the watch too; tested on the emulator (the 7–8 PM call stays on the lane at 8:15 AM and is on the ring at 8:35 AM).
+- **v0.67:** Phone app designed as a clickable prototype (`prototype/phone.html`): setup, Today, Calendars, Look, Settings, with switches for each state; release plan via Watch Face Push (§6.5, RULES §12).
 - **v0.63:** Time-Shift day colours revised (RULES S3) so each part of the day is distinct: midday goes cream → honey → amber instead of one gold, and the night goes purple → royal blue (9 PM) → indigo (midnight) → cobalt (3 AM) → azure instead of one blue; night stops are clock times. Prototype and watch; installed on the Galaxy Watch8.
 - **v0.62:** Time-Shift is now a **colourway** (Colours → Time-Shift) instead of a separate Style option: each colourway tints the theme arcs panel and the Time-Shift panel, hiding the unused one with a transparent tint. Verified on the emulator (Amber and Time-Shift); installed on the Galaxy Watch8.
 - **v0.61:** **Time-Shift on the watch** (RULES §10): Style → Time-Shift in the watch's customize screen colours main-ring meetings by the light at their minutes (sunrise/sunset computed on the watch for the time-zone location). The ring image gains a fourth panel (102 ms to draw all four). Verified on the emulator; installed on the Galaxy Watch8. Location stays the time-zone guess for now (decided 2026-10-28); real location is a possible later addition.
