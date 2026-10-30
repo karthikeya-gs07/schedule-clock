@@ -7,12 +7,27 @@
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Watch Face Push (PRD §6.5): install the Calen-Time face, and make it the watch face once (asked at runtime). -->
+    <uses-permission android:name="com.google.wear.permission.PUSH_WATCH_FACES" />
+    <uses-permission android:name="com.google.wear.permission.SET_PUSHED_WATCH_FACE_AS_ACTIVE" />
 
     <application android:label="@string/app_name">
 
         <meta-data
             android:name="com.google.android.wearable.standalone"
             android:value="true" />
+
+        <!-- Watch Face Push: the default face (amber) sits at assets/default_watchface.apk with its token. -->
+        <meta-data
+            android:name="com.google.android.wearable.marketplace.DEFAULT_WATCHFACE_VALIDATION_TOKEN"
+            android:value="@string/default_wf_token" />
+
+        <!-- Puts the face on the watch in a colourway and, once, makes it the watch face. -->
+        <activity
+            android:name=".FaceSetupActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.DeviceDefault" />
 
         <!-- Calendar access (READ_CALENDAR): opened by a ring tap while it's missing, or from the app list. -->
         <activity

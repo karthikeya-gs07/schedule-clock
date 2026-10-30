@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <WatchFaceInfo>
     <Preview value="@drawable/preview" />
-    <!-- Editable: the Colours theme (RULES §9) is picked in the watch's customize screen. The slots stay
-         fixed to our own data source (RULES §8). -->
-    <Editable value="true" />
+    <!-- Not editable: the colourway is chosen in the phone app, which swaps in that colourway's face
+         (RULES §9). The slots stay fixed to our own data source (RULES §8). -->
+    <Editable value="false" />
 </WatchFaceInfo>

@@ -9,4 +9,10 @@
     <string name="permission_label">Calen-Time</string>
     <string name="permission_why">Calen-Time shows today\'s meetings on your watch face. It reads your calendar on the watch only; nothing leaves the watch.</string>
     <string name="permission_denied">Calendar access is off, so the face can\'t show your meetings. Tap here to turn it on.</string>
+    <string name="face_installing">Putting Calen-Time on your watch…</string>
+    <string name="face_installed">Calen-Time is on your watch.</string>
+    <string name="face_active">Calen-Time is your watch face.</string>
+    <string name="face_pick_yourself">Calen-Time is on your watch. Touch and hold the watch face, then pick Calen-Time.</string>
+    <string name="face_failed">Couldn\'t put Calen-Time on your watch. Try again from the phone app.</string>
+    <string name="face_needs_wear6">Calen-Time needs Wear OS 6 or newer. Check for a watch update.</string>
 </resources>

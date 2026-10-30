@@ -13,6 +13,7 @@ import android.util.Log
  * - `app://<package>/promote`: plays the lane → ring settle (spike 3).
  * - `app://<package>/time?offset=M`: debug time shift in minutes for testing.
  * - `app://<package>/day?name=busy|example`: debug switch of the sample day.
+ * - `app://<package>/face?colour=mint&activate=1`: debug, puts the face on the watch (Watch Face Push).
  * Asks for fresh complication data and finishes before anything is shown. With no calendar yet
  * (nothing from the phone, no access on the watch), any tap on the ring opens [PermissionActivity].
  */
@@ -34,6 +35,10 @@ class TapActivity : Activity() {
             SpikeSchedule.runPromotion(this)
         } else if (uri?.path == "/time") {
             SpikeSchedule.setOffset(this, uri.getQueryParameter("offset")?.toIntOrNull() ?: 0)
+        } else if (uri?.path == "/face") {
+            startActivity(Intent(this, FaceSetupActivity::class.java)
+                .putExtra(FaceSetupActivity.EXTRA_COLOUR, uri.getQueryParameter("colour"))
+                .putExtra(FaceSetupActivity.EXTRA_ACTIVATE, uri.getQueryParameter("activate") == "1"))
         } else if (uri?.path == "/day") {
             SpikeSchedule.setDay(this, uri.getQueryParameter("name") ?: "busy")
         } else {
