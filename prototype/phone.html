@@ -79,7 +79,7 @@
 
   /* ---------- Bottom navigation (Material 3 style) ---------- */
   .nav {
-    flex-shrink: 0; display: grid; grid-template-columns: repeat(4, 1fr); padding: 10px 8px 4px;
+    flex-shrink: 0; display: grid; grid-template-columns: repeat(4, 1fr); padding: 12px 8px 8px;   /* icons only; names are for screen readers */
     background: #121316; border-top: 1px solid #1c1d21;
   }
   .nav button { background: none; border: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0; font-size: 12px; color: var(--muted); }
@@ -491,7 +491,7 @@ function render() {
   else {
     nav.style.display = '';
     content.innerHTML = { home: homeScreen, cal: () => calendarsScreen(false), look: lookScreen, settings: settingsScreen }[state.tab]();
-    nav.innerHTML = TABS.map(([id, label, ic]) => `<button data-tab="${id}" ${state.tab === id ? 'aria-current="page"' : ''}><span class="pill">${icon(ic)}</span>${label}</button>`).join('');
+    nav.innerHTML = TABS.map(([id, label, ic]) => `<button data-tab="${id}" aria-label="${label}" title="${label}" ${state.tab === id ? 'aria-current="page"' : ''}><span class="pill">${icon(ic)}</span></button>`).join('');
   }
   if (!state.keepScroll) content.scrollTop = 0; else content.scrollTop = scroll;
   state.keepScroll = false;
