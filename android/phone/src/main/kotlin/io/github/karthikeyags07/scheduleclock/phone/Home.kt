@@ -177,7 +177,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
             val sample = remember { SampleDay.meetings() }
             val live = !watchMode
             val meetings = if (live) m.meetings else sample
-            val at = if (live) null else SampleDay.SAMPLE_MINUTE
+            val at = if (live && !m.demo) null else SampleDay.SAMPLE_MINUTE
             // Glow: a blurred copy of the face at rest (48 dp of room so the blur isn't cut square); hidden mid-swipe.
             if (!pager.isScrollInProgress && kotlin.math.abs(pager.currentPageOffsetFraction) < .01f) {
                 val glowPad = 48.dp
@@ -398,7 +398,7 @@ private fun MeetingsDrawer(m: AppModel, haze: HazeState, collapsedTop: androidx.
             }
         }
     }
-    val now = System.currentTimeMillis()
+    val now = m.now()
     val zone = ZoneId.systemDefault()
     val endOfToday = LocalDate.now(zone).plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
     val left = m.meetings.filter { !it.allDay && it.end > now && it.begin < endOfToday }

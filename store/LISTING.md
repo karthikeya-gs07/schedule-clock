@@ -54,8 +54,8 @@ Everything Play Console asks for, ready to paste. Phase 4 of PRD §6.5. Items ma
 |---|---|---|
 | App icon | 512 × 512 PNG | `store/icon-512.png` (from `store/make_assets.py`) |
 | Feature graphic | 1024 × 500 PNG | `store/feature-1024x500.png` |
-| Phone screenshots | 2–8, 9:16, sides 320–3840 px, long side at most 2× short | **To take**: Today, Watchface, Calendars, setup. The Fold's cover screen is too tall (2520 × 1080 is over 2:1); use the inner screen or a crop. |
-| Wear OS screenshots | 1+, square, at least 384 × 384, no device frame, face only | **To take**: busy day in Amber and Solaris (watch screenshots are 438 × 438) |
+| Phone screenshots | 2–8, 9:16, sides 320–3840 px, long side at most 2× short | **To take** in demo mode (sample data, never your calendar): `adb shell am start -S -n io.github.karthikeyags07.scheduleclock/.phone.MainActivity --ez demo true`. Today, the status card, the drawer, Watchface (Solaris), Calendars, Settings. The Fold's cover screen is too tall (2520 × 1080 is over 2:1); pad the sides to 1260 × 2520 or use the inner screen. |
+| Wear OS screenshots | 1+, square, at least 384 × 384, no device frame, face only | ✅ `store/screenshots/wear-1-amber.png`, `wear-2-solaris.png` (454 × 454, busy sample day at 10:21 AM, from the Wear OS 6 emulator) |
 
 ## Data safety form (draft answers)
 
@@ -86,8 +86,8 @@ Questionnaire: utility/productivity app, no user-generated content, no sharing, 
 | Item | Value |
 |---|---|
 | Testing track first | **Internal testing** (up to 100 testers by email) |
-| Phone bundle | `android/phone/build/outputs/bundle/release/phone-release.aab` (version 0.9.0, code 1001) |
-| Wear OS bundle | `android/datasource/build/outputs/bundle/release/datasource-release.aab` (version 0.9.0, code 2001), uploaded under the **Wear OS** form factor of the same app |
+| Phone bundle | `android/phone/build/outputs/bundle/release/phone-release.aab` (version 0.9.1, code 1002) |
+| Wear OS bundle | `android/datasource/build/outputs/bundle/release/datasource-release.aab` (version 0.9.1, code 2002), uploaded under the **Wear OS** form factor of the same app |
 | Signing | Play App Signing on. Upload key: `~/.android/calen-time/upload.jks` (**back it up**). Watch faces are signed separately with `~/.android/calen-time/faces.jks`. |
 | Release notes | "First test release: meetings on your watch face, five colourways, calendar choice and meeting buzzes." |
 

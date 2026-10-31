@@ -78,6 +78,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(SystemBarStyle.dark(android.graphics.Color.TRANSPARENT), SystemBarStyle.dark(android.graphics.Color.TRANSPARENT))
         model = AppModel(applicationContext, lifecycleScope)
+        if (intent.getBooleanExtra("demo", false)) { model.startDemo(); AppPrefs.setSetupDone(this, true); model.setupDone = true }
         setContent { CalenTimeApp(model, ::openAppSettings) }
     }
 
@@ -85,7 +86,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         model.reload()
         model.refreshWatch()
-        if (model.setupDone && CalendarSync.hasPermission(this)) SyncWorker.schedule(this)
+        if (model.setupDone && CalendarSync.hasPermission(this) && !model.demo) SyncWorker.schedule(this)
     }
 
     private fun openAppSettings() =

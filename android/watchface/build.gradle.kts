@@ -49,6 +49,8 @@ android {
     buildTypes {
         debug {
             isMinifyEnabled = true
+            // Same key as release: a face can only be swapped for one with the same signer.
+            signingConfig = signingConfigs.findByName("faces") ?: signingConfigs.getByName("debug")
         }
         release {
             isMinifyEnabled = true

@@ -25,8 +25,8 @@ android {
         minSdk = 29
         targetSdk = 36
         // Phone and watch apps share one Play listing, so their version codes must differ: phone 1xxx, watch 2xxx.
-        versionCode = 1001
-        versionName = "0.9.0"
+        versionCode = 1002
+        versionName = "0.9.1"
     }
 
     buildFeatures { compose = true }
@@ -38,6 +38,11 @@ android {
     }
 
     buildTypes {
+        // Debug builds are signed with the same key as release (when the key is on this machine), so the apps on
+        // your devices can move between debug and release builds without being uninstalled.
+        debug {
+            signingConfig = signingConfigs.findByName("upload") ?: signingConfigs.getByName("debug")
+        }
         release {
             isMinifyEnabled = true
             signingConfig = signingConfigs.findByName("upload") ?: signingConfigs.getByName("debug")

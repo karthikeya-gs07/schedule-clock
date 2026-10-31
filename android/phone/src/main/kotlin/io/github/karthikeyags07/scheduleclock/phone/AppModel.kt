@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -30,8 +31,30 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
 
     fun isOn(c: PhoneCalendar) = enabled?.contains(c.id) ?: true
 
+    /**
+     * Demo mode, for store screenshots: the sample busy day and sample calendars at 10:13 AM instead of the
+     * phone's real calendar, and a connected watch. Started with `adb shell am start … --ez demo true`; nothing
+     * is saved or sent while it's on.
+     */
+    var demo by mutableStateOf(false)
+        private set
+    fun startDemo() {
+        demo = true
+        hasPermission = true
+        calendars = SampleDay.calendars()
+        enabled = calendars.filter { it.name != "Holidays" }.map { it.id }.toSet()
+        meetings = SampleDay.meetings()
+        link = WatchLink.State(WatchLink.Watch("demo", "Galaxy Watch8"), WatchLink.FaceStatus(true, true, true, colourway, true))
+        linkChecked = true
+        lastSync = System.currentTimeMillis() - 120_000
+    }
+    /** Now, as the screens see it: 10:13 AM in demo mode. */
+    fun now(): Long = if (!demo) System.currentTimeMillis() else
+        LocalDate.now().atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli() + SampleDay.SAMPLE_MINUTE * 60_000L
+
     /** Re-reads calendars, meetings and the last sync; call when the app opens or calendar access changes. */
     fun reload() = scope.launch {
+        if (demo) return@launch
         hasPermission = CalendarSync.hasPermission(context)
         val (cals, list) = withContext(Dispatchers.IO) { CalendarSync.calendars(context) to CalendarSync.meetings(context) }
         calendars = cals
@@ -43,6 +66,7 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
     }
 
     fun refreshWatch() = scope.launch {
+        if (demo) return@launch
         var next = WatchLink.state(context)
         // Right after the watch app updates, the face reads as not active for a moment; ask again before saying so.
         if (next.face?.installed == true && next.face?.active == false && link.face?.active != false) {
@@ -59,6 +83,7 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
     }
 
     fun toggleCalendar(c: PhoneCalendar, on: Boolean) {
+        if (demo) { enabled = (enabled ?: emptySet()).let { if (on) it + c.id else it - c.id }; return }
         AppPrefs.setCalendarEnabled(context, calendars, c.id, on)
         enabled = AppPrefs.enabledCalendars(context)
         if (setupDone) say(if (on) "${c.name} will sync to your watch" else "${c.name} removed from your watch")
@@ -69,6 +94,7 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
     }
 
     fun syncNow(quiet: Boolean = false) = scope.launch {
+        if (demo) { syncing = true; delay(1000); syncing = false; lastSync = System.currentTimeMillis(); return@launch }
         syncing = true
         val started = System.currentTimeMillis()
         val sent = withContext(Dispatchers.IO) { runCatching { CalendarSync.send(context) } }
@@ -81,6 +107,7 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
     }
 
     fun pickColourway(c: String) {
+        if (demo) { colourway = c; link = link.copy(face = link.face?.copy(colourway = c)); return }
         colourway = c
         AppPrefs.setColourway(context, c)
         AppPrefs.sendSettings(context)

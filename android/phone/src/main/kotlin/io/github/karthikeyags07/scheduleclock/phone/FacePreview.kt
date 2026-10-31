@@ -117,17 +117,29 @@ object SampleDay {
     fun meetings(): List<Meeting> {
         val zone = ZoneId.systemDefault()
         val midnight = LocalDate.now(zone).atStartOfDay(zone).toInstant().toEpochMilli()
-        fun m(start: Int, end: Int, title: String, where: String, private: Boolean = false) =
-            Meeting(midnight + start * 60_000L, midnight + end * 60_000L, title, where, allDay = false, private = private, calendarId = -1)
+        fun m(start: Int, end: Int, title: String, where: String, calendar: Long, private: Boolean = false) =
+            Meeting(midnight + start * 60_000L, midnight + end * 60_000L, title, where, allDay = false, private = private, calendarId = calendar)
         return listOf(
-            m(540, 570, "Standup", "Google Meet"),
-            m(645, 705, "Roadmap planning", "Atlas room"),
-            m(750, 810, "Lunch with Priya", "", private = true),
-            m(840, 885, "Candidate interview", "Teams"),
-            m(855, 885, "Recruiter sync", "Teams"),
-            m(960, 1020, "Design review", "Figma"),
-            m(1080, 1110, "Gym", "Cult, Indiranagar"),
-            m(1140, 1200, "Client call", "Zoom"),
+            m(540, 570, "Standup", "Google Meet", WORK),
+            m(645, 705, "Roadmap planning", "Atlas room", WORK),
+            m(750, 810, "Lunch with Priya", "", PERSONAL, private = true),
+            m(840, 885, "Candidate interview", "Teams", WORK),
+            m(855, 885, "Recruiter sync", "Teams", WORK),
+            m(960, 1020, "Design review", "Figma", WORK),
+            m(1080, 1110, "Gym", "Cult, Indiranagar", FAMILY),
+            m(1140, 1200, "Client call", "Zoom", WORK),
         )
     }
+
+    private const val WORK = -11L
+    private const val PERSONAL = -12L
+    private const val FAMILY = -13L
+
+    /** Calendars to go with the sample day (demo mode only). */
+    fun calendars() = listOf(
+        PhoneCalendar(WORK, "Calendar", "alex@company.com", "com.microsoft.office.outlook", 0xFF4F8FF7.toInt()),
+        PhoneCalendar(PERSONAL, "Personal", "alex@gmail.com", "com.google", 0xFF5FD4A0.toInt()),
+        PhoneCalendar(-14L, "Holidays", "alex@gmail.com", "com.google", 0xFF9AA0A6.toInt()),
+        PhoneCalendar(FAMILY, "Family", "alex@gmail.com", "com.google", 0xFFB48CFF.toInt()),
+    )
 }
