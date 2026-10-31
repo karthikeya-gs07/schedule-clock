@@ -139,7 +139,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, onWatchStatus: () -> Unit, onAbout:
         // ---- (7) watch status and (6) About (frosted, like the pill and sync button) ----
         Row(Modifier.fillMaxWidth().statusBarsPadding().padding(top = 44.dp, start = d(31f), end = d(31f)), horizontalArrangement = Arrangement.SpaceBetween) {
             RoundButton("Watch status", haze, onWatchStatus) {
-                Icon(Icons.watch, null, tint = Palette.text, modifier = Modifier.size(24.dp))
+                Icon(Icons.clock, null, tint = Palette.text, modifier = Modifier.size(24.dp))
                 Box(Modifier.align(Alignment.TopEnd).padding(top = 14.dp, end = 13.dp).size(9.dp).clip(CircleShape)
                     .background(Color(0xFF3A3A3E)).padding(1.5.dp).clip(CircleShape).background(watchColour(m)))
             }
@@ -308,13 +308,10 @@ private fun DrawerMeeting(meeting: Meeting, live: Boolean, clash: Boolean, color
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(meeting.title.ifEmpty { "Busy" }, maxLines = 2, overflow = TextOverflow.Ellipsis,
                 style = BodyStyle.copy(fontSize = 17.sp, lineHeight = 23.sp, fontWeight = FontWeight.Medium))
-            val note = listOfNotNull(
-                meeting.where.takeIf { it.isNotEmpty() && !meeting.private },
-                "Private on the watch".takeIf { meeting.private },
-                "Double booked".takeIf { clash },
-            ).joinToString(" · ")
-            if (note.isNotEmpty()) Text(note, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                style = SubStyle.copy(color = if (clash) Color(0xFFFF9D82) else Palette.muted))
+            // The place, on its own line under the title, when the event has one.
+            if (meeting.where.isNotEmpty()) Text(meeting.where, maxLines = 1, overflow = TextOverflow.Ellipsis, style = SubStyle.copy(color = Palette.body))
+            val note = listOfNotNull("Private on the watch".takeIf { meeting.private }, "Double booked".takeIf { clash }).joinToString(" · ")
+            if (note.isNotEmpty()) Text(note, maxLines = 1, style = SubStyle.copy(color = if (clash) Color(0xFFFF9D82) else Palette.muted))
         }
         Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(top = 1.dp)) {
             Text(t(meeting.begin), style = BodyStyle.copy(fontSize = 15.sp, color = if (live) LocalAccent.current else Palette.text))
