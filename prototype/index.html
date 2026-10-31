@@ -1700,8 +1700,34 @@ if (EMBED.has('embed')) {
   addEventListener('message', ev => {
     const o = ev.data && ev.data.calentime;
     if (!o) return;
+    if (o.sweep) return sweepTo(o);
     apply(o); resetPromotions(); setSelection(-1); applyColors(currentTheme()); applyFace();
   });
+}
+// The phone app moving between Today (live) and Watchface (the sample day at 10:13): instead of jumping, the clock
+// runs forward round the dial to the new time and the new day's meetings fade onto the ring as it goes.
+// postMessage({ calentime: { sweep: true, events, time } }), or `live: true` instead of `time` to sweep to now.
+let sweepFrame = 0;
+function sweepTo(o) {
+  cancelAnimationFrame(sweepFrame);
+  const changed = o.events && JSON.stringify(o.events) !== JSON.stringify(PRESETS.Phone);
+  if (o.events) PRESETS.Phone = o.events;
+  const target = o.live ? realNow() : +o.time;
+  setLive(false); resetPromotions(); setSelection(-1);
+  const delta = ((target - nowMin) % 720 + 720) % 720;   // forward only, so the hands never run back
+  const start = target - delta, ms = 850, t0 = performance.now();   // start: the same dial angle as now
+  const ease = { duration: ms, easing: 'cubic-bezier(.4, 0, .2, 1)' };
+  if (changed) for (const id of ['ringAll', 'tsWheel']) $(id).animate([{ opacity: 0 }, { opacity: 1 }], ease);
+  scrubbing = true; svg.classList.add('scrubbing');
+  const step = t => {
+    const f = Math.min(1, (t - t0) / ms), e = f < .5 ? 4 * f * f * f : 1 - Math.pow(-2 * f + 2, 3) / 2;
+    nowMin = Math.round(start + delta * e);
+    renderAll();
+    if (f < 1) { sweepFrame = requestAnimationFrame(step); return; }
+    nowMin = target; setLive(!!o.live); $('time').value = nowMin; renderAll();
+    scrubbing = false; svg.classList.remove('scrubbing');
+  };
+  sweepFrame = requestAnimationFrame(step);
 }
 
 $('time').value = nowMin;

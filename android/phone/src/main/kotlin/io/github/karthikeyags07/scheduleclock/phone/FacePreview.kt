@@ -32,6 +32,8 @@ import java.time.ZoneId
  * today's and tomorrow's meetings and the chosen colourway (RULES A2). Served from the app's assets through
  * [WebViewAssetLoader]; the app has no internet access, so the face uses its bundled font.
  * [interactive] lets taps through, so an hour on the ring can be tapped like on the watch.
+ * When only the meetings or the time change (Today ↔ Watchface), the loaded face sweeps to them instead of
+ * reloading: the clock runs forward round the dial and the new meetings fade in (RULES A5).
  */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
@@ -39,7 +41,7 @@ fun WatchFacePreview(
     colourway: String, meetings: List<Meeting>, size: Dp, interactive: Boolean = false,
     atMinute: Int? = null, onTap: (() -> Unit)? = null,
 ) {
-    val url = previewUrl(colourway, meetings, atMinute)
+    val (url, events) = previewUrl(colourway, meetings, atMinute)
     val onTapState = rememberUpdatedState(onTap)
     Box(Modifier.size(size).clip(CircleShape).background(androidx.compose.ui.graphics.Color.Black)) {
         AndroidView(
@@ -54,6 +56,7 @@ fun WatchFacePreview(
                     isVerticalScrollBarEnabled = false
                     isHorizontalScrollBarEnabled = false
                     webViewClient = object : WebViewClient() {
+                        override fun onPageFinished(view: WebView, url: String) { view.setTag(R.id.face_loaded, true) }
                         override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =
                             assets.shouldInterceptRequest(request.url)
                     }
@@ -69,7 +72,19 @@ fun WatchFacePreview(
                     tag = url
                 }
             },
-            update = { view -> if (view.tag != url) { view.tag = url; view.loadUrl(url) } },
+            update = { view ->
+                val old = view.tag as String?
+                if (old != url) {
+                    view.tag = url
+                    if (old != null && sameFace(old, url) && view.getTag(R.id.face_loaded) == true) {
+                        val to = atMinute?.let { "time: $it" } ?: "live: true"
+                        view.evaluateJavascript("postMessage({ calentime: { sweep: true, events: $events, $to } }, '*')", null)
+                    } else {
+                        view.setTag(R.id.face_loaded, false)
+                        view.loadUrl(url)
+                    }
+                }
+            },
         )
     }
 }
@@ -78,7 +93,7 @@ fun WatchFacePreview(
  * index.html?embed&theme=…&face=…&v=…#<meetings>. Live time unless [atMinute] fixes it (minutes from midnight);
  * `v` changes with the meetings so a change reloads.
  */
-private fun previewUrl(colourway: String, meetings: List<Meeting>, atMinute: Int?): String {
+private fun previewUrl(colourway: String, meetings: List<Meeting>, atMinute: Int?): Pair<String, String> {
     val zone = ZoneId.systemDefault()
     val midnight = LocalDate.now(zone).atStartOfDay(zone).toInstant().toEpochMilli()
     fun hhmm(minutes: Long) = "%02d:%02d".format(minutes / 60, minutes % 60)
@@ -105,7 +120,13 @@ private fun previewUrl(colourway: String, meetings: List<Meeting>, atMinute: Int
     val face = if (colourway == "solaris" || look.palette != null) "timeshift" else "calen"
     return "https://appassets.androidplatform.net/assets/face/index.html?embed&theme=$theme&face=$face" +
         (atMinute?.let { "&time=$it" } ?: "") +
-        "&v=${json.hashCode()}#${URLEncoder.encode(json, "UTF-8").replace("+", "%20")}"
+        "&v=${json.hashCode()}#${URLEncoder.encode(json, "UTF-8").replace("+", "%20")}" to json
+}
+
+/** The same colourway and face (only the meetings or time differ), so the loaded page can sweep to the change. */
+private fun sameFace(a: String, b: String): Boolean {
+    fun base(u: String) = u.substringBefore("&time=").substringBefore("&v=")
+    return base(a) == base(b)
 }
 
 

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- On a face preview WebView: its page has loaded, so a change can be sent to it instead of reloading. -->
+    <item name="face_loaded" type="id"/>
+</resources>
