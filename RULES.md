@@ -181,6 +181,7 @@ Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.sched
 
 | Date | Change | Rules |
 |---|---|---|
+| 2026-10-31 | Darker dials for Arctic Lagoon, Forest Signal, Plum Rose, Desert Dusk and Copper Garden (about 30 % darker, same hue). | §9 |
 | 2026-10-31 | 3+ overlapping meetings: a stripe splits in two where a third runs, both where four or more do (R4a). Tap-to-focus faster: text slots first, one calendar read per tap, the last ring reused. | R4, M1 |
 | 2026-10-31 | All-day events no longer clash with anything (they were making the whole day look double booked); About close-ups draw arcs at full strength. | W9, §12 A2 |
 | 2026-10-31 | Today fits short screens (scaled by width or height, centred); two panes need ≥ 600 dp both ways; phones portrait-only; test links and demo mode debug-only; watch app needs Wear OS 6. | §12 A2, A11 |

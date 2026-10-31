@@ -190,7 +190,7 @@ BLACK = Colours(bg="#ff000000", track="#ff1c1c1f", text="#fff2f2f2", muted="#ff8
 FIGMA = {   # id: (name, bg, track, text, major, minor, half tick, accent, clash, later, palette)
     "quartz": ("Rose Quartz", "25151e", "573744", "fff1f6", "c6a4b4", "957483", "957483", None, "f99bb2", "a6b4f7",
                ("ffd5ae", "ffacaa", "f58fb8", "cc93dd", "a6b4f7")),
-    "copper": ("Copper Garden", "092021", "355454", "f4f1e7", "9fb9b6", "708d8b", "708d8b", None, "d8936b", "7ba6bf",
+    "copper": ("Copper Garden", "061617", "355454", "f4f1e7", "9fb9b6", "708d8b", "708d8b", None, "d8936b", "7ba6bf",
                ("e8cba0", "e6aa72", "cf8467", "6ab9af", "7ba6bf")),
     "ocean": ("Ocean", "061524", "294157", "e8f6ff", "93afc9", "647f97", "647f97", None, "3fb6e0", "b4b7ff",
               ("8ceadb", "45ccd8", "3ba7e5", "688bff", "b4b7ff")),
@@ -199,11 +199,11 @@ FIGMA = {   # id: (name, bg, track, text, major, minor, half tick, accent, clash
     "acid": ("Acid Circuit", "12180b", "38462a", "f6fbea", "a6b68e", "768562", "768562", None, "91da78", "9aacee",
              ("e7ff8a", "bddf4b", "73d696", "4ccdc3", "9aacee")),
     "lunar": ("Lunar Mono", "14171c", "292e36", "f5faff", "bdc5cf", "8994a2", "7e8a99", "b2bfce", "f4faff", "7b93b0", None),
-    "desert": ("Desert Dusk", "2d211f", "47332c", "fff5e7", "d7bda5", "ae8d7c", "a18772", "e79775", "f6d69a", "ffbaa6", None),
+    "desert": ("Desert Dusk", "1f1716", "47332c", "fff5e7", "d7bda5", "ae8d7c", "a18772", "e79775", "f6d69a", "ffbaa6", None),
     "lime": ("Racing Lime", "202729", "323c3d", "f7ffe9", "bdcec6", "859c94", "869b91", "d0f85a", "65d8ff", "f1ffa8", None),
-    "plum": ("Plum Rose", "2b192c", "432b44", "fff3f9", "d6b8cd", "ae86a5", "a183a0", "eea0bd", "b6a2ff", "ffe0ae", None),
-    "forest": ("Forest Signal", "112b25", "203c32", "f1fff6", "b2cdbe", "759d8b", "749687", "79e4b7", "ffbe55", "d5fca9", None),
-    "arctic": ("Arctic Lagoon", "101f30", "182c40", "f0faff", "a9c4d6", "7094ae", "6c879c", "66d6e8", "a3a5ff", "d2f7ff", None),
+    "plum": ("Plum Rose", "1e121f", "432b44", "fff3f9", "d6b8cd", "ae86a5", "a183a0", "eea0bd", "b6a2ff", "ffe0ae", None),
+    "forest": ("Forest Signal", "0c1e1a", "203c32", "f1fff6", "b2cdbe", "759d8b", "749687", "79e4b7", "ffbe55", "d5fca9", None),
+    "arctic": ("Arctic Lagoon", "0b1622", "182c40", "f0faff", "a9c4d6", "7094ae", "6c879c", "66d6e8", "a3a5ff", "d2f7ff", None),
 }
 def argb(h): return "#ff" + h
 for i, (name, bg, track, text_, major, minor, half, accent, clash, later, palette) in FIGMA.items():

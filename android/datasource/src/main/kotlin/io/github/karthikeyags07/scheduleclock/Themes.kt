@@ -34,16 +34,16 @@ object Themes {
         black("amber", "ffb547"), black("mint", "5fd4a0"), black("violet", "b48cff"), black("rose", "ff7a9c"),
         Theme("solaris", "Solaris", Color.BLACK, c("ff9447"), CORAL, GREY),
         palette("quartz", "Rose Quartz", "25151e", "f99bb2", "957483", "ffd5ae", "ffacaa", "f58fb8", "cc93dd", "a6b4f7"),
-        palette("copper", "Copper Garden", "092021", "d8936b", "708d8b", "e8cba0", "e6aa72", "cf8467", "6ab9af", "7ba6bf"),
+        palette("copper", "Copper Garden", "061617", "d8936b", "708d8b", "e8cba0", "e6aa72", "cf8467", "6ab9af", "7ba6bf"),
         palette("ocean", "Ocean", "061524", "3fb6e0", "647f97", "8ceadb", "45ccd8", "3ba7e5", "688bff", "b4b7ff"),
         palette("aurora", "Aurora", "071a21", "43cfcb", "688b90", "9dfad0", "40d7ad", "45c9df", "6d9bff", "b59aff"),
         palette("acid", "Acid Circuit", "12180b", "91da78", "768562", "e7ff8a", "bddf4b", "73d696", "4ccdc3", "9aacee"),
         solid("lunar", "Lunar Mono", "14171c", "b2bfce", "f4faff", "8994a2"),
-        solid("desert", "Desert Dusk", "2d211f", "e79775", "f6d69a", "ae8d7c"),
+        solid("desert", "Desert Dusk", "1f1716", "e79775", "f6d69a", "ae8d7c"),
         solid("lime", "Racing Lime", "202729", "d0f85a", "65d8ff", "859c94"),
-        solid("plum", "Plum Rose", "2b192c", "eea0bd", "b6a2ff", "ae86a5"),
-        solid("forest", "Forest Signal", "112b25", "79e4b7", "ffbe55", "759d8b"),
-        solid("arctic", "Arctic Lagoon", "101f30", "66d6e8", "a3a5ff", "7094ae"),
+        solid("plum", "Plum Rose", "1e121f", "eea0bd", "b6a2ff", "ae86a5"),
+        solid("forest", "Forest Signal", "0c1e1a", "79e4b7", "ffbe55", "759d8b"),
+        solid("arctic", "Arctic Lagoon", "0b1622", "66d6e8", "a3a5ff", "7094ae"),
     )
     val IDS = ALL.map { it.id }
 
