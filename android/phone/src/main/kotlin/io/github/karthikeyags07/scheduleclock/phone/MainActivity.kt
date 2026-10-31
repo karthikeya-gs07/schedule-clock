@@ -184,9 +184,9 @@ private fun NavBar(current: Tab, haze: HazeState, preview: String?, modifier: Mo
                     .semantics { contentDescription = t.label; this.selected = selected }
                     .drawBehind {
                         if (glow > 0f) drawCircle(Brush.radialGradient(
-                            listOf(selectedTint.copy(alpha = .32f * glow), selectedTint.copy(alpha = .10f * glow), Color.Transparent),
-                            center = center, radius = 26.dp.toPx(),
-                        ), radius = 26.dp.toPx())
+                            listOf(selectedTint.copy(alpha = .16f * glow), selectedTint.copy(alpha = .05f * glow), Color.Transparent),
+                            center = center, radius = 22.dp.toPx(),
+                        ), radius = 22.dp.toPx())
                     },
                 contentAlignment = Alignment.Center,
             ) { Icon(t.icon, null, tint = if (selected) selectedTint else Palette.muted, modifier = Modifier.size(24.dp)) }

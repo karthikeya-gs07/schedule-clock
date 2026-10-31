@@ -141,7 +141,11 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
         val gradients = Looks.of(COLOURWAYS[pager.currentPage]).gradient
         val group = COLOURWAYS.indices.filter { Looks.of(COLOURWAYS[it]).gradient == gradients }
         LaunchedEffect(watchMode, shown) { m.previewColourway = if (watchMode) shown else null }
-        val glow by animateColorAsState(accentFor(shown), tween(400), label = "glow")
+        // The underglow's colours, left to right: one colour, or a gradient face's colours (Solaris: its day). Five
+        // stops either way, each easing on its own, so changing face blends the glow smoothly.
+        val glowStops = (Looks.of(shown).palette?.map { Color(it) } ?: if (shown == "solaris") SOLARIS_COLOURS else null)
+            ?.let { pal -> List(5) { pal[it * (pal.size - 1) / 4] } } ?: List(5) { accentFor(shown) }
+        val glows = glowStops.mapIndexed { i, c -> animateColorAsState(c, tween(400), label = "glow$i").value }
 
         // Where the face sits: under the top buttons on Today, in the middle (above the name and button) on Watchface.
         val faceTopHome = d(158.8f)
@@ -152,12 +156,14 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
         Box(Modifier.fillMaxSize().hazeSource(haze, zIndex = 0f)) {
             // A soft glow of the colourway rising from the bottom of the page (the background colour stays). On
             // Watchface it's fainter and sits lower, so the face is the brightest thing on screen.
-            Box(Modifier.fillMaxSize().drawBehind {
+            // For a gradient face the glow carries its colours across, faded by the same round falloff.
+            Box(Modifier.fillMaxSize().graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }.drawBehind {
                 val k = 1f - .55f * p
+                drawRect(Brush.horizontalGradient(glows))
                 drawRect(Brush.radialGradient(
-                    listOf(glow.copy(alpha = .22f * k), glow.copy(alpha = .08f * k), Color.Transparent),
+                    listOf(Color.Black.copy(alpha = .22f * k), Color.Black.copy(alpha = .08f * k), Color.Transparent),
                     center = Offset(size.width / 2, size.height * (.86f + .2f * p)), radius = size.width * (1.1f - .2f * p),
-                ))
+                ), blendMode = BlendMode.DstIn)
             })
             // The watch stays still (it only moves between Today and Watchface); only the face inside it swipes.
             WatchPhoto(Modifier.offset(x = d(29f), y = d(27f) + dy).size(d(334.5f), d(498.8f)))
@@ -336,7 +342,8 @@ private val CentredCircle = androidx.compose.foundation.shape.GenericShape { siz
     addOval(androidx.compose.ui.geometry.Rect(Offset(size.width / 2, r), r))
 }
 
-private val SOLARIS_DOT = Brush.horizontalGradient(listOf(Color(0xFF3F66E6), Color(0xFFE88AB2), Color(0xFFFFCC5C), Color(0xFFFF7438), Color(0xFFA957DC)))
+private val SOLARIS_COLOURS = listOf(Color(0xFF3F66E6), Color(0xFFE88AB2), Color(0xFFFFCC5C), Color(0xFFFF7438), Color(0xFFA957DC))
+private val SOLARIS_DOT = Brush.horizontalGradient(SOLARIS_COLOURS)
 
 /** Frosted glass over the page: the watch and glow show through, blurred and lightly tinted, with a hairline edge. */
 private fun Modifier.frosted(haze: HazeState, shape: androidx.compose.ui.graphics.Shape) = this
@@ -454,7 +461,7 @@ private fun MeetingsDrawer(m: AppModel, haze: HazeState, collapsedTop: androidx.
             .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
             // Strong blur of the watch and glow behind it; also a layer the floating nav blurs in turn.
             .hazeSource(haze, zIndex = 1f)
-            .hazeEffect(haze, HazeStyle(Home.background, HazeTint(Color(0xFF080808).copy(alpha = .8f)), blurRadius = 48.dp, noiseFactor = .08f)),
+            .hazeEffect(haze, HazeStyle(Home.background, HazeTint(Color(0xFF080808).copy(alpha = .68f)), blurRadius = 48.dp, noiseFactor = .08f)),
     ) {
         // Handle and heading: drag here (or tap) to pull the drawer up and down.
         var dragVelocity = 0f
