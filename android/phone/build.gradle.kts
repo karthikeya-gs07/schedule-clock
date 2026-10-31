@@ -71,4 +71,5 @@ dependencies {
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.webkit)
     implementation(libs.wear.remote.interactions)
+    implementation(libs.haze)                     // frosted nav bar and blurred drawer
 }

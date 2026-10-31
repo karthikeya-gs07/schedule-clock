@@ -13,6 +13,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,6 +50,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 
 /**
  * The phone app (PRD §6.5, RULES §12): first-run setup, then Today, Calendars, Watchface and Settings.
@@ -93,6 +100,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
     val allow: () -> Unit = { if (deniedOnce && !m.hasPermission) openAppSettings() else permission.launch(Manifest.permission.READ_CALENDAR) }
 
     var about by rememberSaveable { mutableStateOf(false) }
+    val haze = rememberHazeState()   // the page behind the floating nav (and Today's drawer), for the frosted blur
     var watchStatus by rememberSaveable { mutableStateOf(false) }
     val install: () -> Unit = { setupStep = 3; m.restartSetup() }
 
@@ -103,8 +111,8 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
                 about -> { BackHandler { about = false }; AboutScreen { about = false } }
                 else -> {
                     BackHandler(enabled = tab != Tab.TODAY || watchStatus) { if (watchStatus) watchStatus = false else tab = Tab.TODAY }
-                    if (tab == Tab.TODAY) HomeScreen(m, onWatchStatus = { watchStatus = true }, onAbout = { about = true })
-                    else Column(Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState())
+                    if (tab == Tab.TODAY) HomeScreen(m, haze, onWatchStatus = { watchStatus = true }, onAbout = { about = true })
+                    else Column(Modifier.fillMaxSize().hazeSource(haze, zIndex = 0f).background(Palette.screen).statusBarsPadding().verticalScroll(rememberScrollState())
                         .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 132.dp)) {
                         when (tab) {
                             Tab.CALENDARS -> { ScreenTitle("Calendars"); CalendarsList(m, allow) }
@@ -112,7 +120,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
                             else -> SettingsScreen(m) { setupStep = 0; m.restartSetup() }
                         }
                     }
-                    NavBar(tab, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp)) { tab = it }
+                    NavBar(tab, haze, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp)) { tab = it }
                     if (watchStatus) WatchStatusPanel(m, allow, install) { watchStatus = false }
                 }
             }
@@ -126,8 +134,11 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
  * the accent colour, each a large tap area.
  */
 @Composable
-private fun NavBar(current: Tab, modifier: Modifier, onSelect: (Tab) -> Unit) = Row(
-    modifier.width(332.dp).height(80.dp).clip(RoundedCornerShape(40.dp)).background(Color(0xFF191919))
+private fun NavBar(current: Tab, haze: HazeState, modifier: Modifier, onSelect: (Tab) -> Unit) = Row(
+    modifier.width(332.dp).height(80.dp).clip(RoundedCornerShape(40.dp))
+        // Frosted glass: whatever scrolls or sits behind shows through, blurred and lightly tinted.
+        .hazeEffect(haze, HazeStyle(Color(0xFF191919), HazeTint(Color(0xFF2C2C30).copy(alpha = .55f)), blurRadius = 26.dp, noiseFactor = .12f))
+        .border(1.dp, Color.White.copy(alpha = .06f), RoundedCornerShape(40.dp))
         .clickable(enabled = false) {}.padding(horizontal = 12.dp, vertical = 6.dp),
     verticalAlignment = Alignment.CenterVertically,
 ) {

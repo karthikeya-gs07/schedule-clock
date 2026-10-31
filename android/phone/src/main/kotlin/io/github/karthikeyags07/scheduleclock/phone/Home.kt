@@ -18,6 +18,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -41,7 +44,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.BlurEffect
@@ -60,6 +65,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.ZoneId
@@ -69,7 +79,6 @@ import kotlin.math.roundToInt
 private object Home {
     val background = Color(0xFF191919)
     val control = Color(0xFF2F2F2F)        // pill, round buttons
-    val drawer = Color(0xF20D0D0D)         // rgba(5,5,5,.4) over the page, made opaque enough to read over the watch
     const val DESIGN_WIDTH = 393f          // the frame's width; the watch block scales with the screen width
 }
 
@@ -79,13 +88,24 @@ private object Home {
  * upcoming meetings (5) that pulls up from under the floating navigation (4).
  */
 @Composable
-fun HomeScreen(m: AppModel, onWatchStatus: () -> Unit, onAbout: () -> Unit) {
+fun HomeScreen(m: AppModel, haze: HazeState, onWatchStatus: () -> Unit, onAbout: () -> Unit) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Home.background)) {
+        val accent = LocalAccent.current
         val s = maxWidth.value / Home.DESIGN_WIDTH          // design px → dp on this screen
         fun d(v: Float) = (v * s).dp
         val faceSize = d(234.3f)
         val pillTop = d(477f)
         val drawerTop = d(559f)
+
+        // Everything but the drawer is the "page" the drawer and the floating nav blur.
+        Box(Modifier.fillMaxSize().hazeSource(haze, zIndex = 0f)) {
+        // A soft glow of the colourway rising from the bottom of the page (the background colour stays).
+        Box(Modifier.fillMaxSize().drawBehind {
+            drawRect(Brush.radialGradient(
+                listOf(accent.copy(alpha = .20f), accent.copy(alpha = .07f), Color.Transparent),
+                center = Offset(size.width / 2, size.height * 1.02f), radius = size.width * 1.05f,
+            ))
+        })
 
         // ---- The watch: photo at 40 %, faded top and bottom, with the live face glowing in its screen ----
         Box(Modifier.offset(x = d(29f), y = d(27f)).size(d(334.5f), d(498.8f))) {
@@ -111,7 +131,7 @@ fun HomeScreen(m: AppModel, onWatchStatus: () -> Unit, onAbout: () -> Unit) {
         }
 
         // ---- (7) watch status and (6) About ----
-        Row(Modifier.fillMaxWidth().statusBarsPadding().padding(top = 19.dp, start = d(31f), end = d(31f)), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(Modifier.fillMaxWidth().statusBarsPadding().padding(top = 44.dp, start = d(31f), end = d(31f)), horizontalArrangement = Arrangement.SpaceBetween) {
             RoundButton("Watch status", onWatchStatus) {
                 Icon(Icons.watch, null, tint = Palette.text, modifier = Modifier.size(24.dp))
                 Box(Modifier.align(Alignment.TopEnd).padding(top = 14.dp, end = 13.dp).size(9.dp).clip(CircleShape)
@@ -126,9 +146,12 @@ fun HomeScreen(m: AppModel, onWatchStatus: () -> Unit, onAbout: () -> Unit) {
             Spacer(Modifier.width(18.dp))
             SyncButton(m)
         }
+        }
 
         // ---- (5) the meetings drawer ----
-        MeetingsDrawer(m, collapsedTop = drawerTop, expandedTop = 112.dp, height = maxHeight)
+        // Pulled up, the drawer stops just under the top buttons (status bar + 44 + 57 + 16 dp).
+        val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+        MeetingsDrawer(m, haze, collapsedTop = drawerTop, expandedTop = statusBar + 117.dp, height = maxHeight)
     }
 }
 
@@ -191,7 +214,7 @@ private fun SyncButton(m: AppModel) {
  * navigation sits on top of its lower part, so the list leaves room for it.
  */
 @Composable
-private fun MeetingsDrawer(m: AppModel, collapsedTop: androidx.compose.ui.unit.Dp, expandedTop: androidx.compose.ui.unit.Dp, height: androidx.compose.ui.unit.Dp) {
+private fun MeetingsDrawer(m: AppModel, haze: HazeState, collapsedTop: androidx.compose.ui.unit.Dp, expandedTop: androidx.compose.ui.unit.Dp, height: androidx.compose.ui.unit.Dp) {
     val density = LocalDensity.current
     val down = with(density) { collapsedTop.toPx() }
     val up = with(density) { expandedTop.toPx() }
@@ -212,7 +235,10 @@ private fun MeetingsDrawer(m: AppModel, collapsedTop: androidx.compose.ui.unit.D
 
     Column(
         Modifier.offset { IntOffset(0, top.value.roundToInt()) }.fillMaxWidth().height(height - expandedTop)
-            .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp)).background(Home.drawer),
+            .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
+            // Strong blur of the watch and glow behind it; also a layer the floating nav blurs in turn.
+            .hazeSource(haze, zIndex = 1f)
+            .hazeEffect(haze, HazeStyle(Home.background, HazeTint(Color(0xFF0D0D0D).copy(alpha = .55f)), blurRadius = 48.dp, noiseFactor = .08f)),
     ) {
         // Handle and heading: drag here (or tap) to pull the drawer up and down.
         var dragVelocity = 0f
@@ -230,24 +256,52 @@ private fun MeetingsDrawer(m: AppModel, collapsedTop: androidx.compose.ui.unit.D
                 }
                 .clickable(role = Role.Button) { scope.launch { top.animateTo(if (top.value > (up + down) / 2) up else down, spring(.85f, 500f)) } }
                 .semantics { contentDescription = "Meetings. Pull up to see them all" }
-                .padding(top = 12.dp, bottom = 10.dp),
+                .padding(top = 14.dp, bottom = 14.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Box(Modifier.width(36.dp).height(4.dp).clip(RoundedCornerShape(2.dp)).background(Palette.faint))
-            Row(Modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 14.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Coming up on your watch", style = BodyStyle.copy(fontWeight = FontWeight.Medium))
+            Row(Modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 22.dp), horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically) {
+                Text("Coming up on your watch", style = BodyStyle.copy(fontSize = 18.sp, fontWeight = FontWeight.Medium))
                 if (left.isNotEmpty()) Text("${left.size} meeting${if (left.size == 1) "" else "s"}", style = HintStyle)
             }
         }
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 8.dp, end = 8.dp, bottom = 132.dp)) {
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 132.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)) {
             if (left.isEmpty()) Text(
                 if (!m.hasPermission) "Allow calendar access to see your meetings here." else "Nothing else today. The watch shows a clear day.",
                 style = SubStyle, modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
             )
             left.forEach { meeting ->
-                MeetingRow(meeting, live = meeting.begin <= now, clash = left.any { it !== meeting && it.begin < meeting.end && meeting.begin < it.end },
+                DrawerMeeting(meeting, live = meeting.begin <= now, clash = left.any { it !== meeting && it.begin < meeting.end && meeting.begin < it.end },
                     color = m.calendars.firstOrNull { it.id == meeting.calendarId }?.color?.let { Color(it) } ?: Palette.muted)
             }
+        }
+    }
+}
+
+private val DRAWER_TIME = java.time.format.DateTimeFormatter.ofPattern("h:mm a")
+
+/** One meeting in the drawer: a roomy card with the time, title and place (or the private / clash note). */
+@Composable
+private fun DrawerMeeting(meeting: Meeting, live: Boolean, clash: Boolean, color: Color) {
+    val zone = ZoneId.systemDefault()
+    fun t(ms: Long) = java.time.Instant.ofEpochMilli(ms).atZone(zone).format(DRAWER_TIME)
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(Color.White.copy(alpha = .05f))
+            .padding(horizontal = 18.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Box(Modifier.padding(top = 7.dp).size(10.dp).clip(CircleShape).background(color))
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(meeting.title.ifEmpty { "Busy" }, style = BodyStyle.copy(fontSize = 17.sp, lineHeight = 23.sp, fontWeight = FontWeight.Medium))
+            Text("${t(meeting.begin)} – ${t(meeting.end)}", style = SubStyle.copy(fontSize = 15.sp, color = if (live) LocalAccent.current else Palette.body))
+            val note = listOfNotNull(
+                meeting.where.takeIf { it.isNotEmpty() && !meeting.private },
+                "Private on the watch".takeIf { meeting.private },
+                "Double booked".takeIf { clash },
+            ).joinToString(" · ")
+            if (note.isNotEmpty()) Text(note, style = SubStyle.copy(color = if (clash) Color(0xFFFF9D82) else Palette.muted))
         }
     }
 }
