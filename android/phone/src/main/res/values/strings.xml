@@ -11,4 +11,11 @@
     <string name="sync_failed">Sync failed: %1$s</string>
     <string name="no_watch">No watch connected. Open Galaxy Wearable or Wear OS on this phone and check the watch is paired.</string>
     <string name="watch_connected">Watch connected: %1$s</string>
+    <string name="widget_sync">Sync now</string>
+    <string name="widget_description">Send your calendar to your watch with one tap.</string>
+    <string name="widget_syncing">Syncing…</string>
+    <string name="widget_failed">Couldn\'t reach your watch</string>
+    <string name="widget_setup">Open CalenTime to set up</string>
+    <string name="widget_never">Not synced yet</string>
+    <string name="widget_synced">Synced at %1$s</string>
 </resources>

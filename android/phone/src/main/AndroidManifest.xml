@@ -22,5 +22,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Home-screen widget: Sync now and when it last synced (RULES A12). -->
+        <receiver
+            android:name=".SyncWidget"
+            android:exported="false"
+            android:label="@string/widget_sync">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_sync_info" />
+        </receiver>
     </application>
 </manifest>

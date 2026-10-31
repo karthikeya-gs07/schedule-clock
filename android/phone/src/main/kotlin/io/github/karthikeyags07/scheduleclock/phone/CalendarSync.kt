@@ -115,6 +115,7 @@ object CalendarSync {
         context.getSharedPreferences("sync", Context.MODE_PRIVATE).edit()
             .putLong("lastSync", System.currentTimeMillis()).putInt("lastCount", events.size).apply()
         Log.i(TAG, "sent ${events.size} events to the watch")
+        SyncWidget.refresh(context)   // the home-screen widget shows the new time
         return events.size
     }
 
