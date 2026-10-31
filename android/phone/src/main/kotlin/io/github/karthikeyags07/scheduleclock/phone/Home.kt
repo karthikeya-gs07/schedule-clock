@@ -697,7 +697,8 @@ fun AboutScreen(colourway: String, onBack: () -> Unit, onRunSetup: () -> Unit) {
             FacePart(colourway, "private", day, SampleDay.SAMPLE_MINUTE, "Striped arc",
                 "A private meeting. Its title and place never leave your phone.")
             FacePart(colourway, "middle", day, SampleDay.SAMPLE_MINUTE, "Middle",
-                "The time, and what's next. Tap an hour on the ring to see what's on then; tap the details to go back.", divider = false)
+                "The time, and what's next. Tap an hour on the ring to see what's on then; tap the details to go back.")
+            IconItem(Icons.calendar, "All-day events", "Not shown on the watch, and they never count as a double booking: your meetings that day look as usual.")
 
             ItemDivider(Modifier.padding(top = 8.dp))
             PageHeading("Buzzes")

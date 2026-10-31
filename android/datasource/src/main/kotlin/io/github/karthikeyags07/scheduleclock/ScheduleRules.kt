@@ -10,7 +10,7 @@ data class Meeting(
     val title: String,
     val where: String = "",
     val private: Boolean = false,
-    /** W9: an all-day event is kept as an event but never placed or shown. Set from CalendarContract.Events.ALL_DAY. */
+    /** W9: an all-day event is kept as an event but never placed, shown or counted as a clash. From CalendarContract.Events.ALL_DAY. */
     val allDay: Boolean = false,
 ) {
     val key: String get() = "$startMin|$title"
@@ -39,8 +39,8 @@ object ScheduleRules {
      * dot has passed its slot (the 7–8 PM call moves at 8:30 AM, not 8:00).
      */
     fun place(meetings: List<Meeting>, now: Int): List<Placed> {
-        val all = meetings.filter { !it.allDay }.sortedBy { it.startMin }   // W9: all-day events are never drawn…
-        val allDays = meetings.filter { it.allDay }                         // …but every meeting on their day clashes with them
+        // W9 (2026-10-31): all-day events are left off the face entirely; they don't clash with the day's meetings.
+        val all = meetings.filter { !it.allDay }.sortedBy { it.startMin }
         val winStart = minOf(now, all.filter { it.startMin < now && it.endMin > now }.minOfOrNull { it.startMin } ?: now)
         val winEnd = winStart + WINDOW_MIN
         val laneEnd = minOf(winEnd, DAY_START_MIN + WINDOW_MIN)
@@ -48,18 +48,17 @@ object ScheduleRules {
         return all.mapNotNull { m ->
             when {
                 now < DAY_START_MIN ->
-                    if (m.endMin > now && m.endMin <= laneEnd) Placed(m, Lane.LATER, m.startMin, m.endMin, overlapping(allDays, m)) else null
+                    if (m.endMin > now && m.endMin <= laneEnd) Placed(m, Lane.LATER, m.startMin, m.endMin) else null
                 // W5: tomorrow's meetings (from the next midnight) never take the main ring before midnight.
                 m.endMin > now && m.endMin <= ringEnd && m.startMin < DAY_MIN ->
-                    Placed(m, Lane.MAIN, maxOf(m.startMin, winStart), m.endMin, overlapping(allDays, m))
+                    Placed(m, Lane.MAIN, maxOf(m.startMin, winStart), m.endMin)
                 (m.endMin > ringEnd || m.startMin >= DAY_MIN) && m.startMin > now && (m.startMin < DAY_MIN || m.startMin < winEnd) ->
-                    Placed(m, Lane.LATER, m.startMin, if (m.startMin < DAY_MIN) minOf(m.endMin, DAY_MIN) else m.endMin, overlapping(allDays, m))
+                    Placed(m, Lane.LATER, m.startMin, if (m.startMin < DAY_MIN) minOf(m.endMin, DAY_MIN) else m.endMin)
                 else -> null
             }
         }
     }
 
-    private fun overlapping(allDays: List<Meeting>, m: Meeting) = allDays.filter { it.startMin < m.endMin && m.startMin < it.endMin }
 
     fun isLive(p: Placed, now: Int) = p.meeting.startMin <= now && p.meeting.endMin > now
 

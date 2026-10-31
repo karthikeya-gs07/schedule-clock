@@ -96,6 +96,7 @@
   body.detail .device .watch { border-radius: 0; }
   body.detail #face, body.detail #face * { transition: none !important; animation: none !important; }   /* a still picture */
   body.detail #scene > * { opacity: .28 !important; }
+  body.detail { --arc-pct: 100%; --arc-pct-hi: 100%; }   /* close-ups: the meeting arcs at full strength */
   body.detail #scene > .keep { opacity: 1 !important; }
   .hint { color: var(--muted); font-size: 13px; text-align: center; }
 
@@ -512,7 +513,7 @@ const keyOf = e => `${e.start}|${e.title}`;
 const isLive = e => e.s <= nowMin && e.e > nowMin;
 
 // All-day events (W9) overlapping e: they cover their whole day, so every meeting that day clashes with them.
-const allDayFor = e => events().filter(a => a.allDay && a.s < e.e && e.s < a.e);
+const allDayFor = e => [];   // W9 (2026-10-31): all-day events never clash with the day's meetings
 // Everything e clashes with: other main-lane meetings (double bookings), then the day's all-day events.
 const clashesFor = (list, e) => [
   ...(e.lane !== 'main' ? [] : list.filter(o => o !== e && o.lane === 'main' && o.s < e.e && e.s < o.e)),
