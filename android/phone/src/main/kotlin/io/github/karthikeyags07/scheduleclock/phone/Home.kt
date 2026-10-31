@@ -19,7 +19,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -167,7 +170,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
             val meetings = if (live) m.meetings else sample
             val at = if (live) null else SampleDay.SAMPLE_MINUTE
             // Glow: a blurred copy of the face at rest (48 dp of room so the blur isn't cut square); hidden mid-swipe.
-            if (!pager.isScrollInProgress) {
+            if (!pager.isScrollInProgress && kotlin.math.abs(pager.currentPageOffsetFraction) < .01f) {
                 val glowPad = 48.dp
                 Box(Modifier.offset(x = d(79.2f) - glowPad, y = d(158.8f) + dy - glowPad).size(faceSize + glowPad * 2)
                     .graphicsLayer { renderEffect = BlurEffect(18.dp.toPx(), 18.dp.toPx(), TileMode.Decal); alpha = .7f; scaleX = 1.04f; scaleY = 1.04f },
@@ -178,7 +181,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
             HorizontalPager(
                 pager,
                 Modifier.offset(y = d(158.8f) + dy).fillMaxWidth().height(faceSize).clip(CentredCircle),
-                userScrollEnabled = watchMode && p > .98f,
+                userScrollEnabled = false,   // the page-wide swipe layer below drives it
                 // On Watchface the faces either side are loaded ahead, so a swipe never shows one still loading.
                 beyondViewportPageCount = if (watchMode) 1 else 0,
             ) { page ->
@@ -218,16 +221,32 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
         MeetingsDrawer(m, haze, collapsedTop = drawerTop, expandedTop = statusBar + 117.dp, height = maxHeight,
             away = lerp(0.dp, maxHeight, p))
 
-        // ---- Watchface: the colourway's name, the page dots and Use watch face ----
+        // ---- Watchface: swipe anywhere on the page to change the face (the pager band is the same width) ----
+        if (watchMode && p > .98f) {
+            val scope = rememberCoroutineScope()
+            Box(Modifier.fillMaxSize().draggable(
+                rememberDraggableState { delta -> pager.dispatchRawDelta(-delta) },
+                Orientation.Horizontal,
+                onDragStopped = { velocity ->
+                    val page = pager.currentPage + pager.currentPageOffsetFraction
+                    val target = when {
+                        velocity < -600 -> kotlin.math.floor(page).toInt() + 1
+                        velocity > 600 -> kotlin.math.ceil(page).toInt() - 1
+                        else -> kotlin.math.round(page).toInt()
+                    }.coerceIn(0, COLOURWAYS.lastIndex)
+                    scope.launch { pager.animateScrollToPage(target) }
+                },
+            ))
+        }
+
+        // ---- Watchface: the page dots, the colourway's name and Use watch face ----
         val pickAlpha = ((p - .45f) / .55f).coerceIn(0f, 1f)
         if (pickAlpha > 0f) Column(
             Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(start = 24.dp, end = 24.dp, bottom = 28.dp + 80.dp + 24.dp)
                 .graphicsLayer { alpha = pickAlpha; translationY = (1f - pickAlpha) * 24.dp.toPx() },
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(lookName(shown), style = TitleStyle)
-            Text(COLOURWAY_LINES[shown].orEmpty(), style = SubStyle, modifier = Modifier.padding(top = 4.dp))
-            Row(Modifier.padding(top = 16.dp, bottom = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.padding(bottom = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 COLOURWAYS.forEachIndexed { i, id ->
                     val on = i == pager.currentPage
                     val dot = Modifier.height(6.dp).width(if (on) 18.dp else 6.dp).clip(CircleShape)
@@ -236,6 +255,8 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                     else Box(dot.background(if (on) accentFor(id) else Color.White.copy(alpha = .25f)))
                 }
             }
+            Text(lookName(shown), style = TitleStyle)
+            Text(COLOURWAY_LINES[shown].orEmpty(), style = SubStyle, modifier = Modifier.padding(top = 4.dp, bottom = 20.dp))
             val face = m.link.face
             val canUse = m.link.watch != null && face?.installed == true
             // A plain frosted button, like Today's; it reads "On your watch" for the colourway in use.
