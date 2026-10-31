@@ -155,8 +155,9 @@ private fun LookCard(id: String, name: String, text: String?, m: AppModel, enabl
     val sample = remember { SampleDay.meetings() }   // a busy sample day, so every colourway shows its arcs
     val accent = LocalAccent.current
     val shape = RoundedCornerShape(20.dp)
-    val box = modifier.fillMaxWidth().clip(shape).background(Palette.surface)
-        .border(BorderStroke(1.dp, if (selected) accent.copy(alpha = .35f) else Color.Transparent), shape)
+    // Same frosted glass as Today's buttons: a light grey tint with a hairline edge (accent edge when chosen).
+    val box = modifier.fillMaxWidth().clip(shape).background(Color(0xFF3A3A3E).copy(alpha = .45f))
+        .border(BorderStroke(1.dp, if (selected) accent.copy(alpha = .45f) else Color.White.copy(alpha = .07f)), shape)
         .clickable(enabled = enabled, role = Role.RadioButton) { m.pickColourway(id) }
     val title: @Composable () -> Unit = {
         Row(verticalAlignment = Alignment.CenterVertically) {

@@ -53,6 +53,8 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -63,6 +65,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -107,26 +110,28 @@ fun HomeScreen(m: AppModel, haze: HazeState, onWatchStatus: () -> Unit, onAbout:
             ))
         })
 
-        // ---- The watch: photo at 40 %, faded top and bottom, with the live face glowing in its screen ----
+        // ---- The watch: photo at 40 %, its strap ends faded out, with the live face glowing in its screen ----
+        // The fade is a mask on the photo itself (not grey boxes on top), so nothing square shows over the glow.
         Box(Modifier.offset(x = d(29f), y = d(27f)).size(d(334.5f), d(498.8f))) {
             Image(
                 painterResource(R.drawable.watch_body), null, contentScale = ContentScale.FillBounds,
-                modifier = Modifier.fillMaxSize().graphicsLayer { alpha = .4f }
-                    .drawWithContent { drawContent(); drawRect(Home.background, blendMode = BlendMode.Multiply) },
+                colorFilter = ColorFilter.tint(Home.background, BlendMode.Multiply),   // Figma's multiply, on the watch's pixels only
+                modifier = Modifier.fillMaxSize()
+                    .graphicsLayer { alpha = .4f; compositingStrategy = CompositingStrategy.Offscreen }
+                    .drawWithContent {
+                        drawContent()
+                        drawRect(Brush.verticalGradient(0f to Color.Transparent, .2f to Color.Black, .78f to Color.Black, 1f to Color.Transparent),
+                            blendMode = BlendMode.DstIn)
+                    },
             )
         }
-        listOf(45.81f to false, 429.1f to true).forEach { (y, flip) ->
-            Box(
-                Modifier.offset(x = d(101.5f), y = d(y)).size(d(189f), d(77f)).background(
-                    Brush.verticalGradient(if (flip) listOf(Color.Transparent, Home.background) else listOf(Home.background, Color.Transparent)),
-                ),
-            )
-        }
+        // Glow: a blurred copy of the face behind it, so the arcs light up the watch around them. Its layer is
+        // 48 dp bigger on every side, so the blur fades out before the layer's edge instead of being cut square.
+        val glowPad = 48.dp
+        Box(Modifier.offset(x = d(79.2f) - glowPad, y = d(158.8f) - glowPad).size(faceSize + glowPad * 2)
+            .graphicsLayer { renderEffect = BlurEffect(18.dp.toPx(), 18.dp.toPx(), TileMode.Decal); alpha = .7f; scaleX = 1.04f; scaleY = 1.04f },
+            contentAlignment = Alignment.Center) { WatchFacePreview(m.colourway, m.meetings, faceSize) }
         Box(Modifier.offset(x = d(79.2f), y = d(158.8f)).size(faceSize)) {
-            // Glow: a blurred copy of the face behind it, so the arcs light up the watch around them.
-            Box(Modifier.graphicsLayer {
-                renderEffect = BlurEffect(18.dp.toPx(), 18.dp.toPx(), TileMode.Decal); alpha = .7f; scaleX = 1.04f; scaleY = 1.04f
-            }) { WatchFacePreview(m.colourway, m.meetings, faceSize) }
             WatchFacePreview(m.colourway, m.meetings, faceSize, interactive = true)
         }
         }
@@ -287,7 +292,10 @@ private fun MeetingsDrawer(m: AppModel, haze: HazeState, collapsedTop: androidx.
 
 private val DRAWER_TIME = java.time.format.DateTimeFormatter.ofPattern("h:mm a")
 
-/** One meeting in the drawer: the title, time and place (or the private / clash note), with room around it. */
+/**
+ * One meeting in the drawer: the title on the left (up to two lines) and its time on the right, with the place
+ * (or the private / clash note) under the title.
+ */
 @Composable
 private fun DrawerMeeting(meeting: Meeting, live: Boolean, clash: Boolean, color: Color) {
     val zone = ZoneId.systemDefault()
@@ -298,14 +306,19 @@ private fun DrawerMeeting(meeting: Meeting, live: Boolean, clash: Boolean, color
     ) {
         Box(Modifier.padding(top = 7.dp).size(10.dp).clip(CircleShape).background(color))
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(meeting.title.ifEmpty { "Busy" }, style = BodyStyle.copy(fontSize = 17.sp, lineHeight = 23.sp, fontWeight = FontWeight.Medium))
-            Text("${t(meeting.begin)} – ${t(meeting.end)}", style = SubStyle.copy(fontSize = 15.sp, color = if (live) LocalAccent.current else Palette.body))
+            Text(meeting.title.ifEmpty { "Busy" }, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                style = BodyStyle.copy(fontSize = 17.sp, lineHeight = 23.sp, fontWeight = FontWeight.Medium))
             val note = listOfNotNull(
                 meeting.where.takeIf { it.isNotEmpty() && !meeting.private },
                 "Private on the watch".takeIf { meeting.private },
                 "Double booked".takeIf { clash },
             ).joinToString(" · ")
-            if (note.isNotEmpty()) Text(note, style = SubStyle.copy(color = if (clash) Color(0xFFFF9D82) else Palette.muted))
+            if (note.isNotEmpty()) Text(note, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                style = SubStyle.copy(color = if (clash) Color(0xFFFF9D82) else Palette.muted))
+        }
+        Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(top = 1.dp)) {
+            Text(t(meeting.begin), style = BodyStyle.copy(fontSize = 15.sp, color = if (live) LocalAccent.current else Palette.text))
+            Text(t(meeting.end), style = SubStyle)
         }
     }
 }
