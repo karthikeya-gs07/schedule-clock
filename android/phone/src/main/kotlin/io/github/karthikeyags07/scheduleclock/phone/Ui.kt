@@ -123,6 +123,7 @@ object Icons {
     val watch = strokeIcon("M12 6a6 6 0 1 1 0 12a6 6 0 1 1 0-12z", "M9 6.5 9.6 3h4.8l.6 3.5M9 17.5l.6 3.5h4.8l.6-3.5M12 9.5V12l1.6 1.2")
     val chevron = strokeIcon("m6 9 6 6 6-6")
     val back = strokeIcon("M19 12H5M11 6l-6 6 6 6")
+    val info = strokeIcon("M12 3.5a8.5 8.5 0 1 1 0 17a8.5 8.5 0 1 1 0-17z", "M12 11v5.5M12 7.8v.1")
 }
 
 // ---------- Shared pieces ----------

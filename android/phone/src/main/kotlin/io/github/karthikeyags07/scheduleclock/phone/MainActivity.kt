@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -91,30 +92,44 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
     // Android stops asking after a second "Don't allow"; then the button opens the app's settings instead.
     val allow: () -> Unit = { if (deniedOnce && !m.hasPermission) openAppSettings() else permission.launch(Manifest.permission.READ_CALENDAR) }
 
+    var about by rememberSaveable { mutableStateOf(false) }
+    var watchStatus by rememberSaveable { mutableStateOf(false) }
+    val install: () -> Unit = { setupStep = 3; m.restartSetup() }
+
     CompositionLocalProvider(LocalAccent provides animatedAccent(m.colourway), LocalTextStyle provides BodyStyle) {   // Google Sans Flex everywhere
-        Box(Modifier.fillMaxSize().background(Palette.screen).statusBarsPadding().navigationBarsPadding()) {
-            if (!m.setupDone) SetupFlow(m, setupStep, allow)
-            else Column(Modifier.fillMaxSize()) {
-                BackHandler(enabled = tab != Tab.TODAY) { tab = Tab.TODAY }
-                Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp)) {
-                    when (tab) {
-                        Tab.TODAY -> TodayScreen(m, allow) { setupStep = 3; m.restartSetup() }
-                        Tab.CALENDARS -> { ScreenTitle("Calendars"); CalendarsList(m, allow) }
-                        Tab.WATCHFACE -> WatchfaceScreen(m)
-                        Tab.SETTINGS -> SettingsScreen(m) { setupStep = 0; m.restartSetup() }
+        Box(Modifier.fillMaxSize().background(Palette.screen)) {
+            when {
+                !m.setupDone -> Box(Modifier.statusBarsPadding().navigationBarsPadding()) { SetupFlow(m, setupStep, allow) }
+                about -> { BackHandler { about = false }; AboutScreen { about = false } }
+                else -> {
+                    BackHandler(enabled = tab != Tab.TODAY || watchStatus) { if (watchStatus) watchStatus = false else tab = Tab.TODAY }
+                    if (tab == Tab.TODAY) HomeScreen(m, onWatchStatus = { watchStatus = true }, onAbout = { about = true })
+                    else Column(Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState())
+                        .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 132.dp)) {
+                        when (tab) {
+                            Tab.CALENDARS -> { ScreenTitle("Calendars"); CalendarsList(m, allow) }
+                            Tab.WATCHFACE -> WatchfaceScreen(m)
+                            else -> SettingsScreen(m) { setupStep = 0; m.restartSetup() }
+                        }
                     }
+                    NavBar(tab, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp)) { tab = it }
+                    if (watchStatus) WatchStatusPanel(m, allow, install) { watchStatus = false }
                 }
-                NavBar(tab) { tab = it }
             }
-            m.toast?.let { Toast(it, Modifier.align(Alignment.BottomCenter).padding(bottom = 96.dp)) }
+            m.toast?.let { Toast(it, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 124.dp)) }
         }
     }
 }
 
-/** Icons only (RULES §12): the selected one in the accent colour, each a large tap area. */
+/**
+ * Floating navigation (Figma (4)): a 332 × 80 pill above every tab. Icons only (RULES §12), the selected one in
+ * the accent colour, each a large tap area.
+ */
 @Composable
-private fun NavBar(current: Tab, onSelect: (Tab) -> Unit) = Row(
-    Modifier.fillMaxWidth().background(Palette.nav).padding(horizontal = 8.dp, vertical = 6.dp),
+private fun NavBar(current: Tab, modifier: Modifier, onSelect: (Tab) -> Unit) = Row(
+    modifier.width(332.dp).height(80.dp).clip(RoundedCornerShape(40.dp)).background(Color(0xFF191919))
+        .clickable(enabled = false) {}.padding(horizontal = 12.dp, vertical = 6.dp),
+    verticalAlignment = Alignment.CenterVertically,
 ) {
     Tab.entries.forEach { t ->
         val selected = t == current

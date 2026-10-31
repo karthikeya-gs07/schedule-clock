@@ -42,66 +42,11 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-// ---------- Today (RULES A2, A3) ----------
-@Composable
-fun TodayScreen(m: AppModel, onAllow: () -> Unit, onInstall: () -> Unit) {
-    val face = m.link.face
-    val watchOk = m.link.watch != null && face != null
-    Spacer(Modifier.height(12.dp))
-    if (!m.hasPermission) Banner("Calendar access is off", "Calen-Time can't see your meetings, so the watch shows an empty day.", action = "Allow access", onAction = onAllow)
-    when {
-        !m.linkChecked -> {}
-        m.link.watch == null -> Banner("Watch not connected", "Open Galaxy Wearable and check your watch is paired and nearby.")
-        face == null -> Banner("Calen-Time isn't on your watch", "Install the Calen-Time watch app from the Play Store on your watch.", info = true,
-            action = "Install on watch", onAction = { m.getWatchApp() })
-        !face.supported -> Banner("This watch needs an update", "Calen-Time needs Wear OS 6 or newer. Check for a watch update in Galaxy Wearable.")
-        !face.installed -> Banner("Watch face isn't on your watch", "Install it, then confirm on the watch to make it your watch face.", info = true, action = "Install on watch", onAction = onInstall)
-        !face.active -> Banner("Calen-Time isn't your watch face", "Touch and hold your watch face, then swipe to Calen-Time and tap it.", info = true)
-    }
-    Card {
-        Column(Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 22.dp, bottom = 18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            WatchFacePreview(m.colourway, m.meetings, 220.dp, interactive = true)
-            Spacer(Modifier.height(14.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(8.dp).clip(CircleShape).background(if (watchOk) Palette.ok else Palette.faint))
-                Spacer(Modifier.width(8.dp))
-                Text("${m.link.watch?.name ?: "Your watch"} · ${if (m.link.watch != null) "Connected" else "Not connected"}",
-                    style = BodyStyle, fontWeight = FontWeight.Medium)
-            }
-            Text(
-                when {
-                    m.link.watch == null -> "Meetings will sync when the watch is back"
-                    m.lastSync == 0L -> "Not synced yet"
-                    System.currentTimeMillis() - m.lastSync < 60_000 -> "Synced just now"
-                    else -> "Synced ${DateUtils.getRelativeTimeSpanString(m.lastSync)} · updates every 15 min"
-                },
-                style = HintStyle, modifier = Modifier.padding(top = 2.dp, bottom = 16.dp),
-            )
-            TonalButton(if (m.syncing) "Syncing…" else "Sync now", Icons.sync, enabled = m.link.watch != null && m.hasPermission, busy = m.syncing) { m.syncNow() }
-        }
-    }
-    val now = System.currentTimeMillis()
-    val zone = ZoneId.systemDefault()
-    val endOfToday = LocalDate.now(zone).plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
-    val left = m.meetings.filter { !it.allDay && it.end > now && it.begin < endOfToday }
-    SectionLabel("Coming up on your watch", if (left.isEmpty()) "" else "${left.size} meeting${if (left.size == 1) "" else "s"}")
-    Rows {
-        if (left.isEmpty()) Text(
-            if (!m.hasPermission) "Allow calendar access to see your meetings here." else "Nothing else today. The watch shows a clear day.",
-            style = SubStyle, modifier = Modifier.fillMaxWidth().padding(26.dp),
-        )
-        left.forEachIndexed { i, meeting ->
-            if (i > 0) RowDivider()
-            MeetingRow(meeting, live = meeting.begin <= now, clash = left.any { it !== meeting && it.begin < meeting.end && meeting.begin < it.end },
-                color = m.calendars.firstOrNull { it.id == meeting.calendarId }?.color?.let { Color(it) } ?: Palette.muted)
-        }
-    }
-}
-
+// ---------- Meeting rows (Today's drawer) ----------
 private val TIME = DateTimeFormatter.ofPattern("h:mm a")
 
 @Composable
-private fun MeetingRow(meeting: Meeting, live: Boolean, clash: Boolean, color: Color) = Row(
+internal fun MeetingRow(meeting: Meeting, live: Boolean, clash: Boolean, color: Color) = Row(
     Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp),
 ) {
     Text(Instant.ofEpochMilli(meeting.begin).atZone(ZoneId.systemDefault()).format(TIME),
