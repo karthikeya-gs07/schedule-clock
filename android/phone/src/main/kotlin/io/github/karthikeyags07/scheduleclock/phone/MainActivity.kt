@@ -163,7 +163,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
                             androidx.compose.animation.AnimatedVisibility(about, enter = slideInHorizontally { it } + fadeIn(),
                                 exit = slideOutHorizontally { it } + fadeOut()) {
                                 BackHandler { about = false }
-                                AboutScreen(m.colourway, onBack = { about = false }, closable = true) { about = false; setupStep = 0; m.restartSetup() }
+                                AboutScreen(m.colourway, onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() }
                             }
                             if (!about) NavBar(right, rightHaze, null, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp),
                                 tabs = listOf(Tab.WATCHFACE, Tab.CALENDARS, Tab.SETTINGS)) { tab = it }

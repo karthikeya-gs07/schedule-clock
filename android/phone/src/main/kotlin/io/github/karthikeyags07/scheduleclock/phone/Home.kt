@@ -658,31 +658,21 @@ fun WatchStatusPanel(m: AppModel, haze: HazeState, onAllow: () -> Unit, onInstal
  * with the part's name and meaning under each, round icons beside the buzzes, and a frosted button at the end.
  */
 @Composable
-fun AboutScreen(colourway: String, onBack: () -> Unit, closable: Boolean = false, onRunSetup: () -> Unit) {
+fun AboutScreen(colourway: String, onBack: () -> Unit, onRunSetup: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val version = context.packageManager.getPackageInfo(context.packageName, 0).versionName
     Box(Modifier.fillMaxSize().stagePage(LocalAccent.current)) {
         Column(Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState())
             .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 40.dp).navigationBarsPadding()) {
-            if (closable) {
-                // In the unfolded right pane: the title, and close on the far right, level with Today's info button
-                // (status bar + 44 dp, 57 dp round).
-                Row(Modifier.fillMaxWidth().padding(top = 32.dp).height(57.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("Calen-Time", style = TitleStyle, modifier = Modifier.weight(1f))
-                    Box(Modifier.size(57.dp).clip(CircleShape).frostCard(CircleShape)
-                        .clickable(role = Role.Button, onClick = onBack).semantics { contentDescription = "Close" },
-                        contentAlignment = Alignment.Center) {
-                        Icon(Icons.close, null, tint = Palette.text, modifier = Modifier.size(22.dp))
-                    }
-                }
-            } else {
-                // Back: a round frosted button at the top, like Today's top buttons.
-                Box(Modifier.padding(bottom = 22.dp).size(52.dp).clip(CircleShape).frostCard(CircleShape)
-                    .clickable(role = Role.Button, onClick = onBack).semantics { contentDescription = "Back" },
+            // The title, and close (×) on the far right, level with Today's info button (status bar + 44 dp, 57 dp
+            // round): the same folded and in the unfolded right pane.
+            Row(Modifier.fillMaxWidth().padding(top = 32.dp).height(57.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("Calen-Time", style = TitleStyle, modifier = Modifier.weight(1f))
+                Box(Modifier.size(57.dp).clip(CircleShape).frostCard(CircleShape)
+                    .clickable(role = Role.Button, onClick = onBack).semantics { contentDescription = "Close" },
                     contentAlignment = Alignment.Center) {
-                    Icon(Icons.back, null, tint = Palette.text, modifier = Modifier.size(22.dp))
+                    Icon(Icons.close, null, tint = Palette.text, modifier = Modifier.size(22.dp))
                 }
-                Text("Calen-Time", style = TitleStyle)
             }
             Text("Version $version", style = SubStyle, modifier = Modifier.padding(top = 4.dp, bottom = 18.dp))
             Text("Your day, around the clock. Calen-Time turns your watch face into a picture of the next 12 hours: every meeting is an arc on the ring, so one glance tells you how busy you are, what's next and how much time you have before it.",
