@@ -111,16 +111,16 @@ private fun OutlookHelp() {
             Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable(role = Role.Button) { open = !open }.padding(vertical = 9.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Box(Modifier.size(42.dp).clip(CircleShape).frostCard(CircleShape), contentAlignment = Alignment.Center) {
-                Icon(Icons.info, null, tint = Palette.text, modifier = Modifier.size(20.dp))
+            Box(Modifier.size(38.dp).clip(CircleShape).frostCard(CircleShape), contentAlignment = Alignment.Center) {
+                Icon(Icons.info, null, tint = Palette.text, modifier = Modifier.size(18.dp))
             }
-            Text("Don't see your work or Teams calendar?", style = BodyStyle.copy(fontSize = 17.sp, lineHeight = 23.sp, fontWeight = FontWeight.Medium), modifier = Modifier.weight(1f))
+            Text("Don't see your work or Teams calendar?", style = BodyStyle.copy(fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Medium), modifier = Modifier.weight(1f))
             Icon(Icons.chevron, null, tint = Palette.text, modifier = Modifier.size(20.dp).rotate(if (open) 180f else 0f))
         }
-        if (open) Column(Modifier.padding(start = 56.dp, top = 6.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (open) Column(Modifier.padding(start = 52.dp, top = 6.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("Open the **Outlook** app and tap your profile picture.", "Tap **Settings**, then your work account.",
                 "Turn on **Sync calendars**.", "Come back here. It shows up under Outlook within a minute.")
-                .forEachIndexed { i, s -> Text(bold("${i + 1}. $s"), style = PageBody) }
+                .forEachIndexed { i, s -> Text(bold("${i + 1}. $s"), style = ItemTextStyle) }
         }
     }
 }
@@ -148,6 +148,6 @@ fun SettingsScreen(m: AppModel, onRunSetup: () -> Unit) {
     // Setup again (also on About): calendar access, calendars and the face on the watch, from the start.
     PageHeading("Setup")
     Text("Go through setup again: calendar access, which calendars to send, and putting the face on your watch.",
-        style = PageBody, modifier = Modifier.padding(bottom = 16.dp))
+        style = ItemTextStyle, modifier = Modifier.padding(bottom = 16.dp))
     RunSetupButton(onRunSetup, Modifier.fillMaxWidth())
 }

@@ -51,7 +51,8 @@ fun WatchfaceGrid(m: AppModel, haze: HazeState) {
     Column(Modifier.fillMaxSize().hazeSource(haze, zIndex = 0f).stagePage(LocalAccent.current, dark = true).statusBarsPadding()) {
         Column(Modifier.padding(horizontal = 20.dp)) {
             PageTitle("Watchface", "Pick the look for your watch.")
-            Box(Modifier.fillMaxWidth().padding(top = 20.dp, bottom = 16.dp), contentAlignment = Alignment.CenterStart) {
+            // Centred, as above the watch on the folded screen.
+            Box(Modifier.fillMaxWidth().padding(top = 20.dp, bottom = 18.dp), contentAlignment = Alignment.Center) {
                 LookTabs(gradients, haze, Modifier) { gradients = it }
             }
         }
@@ -70,7 +71,7 @@ fun WatchfaceGrid(m: AppModel, haze: HazeState) {
 private fun FaceCard(m: AppModel, look: Look, sample: List<Meeting>) {
     val inUse = look.id == m.colourway
     val canUse = m.link.watch != null && m.link.face?.installed == true
-    val edge = if (inUse) LocalAccent.current else Color.White.copy(alpha = .07f)
+    val edge = if (inUse) LocalAccent.current.copy(alpha = .35f) else Color.White.copy(alpha = .07f)   // a quiet hint, not a frame
     Column(
         Modifier.clip(RoundedCornerShape(24.dp)).frostCard(RoundedCornerShape(24.dp), edge).padding(14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

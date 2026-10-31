@@ -267,25 +267,27 @@ fun Modifier.stagePage(glow: Color, dark: Boolean = false) = background(if (dark
 val DarkPage = Color(0xFF111113)
 
 val PageBody = BodyStyle.copy(color = Palette.body, fontSize = 16.sp, lineHeight = 23.sp)
-private val ItemTitle = BodyStyle.copy(fontSize = 17.sp, lineHeight = 23.sp, fontWeight = FontWeight.Medium)
+private val ItemTitle = BodyStyle.copy(fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Medium)
+// Under an item's name: smaller and quieter than it, so the name leads.
+val ItemTextStyle = BodyStyle.copy(fontSize = 14.sp, lineHeight = 20.sp, color = Palette.muted)
 
 @Composable
 fun PageTitle(title: String, subtitle: String? = null) {
-    Text(title, style = TitleStyle.copy(fontSize = 34.sp, lineHeight = 40.sp), modifier = Modifier.padding(top = 14.dp))
-    subtitle?.let { Text(it, style = SubStyle.copy(fontSize = 15.sp), modifier = Modifier.padding(top = 4.dp)) }
+    Text(title, style = TitleStyle, modifier = Modifier.padding(top = 14.dp))
+    subtitle?.let { Text(it, style = SubStyle, modifier = Modifier.padding(top = 4.dp)) }
 }
 
 @Composable
-fun PageHeading(text: String, sub: String? = null) = Column(Modifier.padding(top = 34.dp, bottom = 16.dp)) {
-    Text(text, style = TitleStyle.copy(fontSize = 22.sp, lineHeight = 28.sp))
-    sub?.let { Text(it, style = SubStyle.copy(fontSize = 15.sp), modifier = Modifier.padding(top = 2.dp)) }
+fun PageHeading(text: String, sub: String? = null) = Column(Modifier.padding(top = 30.dp, bottom = 12.dp)) {
+    Text(text, style = TitleStyle.copy(fontSize = 19.sp, lineHeight = 25.sp))
+    sub?.let { Text(it, style = SubStyle.copy(fontSize = 13.sp), modifier = Modifier.padding(top = 2.dp)) }
 }
 
 /** The round frosted icon of an item: an icon, or a calendar's colour as a dot. */
 @Composable
 private fun ItemIcon(icon: ImageVector?, dot: Color?, dim: Boolean = false) =
-    Box(Modifier.size(42.dp).clip(CircleShape).frostCard(CircleShape), contentAlignment = Alignment.Center) {
-        if (icon != null) Icon(icon, null, tint = if (dim) Palette.faint else Palette.text, modifier = Modifier.size(20.dp))
+    Box(Modifier.size(38.dp).clip(CircleShape).frostCard(CircleShape), contentAlignment = Alignment.Center) {
+        if (icon != null) Icon(icon, null, tint = if (dim) Palette.faint else Palette.text, modifier = Modifier.size(18.dp))
         dot?.let { Box(Modifier.size(14.dp).clip(CircleShape).background(if (dim) it.copy(alpha = .4f) else it)) }
     }
 
@@ -297,7 +299,7 @@ fun IconItem(icon: ImageVector, title: String, text: String) = Row(
     ItemIcon(icon, null)
     Column(Modifier.weight(1f).padding(top = 1.dp)) {
         Text(title, style = ItemTitle)
-        Text(text, style = PageBody, modifier = Modifier.padding(top = 2.dp))
+        Text(text, style = ItemTextStyle, modifier = Modifier.padding(top = 2.dp))
     }
 }
 
@@ -314,7 +316,7 @@ fun ToggleItem(title: String, text: String? = null, checked: Boolean, icon: Imag
         ItemIcon(icon, dot, dim = !enabled)
         Column(Modifier.weight(1f)) {
             Text(title, style = ItemTitle.copy(color = if (enabled) Palette.text else Palette.faint))
-            text?.let { Text(it, style = PageBody.copy(fontSize = 15.sp, lineHeight = 21.sp, color = if (enabled) Palette.body else Palette.faint)) }
+            text?.let { Text(it, style = ItemTextStyle.copy(color = if (enabled) Palette.muted else Palette.faint), modifier = Modifier.padding(top = 1.dp)) }
         }
         Switch(
             checked = checked, onCheckedChange = null, enabled = enabled,
