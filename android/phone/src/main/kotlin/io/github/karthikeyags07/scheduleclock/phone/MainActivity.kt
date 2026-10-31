@@ -148,6 +148,8 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
                     Row(Modifier.fillMaxSize()) {
                         Box(Modifier.weight(1f).fillMaxHeight()) {
                             HomeScreen(m, haze, watchMode = false, onWatchStatus = { watchStatus = true }, onAbout = { about = true })
+                            // The watch status card opens over Today's pane only, under its clock button.
+                            if (watchStatus) WatchStatusPanel(m, haze, allow, install) { watchStatus = false }
                         }
                         Box(Modifier.width(1.dp).fillMaxHeight().background(Color.White.copy(alpha = .06f)))
                         Box(Modifier.weight(1f).fillMaxHeight()) {
@@ -171,7 +173,6 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
                                 tabs = listOf(Tab.WATCHFACE, Tab.CALENDARS, Tab.SETTINGS)) { tab = it }
                         }
                     }
-                    if (watchStatus) WatchStatusPanel(m, haze, allow, install) { watchStatus = false }
                 }
                 else -> {
                     BackHandler(enabled = tab != Tab.TODAY || watchStatus) { if (watchStatus) watchStatus = false else tab = Tab.TODAY }
