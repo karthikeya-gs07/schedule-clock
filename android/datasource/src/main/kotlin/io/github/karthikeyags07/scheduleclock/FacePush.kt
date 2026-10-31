@@ -64,8 +64,10 @@ object FacePush {
     /** Puts the face in [colourway] on the watch: added the first time, swapped into our slot after that. */
     suspend fun install(context: Context, colourway: String): Status = busy.withLock {
         require(colourway in COLOURWAYS) { "unknown colourway $colourway" }
+        // Already showing it (often because the other path just swapped it): answer from what we know rather
+        // than asking "is it active?" so soon after a swap, which can stall past the phone's timeout.
         if (prefs(context).getString("colourway", null) == colourway &&
-            manager(context).listWatchFaces().installedWatchFaceDetails.isNotEmpty()) return@withLock status(context)   // already showing it
+            manager(context).listWatchFaces().installedWatchFaceDetails.isNotEmpty()) return@withLock cachedStatus(context, colourway)
         val manager = manager(context)
         val slot = manager.listWatchFaces().installedWatchFaceDetails.firstOrNull()
         val token = JSONObject(context.assets.open("faces/tokens.json").bufferedReader().readText()).getString(colourway)
@@ -74,10 +76,11 @@ object FacePush {
         }
         prefs(context).edit().putString("colourway", colourway).apply()
         Log.i(TAG, "face push: ${if (slot == null) "added" else "swapped to"} $colourway")
-        if (slot == null) status(context)
-        else Status(supported = true, installed = true, active = prefs(context).getBoolean("active", false), colourway = colourway,
-            activateUsed = prefs(context).getBoolean("activateUsed", false))   // no active check right after a swap
+        if (slot == null) status(context) else cachedStatus(context, colourway)   // no active check right after a swap
     }
+
+    private fun cachedStatus(context: Context, colourway: String) = Status(supported = true, installed = true,
+        active = prefs(context).getBoolean("active", false), colourway = colourway, activateUsed = prefs(context).getBoolean("activateUsed", false))
 
     fun canActivate(context: Context) =
         context.checkSelfPermission(ACTIVATE_PERMISSION) == PackageManager.PERMISSION_GRANTED
