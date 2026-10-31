@@ -52,7 +52,7 @@ object SpikeSchedule {
     /**
      * The default sample (`day?name=busy`): a busy day that rolls with the clock, so a real watch looks busy
      * at any hour. Minutes from the hour it was made (`anchor`): a live meeting, back-to-back meetings, a
-     * private one, a full and a partial double booking, a long title, and one past the 12 h window. Made
+     * private one, a full and a partial double booking (with a third and fourth joining the full one, R4a), a long title, and one past the 12 h window. Made
      * again at the current hour once they've all ended. Past midnight they become tomorrow's (W5, W5a).
      */
     private fun busyDay(anchor: Int) = listOf(
@@ -61,6 +61,8 @@ object SpikeSchedule {
         Meeting(anchor + 105, anchor + 135, "Lunch with Sam", "Café Blue", private = true),
         Meeting(anchor + 150, anchor + 210, "Design review", "Room 4"),
         Meeting(anchor + 150, anchor + 210, "Vendor call", "Zoom"),            // full double booking
+        Meeting(anchor + 170, anchor + 210, "Budget check", "Teams"),          // a third joins (R4a: inner stripe splits)
+        Meeting(anchor + 185, anchor + 200, "Quick sync", "Teams"),            // and a fourth (both split)
         Meeting(anchor + 240, anchor + 285, "Candidate interview", "Zoom"),
         Meeting(anchor + 270, anchor + 300, "Recruiter sync", "Room 2"),       // partial overlap
         Meeting(anchor + 300, anchor + 360, "Weekly sync", "Google Meet"),
@@ -128,7 +130,17 @@ object SpikeSchedule {
         requestUpdate(context.applicationContext)
     }
 
-    private fun placed(context: Context, now: Int = now(context)) = ScheduleRules.place(meetings(context, now), now)
+    // A tap (or any change) asks all six slots at once, and the face asks them all again ~1 s later; each used to read
+    // the calendar again. One read now serves the burst: kept 3 s, for the same minute, and dropped on every
+    // requestUpdate (a change of data, selection or settings).
+    private var cache: Triple<Int, Long, List<Placed>>? = null
+    private const val CACHE_MS = 3_000L
+
+    private fun placed(context: Context, now: Int = now(context)): List<Placed> {
+        val t = SystemClock.elapsedRealtime()
+        cache?.let { (min, at, list) -> if (min == now && t - at < CACHE_MS) return list }
+        return ScheduleRules.place(meetings(context, now), now).also { cache = Triple(now, t, it) }
+    }
 
     /** The selected meeting's index in [list], or -1. A selection that is no longer shown is cleared (I10). */
     private fun selectedIndex(context: Context, list: List<Placed>): Int {
@@ -164,14 +176,20 @@ object SpikeSchedule {
 
     // ---- Slot data -------------------------------------------------------------------------
 
+    private var lastRing: Pair<List<Any?>, ByteArray>? = null
+
     /** Slot 1: the whole ring as one image (spike 2). */
     fun ringImage(context: Context): SmallImageComplicationData {
         val t0 = SystemClock.elapsedRealtimeNanos()
         val now = now(context)
         val list = placed(context, now)
         val selected = selectedIndex(context, list).takeIf { it >= 0 }?.let { list[it].meeting.key }
-        val png = RingRenderer.renderPng(list, now, selected, hiddenKey = prefs(context).getString("settling", null),
-            theme = Themes.of(FacePush.colourway(context)))
+        val hidden = prefs(context).getString("settling", null)
+        val theme = Themes.of(FacePush.colourway(context))
+        // The same ring as last time (the face asking again after a tap): send the PNG already made.
+        val key = listOf(list, now, selected, hidden, theme.id)
+        val png = lastRing?.takeIf { it.first == key }?.second
+            ?: RingRenderer.renderPng(list, now, selected, hiddenKey = hidden, theme = theme).also { lastRing = key to it }
         MeetingBuzz.schedule(context)   // the ring redraws every 5 min and on changes: keep the next buzz set
         Log.i(TAG, "ring image: ${png.size / 1024} KB PNG, drawn+encoded in ${(SystemClock.elapsedRealtimeNanos() - t0) / 1_000_000} ms")
         val image = SmallImage.Builder(Icon.createWithData(png, 0, png.size), SmallImageType.PHOTO).build()
@@ -290,16 +308,19 @@ object SpikeSchedule {
         }, 150 + SETTLE_MS)
     }
 
+    // The slots that move the text first (they drive the 0.52 s glide, M1), the ring image last: it takes the longest
+    // to draw and used to hold the others back.
     private val allServices = listOf(
-        RingImageDataSourceService::class.java,
         StatusDataSourceService::class.java,
         DetailsDataSourceService::class.java,
-        PromoteDataSourceService::class.java,
         TitleScrollDataSourceService::class.java,
         TitleScrollArrowDataSourceService::class.java,
+        PromoteDataSourceService::class.java,
+        RingImageDataSourceService::class.java,
     )
 
     fun requestUpdate(context: Context, vararg services: Class<out ComplicationDataSourceService>) {
+        cache = null
         for (service in services.ifEmpty { allServices.toTypedArray() }) {
             ComplicationDataSourceUpdateRequester.create(context, ComponentName(context, service)).requestUpdateAll()
         }

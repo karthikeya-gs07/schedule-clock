@@ -103,6 +103,26 @@ object RingRenderer {
                     arc(canvas, from, to, R + 4.5f, stroke)
                 }
             }
+            // R4a: where 3 meetings run at once the inner stripe splits into two thin halves; at 4 (or more) the outer
+            // one splits too. Drawn over the two stripes: the half to split is blanked, then two 2 px stripes.
+            val clashEnds = ScheduleRules.clashRanges(shown).flatMap { listOf(it.first, it.second) }.toSet()
+            for ((a0, b0, depth) in ScheduleRules.clashDepths(shown)) {
+                for ((a, b) in minus(a0 to b0, keepOut)) {
+                    for ((from, to, color) in listOf(Triple(a, minOf(b, maxOf(a, now)), CLASH_PAST), Triple(maxOf(a, now), b, CLASH))) {
+                        if (to <= from) continue
+                        for (side in if (depth >= 4) listOf(-1f, 1f) else listOf(-1f)) {
+                            stroke.shader = null; stroke.pathEffect = null; stroke.strokeCap = Paint.Cap.BUTT
+                            stroke.color = dimmed(CLASH_MASK, dim); stroke.strokeWidth = 6f
+                            // Where the piece meets the clash's own end, stop where the round stripe ends do.
+                            val inStart = from in clashEnds; val inEnd = to in clashEnds
+                            arcFlat(canvas, from, to, R + side * 4.5f, stroke, inStart, inEnd)
+                            stroke.color = dimmed(color, dim); stroke.strokeWidth = 2f
+                            arcFlat(canvas, from, to, R + side * 3f, stroke, inStart, inEnd)
+                            arcFlat(canvas, from, to, R + side * 6f, stroke, inStart, inEnd)
+                        }
+                    }
+                }
+            }
             // R9: a selected private (or coral lane) meeting at full strength, above the clash stripes.
             selected?.takeIf { fixed(it) }?.let {
                 if (it.lane == Lane.MAIN) drawMain(canvas, stroke, it, now, dim = false) else drawLater(canvas, stroke, it, dim = false)
@@ -237,6 +257,17 @@ object RingRenderer {
         val start = (from % ScheduleRules.DIAL_MIN) / ScheduleRules.DIAL_MIN.toFloat() * 360f - 90f + inset
         val sweep = (to - from) / ScheduleRules.DIAL_MIN.toFloat() * 360f - 2 * inset
         canvas.drawArc(RectF(C - r, C - r, C + r, C + r), start, sweep.coerceAtLeast(if (capDeg > 0f) 0.01f else 0.5f), false, paint)
+    }
+
+    /** A butt-capped arc from [from] to [to] with no gap at the ends: for pieces inside a stripe (R4a). */
+    private fun arcFlat(canvas: Canvas, from: Int, to: Int, r: Float, paint: Paint, insetStart: Boolean = false, insetEnd: Boolean = false) {
+        val inset = GAP_DEG + Math.toDegrees((2.5f / R).toDouble()).toFloat()   // a 5 px round stripe's end
+        val a = if (insetStart) inset else 0f
+        val b = if (insetEnd) inset else 0f
+        val start = (from % ScheduleRules.DIAL_MIN) / ScheduleRules.DIAL_MIN.toFloat() * 360f - 90f + a
+        val sweep = (to - from) / ScheduleRules.DIAL_MIN.toFloat() * 360f - a - b
+        if (sweep <= 0f) return
+        canvas.drawArc(RectF(C - r, C - r, C + r, C + r), start, sweep, false, paint)
     }
 
     private fun midDeg(from: Int, to: Int) =

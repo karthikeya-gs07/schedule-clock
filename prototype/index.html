@@ -208,6 +208,8 @@
   #ringAll path.later.private { stroke-dasharray: 4 3; stroke: var(--c-private); stroke-linecap: butt; }
   #ringAll path.clash-mask { stroke: #3f1f17; stroke: color-mix(in srgb, var(--c-clash) 25%, var(--c-bg)); stroke-width: 14px; stroke-opacity: 1; stroke-linecap: butt; }   /* dark coral between the two stripes */
   #ringAll path.clash { stroke: var(--c-clash); stroke: color-mix(in srgb, var(--c-clash) var(--arc-pct-hi), var(--c-bg)); stroke-width: 5px; }
+  #ringAll path.clash-mask.split { stroke-width: 6px; }   /* R4a: the half of a stripe that splits */
+  #ringAll path.clash.thin { stroke-width: 2px; stroke-linecap: butt; }
   #ringAll path.clash.past { stroke: var(--c-clash-past); stroke: color-mix(in srgb, var(--c-clash-past) var(--arc-pct-hi), var(--c-bg)); }
   /* Selected arc (R9): the meeting exactly as it normally looks (same colour, same width), drawn above the
      dimmed ring, so it reads as the one meeting at full strength. */
@@ -260,6 +262,7 @@
   #face.ambient #ringAll path { stroke: #9a9a9a; stroke-width: 3px; stroke-opacity: 1; }
   #face.ambient #ringAll path.past { stroke: #4a4a4a; }
   #face.ambient #ringAll path.clash-mask { stroke: var(--c-bg); stroke-width: 14px; }
+  #face.ambient #ringAll path.clash-mask.split { stroke-width: 6px; }
   /* Theme colours for the static parts of the face (ambient rules above stay monochrome) */
   #face #dDate, #face #dAmpm { fill: var(--c-muted); }
   #face #dTime, #face #dTitle { fill: var(--c-text); }
@@ -537,6 +540,27 @@ function clashRanges(list) {
   }, []);
 }
 
+// R4a: minute ranges where 3+ main-lane meetings run at once, with that count (capped at 4), moment by moment.
+function clashDepths(list) {
+  const main = list.filter(e => e.lane === 'main');
+  const edges = [...new Set(main.flatMap(e => [e.cs, e.ce]))].sort((x, y) => x - y), out = [];
+  for (let i = 0; i + 1 < edges.length; i++) {
+    const a = edges[i], b = edges[i + 1], d = Math.min(4, main.filter(e => e.cs < b && a < e.ce).length);
+    const last = out[out.length - 1];
+    if (d < 3) continue;
+    if (last && last[1] === a && last[2] === d) last[1] = b; else out.push([a, b, d]);
+  }
+  return out;
+}
+// A butt-ended arc with no gap, optionally stopping where a round 5 px stripe's ends do (R4a pieces).
+function flatArc(fromMin, toMin, r, inStart, inEnd) {
+  const inset = GAP_DEG + 2.5 / R * 180 / Math.PI;
+  const a0 = angleOf(fromMin) + (inStart ? inset : 0), sweep = ((toMin - fromMin) / 720) * 360 - (inStart ? inset : 0) - (inEnd ? inset : 0);
+  if (sweep <= 0) return '';
+  const [x0, y0] = polar(a0, r), [x1, y1] = polar(a0 + sweep, r);
+  return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${sweep > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+}
+
 // ---------- Formatting ----------
 function fmtClock(min, withSuffix = true) {
   const h24 = Math.floor(min / 60) % 24, m = min % 60;
@@ -780,6 +804,17 @@ function renderBase(list) {
       add(`x${n}${i}:in`, `clash ${cls}`.trim(), arcPath(f, t, R - CLASH_OFFSET, wClash));
       add(`x${n}${i}:out`, `clash ${cls}`.trim(), arcPath(f, t, R + CLASH_OFFSET, wClash));
     });
+  });
+  // R4a: 3 at once splits the inner stripe into two thin halves; 4 or more splits the outer one too.
+  const clashEnds = new Set(clashRanges(list).flat());
+  clashDepths(list).forEach(([a, b, d], n) => {
+    const parts = a < nowMin && b > nowMin ? [[a, nowMin, 'past'], [nowMin, b, '']] : [[a, b, b <= nowMin ? 'past' : '']];
+    parts.forEach(([f, t, cls], i) => (d >= 4 ? [-1, 1] : [-1]).forEach(side => {
+      const s0 = clashEnds.has(f), s1 = clashEnds.has(t), k = `d${n}${i}${side}`;
+      add(`${k}:mask`, 'clash-mask split', flatArc(f, t, R + side * CLASH_OFFSET, s0, s1));
+      add(`${k}:a`, `clash thin ${cls}`.trim(), flatArc(f, t, R + side * 3, s0, s1));
+      add(`${k}:b`, `clash thin ${cls}`.trim(), flatArc(f, t, R + side * 6, s0, s1));
+    }));
   });
   $('ringDefs').innerHTML = defs.join('');
   syncRing(items);

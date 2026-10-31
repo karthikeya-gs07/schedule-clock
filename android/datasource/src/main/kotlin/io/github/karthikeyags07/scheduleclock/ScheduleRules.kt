@@ -97,6 +97,24 @@ object ScheduleRules {
         }
     }
 
+    /**
+     * R4a (2026-10-31): how many main-ring meetings overlap, moment by moment. Minute ranges where 3 or more run at
+     * once, with that count (capped at 4): the ring splits a clash stripe in half there (3), or both (4).
+     */
+    fun clashDepths(list: List<Placed>): List<Triple<Int, Int, Int>> {
+        val main = list.filter { it.lane == Lane.MAIN }
+        val edges = main.flatMap { listOf(it.cs, it.ce) }.distinct().sorted()
+        return edges.zipWithNext().mapNotNull { (a, b) ->
+            val depth = main.count { it.cs < b && a < it.ce }
+            if (depth >= 3) Triple(a, b, minOf(depth, 4)) else null
+        }.fold(mutableListOf()) { merged, seg ->   // join neighbours of the same depth
+            val last = merged.lastOrNull()
+            if (last != null && last.second == seg.first && last.third == seg.third) merged[merged.size - 1] = Triple(last.first, seg.second, seg.third)
+            else merged += seg
+            merged
+        }
+    }
+
     /** I3: indexes of meetings touching a dial hour, main ring first, then the later lane. */
     fun meetingsInHour(list: List<Placed>, hour: Int): List<Int> =
         list.indices.filter { i ->

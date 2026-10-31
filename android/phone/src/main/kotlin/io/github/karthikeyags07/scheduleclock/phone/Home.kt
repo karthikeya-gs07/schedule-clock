@@ -693,7 +693,7 @@ fun AboutScreen(colourway: String, onBack: () -> Unit, onRunSetup: () -> Unit) {
             FacePart(colourway, "lane", day, SampleDay.SAMPLE_MINUTE, "Inner line",
                 "Meetings later today that don't fit the next 12 hours yet. They move onto the ring 30 minutes after their slot frees up.")
             FacePart(colourway, "clash", day, SampleDay.SAMPLE_MINUTE, "Two thin stripes",
-                "A double booking: two meetings at the same time.")
+                "A double booking: two meetings at the same time. When a third joins, one stripe splits into two thin lines; at four or more, both do.")
             FacePart(colourway, "private", day, SampleDay.SAMPLE_MINUTE, "Striped arc",
                 "A private meeting. Its title and place never leave your phone.")
             FacePart(colourway, "middle", day, SampleDay.SAMPLE_MINUTE, "Middle",
