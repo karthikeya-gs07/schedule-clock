@@ -80,14 +80,15 @@ fun CalendarsList(m: AppModel, onAllow: () -> Unit) {
     // One group per provider and account: "Google · you@gmail.com", "Samsung · …", "On this phone".
     m.calendars.groupBy { accountLabel(it.accountType) to it.account.takeIf { a -> '@' in a }.orEmpty() }
         .toList().sortedBy { (key, _) -> PROVIDER_ORDER.indexOf(key.first) }
-        .forEach { (key, cals) ->
+        .forEachIndexed { i, (key, cals) ->
+        if (i > 0) ItemDivider(Modifier.padding(top = 8.dp))   // a hairline between accounts
         PageHeading(key.first, key.second.ifEmpty { null })
         cals.forEach { c ->
             ToggleItem(c.name.ifEmpty { "Calendar" }, checked = m.isOn(c), dot = Color(c.color)) { m.toggleCalendar(c, it) }
         }
     }
     if (m.hasPermission && m.calendars.isEmpty()) Text("No calendars on this phone yet.", style = PageBody, modifier = Modifier.padding(vertical = 22.dp))
-    OutlookHelp()
+    OutlookHelp(divider = m.calendars.isNotEmpty())
 }
 
 private val PROVIDER_ORDER = listOf("Google", "Outlook", "Samsung", "On this phone", "Other")
@@ -102,9 +103,10 @@ private fun accountLabel(type: String) = when {
 }
 
 @Composable
-private fun OutlookHelp() {
+private fun OutlookHelp(divider: Boolean) {
     var open by remember { mutableStateOf(false) }
     // A question that opens into the steps, in the page's plain style (no card).
+    if (divider) ItemDivider(Modifier.padding(top = 8.dp))
     PageHeading("Missing a calendar?")
     Column(Modifier.fillMaxWidth()) {
         Row(
@@ -141,10 +143,12 @@ fun SettingsScreen(m: AppModel, onRunSetup: () -> Unit) {
     ToggleItem("5 min before it ends", "Two short buzzes · meetings of 10 min or more", m.buzz[AppPrefs.Buzz.END] == true, Icons.buzz) { m.setBuzz(AppPrefs.Buzz.END, it) }
     ToggleItem("Buzz in Do Not Disturb", "Buzzes still come through when your watch is silenced", m.buzz[AppPrefs.Buzz.DND] == true, Icons.watch, enabled = any) { m.setBuzz(AppPrefs.Buzz.DND, it) }
     // Sync isn't a setting: a short note says how it works.
+    ItemDivider(Modifier.padding(top = 8.dp))   // hairlines between the sections
     PageHeading("Sync")
     IconItem(Icons.sync, "Every 15 minutes", "And as soon as a meeting changes. Calen-Time sends yesterday to tomorrow from the calendars you picked.")
     IconItem(Icons.lock, "Private events", "They go to your watch without their title or place.")
     // Setup again (also on About): calendar access, calendars and the face on the watch, from the start.
+    ItemDivider(Modifier.padding(top = 8.dp))
     PageHeading("Setup")
     Text("Go through setup again: calendar access, which calendars to send, and putting the face on your watch.",
         style = ItemTextStyle, modifier = Modifier.padding(bottom = 16.dp))

@@ -653,13 +653,26 @@ fun AboutScreen(colourway: String, onBack: () -> Unit, closable: Boolean = false
     Box(Modifier.fillMaxSize().stagePage(LocalAccent.current)) {
         Column(Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState())
             .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 40.dp).navigationBarsPadding()) {
-            // Back (or, in the unfolded right pane, close): a round frosted button at the top, like Today's top buttons.
-            Box(Modifier.padding(bottom = 22.dp).size(52.dp).clip(CircleShape).frostCard(CircleShape)
-                .clickable(role = Role.Button, onClick = onBack).semantics { contentDescription = if (closable) "Close" else "Back" },
-                contentAlignment = Alignment.Center) {
-                Icon(if (closable) Icons.close else Icons.back, null, tint = Palette.text, modifier = Modifier.size(22.dp))
+            if (closable) {
+                // In the unfolded right pane: the title, and close on the far right, level with Today's info button
+                // (status bar + 44 dp, 57 dp round).
+                Row(Modifier.fillMaxWidth().padding(top = 32.dp).height(57.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("Calen-Time", style = TitleStyle, modifier = Modifier.weight(1f))
+                    Box(Modifier.size(57.dp).clip(CircleShape).frostCard(CircleShape)
+                        .clickable(role = Role.Button, onClick = onBack).semantics { contentDescription = "Close" },
+                        contentAlignment = Alignment.Center) {
+                        Icon(Icons.close, null, tint = Palette.text, modifier = Modifier.size(22.dp))
+                    }
+                }
+            } else {
+                // Back: a round frosted button at the top, like Today's top buttons.
+                Box(Modifier.padding(bottom = 22.dp).size(52.dp).clip(CircleShape).frostCard(CircleShape)
+                    .clickable(role = Role.Button, onClick = onBack).semantics { contentDescription = "Back" },
+                    contentAlignment = Alignment.Center) {
+                    Icon(Icons.back, null, tint = Palette.text, modifier = Modifier.size(22.dp))
+                }
+                Text("Calen-Time", style = TitleStyle)
             }
-            Text("Calen-Time", style = TitleStyle)
             Text("Version $version", style = SubStyle, modifier = Modifier.padding(top = 4.dp, bottom = 18.dp))
             Text("Your day, around the clock. Calen-Time turns your watch face into a picture of the next 12 hours: every meeting is an arc on the ring, so one glance tells you how busy you are, what's next and how much time you have before it.",
                 style = PageBody)
