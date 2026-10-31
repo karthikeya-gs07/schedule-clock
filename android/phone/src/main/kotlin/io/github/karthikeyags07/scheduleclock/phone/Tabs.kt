@@ -133,8 +133,7 @@ fun bold(s: String) = buildAnnotatedString {
 // ---------- Settings (RULES A6) ----------
 @Composable
 fun SettingsScreen(m: AppModel, onRunSetup: () -> Unit) {
-    val context = LocalContext.current
-    PageTitle("Settings", "Calen-Time ${context.packageManager.getPackageInfo(context.packageName, 0).versionName}")
+    PageTitle("Settings")
     PageHeading("Meeting buzzes")
     val any = m.buzz[AppPrefs.Buzz.START] == true || m.buzz[AppPrefs.Buzz.MIDDLE] == true || m.buzz[AppPrefs.Buzz.END] == true
     ToggleItem("2 min before it starts", "One short buzz", m.buzz[AppPrefs.Buzz.START] == true, Icons.buzz) { m.setBuzz(AppPrefs.Buzz.START, it) }

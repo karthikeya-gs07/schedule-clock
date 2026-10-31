@@ -14,6 +14,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -126,16 +127,17 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
             val wide = maxWidth >= 600.dp
             val workPage: @Composable (Tab, HazeState) -> Unit = { shown, h ->
                 Column(Modifier.fillMaxSize().hazeSource(h, zIndex = 0f).stagePage(LocalAccent.current, dark = true).statusBarsPadding()
-                    .verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 132.dp)) {
+                    // Clear of the floating nav (28 + 80 dp above the system bar) with room to spare.
+                    .verticalScroll(rememberScrollState()).navigationBarsPadding().padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 150.dp)) {
                     when (shown) {
-                        Tab.CALENDARS -> { PageTitle("Calendars", "Choose which calendars go to your watch."); CalendarsList(m, allow) }
+                        Tab.CALENDARS -> { PageTitle("Calendars"); CalendarsList(m, allow) }
                         else -> SettingsScreen(m) { setupStep = 0; m.restartSetup() }
                     }
                 }
             }
             when {
                 !m.setupDone -> SetupFlow(m, setupStep, allow)   // full-bleed; it handles the system bars itself
-                about -> { BackHandler { about = false }; AboutScreen(m.colourway, onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() } }
+                about && !wide -> { BackHandler { about = false }; AboutScreen(m.colourway, onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() } }
                 wide -> {
                     // Right pane: Watchface (a 2-column grid), Calendars or Settings, with its own three-tab nav.
                     val right = if (tab == Tab.TODAY) Tab.WATCHFACE else tab
@@ -157,7 +159,13 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
                                 },
                                 label = "rightPane",
                             ) { shown -> if (shown == Tab.WATCHFACE) WatchfaceGrid(m, rightHaze) else workPage(shown, rightHaze) }
-                            NavBar(right, rightHaze, null, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp),
+                            // About opens over the right pane, with a close button; Today stays on the left.
+                            androidx.compose.animation.AnimatedVisibility(about, enter = slideInHorizontally { it } + fadeIn(),
+                                exit = slideOutHorizontally { it } + fadeOut()) {
+                                BackHandler { about = false }
+                                AboutScreen(m.colourway, onBack = { about = false }, closable = true) { about = false; setupStep = 0; m.restartSetup() }
+                            }
+                            if (!about) NavBar(right, rightHaze, null, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp),
                                 tabs = listOf(Tab.WATCHFACE, Tab.CALENDARS, Tab.SETTINGS)) { tab = it }
                         }
                     }

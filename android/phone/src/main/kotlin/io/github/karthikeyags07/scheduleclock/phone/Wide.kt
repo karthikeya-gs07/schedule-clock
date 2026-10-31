@@ -1,5 +1,7 @@
 package io.github.karthikeyags07.scheduleclock.phone
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -50,7 +52,7 @@ fun WatchfaceGrid(m: AppModel, haze: HazeState) {
     val sample = remember { SampleDay.meetings() }
     Column(Modifier.fillMaxSize().hazeSource(haze, zIndex = 0f).stagePage(LocalAccent.current, dark = true).statusBarsPadding()) {
         Column(Modifier.padding(horizontal = 20.dp)) {
-            PageTitle("Watchface", "Pick the look for your watch.")
+            PageTitle("Watchface")
             // Centred, as above the watch on the folded screen.
             Box(Modifier.fillMaxWidth().padding(top = 20.dp, bottom = 18.dp), contentAlignment = Alignment.Center) {
                 LookTabs(gradients, haze, Modifier) { gradients = it }
@@ -71,9 +73,10 @@ fun WatchfaceGrid(m: AppModel, haze: HazeState) {
 private fun FaceCard(m: AppModel, look: Look, sample: List<Meeting>) {
     val inUse = look.id == m.colourway
     val canUse = m.link.watch != null && m.link.face?.installed == true
-    val edge = if (inUse) LocalAccent.current.copy(alpha = .35f) else Color.White.copy(alpha = .07f)   // a quiet hint, not a frame
+    val edge = if (inUse) LocalAccent.current.copy(alpha = .35f) else Color.White.copy(alpha = .05f)   // a quiet hint, not a frame
     Column(
-        Modifier.clip(RoundedCornerShape(24.dp)).frostCard(RoundedCornerShape(24.dp), edge).padding(14.dp),
+        // Darker than the frosted buttons, so the faces and buttons stand out on the card.
+        Modifier.clip(RoundedCornerShape(24.dp)).background(Color.White.copy(alpha = .035f)).border(1.dp, edge, RoundedCornerShape(24.dp)).padding(14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -83,14 +86,16 @@ private fun FaceCard(m: AppModel, look: Look, sample: List<Meeting>) {
         Text(look.line, style = SubStyle, maxLines = 2, overflow = TextOverflow.Ellipsis, minLines = 2,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(top = 2.dp))
         Row(
-            Modifier.padding(top = 12.dp).fillMaxWidth().height(44.dp).clip(RoundedCornerShape(22.dp))
-                .frostCard(RoundedCornerShape(22.dp))
+            // The same button as on the folded screen: 52 dp, frosted, 15 sp.
+            Modifier.padding(top = 14.dp).fillMaxWidth().height(52.dp).clip(RoundedCornerShape(26.dp))
+                .frostCard(RoundedCornerShape(26.dp))
                 .clickable(enabled = !inUse && canUse, role = Role.Button) { m.pickColourway(look.id) }
                 .graphicsLayer { alpha = if (inUse || canUse) 1f else .45f },
             horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (inUse) Icon(Icons.check, null, tint = Palette.text, modifier = Modifier.size(16.dp).padding(end = 2.dp))
-            Text(if (inUse) " On your watch" else "Use watch face", style = BodyStyle.copy(fontSize = 14.sp, fontWeight = FontWeight.Medium))
+            if (inUse) Icon(Icons.check, null, tint = Palette.text, modifier = Modifier.size(18.dp))
+            if (inUse) androidx.compose.foundation.layout.Spacer(Modifier.size(8.dp))
+            Text(if (inUse) "On your watch" else "Use watch face", style = BodyStyle.copy(fontWeight = FontWeight.Medium))
         }
     }
 }

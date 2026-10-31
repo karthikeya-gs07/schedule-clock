@@ -283,6 +283,10 @@ fun PageHeading(text: String, sub: String? = null) = Column(Modifier.padding(top
     sub?.let { Text(it, style = SubStyle.copy(fontSize = 13.sp), modifier = Modifier.padding(top = 2.dp)) }
 }
 
+/** A hairline between items on a page (About). */
+@Composable
+fun ItemDivider(modifier: Modifier = Modifier) = Box(modifier.fillMaxWidth().height(1.dp).background(Color.White.copy(alpha = .07f)))
+
 /** The round frosted icon of an item: an icon, or a calendar's colour as a dot. */
 @Composable
 private fun ItemIcon(icon: ImageVector?, dot: Color?, dim: Boolean = false) =

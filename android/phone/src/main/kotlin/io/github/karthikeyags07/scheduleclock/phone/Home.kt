@@ -304,7 +304,8 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
 internal fun LookTabs(gradients: Boolean, haze: HazeState, modifier: Modifier, onSelect: (Boolean) -> Unit) {
     val at by animateFloatAsState(if (gradients) 1f else 0f, tween(300, easing = FastOutSlowInEasing), label = "lookTab")
     val tabWidth = 112.dp
-    Box(modifier.height(44.dp).width(tabWidth * 2 + 8.dp).clip(RoundedCornerShape(22.dp)).frosted(haze, RoundedCornerShape(22.dp)).padding(4.dp)) {
+    // A fixed frosted tint (not a live blur), so the tabs look the same folded and unfolded, whatever is behind them.
+    Box(modifier.height(44.dp).width(tabWidth * 2 + 8.dp).clip(RoundedCornerShape(22.dp)).frostCard(RoundedCornerShape(22.dp)).padding(4.dp)) {
         Box(Modifier.offset(x = tabWidth * at).width(tabWidth).fillMaxHeight().clip(RoundedCornerShape(18.dp)).background(Color.White.copy(alpha = .12f)))
         Row {
             listOf("Solids" to false, "Gradients" to true).forEach { (label, g) ->
@@ -646,21 +647,22 @@ fun WatchStatusPanel(m: AppModel, haze: HazeState, onAllow: () -> Unit, onInstal
  * with the part's name and meaning under each, round icons beside the buzzes, and a frosted button at the end.
  */
 @Composable
-fun AboutScreen(colourway: String, onBack: () -> Unit, onRunSetup: () -> Unit) {
+fun AboutScreen(colourway: String, onBack: () -> Unit, closable: Boolean = false, onRunSetup: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val version = context.packageManager.getPackageInfo(context.packageName, 0).versionName
     Box(Modifier.fillMaxSize().stagePage(LocalAccent.current)) {
         Column(Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState())
             .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 40.dp).navigationBarsPadding()) {
-            // Back: a round frosted button at the top of the page, like Today's top buttons.
+            // Back (or, in the unfolded right pane, close): a round frosted button at the top, like Today's top buttons.
             Box(Modifier.padding(bottom = 22.dp).size(52.dp).clip(CircleShape).frostCard(CircleShape)
-                .clickable(role = Role.Button, onClick = onBack).semantics { contentDescription = "Back" }, contentAlignment = Alignment.Center) {
-                Icon(Icons.back, null, tint = Palette.text, modifier = Modifier.size(22.dp))
+                .clickable(role = Role.Button, onClick = onBack).semantics { contentDescription = if (closable) "Close" else "Back" },
+                contentAlignment = Alignment.Center) {
+                Icon(if (closable) Icons.close else Icons.back, null, tint = Palette.text, modifier = Modifier.size(22.dp))
             }
-            Text("Calen-Time", style = TitleStyle.copy(fontSize = 34.sp, lineHeight = 40.sp))
-            Text("Version $version", style = SubStyle.copy(fontSize = 15.sp), modifier = Modifier.padding(top = 4.dp, bottom = 18.dp))
+            Text("Calen-Time", style = TitleStyle)
+            Text("Version $version", style = SubStyle, modifier = Modifier.padding(top = 4.dp, bottom = 18.dp))
             Text("Your day, around the clock. Calen-Time turns your watch face into a picture of the next 12 hours: every meeting is an arc on the ring, so one glance tells you how busy you are, what's next and how much time you have before it.",
-                style = PageBody.copy(fontSize = 17.sp, lineHeight = 25.sp))
+                style = PageBody)
 
             // Each part of the face as a close-up of the face in your colourway, on the sample day (plus a late call,
             // so the inner line has something on it); the arcs at 11:10 so one meeting is under way.
@@ -677,14 +679,19 @@ fun AboutScreen(colourway: String, onBack: () -> Unit, onRunSetup: () -> Unit) {
             FacePart(colourway, "private", day, SampleDay.SAMPLE_MINUTE, "Striped arc",
                 "A private meeting. Its title and place never leave your phone.")
             FacePart(colourway, "middle", day, SampleDay.SAMPLE_MINUTE, "Middle",
-                "The time, and what's next. Tap an hour on the ring to see what's on then; tap the details to go back.")
+                "The time, and what's next. Tap an hour on the ring to see what's on then; tap the details to go back.", divider = false)
 
+            ItemDivider(Modifier.padding(top = 8.dp))
             PageHeading("Buzzes")
             IconItem(Icons.buzz, "2 min before", "One short buzz to wrap up and join.")
+            ItemDivider()
             IconItem(Icons.clock, "Halfway", "One long buzz, for meetings of 15 minutes or more.")
+            ItemDivider()
             IconItem(Icons.buzz, "5 min before the end", "Two short buzzes, for meetings of 10 minutes or more.")
+            ItemDivider(Modifier.padding(top = 8.dp))
             PageHeading("Privacy")
             IconItem(Icons.lock, "Phone to watch only", "Your calendar goes from your phone to your own watch and nowhere else. Calen-Time has no internet access, no accounts, no ads and no tracking.")
+            ItemDivider(Modifier.padding(top = 8.dp))
             PageHeading("Credits")
             IconItem(Icons.info, "Fonts", "Google Sans Flex and Anta, under the SIL Open Font License.")
 
@@ -697,14 +704,15 @@ fun AboutScreen(colourway: String, onBack: () -> Unit, onRunSetup: () -> Unit) {
 
 /** One part of the face: a close-up on top, its name and what it means below. */
 @Composable
-private fun FacePart(colourway: String, detail: String, day: List<Meeting>, at: Int, title: String, text: String) {
-    Column(Modifier.fillMaxWidth().padding(bottom = 26.dp)) {
+private fun FacePart(colourway: String, detail: String, day: List<Meeting>, at: Int, title: String, text: String, divider: Boolean = true) {
+    Column(Modifier.fillMaxWidth().padding(bottom = 22.dp)) {
         Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).border(1.dp, Color.White.copy(alpha = .07f), RoundedCornerShape(24.dp))) {
             FaceDetail(colourway, detail, day, at)
         }
-        Text(title, style = BodyStyle.copy(fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.Medium), modifier = Modifier.padding(top = 14.dp))
-        Text(text, style = PageBody, modifier = Modifier.padding(top = 4.dp))
+        Text(title, style = BodyStyle.copy(fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Medium), modifier = Modifier.padding(top = 14.dp))
+        Text(text, style = ItemTextStyle, modifier = Modifier.padding(top = 2.dp))
     }
+    if (divider) ItemDivider(Modifier.padding(bottom = 22.dp))
 }
 
 /** Run setup again: a full-width frosted button (About and Settings). */
