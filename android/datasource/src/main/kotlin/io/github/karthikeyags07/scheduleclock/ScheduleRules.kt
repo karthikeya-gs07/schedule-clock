@@ -24,6 +24,7 @@ data class Placed(val meeting: Meeting, val lane: Lane, val cs: Int, val ce: Int
 object ScheduleRules {
     private const val WINDOW_MIN = 12 * 60
     private const val DAY_MIN = 24 * 60
+    private const val LOOKAHEAD_MIN = 14 * 60   // W6: tomorrow's meetings starting this soon wait on the lane
     const val DIAL_MIN = 12 * 60
     private const val DAY_START_MIN = 6 * 60   // W5a: before 6 AM the day's meetings wait on the lane
     private const val PROMOTE_GAP_MIN = 30      // W8: a lane meeting moves to the ring 30 min after the now dot passes its slot
@@ -52,7 +53,8 @@ object ScheduleRules {
                 // W5: tomorrow's meetings (from the next midnight) never take the main ring before midnight.
                 m.endMin > now && m.endMin <= ringEnd && m.startMin < DAY_MIN ->
                     Placed(m, Lane.MAIN, maxOf(m.startMin, winStart), m.endMin)
-                (m.endMin > ringEnd || m.startMin >= DAY_MIN) && m.startMin > now && (m.startMin < DAY_MIN || m.startMin < winEnd) ->
+                (m.endMin > ringEnd || m.startMin >= DAY_MIN) && m.startMin > now &&
+                    (m.startMin < DAY_MIN || m.startMin < winEnd || m.startMin <= now + LOOKAHEAD_MIN) ->
                     Placed(m, Lane.LATER, m.startMin, if (m.startMin < DAY_MIN) minOf(m.endMin, DAY_MIN) else m.endMin)
                 else -> null
             }
