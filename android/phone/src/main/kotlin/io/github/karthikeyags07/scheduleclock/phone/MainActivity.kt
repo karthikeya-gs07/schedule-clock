@@ -29,6 +29,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -119,10 +121,48 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
     val install: () -> Unit = { setupStep = 3; m.restartSetup() }
 
     CompositionLocalProvider(LocalAccent provides animatedAccent(m.colourway), LocalTextStyle provides BodyStyle) {   // Google Sans Flex everywhere
-        Box(Modifier.fillMaxSize().background(Palette.screen)) {
+        BoxWithConstraints(Modifier.fillMaxSize().background(Palette.screen)) {
+            // Unfolded (Fold 7/8 inner screen, tablets): two panes, Today on the left and the other pages on the right.
+            val wide = maxWidth >= 600.dp
+            val workPage: @Composable (Tab, HazeState) -> Unit = { shown, h ->
+                Column(Modifier.fillMaxSize().hazeSource(h, zIndex = 0f).stagePage(LocalAccent.current, dark = true).statusBarsPadding()
+                    .verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 132.dp)) {
+                    when (shown) {
+                        Tab.CALENDARS -> { PageTitle("Calendars", "Choose which calendars go to your watch."); CalendarsList(m, allow) }
+                        else -> SettingsScreen(m) { setupStep = 0; m.restartSetup() }
+                    }
+                }
+            }
             when {
                 !m.setupDone -> SetupFlow(m, setupStep, allow)   // full-bleed; it handles the system bars itself
                 about -> { BackHandler { about = false }; AboutScreen(m.colourway, onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() } }
+                wide -> {
+                    // Right pane: Watchface (a 2-column grid), Calendars or Settings, with its own three-tab nav.
+                    val right = if (tab == Tab.TODAY) Tab.WATCHFACE else tab
+                    val rightHaze = rememberHazeState()
+                    BackHandler(enabled = right != Tab.WATCHFACE || watchStatus) { if (watchStatus) watchStatus = false else tab = Tab.WATCHFACE }
+                    Row(Modifier.fillMaxSize()) {
+                        Box(Modifier.weight(1f).fillMaxHeight()) {
+                            HomeScreen(m, haze, watchMode = false, onWatchStatus = { watchStatus = true }, onAbout = { about = true })
+                        }
+                        Box(Modifier.width(1.dp).fillMaxHeight().background(Color.White.copy(alpha = .06f)))
+                        Box(Modifier.weight(1f).fillMaxHeight()) {
+                            AnimatedContent(
+                                targetState = right,
+                                transitionSpec = {
+                                    val forward = targetState.ordinal > initialState.ordinal
+                                    val ease = tween<IntOffset>(420, easing = FastOutSlowInEasing)
+                                    (slideInHorizontally(ease) { w -> if (forward) w else -w } togetherWith
+                                        slideOutHorizontally(ease) { w -> if (forward) -w / 3 else w / 3 } + fadeOut(tween(420)))
+                                },
+                                label = "rightPane",
+                            ) { shown -> if (shown == Tab.WATCHFACE) WatchfaceGrid(m, rightHaze) else workPage(shown, rightHaze) }
+                            NavBar(right, rightHaze, null, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp),
+                                tabs = listOf(Tab.WATCHFACE, Tab.CALENDARS, Tab.SETTINGS)) { tab = it }
+                        }
+                    }
+                    if (watchStatus) WatchStatusPanel(m, haze, allow, install) { watchStatus = false }
+                }
                 else -> {
                     BackHandler(enabled = tab != Tab.TODAY || watchStatus) { if (watchStatus) watchStatus = false else tab = Tab.TODAY }
                     // Pages slide in from the side they sit on in the nav bar (RULES §12 A10). Today and Watchface are
@@ -140,13 +180,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
                     ) { shown ->
                         if (shown == Tab.TODAY || shown == Tab.WATCHFACE)
                             HomeScreen(m, haze, watchMode = shown == Tab.WATCHFACE, onWatchStatus = { watchStatus = true }, onAbout = { about = true })
-                        else Column(Modifier.fillMaxSize().hazeSource(haze, zIndex = 0f).stagePage(LocalAccent.current).statusBarsPadding()
-                            .verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 132.dp)) {
-                            when (shown) {
-                                Tab.CALENDARS -> { PageTitle("Calendars", "Choose which calendars go to your watch."); CalendarsList(m, allow) }
-                                else -> SettingsScreen(m) { setupStep = 0; m.restartSetup() }
-                            }
-                        }
+                        else workPage(shown, haze)
                     }
                     NavBar(tab, haze, m.previewColourway.takeIf { tab == Tab.WATCHFACE }, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp)) { tab = it }
                     if (watchStatus) WatchStatusPanel(m, haze, allow, install) { watchStatus = false }
@@ -162,18 +196,18 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
  * the accent colour, each a large tap area.
  */
 @Composable
-private fun NavBar(current: Tab, haze: HazeState, preview: String?, modifier: Modifier, onSelect: (Tab) -> Unit) {
+private fun NavBar(current: Tab, haze: HazeState, preview: String?, modifier: Modifier, tabs: List<Tab> = Tab.entries, onSelect: (Tab) -> Unit) {
     // While browsing Watchface, the selected icon takes the colour of the colourway on show.
     val selectedTint by animateColorAsState(preview?.let(::accentFor) ?: LocalAccent.current, tween(300), label = "navTint")
     Row(
-        modifier.width(332.dp).height(80.dp).clip(RoundedCornerShape(40.dp))
+        modifier.width((tabs.size * 77 + 24).dp).height(80.dp).clip(RoundedCornerShape(40.dp))
             // Frosted glass: whatever scrolls or sits behind shows through, blurred and lightly tinted.
             .hazeEffect(haze, HazeStyle(Color(0xFF191919), HazeTint(Color(0xFF2C2C30).copy(alpha = .55f)), blurRadius = 26.dp, noiseFactor = .12f))
             .border(1.dp, Color.White.copy(alpha = .06f), RoundedCornerShape(40.dp))
             .clickable(enabled = false) {}.padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Tab.entries.forEach { t ->
+        tabs.forEach { t ->
             val selected = t == current
             // The selected icon has a soft glow of its colour behind it (fades in and out as tabs change).
             val glow by animateFloatAsState(if (selected) 1f else 0f, tween(300), label = "navGlow")

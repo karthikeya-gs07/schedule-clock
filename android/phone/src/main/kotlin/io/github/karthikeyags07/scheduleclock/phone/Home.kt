@@ -301,7 +301,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
 
 /** Two frosted tabs, Solids and Gradients; the lit pill slides to the chosen one. */
 @Composable
-private fun LookTabs(gradients: Boolean, haze: HazeState, modifier: Modifier, onSelect: (Boolean) -> Unit) {
+internal fun LookTabs(gradients: Boolean, haze: HazeState, modifier: Modifier, onSelect: (Boolean) -> Unit) {
     val at by animateFloatAsState(if (gradients) 1f else 0f, tween(300, easing = FastOutSlowInEasing), label = "lookTab")
     val tabWidth = 112.dp
     Box(modifier.height(44.dp).width(tabWidth * 2 + 8.dp).clip(RoundedCornerShape(22.dp)).frosted(haze, RoundedCornerShape(22.dp)).padding(4.dp)) {

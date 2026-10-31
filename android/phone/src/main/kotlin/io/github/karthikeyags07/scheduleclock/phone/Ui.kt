@@ -254,11 +254,17 @@ fun animatedAccent(colourway: String): Color = animateColorAsState(accentFor(col
 // Today's grey stage with the colourway's glow at the top, a large title, 22 sp section headings, and items as a
 // round frosted icon beside a name and text, without cards.
 
-/** The grey stage with a soft glow of [glow] from the top. */
-fun Modifier.stagePage(glow: Color) = background(StageBackground).drawBehind {
-    drawRect(Brush.radialGradient(listOf(glow.copy(alpha = .16f), glow.copy(alpha = .05f), Color.Transparent),
+/**
+ * The grey stage with a soft glow of [glow] from the top. [dark]: the working pages (Calendars, Settings,
+ * Watchface in the wide view) sit on a darker page with a fainter glow, so their text reads more easily.
+ */
+fun Modifier.stagePage(glow: Color, dark: Boolean = false) = background(if (dark) DarkPage else StageBackground).drawBehind {
+    val k = if (dark) .45f else 1f
+    drawRect(Brush.radialGradient(listOf(glow.copy(alpha = .16f * k), glow.copy(alpha = .05f * k), Color.Transparent),
         center = Offset(size.width / 2, 0f), radius = size.width * 1.1f))
 }
+
+val DarkPage = Color(0xFF111113)
 
 val PageBody = BodyStyle.copy(color = Palette.body, fontSize = 16.sp, lineHeight = 23.sp)
 private val ItemTitle = BodyStyle.copy(fontSize = 17.sp, lineHeight = 23.sp, fontWeight = FontWeight.Medium)
