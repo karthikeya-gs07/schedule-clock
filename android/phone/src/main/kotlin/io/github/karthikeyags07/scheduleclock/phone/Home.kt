@@ -11,6 +11,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -78,7 +79,6 @@ import kotlin.math.roundToInt
 /** The Today screen's own colours (Figma "Calen-Time", node 28:3). */
 private object Home {
     val background = Color(0xFF191919)
-    val control = Color(0xFF2F2F2F)        // pill, round buttons
     const val DESIGN_WIDTH = 393f          // the frame's width; the watch block scales with the screen width
 }
 
@@ -102,8 +102,8 @@ fun HomeScreen(m: AppModel, haze: HazeState, onWatchStatus: () -> Unit, onAbout:
         // A soft glow of the colourway rising from the bottom of the page (the background colour stays).
         Box(Modifier.fillMaxSize().drawBehind {
             drawRect(Brush.radialGradient(
-                listOf(accent.copy(alpha = .20f), accent.copy(alpha = .07f), Color.Transparent),
-                center = Offset(size.width / 2, size.height * 1.02f), radius = size.width * 1.05f,
+                listOf(accent.copy(alpha = .22f), accent.copy(alpha = .08f), Color.Transparent),
+                center = Offset(size.width / 2, size.height * .86f), radius = size.width * 1.1f,
             ))
         })
 
@@ -129,23 +129,23 @@ fun HomeScreen(m: AppModel, haze: HazeState, onWatchStatus: () -> Unit, onAbout:
             }) { WatchFacePreview(m.colourway, m.meetings, faceSize) }
             WatchFacePreview(m.colourway, m.meetings, faceSize, interactive = true)
         }
+        }
 
-        // ---- (7) watch status and (6) About ----
+        // ---- (7) watch status and (6) About (frosted, like the pill and sync button) ----
         Row(Modifier.fillMaxWidth().statusBarsPadding().padding(top = 44.dp, start = d(31f), end = d(31f)), horizontalArrangement = Arrangement.SpaceBetween) {
-            RoundButton("Watch status", onWatchStatus) {
+            RoundButton("Watch status", haze, onWatchStatus) {
                 Icon(Icons.watch, null, tint = Palette.text, modifier = Modifier.size(24.dp))
                 Box(Modifier.align(Alignment.TopEnd).padding(top = 14.dp, end = 13.dp).size(9.dp).clip(CircleShape)
-                    .background(Home.control).padding(1.5.dp).clip(CircleShape).background(watchColour(m)))
+                    .background(Color(0xFF3A3A3E)).padding(1.5.dp).clip(CircleShape).background(watchColour(m)))
             }
-            RoundButton("About Calen-Time", onAbout) { Icon(Icons.info, null, tint = Palette.text, modifier = Modifier.size(24.dp)) }
+            RoundButton("About Calen-Time", haze, onAbout) { Icon(Icons.info, null, tint = Palette.text, modifier = Modifier.size(24.dp)) }
         }
 
         // ---- (1) sync pill and (2) sync button ----
         Row(Modifier.fillMaxWidth().offset(y = pillTop), horizontalArrangement = Arrangement.Center) {
-            SyncPill(m, Modifier.width(184.dp))
+            SyncPill(m, haze, Modifier.width(184.dp))
             Spacer(Modifier.width(18.dp))
-            SyncButton(m)
-        }
+            SyncButton(m, haze)
         }
 
         // ---- (5) the meetings drawer ----
@@ -155,6 +155,11 @@ fun HomeScreen(m: AppModel, haze: HazeState, onWatchStatus: () -> Unit, onAbout:
     }
 }
 
+/** Frosted glass over the page: the watch and glow show through, blurred and lightly tinted, with a hairline edge. */
+private fun Modifier.frosted(haze: HazeState, shape: androidx.compose.ui.graphics.Shape) = this
+    .hazeEffect(haze, HazeStyle(Home.background, HazeTint(Color(0xFF3A3A3E).copy(alpha = .45f)), blurRadius = 22.dp, noiseFactor = .12f))
+    .border(1.dp, Color.White.copy(alpha = .07f), shape)
+
 private fun watchColour(m: AppModel): Color = when {
     !m.linkChecked -> Palette.faint
     m.link.watch == null -> Palette.faint
@@ -163,18 +168,18 @@ private fun watchColour(m: AppModel): Color = when {
 }
 
 @Composable
-private fun RoundButton(label: String, onClick: () -> Unit, content: @Composable androidx.compose.foundation.layout.BoxScope.() -> Unit) = Box(
-    Modifier.size(57.dp).clip(CircleShape).background(Home.control).clickable(role = Role.Button, onClick = onClick)
+private fun RoundButton(label: String, haze: HazeState, onClick: () -> Unit, content: @Composable androidx.compose.foundation.layout.BoxScope.() -> Unit) = Box(
+    Modifier.size(57.dp).clip(CircleShape).frosted(haze, CircleShape).clickable(role = Role.Button, onClick = onClick)
         .semantics { contentDescription = label },
     contentAlignment = Alignment.Center, content = content,
 )
 
 /** (1) Last sync on the first line, the watch on the second; dimmed while a sync runs. */
 @Composable
-private fun SyncPill(m: AppModel, modifier: Modifier) {
+private fun SyncPill(m: AppModel, haze: HazeState, modifier: Modifier) {
     val dim by animateFloatAsState(if (m.syncing) .4f else 1f, tween(250), label = "dim")
     Column(
-        modifier.height(57.dp).clip(RoundedCornerShape(40.dp)).background(Home.control).padding(horizontal = 20.dp)
+        modifier.height(57.dp).clip(RoundedCornerShape(40.dp)).frosted(haze, RoundedCornerShape(40.dp)).padding(horizontal = 20.dp)
             .graphicsLayer { alpha = dim },
         verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -196,14 +201,14 @@ private fun SyncPill(m: AppModel, modifier: Modifier) {
 
 /** (2) Syncs now; the icon spins until the sync finishes. */
 @Composable
-private fun SyncButton(m: AppModel) {
+private fun SyncButton(m: AppModel, haze: HazeState) {
     val spin = remember { Animatable(0f) }
     LaunchedEffect(m.syncing) {
         if (m.syncing) while (true) spin.animateTo(spin.value + 360f, tween(900, easing = LinearEasing))
         else if (spin.value % 360f != 0f) spin.animateTo((spin.value / 360f).toInt() * 360f + 360f, tween(400))
     }
     val enabled = m.link.watch != null && m.hasPermission && !m.syncing
-    RoundButton("Sync now", { if (enabled) m.syncNow() }) {
+    RoundButton("Sync now", haze, { if (enabled) m.syncNow() }) {
         Icon(Icons.sync, null, tint = if (m.link.watch != null && m.hasPermission) Palette.text else Palette.faint,
             modifier = Modifier.size(24.dp).rotate(spin.value))
     }
@@ -238,7 +243,7 @@ private fun MeetingsDrawer(m: AppModel, haze: HazeState, collapsedTop: androidx.
             .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
             // Strong blur of the watch and glow behind it; also a layer the floating nav blurs in turn.
             .hazeSource(haze, zIndex = 1f)
-            .hazeEffect(haze, HazeStyle(Home.background, HazeTint(Color(0xFF0D0D0D).copy(alpha = .55f)), blurRadius = 48.dp, noiseFactor = .08f)),
+            .hazeEffect(haze, HazeStyle(Home.background, HazeTint(Color(0xFF080808).copy(alpha = .8f)), blurRadius = 48.dp, noiseFactor = .08f)),
     ) {
         // Handle and heading: drag here (or tap) to pull the drawer up and down.
         var dragVelocity = 0f
@@ -262,17 +267,17 @@ private fun MeetingsDrawer(m: AppModel, haze: HazeState, collapsedTop: androidx.
             Box(Modifier.width(36.dp).height(4.dp).clip(RoundedCornerShape(2.dp)).background(Palette.faint))
             Row(Modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 22.dp), horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically) {
-                Text("Coming up on your watch", style = BodyStyle.copy(fontSize = 18.sp, fontWeight = FontWeight.Medium))
+                Text("Today's calendar", style = BodyStyle.copy(fontSize = 18.sp, fontWeight = FontWeight.Medium))
                 if (left.isNotEmpty()) Text("${left.size} meeting${if (left.size == 1) "" else "s"}", style = HintStyle)
             }
         }
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 132.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 28.dp, end = 28.dp, top = 8.dp, bottom = 132.dp)) {
             if (left.isEmpty()) Text(
                 if (!m.hasPermission) "Allow calendar access to see your meetings here." else "Nothing else today. The watch shows a clear day.",
                 style = SubStyle, modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
             )
-            left.forEach { meeting ->
+            left.forEachIndexed { i, meeting ->
+                if (i > 0) Box(Modifier.fillMaxWidth().height(1.dp).background(Color.White.copy(alpha = .08f)))
                 DrawerMeeting(meeting, live = meeting.begin <= now, clash = left.any { it !== meeting && it.begin < meeting.end && meeting.begin < it.end },
                     color = m.calendars.firstOrNull { it.id == meeting.calendarId }?.color?.let { Color(it) } ?: Palette.muted)
             }
@@ -282,14 +287,13 @@ private fun MeetingsDrawer(m: AppModel, haze: HazeState, collapsedTop: androidx.
 
 private val DRAWER_TIME = java.time.format.DateTimeFormatter.ofPattern("h:mm a")
 
-/** One meeting in the drawer: a roomy card with the time, title and place (or the private / clash note). */
+/** One meeting in the drawer: the title, time and place (or the private / clash note), with room around it. */
 @Composable
 private fun DrawerMeeting(meeting: Meeting, live: Boolean, clash: Boolean, color: Color) {
     val zone = ZoneId.systemDefault()
     fun t(ms: Long) = java.time.Instant.ofEpochMilli(ms).atZone(zone).format(DRAWER_TIME)
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(Color.White.copy(alpha = .05f))
-            .padding(horizontal = 18.dp, vertical = 16.dp),
+        Modifier.fillMaxWidth().padding(vertical = 18.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Box(Modifier.padding(top = 7.dp).size(10.dp).clip(CircleShape).background(color))
@@ -314,7 +318,7 @@ fun WatchStatusPanel(m: AppModel, onAllow: () -> Unit, onInstall: () -> Unit, on
     Box(Modifier.fillMaxSize().background(Color(0x99000000)).clickable(onClick = onClose), contentAlignment = Alignment.TopCenter) {
         Column(
             Modifier.statusBarsPadding().padding(top = 92.dp, start = 16.dp, end = 16.dp).fillMaxWidth()
-                .clip(RoundedCornerShape(28.dp)).background(Home.control).clickable(enabled = false) {}.padding(20.dp),
+                .clip(RoundedCornerShape(28.dp)).background(Color(0xFF2F2F2F)).clickable(enabled = false) {}.padding(20.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(10.dp).clip(CircleShape).background(watchColour(m)))
