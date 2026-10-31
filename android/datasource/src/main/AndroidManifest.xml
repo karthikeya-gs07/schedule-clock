@@ -24,6 +24,15 @@
             android:name="com.google.android.wearable.marketplace.DEFAULT_WATCHFACE_VALIDATION_TOKEN"
             android:value="@string/default_wf_token" />
 
+        <!-- Covers the watch while the colourway's face is swapped in, so Wear OS's plain stand-in clock isn't seen. -->
+        <activity
+            android:name=".ColourSwapActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask"
+            android:taskAffinity=".colourswap"
+            android:theme="@android:style/Theme.DeviceDefault" />
+
         <!-- Puts the face on the watch in a colourway and, once, makes it the watch face. -->
         <activity
             android:name=".FaceSetupActivity"

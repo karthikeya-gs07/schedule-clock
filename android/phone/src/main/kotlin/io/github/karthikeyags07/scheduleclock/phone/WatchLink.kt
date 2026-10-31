@@ -61,6 +61,20 @@ object WatchLink {
         }
     }
 
+    /** Opens the watch's colour change (a short transition that covers the face swap) for [colourway]. */
+    suspend fun openColourChange(context: Context, colourway: String): Boolean {
+        val watch = watch(context) ?: return false
+        val intent = Intent(Intent.ACTION_VIEW)
+            .addCategory(Intent.CATEGORY_BROWSABLE)
+            .setData(Uri.parse("app://io.github.karthikeyags07.scheduleclock/colour?name=$colourway"))
+        return try {
+            RemoteActivityHelper(context).startRemoteActivity(intent, watch.id).await()
+            true
+        } catch (e: Exception) {
+            Log.w(TAG, "couldn't open the colour change on the watch: ${e.message}"); false
+        }
+    }
+
     /** Opens Calen-Time's Play Store page on the watch, for when the watch app isn't installed there. */
     suspend fun openPlayOnWatch(context: Context): Boolean {
         val watch = watch(context) ?: return false

@@ -110,11 +110,22 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
         if (demo) { colourway = c; link = link.copy(face = link.face?.copy(colourway = c)); return }
         colourway = c
         AppPrefs.setColourway(context, c)
-        AppPrefs.sendSettings(context)
         scope.launch {
-            val status = WatchLink.setColourway(context, c)
-            if (status != null) link = link.copy(face = status)
-            say(if (status?.installed == true) "${lookName(c)} is on your watch" else "Saved. It's used when the face is on your watch")
+            // With the face on the watch, the change plays as a transition there (the ring in the new colour covers
+            // the swap); otherwise, or if the watch can't open it, the swap goes by request or waits for the watch.
+            val shown = link.face?.installed == true && WatchLink.openColourChange(context, c)
+            if (shown) {
+                say("Changing to ${lookName(c)}…")
+                delay(4500)   // the swap and the new face loading, under the transition
+                AppPrefs.sendSettings(context)   // after the swap, so the watch's catch-up finds it already done
+                link = WatchLink.state(context)
+                say("${lookName(c)} is on your watch")
+            } else {
+                AppPrefs.sendSettings(context)
+                val status = WatchLink.setColourway(context, c)
+                if (status != null) link = link.copy(face = status)
+                say(if (status?.installed == true) "${lookName(c)} is on your watch" else "Saved. It's used when the face is on your watch")
+            }
         }
     }
 

@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import kotlinx.coroutines.launch
 
 /**
  * Invisible handler for the face's deep links (PRD §6.3 risk 1):
@@ -14,6 +15,8 @@ import android.util.Log
  * - `app://<package>/time?offset=M`: debug time shift in minutes for testing.
  * - `app://<package>/day?name=busy|example`: debug switch of the sample day.
  * - `app://<package>/face?colour=mint&activate=1`: debug, puts the face on the watch (Watch Face Push).
+ * - `app://<package>/colour?name=mint`: the phone app's colourway change, shown as a transition (ColourSwapActivity).
+ * - `app://<package>/swap?colour=mint`: debug, swaps the colourway silently (no transition), as the /settings catch-up does.
  * Asks for fresh complication data and finishes before anything is shown. With no calendar yet
  * (nothing from the phone, no access on the watch), any tap on the ring opens [PermissionActivity].
  */
@@ -35,6 +38,13 @@ class TapActivity : Activity() {
             SpikeSchedule.runPromotion(this)
         } else if (uri?.path == "/time") {
             SpikeSchedule.setOffset(this, uri.getQueryParameter("offset")?.toIntOrNull() ?: 0)
+        } else if (uri?.path == "/colour") {   // the phone app picked a colourway: swap it in behind a transition
+            startActivity(Intent(this, ColourSwapActivity::class.java)
+                .putExtra(ColourSwapActivity.EXTRA_COLOUR, uri.getQueryParameter("name")))
+        } else if (uri?.path == "/swap") {   // debug: swap colourway silently, as the phone app does
+            val colourway = uri.getQueryParameter("colour") ?: "amber"
+            val app = applicationContext
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch { FacePush.install(app, colourway) }
         } else if (uri?.path == "/face") {
             startActivity(Intent(this, FaceSetupActivity::class.java)
                 .putExtra(FaceSetupActivity.EXTRA_COLOUR, uri.getQueryParameter("colour"))
