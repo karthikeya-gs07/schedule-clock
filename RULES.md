@@ -181,6 +181,7 @@ Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.sched
 
 | Date | Change | Rules |
 |---|---|---|
+| 2026-10-31 | Watchface: the watch is centred between the tabs and the page dots. | §12 A5 |
 | 2026-10-31 | Underglow takes a gradient face's colours left to right; softer nav icon glow; drawer frost a little lighter. | §12 A2, A5 |
 | 2026-10-31 | Watchface: Solids and Gradients tabs above the watch; Solaris is under Gradients. | §12 A5 |
 | 2026-10-31 | Eleven Figma themes added (16 colourways): six tinted-dial themes with one arc colour, five Palette themes whose arcs run through five colours over the 12 hours ahead. Double bookings and private stripes take each theme's colours. | §9 |

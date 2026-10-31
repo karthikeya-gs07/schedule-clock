@@ -149,7 +149,9 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
 
         // Where the face sits: under the top buttons on Today, in the middle (above the name and button) on Watchface.
         val faceTopHome = d(158.8f)
-        val faceTopCentre = statusBar + (maxHeight - statusBar - 300.dp - faceSize) / 2
+        // Centred in the room between the tabs (status bar + 72 dp) and the dots, name and button (~300 dp).
+        val tabsBottom = statusBar + 72.dp
+        val faceTopCentre = tabsBottom + (maxHeight - tabsBottom - 300.dp - faceSize) / 2
         val dy = lerp(0.dp, faceTopCentre - faceTopHome, p)
 
         // Everything but the drawer is the "page" the drawer and the floating nav blur.
