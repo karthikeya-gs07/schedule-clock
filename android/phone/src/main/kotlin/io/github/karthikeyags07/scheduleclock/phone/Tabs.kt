@@ -133,7 +133,7 @@ fun bold(s: String) = buildAnnotatedString {
 
 // ---------- Settings (RULES A6) ----------
 @Composable
-fun SettingsScreen(m: AppModel) {
+fun SettingsScreen(m: AppModel, onRunSetup: () -> Unit) {
     ScreenTitle("Settings")
     val context = LocalContext.current
     Text("Calen-Time ${context.packageManager.getPackageInfo(context.packageName, 0).versionName}", style = SubStyle)
@@ -154,4 +154,10 @@ fun SettingsScreen(m: AppModel) {
     SectionLabel("Sync")
     Text("Calen-Time syncs every 15 minutes, and as soon as a meeting changes. It sends yesterday to tomorrow from the calendars you picked; private events go without their title or place.",
         style = SubStyle, modifier = Modifier.padding(horizontal = 4.dp))
+    // Setup again (also on About): calendar access, calendars and the face on the watch, from the start.
+    Spacer(Modifier.height(8.dp))
+    SectionLabel("Setup")
+    Text("Go through setup again: calendar access, which calendars to send, and putting the face on your watch.",
+        style = SubStyle, modifier = Modifier.padding(start = 4.dp, end = 4.dp, bottom = 14.dp))
+    RunSetupButton(onRunSetup, Modifier.fillMaxWidth())
 }

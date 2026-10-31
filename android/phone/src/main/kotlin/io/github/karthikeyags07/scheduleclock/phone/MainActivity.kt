@@ -144,7 +144,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
                             .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 132.dp)) {
                             when (shown) {
                                 Tab.CALENDARS -> { ScreenTitle("Calendars"); CalendarsList(m, allow) }
-                                else -> SettingsScreen(m)
+                                else -> SettingsScreen(m) { setupStep = 0; m.restartSetup() }
                             }
                         }
                     }
