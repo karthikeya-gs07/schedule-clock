@@ -68,7 +68,9 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
 
     fun syncNow(quiet: Boolean = false) = scope.launch {
         syncing = true
+        val started = System.currentTimeMillis()
         val sent = withContext(Dispatchers.IO) { runCatching { CalendarSync.send(context) } }
+        delay((1000 - (System.currentTimeMillis() - started)).coerceAtLeast(0))   // a sync takes ~0.1 s: spin one full turn so it's seen
         syncing = false
         sent.onSuccess { n ->
             lastSync = System.currentTimeMillis(); lastCount = n
