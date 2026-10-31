@@ -103,7 +103,8 @@ import kotlin.math.roundToInt
 /** The Today screen's own colours (Figma "Calen-Time", node 28:3). */
 private object Home {
     val background = Color(0xFF191919)
-    const val DESIGN_WIDTH = 393f          // the frame's width; the watch block scales with the screen width
+    const val DESIGN_WIDTH = 393f          // the frame's size; the watch block scales to fit the screen
+    const val DESIGN_HEIGHT = 852f
 }
 
 private val COLOURWAYS = Looks.IDS
@@ -122,8 +123,11 @@ private val COLOURWAYS = Looks.IDS
 @Composable
 fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: () -> Unit, onAbout: () -> Unit) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Home.background)) {
-        val s = maxWidth.value / Home.DESIGN_WIDTH          // design px → dp on this screen
+        // Design px → dp: by width, or by height on a short screen (small phones, a tablet's left pane), so the
+        // watch, buttons and drawer always fit; the block is then centred across the width.
+        val s = minOf(maxWidth.value / Home.DESIGN_WIDTH, maxHeight.value / Home.DESIGN_HEIGHT)
         fun d(v: Float) = (v * s).dp
+        val left = (maxWidth - d(Home.DESIGN_WIDTH)) / 2
         val faceSize = d(234.3f)
         val pillTop = d(477f)
         val drawerTop = d(559f)
@@ -169,7 +173,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                 ), blendMode = BlendMode.DstIn)
             })
             // The watch stays still (it only moves between Today and Watchface); only the face inside it swipes.
-            WatchPhoto(Modifier.offset(x = d(29f), y = d(27f) + dy).size(d(334.5f), d(498.8f)))
+            WatchPhoto(Modifier.offset(x = left + d(29f), y = d(27f) + dy).size(d(334.5f), d(498.8f)))
             val sample = remember { SampleDay.meetings() }
             val live = !watchMode
             val meetings = if (live) m.meetings else sample
@@ -177,7 +181,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
             // Glow: a blurred copy of the face at rest (48 dp of room so the blur isn't cut square); hidden mid-swipe.
             if (!pager.isScrollInProgress && kotlin.math.abs(pager.currentPageOffsetFraction) < .01f) {
                 val glowPad = 48.dp
-                Box(Modifier.offset(x = d(79.2f) - glowPad, y = d(158.8f) + dy - glowPad).size(faceSize + glowPad * 2)
+                Box(Modifier.offset(x = left + d(79.2f) - glowPad, y = d(158.8f) + dy - glowPad).size(faceSize + glowPad * 2)
                     .graphicsLayer { renderEffect = BlurEffect(18.dp.toPx(), 18.dp.toPx(), TileMode.Decal); alpha = .7f; scaleX = 1.04f; scaleY = 1.04f },
                     contentAlignment = Alignment.Center) { WatchFacePreview(COLOURWAYS[pager.settledPage], meetings, faceSize, atMinute = at) }
             }
@@ -204,7 +208,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
         val todayAlpha = (1f - p * 2f).coerceIn(0f, 1f)
         if (todayAlpha > 0f) {
             // (7) watch status and (6) About (frosted, like the pill and sync button)
-            Row(Modifier.fillMaxWidth().statusBarsPadding().padding(top = 44.dp, start = d(31f), end = d(31f)).graphicsLayer { alpha = todayAlpha },
+            Row(Modifier.fillMaxWidth().statusBarsPadding().padding(top = 44.dp, start = left + d(31f), end = left + d(31f)).graphicsLayer { alpha = todayAlpha },
                 horizontalArrangement = Arrangement.SpaceBetween) {
                 RoundButton("Watch status", haze, onWatchStatus) {
                     Icon(Icons.clock, null, tint = Palette.text, modifier = Modifier.size(24.dp))

@@ -27,6 +27,10 @@ No crashes on any device. Everything that breaks has one cause: **Today is laid 
 
 Minor, demo mode only: with no watch connected (the emulators) the sync pill reads "Galaxy Watch8 ·" with nothing after the dot. Not seen by real users.
 
+### Status after the fixes (2026-10-31)
+
+Fixes 1–3 are in: Today sizes by `min(width / 393, height / 852)` and centres; two panes need ≥ 600 dp both ways; phones are portrait-only. Retested on the emulators: the small phone now shows the whole Today layout (smaller watch, drawer header above the nav) and Watchface's dots clear the face; the Pixel 9 stays portrait when rotated. Fix 4 wasn't needed once Today scales by height. **Not retested:** the tablet in landscape, and the real Fold and watch (disconnected at the time).
+
 ## 2. Play Store readiness
 
 ### Fine as it is
@@ -44,11 +48,11 @@ Minor, demo mode only: with no watch connected (the emulators) the sync pill rea
 |---|---|---|---|---|
 | 1 | **High** | **Watch Face Push used to install our own face.** Google's docs say the push API is for watch face *marketplace* apps; Play review may reject an app that pushes only its own faces. | Policy fit; the most likely rejection reason. | Submit with a clear review note (the face needs its watch app's calendar data, so it can't be a standalone face listing; colourways are picked in the phone app). Fallback if rejected: publish the face itself as a WFF watch face listing and keep the watch app as its data source (complications). Decide before uploading. |
 | 2 | **High** | **Privacy policy not online, no contact email.** `docs/privacy.html` exists but isn't published. | Required for any app asking for calendar access. | Publish `docs/` with GitHub Pages (or any URL), add a public contact email in Play Console. |
-| 3 | **Medium** | **Debug deep links ship in the release watch app.** `TapActivity` is exported and accepts `/swap?colour=`, `/day?name=` (switch to a sample day) and `/offset=` (shift the clock). Any app on the watch could change the face or put it on fake meetings. | Security/quality review; an exported entry point that changes data. | Only handle `/swap`, `/day` and `/offset` when `BuildConfig.DEBUG`; release keeps `/select`, `/release` and `/colour`. |
-| 4 | **Medium** | **Demo mode can be switched on by any app** (`--ez demo true` on the exported launcher activity), and it saves "setup done". | Same as above, smaller impact. | Honour the `demo` extra only in debug builds, and don't persist setup from it. |
-| 5 | **Medium** | **Watch minSdk 34 (Wear OS 5) but the face needs Wear OS 6.** Wear OS 5 users can install it and only get "Your watch needs an update". | Bad reviews; the listing says Wear OS 6. | Set the watch app's `minSdk = 36`, so Play only offers it to Wear OS 6 watches. |
+| 3 | ✅ fixed | **Debug deep links ship in the release watch app.** `TapActivity` is exported and accepts `/swap?colour=`, `/day?name=` (switch to a sample day) and `/offset=` (shift the clock). Any app on the watch could change the face or put it on fake meetings. | Security/quality review; an exported entry point that changes data. | Only handle `/swap`, `/day` and `/offset` when `BuildConfig.DEBUG`; release keeps `/select`, `/release` and `/colour`. |
+| 4 | ✅ fixed | **Demo mode can be switched on by any app** (`--ez demo true` on the exported launcher activity), and it saves "setup done". | Same as above, smaller impact. | Honour the `demo` extra only in debug builds, and don't persist setup from it. |
+| 5 | ✅ fixed | **Watch minSdk 34 (Wear OS 5) but the face needs Wear OS 6.** Wear OS 5 users can install it and only get "Your watch needs an update". | Bad reviews; the listing says Wear OS 6. | Set the watch app's `minSdk = 36`, so Play only offers it to Wear OS 6 watches. |
 | 6 | **Medium** | **`USE_EXACT_ALARM`** (meeting buzzes). Play restricts it to alarm and calendar apps and asks for a declaration. | Permission declaration form at upload. | Declare it as a calendar app (text drafted in `LISTING.md`). If refused, switch to `SCHEDULE_EXACT_ALARM` with a fallback when not granted. |
-| 7 | **Medium** | **Landscape and short screens** (section 1). | Play's large-screen quality checks and "app breaks in landscape" reports. | Fixes 1–4 in section 1. |
+| 7 | ✅ fixed | **Landscape and short screens** (section 1). | Play's large-screen quality checks and "app breaks in landscape" reports. | Fixes 1–4 in section 1. |
 | 8 | Low | The watch app says it's standalone (`com.google.android.wearable.standalone = true`). | Standalone apps must be useful without the phone. | Fine if the watch reading its own calendar is the intended fallback; otherwise set it to false so Play requires the phone app. |
 | 9 | Low | No tablet screenshots. | Optional, but the tablet listing looks empty without them. | Take 2 screenshots on the tablet emulator after the layout fixes. |
 

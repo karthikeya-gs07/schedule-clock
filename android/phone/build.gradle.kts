@@ -29,7 +29,7 @@ android {
         versionName = "0.9.1"
     }
 
-    buildFeatures { compose = true }
+    buildFeatures { compose = true; buildConfig = true }   // BuildConfig.DEBUG: demo mode
 
     signingConfigs {
         signingKey("upload") { f, password, alias ->

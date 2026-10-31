@@ -26,22 +26,25 @@ class TapActivity : Activity() {
         val received = System.currentTimeMillis()
         val uri = intent?.data
         Log.i(TAG, "tap received: $uri t=$received")
+        // Test links (buzz, settle, clock offset, silent swap, sample day) only in debug builds: this activity is
+        // exported, so in a release build no other app can change the face's data through it.
+        val test = BuildConfig.DEBUG
 
         if (uri?.path == "/select" && SpikeSchedule.needsCalendarSetup(this)) {
             startActivity(Intent(this, PermissionActivity::class.java))
         } else if (uri?.path == "/release") {
             SpikeSchedule.release(this)
-        } else if (uri?.path == "/buzz") {
+        } else if (test && uri?.path == "/buzz") {
             MeetingBuzz.Kind.entries.firstOrNull { it.name.equals(uri.getQueryParameter("kind"), true) }
                 ?.let { MeetingBuzz.play(this, it) }
-        } else if (uri?.path == "/promote") {
+        } else if (test && uri?.path == "/promote") {
             SpikeSchedule.runPromotion(this)
-        } else if (uri?.path == "/time") {
+        } else if (test && uri?.path == "/time") {
             SpikeSchedule.setOffset(this, uri.getQueryParameter("offset")?.toIntOrNull() ?: 0)
         } else if (uri?.path == "/colour") {   // the phone app picked a colourway: swap it in behind a transition
             startActivity(Intent(this, ColourSwapActivity::class.java)
                 .putExtra(ColourSwapActivity.EXTRA_COLOUR, uri.getQueryParameter("name")))
-        } else if (uri?.path == "/swap") {   // debug: swap colourway silently, as the phone app does
+        } else if (test && uri?.path == "/swap") {   // debug: swap colourway silently, as the phone app does
             val colourway = uri.getQueryParameter("colour") ?: "amber"
             val app = applicationContext
             kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch { FacePush.install(app, colourway) }
@@ -49,10 +52,10 @@ class TapActivity : Activity() {
             startActivity(Intent(this, FaceSetupActivity::class.java)
                 .putExtra(FaceSetupActivity.EXTRA_COLOUR, uri.getQueryParameter("colour"))
                 .putExtra(FaceSetupActivity.EXTRA_ACTIVATE, uri.getQueryParameter("activate") == "1"))
-        } else if (uri?.path == "/day") {
+        } else if (test && uri?.path == "/day") {
             SpikeSchedule.setDay(this, uri.getQueryParameter("name") ?: "busy")
-        } else {
-            uri?.getQueryParameter("hour")?.toIntOrNull()?.let { SpikeSchedule.tapHour(this, it) }
+        } else if (uri?.path == "/select") {
+            uri.getQueryParameter("hour")?.toIntOrNull()?.let { SpikeSchedule.tapHour(this, it) }
             Log.i(TAG, "update requested after ${System.currentTimeMillis() - received} ms")
         }
 

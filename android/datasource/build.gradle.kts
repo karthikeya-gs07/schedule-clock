@@ -20,9 +20,11 @@ android {
     namespace = "io.github.karthikeyags07.scheduleclock"
     compileSdk = 36
 
+    buildFeatures { buildConfig = true }   // BuildConfig.DEBUG: test links (TapActivity)
+
     defaultConfig {
         applicationId = "io.github.karthikeyags07.scheduleclock"
-        minSdk = 34 // Wear OS 5
+        minSdk = 36 // Wear OS 6: Watch Face Push, which installs the face (Play only offers it to watches that can use it)
         targetSdk = 36
         // Phone and watch apps share one Play listing, so their version codes must differ: phone 1xxx, watch 2xxx.
         versionCode = 2002

@@ -85,7 +85,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(SystemBarStyle.dark(android.graphics.Color.TRANSPARENT), SystemBarStyle.dark(android.graphics.Color.TRANSPARENT))
         model = AppModel(applicationContext, lifecycleScope)
-        if (intent.getBooleanExtra("demo", false)) { model.startDemo(); AppPrefs.setSetupDone(this, true); model.setupDone = true }
+        // Demo mode (sample day, for screenshots) only in debug builds, and nothing of it is saved.
+        if (BuildConfig.DEBUG && intent.getBooleanExtra("demo", false)) { model.startDemo(); model.setupDone = true }
         setContent { CalenTimeApp(model, ::openAppSettings) }
     }
 
@@ -124,7 +125,8 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
     CompositionLocalProvider(LocalAccent provides animatedAccent(m.colourway), LocalTextStyle provides BodyStyle) {   // Google Sans Flex everywhere
         BoxWithConstraints(Modifier.fillMaxSize().background(Palette.screen)) {
             // Unfolded (Fold 7/8 inner screen, tablets): two panes, Today on the left and the other pages on the right.
-            val wide = maxWidth >= 600.dp
+            // Only when the screen is tall enough too: a landscape phone (or a short window) stays one pane.
+            val wide = maxWidth >= 600.dp && maxHeight >= 600.dp
             val workPage: @Composable (Tab, HazeState) -> Unit = { shown, h ->
                 Column(Modifier.fillMaxSize().hazeSource(h, zIndex = 0f).stagePage(LocalAccent.current, dark = true).statusBarsPadding()
                     // Clear of the floating nav (28 + 80 dp above the system bar) with room to spare.
