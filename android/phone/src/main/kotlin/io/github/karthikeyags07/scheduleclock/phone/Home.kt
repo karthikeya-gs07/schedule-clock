@@ -250,8 +250,9 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                 COLOURWAYS.forEachIndexed { i, id ->
                     val on = i == pager.currentPage
                     val dot = Modifier.height(6.dp).width(if (on) 18.dp else 6.dp).clip(CircleShape)
-                    // Solaris's dot is its day in miniature: night blue → dawn → noon gold → sunset coral → violet.
-                    if (id == "solaris") Box(dot.graphicsLayer { alpha = if (on) 1f else .55f }.background(SOLARIS_DOT))
+                    // Selected, Solaris's dot is its day in miniature (night blue → dawn → noon gold → sunset coral → violet);
+                    // unselected, every dot is the same plain grey.
+                    if (id == "solaris" && on) Box(dot.background(SOLARIS_DOT))
                     else Box(dot.background(if (on) accentFor(id) else Color.White.copy(alpha = .25f)))
                 }
             }
