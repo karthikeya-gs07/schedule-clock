@@ -122,7 +122,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
         Box(Modifier.fillMaxSize().background(Palette.screen)) {
             when {
                 !m.setupDone -> SetupFlow(m, setupStep, allow)   // full-bleed; it handles the system bars itself
-                about -> { BackHandler { about = false }; AboutScreen(onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() } }
+                about -> { BackHandler { about = false }; AboutScreen(m.colourway, onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() } }
                 else -> {
                     BackHandler(enabled = tab != Tab.TODAY || watchStatus) { if (watchStatus) watchStatus = false else tab = Tab.TODAY }
                     // Pages slide in from the side they sit on in the nav bar (RULES §12 A10). Today and Watchface are

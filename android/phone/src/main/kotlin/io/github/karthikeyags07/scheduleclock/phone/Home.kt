@@ -641,7 +641,7 @@ fun WatchStatusPanel(m: AppModel, haze: HazeState, onAllow: () -> Unit, onInstal
 // ---------- (6) About ----------
 /** About Calen-Time: what it is, how to read the face, privacy, and credits. */
 @Composable
-fun AboutScreen(onBack: () -> Unit, onRunSetup: () -> Unit) {
+fun AboutScreen(colourway: String, onBack: () -> Unit, onRunSetup: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val version = context.packageManager.getPackageInfo(context.packageName, 0).versionName
     Column(Modifier.fillMaxSize().background(Palette.screen).statusBarsPadding()) {
@@ -655,20 +655,22 @@ fun AboutScreen(onBack: () -> Unit, onRunSetup: () -> Unit) {
             Spacer(Modifier.height(18.dp))
             Text("Your day, around the clock. Calen-Time turns your watch face into a picture of the next 12 hours: every meeting is an arc on the ring, so one glance tells you how busy you are, what's next and how much time you have before it.",
                 style = BodyStyle.copy(color = Palette.body))
-            AboutSection("Reading the face", listOf(
-                "Arcs" to "Each meeting is an arc at its time on the 12-hour ring. The part already gone is dimmer.",
-                "The white dot" to "Now. The faint trail behind it fades over the last two hours.",
-                "Inner line" to "Meetings later today that don't fit the next 12 hours yet. They move onto the ring 30 minutes after their slot frees up.",
-                "Two thin stripes" to "A double booking: two meetings at the same time.",
-                "Grey stripes" to "A private meeting. Its title and place never leave your phone.",
-                "Middle" to "The time, and what's next. Tap an hour on the ring to see what's on then; tap the details to go back.",
-            ))
-            AboutSection("Colourways", listOf(
-                "Amber, Mint, Violet, Rose" to "Pick one on the Watchface tab; your watch changes in a few seconds.",
-                "Lunar Mono to Arctic Lagoon" to "One arc colour on a dial tinted to match.",
-                "Rose Quartz to Acid Circuit" to "Palette themes: the arcs run through five colours, from now to 12 hours ahead.",
-                "Solaris" to "The ring takes the colour of the light at each hour: dawn rose, noon gold, sunset coral, night indigo, from your sunrise and sunset.",
-            ))
+            // Each part of the face as a close-up of the face in your colourway, on the sample day (plus a late call,
+            // so the inner line has something on it); the arcs at 11:10 so one meeting is under way.
+            val day = remember { SampleDay.meetings() + SampleDay.lateCall() }
+            SectionLabel("Reading the face")
+            FacePart(colourway, "arcs", day, 670, "Arcs",
+                "Each meeting is an arc at its time on the 12-hour ring. The part already gone is dimmer.")
+            FacePart(colourway, "now", day, SampleDay.SAMPLE_MINUTE, "The dot",
+                "Now. The faint trail behind it fades over the last two hours.")
+            FacePart(colourway, "lane", day, SampleDay.SAMPLE_MINUTE, "Inner line",
+                "Meetings later today that don't fit the next 12 hours yet. They move onto the ring 30 minutes after their slot frees up.")
+            FacePart(colourway, "clash", day, SampleDay.SAMPLE_MINUTE, "Two thin stripes",
+                "A double booking: two meetings at the same time.")
+            FacePart(colourway, "private", day, SampleDay.SAMPLE_MINUTE, "Striped arc",
+                "A private meeting. Its title and place never leave your phone.")
+            FacePart(colourway, "middle", day, SampleDay.SAMPLE_MINUTE, "Middle",
+                "The time, and what's next. Tap an hour on the ring to see what's on then; tap the details to go back.")
             AboutSection("Buzzes", listOf(
                 "2 min before" to "One short buzz to wrap up and join.",
                 "Halfway" to "One long buzz, for meetings of 15 minutes or more.",
@@ -686,16 +688,24 @@ fun AboutScreen(onBack: () -> Unit, onRunSetup: () -> Unit) {
     }
 }
 
+/** One part of the face: a close-up on top, its name and what it means below. */
+@Composable
+private fun FacePart(colourway: String, detail: String, day: List<Meeting>, at: Int, title: String, text: String) {
+    Column(Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 22.dp)) {
+        FaceDetail(colourway, detail, day, at)
+        Text(title, style = BodyStyle.copy(fontWeight = FontWeight.Medium), modifier = Modifier.padding(top = 12.dp, start = 4.dp, end = 4.dp))
+        Text(text, style = SubStyle, modifier = Modifier.padding(top = 2.dp, start = 4.dp, end = 4.dp))
+    }
+}
+
+/** A plain section: its label, then each item's name and text, with no card around them. */
 @Composable
 private fun AboutSection(title: String, items: List<Pair<String, String>>) {
     SectionLabel(title)
-    Rows {
-        items.forEachIndexed { i, (k, v) ->
-            if (i > 0) RowDivider()
-            Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 14.dp)) {
-                Text(k, style = BodyStyle.copy(fontWeight = FontWeight.Medium))
-                Text(v, style = SubStyle, modifier = Modifier.padding(top = 2.dp))
-            }
+    items.forEach { (k, v) ->
+        Column(Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, bottom = 16.dp)) {
+            Text(k, style = BodyStyle.copy(fontWeight = FontWeight.Medium))
+            Text(v, style = SubStyle, modifier = Modifier.padding(top = 2.dp))
         }
     }
 }

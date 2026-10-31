@@ -12,7 +12,11 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberUpdatedState
@@ -40,12 +44,29 @@ import java.time.ZoneId
 fun WatchFacePreview(
     colourway: String, meetings: List<Meeting>, size: Dp, interactive: Boolean = false,
     atMinute: Int? = null, onTap: (() -> Unit)? = null,
+) = FaceWebView(colourway, meetings, atMinute, interactive, onTap, null, Modifier.size(size).clip(CircleShape))
+
+/**
+ * A still close-up of one part of the face (About, RULES A8): a 16:9 crop the width of [modifier], the rest of the
+ * face dimmed. [detail] is one of the page's crops: arcs, now, lane, clash, private, middle.
+ */
+@Composable
+fun FaceDetail(colourway: String, detail: String, meetings: List<Meeting>, atMinute: Int, modifier: Modifier = Modifier) =
+    FaceWebView(colourway, meetings, atMinute, interactive = false, onTap = null, detail = detail,
+        modifier = modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(20.dp)))
+
+@SuppressLint("SetJavaScriptEnabled")
+@Composable
+private fun FaceWebView(
+    colourway: String, meetings: List<Meeting>, atMinute: Int?, interactive: Boolean, onTap: (() -> Unit)?,
+    detail: String?, modifier: Modifier,
 ) {
-    val (url, events) = previewUrl(colourway, meetings, atMinute)
+    val (base, events) = previewUrl(colourway, meetings, atMinute)
+    val url = if (detail == null) base else base.replaceFirst("?embed&", "?embed&detail=$detail&")
     val onTapState = rememberUpdatedState(onTap)
-    Box(Modifier.size(size).clip(CircleShape).background(androidx.compose.ui.graphics.Color.Black)) {
+    Box(modifier.background(androidx.compose.ui.graphics.Color.Black)) {
         AndroidView(
-            modifier = Modifier.size(size),
+            modifier = Modifier.matchParentSize(),
             factory = { context ->
                 val assets = WebViewAssetLoader.Builder()
                     .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(context))
@@ -152,6 +173,13 @@ object SampleDay {
             m(1080, 1110, "Gym", "Cult, Indiranagar", FAMILY),
             m(1140, 1200, "Client call", "Zoom", WORK),
         )
+    }
+
+    /** A call after the 12 hours shown at 10:13, so the inner line (later today) has a meeting on it (About). */
+    fun lateCall(): Meeting {
+        val zone = ZoneId.systemDefault()
+        val midnight = LocalDate.now(zone).atStartOfDay(zone).toInstant().toEpochMilli()
+        return Meeting(midnight + 1350 * 60_000L, midnight + 1410 * 60_000L, "Late call", "", allDay = false, private = false, calendarId = WORK)
     }
 
     private const val WORK = -11L
