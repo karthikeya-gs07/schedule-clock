@@ -7,6 +7,10 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.material3.ripple
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -171,10 +175,19 @@ private fun NavBar(current: Tab, haze: HazeState, preview: String?, modifier: Mo
     ) {
         Tab.entries.forEach { t ->
             val selected = t == current
+            // The selected icon has a soft glow of its colour behind it (fades in and out as tabs change).
+            val glow by animateFloatAsState(if (selected) 1f else 0f, tween(300), label = "navGlow")
             Box(
-                Modifier.weight(1f).height(68.dp).clip(RoundedCornerShape(20.dp))
-                    .clickable(role = Role.Tab) { onSelect(t) }
-                    .semantics { contentDescription = t.label; this.selected = selected },
+                Modifier.weight(1f).height(68.dp)
+                    // The whole cell is the tap area; the touch ripple is a circle round the icon.
+                    .clickable(interactionSource = null, indication = ripple(bounded = false, radius = 28.dp), role = Role.Tab) { onSelect(t) }
+                    .semantics { contentDescription = t.label; this.selected = selected }
+                    .drawBehind {
+                        if (glow > 0f) drawCircle(Brush.radialGradient(
+                            listOf(selectedTint.copy(alpha = .32f * glow), selectedTint.copy(alpha = .10f * glow), Color.Transparent),
+                            center = center, radius = 26.dp.toPx(),
+                        ), radius = 26.dp.toPx())
+                    },
                 contentAlignment = Alignment.Center,
             ) { Icon(t.icon, null, tint = if (selected) selectedTint else Palette.muted, modifier = Modifier.size(24.dp)) }
         }
