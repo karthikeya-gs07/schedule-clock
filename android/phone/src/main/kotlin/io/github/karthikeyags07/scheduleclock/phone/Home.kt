@@ -321,42 +321,103 @@ private fun DrawerMeeting(meeting: Meeting, live: Boolean, clash: Boolean, color
 }
 
 // ---------- (7) Watch status ----------
-/** What's going on with the watch, with the one fix that applies (RULES A3), shown over Today. */
+private data class StatusItem(val icon: androidx.compose.ui.graphics.vector.ImageVector, val label: String, val value: String, val ok: Boolean?)
+
+/**
+ * What's going on with the watch (RULES A3): a frosted card that drops in under the clock button, with a
+ * one-line verdict, the four things that have to be right, and the one fix that applies.
+ */
 @Composable
-fun WatchStatusPanel(m: AppModel, onAllow: () -> Unit, onInstall: () -> Unit, onClose: () -> Unit) {
+fun WatchStatusPanel(m: AppModel, haze: HazeState, onAllow: () -> Unit, onInstall: () -> Unit, onClose: () -> Unit) {
     val face = m.link.face
-    Box(Modifier.fillMaxSize().background(Color(0x99000000)).clickable(onClick = onClose), contentAlignment = Alignment.TopCenter) {
+    val watch = m.link.watch
+    val amber = Color(0xFFFFB547)
+    val (title, line, colour) = when {
+        watch == null -> Triple("Watch not connected", "Open Galaxy Wearable and check your watch is paired and nearby.", Palette.muted)
+        !m.hasPermission -> Triple("Calendar access is off", "Allow it so your meetings can reach the watch.", amber)
+        face == null -> Triple("Calen-Time isn't on your watch", "Get the watch app to put the face on.", amber)
+        !face.supported -> Triple("Your watch needs an update", "Calen-Time needs Wear OS 6 or newer. Check for an update in Galaxy Wearable.", amber)
+        !face.installed -> Triple("The face isn't on your watch", "Put it on, then confirm on the watch.", amber)
+        !face.active -> Triple("Not your watch face right now", "Touch and hold your watch face, then swipe to Calen-Time and tap it.", amber)
+        else -> Triple("All good", "Your meetings sync to your watch on their own.", Palette.ok)
+    }
+    val items = listOf(
+        StatusItem(Icons.watch, "Connection", if (watch != null) "Connected" else "Not connected", watch != null),
+        StatusItem(Icons.info, "Calen-Time on the watch",
+            when { watch == null -> "Unknown"; face == null -> "Not installed"; !face.supported -> "Needs Wear OS 6"; else -> "Installed" },
+            if (watch == null) null else face != null && face.supported),
+        StatusItem(Icons.look, "Watch face",
+            when { face == null || !face.supported -> "—"; !face.installed -> "Not on the watch"; face.active -> "In use · ${lookName(face.colourway ?: m.colourway)}"; else -> "On the watch, not in use" },
+            if (face == null || !face.supported) null else face.active),
+        StatusItem(Icons.calendar, "Calendar access", if (m.hasPermission) "Allowed" else "Off", m.hasPermission),
+    )
+
+    // Drops in: the scrim fades, the card fades and grows from just under the button.
+    val shown = remember { Animatable(0f) }
+    LaunchedEffect(Unit) { shown.animateTo(1f, spring(dampingRatio = .8f, stiffness = 420f)) }
+    Box(Modifier.fillMaxSize().graphicsLayer { alpha = shown.value.coerceIn(0f, 1f) }.background(Color(0x8C000000))
+        .clickable(interactionSource = null, indication = null, onClick = onClose)) {
         Column(
-            Modifier.statusBarsPadding().padding(top = 92.dp, start = 16.dp, end = 16.dp).fillMaxWidth()
-                .clip(RoundedCornerShape(28.dp)).background(Color(0xFF2F2F2F)).clickable(enabled = false) {}.padding(20.dp),
+            Modifier.statusBarsPadding().padding(top = 44.dp + 57.dp + 12.dp, start = 16.dp, end = 16.dp).fillMaxWidth()
+                .graphicsLayer {
+                    val k = .92f + .08f * shown.value; scaleX = k; scaleY = k
+                    transformOrigin = androidx.compose.ui.graphics.TransformOrigin(.12f, 0f)
+                }
+                .clip(RoundedCornerShape(32.dp))
+                .hazeEffect(haze, HazeStyle(Home.background, HazeTint(Color(0xFF1C1C20).copy(alpha = .8f)), blurRadius = 40.dp, noiseFactor = .1f))
+                .border(1.dp, Color.White.copy(alpha = .08f), RoundedCornerShape(32.dp))
+                .clickable(interactionSource = null, indication = null) {}
+                .padding(22.dp),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(10.dp).clip(CircleShape).background(watchColour(m)))
-                Spacer(Modifier.width(10.dp))
-                Text(m.link.watch?.name ?: "No watch connected", style = BodyStyle.copy(fontSize = 17.sp, fontWeight = FontWeight.Medium))
+            // Verdict
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                Box(Modifier.size(52.dp).clip(CircleShape).background(colour.copy(alpha = .16f)), contentAlignment = Alignment.Center) {
+                    Icon(if (colour == Palette.ok) Icons.check else if (watch == null) Icons.watch else Icons.warn, null, tint = colour, modifier = Modifier.size(26.dp))
+                }
+                Column(Modifier.weight(1f)) {
+                    Text(title, style = BodyStyle.copy(fontSize = 19.sp, lineHeight = 24.sp, fontWeight = FontWeight.Medium))
+                    Text(watch?.name ?: "No watch", style = SubStyle)
+                }
+                Box(Modifier.size(36.dp).clip(CircleShape).clickable(role = Role.Button, onClick = onClose).semantics { contentDescription = "Close" },
+                    contentAlignment = Alignment.Center) { Icon(Icons.close, null, tint = Palette.muted, modifier = Modifier.size(20.dp)) }
             }
-            Spacer(Modifier.height(14.dp))
-            val rows = buildList {
-                add("Connection" to if (m.link.watch != null) "Connected" else "Not connected")
-                add("Calen-Time on the watch" to when { m.link.watch == null -> "Unknown"; face == null -> "Not installed"; !face.supported -> "Needs Wear OS 6"; else -> "Installed" })
-                add("Watch face" to when { face == null || !face.supported -> "—"; !face.installed -> "Not on the watch"; face.active -> "In use · ${lookName(face.colourway ?: m.colourway)}"; else -> "On the watch, not in use" })
-                add("Calendar access" to if (m.hasPermission) "Allowed" else "Off")
-            }
-            rows.forEach { (k, v) ->
-                Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(k, style = SubStyle); Text(v, style = SubStyle.copy(color = Palette.text))
+            Text(line, style = SubStyle.copy(color = Palette.body), modifier = Modifier.padding(top = 14.dp, bottom = 18.dp))
+
+            // The four things that have to be right
+            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(Color.White.copy(alpha = .05f))) {
+                items.forEachIndexed { i, item ->
+                    if (i > 0) Box(Modifier.padding(start = 64.dp).fillMaxWidth().height(1.dp).background(Color.White.copy(alpha = .06f)))
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                        Box(Modifier.size(36.dp).clip(CircleShape).background(Color.White.copy(alpha = .06f)), contentAlignment = Alignment.Center) {
+                            Icon(item.icon, null, tint = Palette.text, modifier = Modifier.size(18.dp))
+                        }
+                        Column(Modifier.weight(1f)) {
+                            Text(item.label, style = BodyStyle)
+                            Text(item.value, style = HintStyle)
+                        }
+                        Box(Modifier.size(22.dp).clip(CircleShape).background(when (item.ok) { true -> Palette.ok.copy(alpha = .18f); false -> amber.copy(alpha = .18f); null -> Color.White.copy(alpha = .06f) }),
+                            contentAlignment = Alignment.Center) {
+                            when (item.ok) {
+                                true -> Icon(Icons.check, null, tint = Palette.ok, modifier = Modifier.size(14.dp))
+                                false -> Text("!", color = amber, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                null -> {}
+                            }
+                        }
+                    }
                 }
             }
-            Spacer(Modifier.height(16.dp))
-            when {
-                !m.hasPermission -> PrimaryButton("Allow calendar access", Modifier.fillMaxWidth(), onClick = onAllow)
-                m.link.watch == null -> Text("Open Galaxy Wearable and check your watch is paired and nearby.", style = SubStyle)
-                face == null -> PrimaryButton("Install on watch", Modifier.fillMaxWidth()) { m.getWatchApp(); onClose() }
-                !face.supported -> Text("Check for a watch update in Galaxy Wearable.", style = SubStyle)
-                !face.installed -> PrimaryButton("Put the face on your watch", Modifier.fillMaxWidth()) { onClose(); onInstall() }
-                !face.active -> Text("Touch and hold your watch face, then swipe to Calen-Time and tap it.", style = SubStyle)
-                else -> Text("All good. Your meetings sync on their own.", style = SubStyle)
+
+            // The one fix that applies
+            val fix: Pair<String, () -> Unit>? = when {
+                watch == null -> null
+                !m.hasPermission -> "Allow calendar access" to onAllow
+                face == null -> "Get the watch app" to { m.getWatchApp(); onClose() }
+                !face.supported -> null
+                !face.installed -> "Put the face on your watch" to { onClose(); onInstall() }
+                else -> null
             }
+            if (fix != null) { Spacer(Modifier.height(18.dp)); PrimaryButton(fix.first, Modifier.fillMaxWidth(), onClick = fix.second) }
         }
     }
 }

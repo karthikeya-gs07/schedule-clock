@@ -2,6 +2,7 @@ package io.github.karthikeyags07.scheduleclock.phone
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -113,8 +114,7 @@ object Icons {
     val home = strokeIcon("M12 3 3 10v11h6v-6h6v6h6V10z")
     val calendar = strokeIcon("M6.5 5h11a3 3 0 0 1 3 3v9.5a3 3 0 0 1-3 3h-11a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3z", "M3.5 10h17M8 3v4M16 3v4")
     val look = strokeIcon("M12 3.5a8.5 8.5 0 1 1 0 17a8.5 8.5 0 1 1 0-17z", filled = "M12 3.5a8.5 8.5 0 0 1 0 17z")
-    val settings = strokeIcon("M12 9a3 3 0 1 1 0 6a3 3 0 1 1 0-6z",
-        "M12 2.8v2.6M12 18.6v2.6M21.2 12h-2.6M5.4 12H2.8M18.5 5.5l-1.8 1.8M7.3 16.7l-1.8 1.8M18.5 18.5l-1.8-1.8M7.3 7.3 5.5 5.5")
+    val settings = strokeIcon("M12 8.8a3.2 3.2 0 1 1 0 6.4a3.2 3.2 0 1 1 0-6.4z", "M8.98 5.24 L9.16 2.83 L14.84 2.83 L15.02 5.24 L14.64 5.09 L16.48 3.51 L20.49 7.52 L18.91 9.36 L18.76 8.98 L21.17 9.16 L21.17 14.84 L18.76 15.02 L18.91 14.64 L20.49 16.48 L16.48 20.49 L14.64 18.91 L15.02 18.76 L14.84 21.17 L9.16 21.17 L8.98 18.76 L9.36 18.91 L7.52 20.49 L3.51 16.48 L5.09 14.64 L5.24 15.02 L2.83 14.84 L2.83 9.16 L5.24 8.98 L5.09 9.36 L3.51 7.52 L7.52 3.51 L9.36 5.09Z")   // a gear
     val sync = strokeIcon("M20 12a8 8 0 0 1-14.3 4.9M4 12A8 8 0 0 1 18.3 7.1M18.5 3v4.3h-4.3M5.5 21v-4.3h4.3")
     val warn = strokeIcon("M12 3 2 20h20zM12 10v4.5M12 17.2v.1")
     val check = strokeIcon("m5 12.5 4.5 4.5L19 7.5")
@@ -123,6 +123,7 @@ object Icons {
     val watch = strokeIcon("M12 6a6 6 0 1 1 0 12a6 6 0 1 1 0-12z", "M9 6.5 9.6 3h4.8l.6 3.5M9 17.5l.6 3.5h4.8l.6-3.5M12 9.5V12l1.6 1.2")
     val chevron = strokeIcon("m6 9 6 6 6-6")
     val back = strokeIcon("M19 12H5M11 6l-6 6 6 6")
+    val close = strokeIcon("M6 6l12 12M18 6 6 18")
     val clock = strokeIcon("M12 3.5a8.5 8.5 0 1 1 0 17a8.5 8.5 0 1 1 0-17z", "M12 7.5V12l3 2")
     val info = strokeIcon("M12 3.5a8.5 8.5 0 1 1 0 17a8.5 8.5 0 1 1 0-17z", "M12 11v5.5M12 7.8v.1")
 }
@@ -133,7 +134,14 @@ fun ScreenTitle(text: String) = Text(text, style = TitleStyle, modifier = Modifi
 
 @Composable
 fun Card(modifier: Modifier = Modifier, content: @Composable () -> Unit) =
-    Box(modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Palette.surface)) { content() }
+    Box(modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).frostCard(RoundedCornerShape(20.dp))) { content() }
+
+/**
+ * The frosted look of Today's buttons, for cards on the other screens: a light grey tint and a hairline edge.
+ * (Over a plain background there's nothing to blur, so it's the tint and edge alone.)
+ */
+fun Modifier.frostCard(shape: androidx.compose.ui.graphics.Shape, edge: Color = Color.White.copy(alpha = .07f)) =
+    background(Color(0xFF3A3A3E).copy(alpha = .45f)).border(1.dp, edge, shape)
 
 @Composable
 fun SectionLabel(text: String, trailing: String = "") = Row(
@@ -232,11 +240,11 @@ fun SwitchRow(label: String, hint: String? = null, checked: Boolean, enabled: Bo
 /** Rows inside one rounded card, with thin dividers. */
 @Composable
 fun Rows(content: @Composable () -> Unit) = Column(
-    Modifier.fillMaxWidth().padding(bottom = 14.dp).clip(RoundedCornerShape(20.dp)).background(Palette.surface),
+    Modifier.fillMaxWidth().padding(bottom = 14.dp).clip(RoundedCornerShape(20.dp)).frostCard(RoundedCornerShape(20.dp)),
 ) { content() }
 
 @Composable
-fun RowDivider() = Box(Modifier.fillMaxWidth().height(1.dp).background(Palette.divider))
+fun RowDivider() = Box(Modifier.fillMaxWidth().height(1.dp).background(Color.White.copy(alpha = .07f)))
 
 @Composable
 fun animatedAccent(colourway: String): Color = animateColorAsState(accentFor(colourway), label = "accent").value

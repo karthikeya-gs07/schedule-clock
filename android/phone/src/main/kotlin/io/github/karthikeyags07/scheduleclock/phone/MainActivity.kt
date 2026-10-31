@@ -121,7 +121,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
                         }
                     }
                     NavBar(tab, haze, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp)) { tab = it }
-                    if (watchStatus) WatchStatusPanel(m, allow, install) { watchStatus = false }
+                    if (watchStatus) WatchStatusPanel(m, haze, allow, install) { watchStatus = false }
                 }
             }
             m.toast?.let { Toast(it, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 124.dp)) }

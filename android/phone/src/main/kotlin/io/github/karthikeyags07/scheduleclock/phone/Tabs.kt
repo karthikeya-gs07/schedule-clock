@@ -110,7 +110,7 @@ private fun accountLabel(type: String) = when {
 @Composable
 private fun OutlookHelp() {
     var open by remember { mutableStateOf(false) }
-    Column(Modifier.fillMaxWidth().padding(top = 18.dp, bottom = 14.dp).clip(RoundedCornerShape(20.dp)).background(Palette.surface)) {
+    Column(Modifier.fillMaxWidth().padding(top = 18.dp, bottom = 14.dp).clip(RoundedCornerShape(20.dp)).frostCard(RoundedCornerShape(20.dp))) {
         Row(
             Modifier.fillMaxWidth().clickable(role = Role.Button) { open = !open }.padding(horizontal = 18.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -156,8 +156,7 @@ private fun LookCard(id: String, name: String, text: String?, m: AppModel, enabl
     val accent = LocalAccent.current
     val shape = RoundedCornerShape(20.dp)
     // Same frosted glass as Today's buttons: a light grey tint with a hairline edge (accent edge when chosen).
-    val box = modifier.fillMaxWidth().clip(shape).background(Color(0xFF3A3A3E).copy(alpha = .45f))
-        .border(BorderStroke(1.dp, if (selected) accent.copy(alpha = .45f) else Color.White.copy(alpha = .07f)), shape)
+    val box = modifier.fillMaxWidth().clip(shape).frostCard(shape, edge = if (selected) accent.copy(alpha = .45f) else Color.White.copy(alpha = .07f))
         .clickable(enabled = enabled, role = Role.RadioButton) { m.pickColourway(id) }
     val title: @Composable () -> Unit = {
         Row(verticalAlignment = Alignment.CenterVertically) {

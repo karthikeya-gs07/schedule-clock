@@ -146,7 +146,7 @@ fun SetupFlow(m: AppModel, startStep: Int, onAllow: () -> Unit) {
                         Install.NO_PROMPT -> {
                             Spacer(Modifier.height(14.dp))
                             Banner("No prompt on your watch?", "Calen-Time is already on your watch. You can pick it yourself:", info = true)
-                            Column(Modifier.fillMaxWidth().padding(bottom = 16.dp).clip(RoundedCornerShape(20.dp)).background(Palette.surface).padding(18.dp),
+                            Column(Modifier.fillMaxWidth().padding(bottom = 16.dp).clip(RoundedCornerShape(20.dp)).frostCard(RoundedCornerShape(20.dp)).padding(18.dp),
                                 verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                 listOf("Wake your watch, then **touch and hold** the watch face.",
                                     "Swipe to **Calen-Time**. Not there? Swipe to the end, tap **+ Add** and pick it from the list.",
