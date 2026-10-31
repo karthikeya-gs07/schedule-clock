@@ -90,12 +90,12 @@ private fun FaceCard(m: AppModel, look: Look, sample: List<Meeting>) {
             Modifier.padding(top = 14.dp).fillMaxWidth().height(52.dp).clip(RoundedCornerShape(26.dp))
                 .frostCard(RoundedCornerShape(26.dp))
                 .clickable(enabled = !inUse && canUse, role = Role.Button) { m.pickColourway(look.id) }
-                .graphicsLayer { alpha = if (inUse || canUse) 1f else .45f },
+                .graphicsLayer { alpha = if (inUse) .6f else if (canUse) 1f else .45f },
             horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (inUse) Icon(Icons.check, null, tint = Palette.text, modifier = Modifier.size(18.dp))
-            if (inUse) androidx.compose.foundation.layout.Spacer(Modifier.size(8.dp))
-            Text(if (inUse) "On your watch" else "Use watch face", style = BodyStyle.copy(fontWeight = FontWeight.Medium))
+            // The one on the watch: a quiet, disabled "Installed", so it doesn't read as something to tap.
+            Text(if (inUse) "Installed" else "Use watch face",
+                style = BodyStyle.copy(fontWeight = FontWeight.Medium, color = if (inUse) Palette.faint else Palette.text))
         }
     }
 }
