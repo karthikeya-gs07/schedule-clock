@@ -82,6 +82,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
@@ -110,8 +112,9 @@ private val COLOURWAYS = Looks.IDS
  *
  * - **Today:** the live face inside a watch, the sync pill (1) and sync button (2) under it, the watch status (7)
  *   and About (6) buttons at the top, and the drawer of today's meetings (5) under the floating navigation (4).
- * - **Watchface:** the watch glides to the middle, the drawer slides away and the buttons dissolve. Swipe left
- *   and right to see each colourway on the busy sample day; **Use watch face** sends the one shown to the watch.
+ * - **Watchface:** the watch glides to the middle, the drawer slides away and the buttons dissolve. Tabs above the
+ *   watch split the colourways into Solids and Gradients; swipe left and right to see each one in the tab on the
+ *   busy sample day; **Use watch face** sends the one shown to the watch.
  *
  * [watchMode] picks the screen; the change animates both ways.
  */
@@ -134,6 +137,9 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
             if (!watchMode && pager.currentPage != inUse) pager.animateScrollToPage(inUse)
         }
         val shown = if (watchMode) COLOURWAYS[pager.currentPage] else m.colourway
+        // The tab the face on show belongs to, and the pages under it (Solids come first, then Gradients).
+        val gradients = Looks.of(COLOURWAYS[pager.currentPage]).gradient
+        val group = COLOURWAYS.indices.filter { Looks.of(COLOURWAYS[it]).gradient == gradients }
         LaunchedEffect(watchMode, shown) { m.previewColourway = if (watchMode) shown else null }
         val glow by animateColorAsState(accentFor(shown), tween(400), label = "glow")
 
@@ -223,21 +229,37 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                         velocity < -600 -> kotlin.math.floor(page).toInt() + 1
                         velocity > 600 -> kotlin.math.ceil(page).toInt() - 1
                         else -> kotlin.math.round(page).toInt()
-                    }.coerceIn(0, COLOURWAYS.lastIndex)
+                    }.coerceIn(group.first(), group.last())   // a swipe stays inside the tab
                     scope.launch { pager.animateScrollToPage(target) }
                 },
             ))
         }
 
-        // ---- Watchface: the page dots, the colourway's name and Use watch face ----
+        // ---- Watchface: Solids / Gradients tabs above the watch ----
         val pickAlpha = ((p - .45f) / .55f).coerceIn(0f, 1f)
+        if (pickAlpha > 0f) {
+            val scope = rememberCoroutineScope()
+            LookTabs(gradients, haze,
+                Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 28.dp)
+                    .graphicsLayer { alpha = pickAlpha; translationY = (1f - pickAlpha) * -16.dp.toPx() },
+            ) { toGradients ->
+                if (toGradients != gradients && watchMode) scope.launch {
+                    // Open the tab on the colourway in use if it's there, otherwise on its first.
+                    val pages = COLOURWAYS.indices.filter { Looks.of(COLOURWAYS[it]).gradient == toGradients }
+                    pager.animateScrollToPage(pages.firstOrNull { COLOURWAYS[it] == m.colourway } ?: pages.first())
+                }
+            }
+        }
+
+        // ---- Watchface: the page dots, the colourway's name and Use watch face ----
         if (pickAlpha > 0f) Column(
             Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(start = 24.dp, end = 24.dp, bottom = 28.dp + 80.dp + 24.dp)
                 .graphicsLayer { alpha = pickAlpha; translationY = (1f - pickAlpha) * 24.dp.toPx() },
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Row(Modifier.padding(bottom = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                COLOURWAYS.forEachIndexed { i, id ->
+                group.forEach { i ->
+                    val id = COLOURWAYS[i]
                     val on = i == pager.currentPage
                     val dot = Modifier.height(6.dp).width(if (on) 18.dp else 6.dp).clip(CircleShape)
                     // Selected, Solaris's dot is its day in miniature (night blue → dawn → noon gold → sunset coral → violet)
@@ -264,6 +286,26 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                 Text(if (inUse) "On your watch" else "Use watch face", style = BodyStyle.copy(fontWeight = FontWeight.Medium))
             }
             if (!canUse) Text("Connect your watch with Calen-Time on it to change faces.", style = HintStyle, modifier = Modifier.padding(top = 10.dp))
+        }
+    }
+}
+
+/** Two frosted tabs, Solids and Gradients; the lit pill slides to the chosen one. */
+@Composable
+private fun LookTabs(gradients: Boolean, haze: HazeState, modifier: Modifier, onSelect: (Boolean) -> Unit) {
+    val at by animateFloatAsState(if (gradients) 1f else 0f, tween(300, easing = FastOutSlowInEasing), label = "lookTab")
+    val tabWidth = 112.dp
+    Box(modifier.height(44.dp).width(tabWidth * 2 + 8.dp).clip(RoundedCornerShape(22.dp)).frosted(haze, RoundedCornerShape(22.dp)).padding(4.dp)) {
+        Box(Modifier.offset(x = tabWidth * at).width(tabWidth).fillMaxHeight().clip(RoundedCornerShape(18.dp)).background(Color.White.copy(alpha = .12f)))
+        Row {
+            listOf("Solids" to false, "Gradients" to true).forEach { (label, g) ->
+                val on = g == gradients
+                Box(Modifier.width(tabWidth).fillMaxHeight().clip(RoundedCornerShape(18.dp))
+                    .clickable(role = Role.Tab) { onSelect(g) }.semantics { selected = on },
+                    contentAlignment = Alignment.Center) {
+                    Text(label, style = BodyStyle.copy(fontWeight = FontWeight.Medium, color = if (on) Palette.text else Palette.muted))
+                }
+            }
         }
     }
 }
