@@ -25,6 +25,8 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
     var lastCount by mutableStateOf(0)
     var buzz by mutableStateOf(AppPrefs.Buzz.entries.associateWith { AppPrefs.buzz(context, it) })
     var toast by mutableStateOf<String?>(null)
+    /** The colourway on show while browsing Watchface (null elsewhere); the nav's selected icon takes its colour. */
+    var previewColourway by mutableStateOf<String?>(null)
 
     fun isOn(c: PhoneCalendar) = enabled?.contains(c.id) ?: true
 

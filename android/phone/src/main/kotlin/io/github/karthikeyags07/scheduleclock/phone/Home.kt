@@ -133,6 +133,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
             if (!watchMode && pager.currentPage != inUse) pager.animateScrollToPage(inUse)
         }
         val shown = if (watchMode) COLOURWAYS[pager.currentPage] else m.colourway
+        LaunchedEffect(watchMode, shown) { m.previewColourway = if (watchMode) shown else null }
         val glow by animateColorAsState(accentFor(shown), tween(400), label = "glow")
 
         // Where the face sits: under the top buttons on Today, in the middle (above the name and button) on Watchface.

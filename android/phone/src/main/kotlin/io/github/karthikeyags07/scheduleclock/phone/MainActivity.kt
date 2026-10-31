@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
@@ -142,7 +143,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
                             }
                         }
                     }
-                    NavBar(tab, haze, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp)) { tab = it }
+                    NavBar(tab, haze, m.previewColourway.takeIf { tab == Tab.WATCHFACE }, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp)) { tab = it }
                     if (watchStatus) WatchStatusPanel(m, haze, allow, install) { watchStatus = false }
                 }
             }
@@ -156,22 +157,26 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
  * the accent colour, each a large tap area.
  */
 @Composable
-private fun NavBar(current: Tab, haze: HazeState, modifier: Modifier, onSelect: (Tab) -> Unit) = Row(
-    modifier.width(332.dp).height(80.dp).clip(RoundedCornerShape(40.dp))
-        // Frosted glass: whatever scrolls or sits behind shows through, blurred and lightly tinted.
-        .hazeEffect(haze, HazeStyle(Color(0xFF191919), HazeTint(Color(0xFF2C2C30).copy(alpha = .55f)), blurRadius = 26.dp, noiseFactor = .12f))
-        .border(1.dp, Color.White.copy(alpha = .06f), RoundedCornerShape(40.dp))
-        .clickable(enabled = false) {}.padding(horizontal = 12.dp, vertical = 6.dp),
-    verticalAlignment = Alignment.CenterVertically,
-) {
-    Tab.entries.forEach { t ->
-        val selected = t == current
-        Box(
-            Modifier.weight(1f).height(68.dp).clip(RoundedCornerShape(20.dp))
-                .clickable(role = Role.Tab) { onSelect(t) }
-                .semantics { contentDescription = t.label; this.selected = selected },
-            contentAlignment = Alignment.Center,
-        ) { Icon(t.icon, null, tint = if (selected) LocalAccent.current else Palette.muted, modifier = Modifier.size(24.dp)) }
+private fun NavBar(current: Tab, haze: HazeState, preview: String?, modifier: Modifier, onSelect: (Tab) -> Unit) {
+    // While browsing Watchface, the selected icon takes the colour of the colourway on show.
+    val selectedTint by animateColorAsState(preview?.let(::accentFor) ?: LocalAccent.current, tween(300), label = "navTint")
+    Row(
+        modifier.width(332.dp).height(80.dp).clip(RoundedCornerShape(40.dp))
+            // Frosted glass: whatever scrolls or sits behind shows through, blurred and lightly tinted.
+            .hazeEffect(haze, HazeStyle(Color(0xFF191919), HazeTint(Color(0xFF2C2C30).copy(alpha = .55f)), blurRadius = 26.dp, noiseFactor = .12f))
+            .border(1.dp, Color.White.copy(alpha = .06f), RoundedCornerShape(40.dp))
+            .clickable(enabled = false) {}.padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Tab.entries.forEach { t ->
+            val selected = t == current
+            Box(
+                Modifier.weight(1f).height(68.dp).clip(RoundedCornerShape(20.dp))
+                    .clickable(role = Role.Tab) { onSelect(t) }
+                    .semantics { contentDescription = t.label; this.selected = selected },
+                contentAlignment = Alignment.Center,
+            ) { Icon(t.icon, null, tint = if (selected) selectedTint else Palette.muted, modifier = Modifier.size(24.dp)) }
+        }
     }
 }
 
