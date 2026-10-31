@@ -81,18 +81,12 @@ fun CalendarsList(m: AppModel, onAllow: () -> Unit) {
     m.calendars.groupBy { accountLabel(it.accountType) to it.account.takeIf { a -> '@' in a }.orEmpty() }
         .toList().sortedBy { (key, _) -> PROVIDER_ORDER.indexOf(key.first) }
         .forEach { (key, cals) ->
-        Column(Modifier.padding(start = 4.dp, top = 22.dp, bottom = 10.dp)) {
-            Text(key.first, style = BodyStyle, fontWeight = FontWeight.Medium)
-            if (key.second.isNotEmpty()) Text(key.second, style = HintStyle)
-        }
-        Rows {
-            cals.forEachIndexed { i, c ->
-                if (i > 0) RowDivider()
-                SwitchRow(c.name.ifEmpty { "Calendar" }, checked = m.isOn(c), dot = Color(c.color)) { m.toggleCalendar(c, it) }
-            }
+        PageHeading(key.first, key.second.ifEmpty { null })
+        cals.forEach { c ->
+            ToggleItem(c.name.ifEmpty { "Calendar" }, checked = m.isOn(c), dot = Color(c.color)) { m.toggleCalendar(c, it) }
         }
     }
-    if (m.hasPermission && m.calendars.isEmpty()) Text("No calendars on this phone yet.", style = SubStyle, modifier = Modifier.padding(vertical = 22.dp))
+    if (m.hasPermission && m.calendars.isEmpty()) Text("No calendars on this phone yet.", style = PageBody, modifier = Modifier.padding(vertical = 22.dp))
     OutlookHelp()
 }
 
@@ -110,18 +104,23 @@ private fun accountLabel(type: String) = when {
 @Composable
 private fun OutlookHelp() {
     var open by remember { mutableStateOf(false) }
-    Column(Modifier.fillMaxWidth().padding(top = 18.dp, bottom = 14.dp).clip(RoundedCornerShape(20.dp)).frostCard(RoundedCornerShape(20.dp))) {
+    // A question that opens into the steps, in the page's plain style (no card).
+    PageHeading("Missing a calendar?")
+    Column(Modifier.fillMaxWidth()) {
         Row(
-            Modifier.fillMaxWidth().clickable(role = Role.Button) { open = !open }.padding(horizontal = 18.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable(role = Role.Button) { open = !open }.padding(vertical = 9.dp),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Text("Don't see your work or Teams calendar?", style = BodyStyle, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+            Box(Modifier.size(42.dp).clip(CircleShape).frostCard(CircleShape), contentAlignment = Alignment.Center) {
+                Icon(Icons.info, null, tint = Palette.text, modifier = Modifier.size(20.dp))
+            }
+            Text("Don't see your work or Teams calendar?", style = BodyStyle.copy(fontSize = 17.sp, lineHeight = 23.sp, fontWeight = FontWeight.Medium), modifier = Modifier.weight(1f))
             Icon(Icons.chevron, null, tint = Palette.text, modifier = Modifier.size(20.dp).rotate(if (open) 180f else 0f))
         }
-        if (open) Column(Modifier.padding(start = 18.dp, end = 18.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        if (open) Column(Modifier.padding(start = 56.dp, top = 6.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("Open the **Outlook** app and tap your profile picture.", "Tap **Settings**, then your work account.",
                 "Turn on **Sync calendars**.", "Come back here. It shows up under Outlook within a minute.")
-                .forEachIndexed { i, s -> Text(bold("${i + 1}. $s"), style = SubStyle.copy(color = Palette.body)) }
+                .forEachIndexed { i, s -> Text(bold("${i + 1}. $s"), style = PageBody) }
         }
     }
 }
@@ -134,30 +133,21 @@ fun bold(s: String) = buildAnnotatedString {
 // ---------- Settings (RULES A6) ----------
 @Composable
 fun SettingsScreen(m: AppModel, onRunSetup: () -> Unit) {
-    ScreenTitle("Settings")
     val context = LocalContext.current
-    Text("Calen-Time ${context.packageManager.getPackageInfo(context.packageName, 0).versionName}", style = SubStyle)
-    Row(Modifier.padding(start = 4.dp, top = 22.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-        Icon(Icons.buzz, null, tint = Palette.muted, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text("Meeting buzzes", style = HintStyle)
-    }
+    PageTitle("Settings", "Calen-Time ${context.packageManager.getPackageInfo(context.packageName, 0).versionName}")
+    PageHeading("Meeting buzzes")
     val any = m.buzz[AppPrefs.Buzz.START] == true || m.buzz[AppPrefs.Buzz.MIDDLE] == true || m.buzz[AppPrefs.Buzz.END] == true
-    Rows {
-        SwitchRow("2 min before it starts", "One short buzz", m.buzz[AppPrefs.Buzz.START] == true) { m.setBuzz(AppPrefs.Buzz.START, it) }
-        RowDivider()
-        SwitchRow("Halfway through", "One long buzz · meetings of 15 min or more", m.buzz[AppPrefs.Buzz.MIDDLE] == true) { m.setBuzz(AppPrefs.Buzz.MIDDLE, it) }
-        RowDivider()
-        SwitchRow("5 min before it ends", "Two short buzzes · meetings of 10 min or more", m.buzz[AppPrefs.Buzz.END] == true) { m.setBuzz(AppPrefs.Buzz.END, it) }
-        RowDivider()
-        SwitchRow("Buzz in Do Not Disturb", "Buzzes still come through when your watch is silenced", m.buzz[AppPrefs.Buzz.DND] == true, enabled = any) { m.setBuzz(AppPrefs.Buzz.DND, it) }
-    }
+    ToggleItem("2 min before it starts", "One short buzz", m.buzz[AppPrefs.Buzz.START] == true, Icons.buzz) { m.setBuzz(AppPrefs.Buzz.START, it) }
+    ToggleItem("Halfway through", "One long buzz · meetings of 15 min or more", m.buzz[AppPrefs.Buzz.MIDDLE] == true, Icons.clock) { m.setBuzz(AppPrefs.Buzz.MIDDLE, it) }
+    ToggleItem("5 min before it ends", "Two short buzzes · meetings of 10 min or more", m.buzz[AppPrefs.Buzz.END] == true, Icons.buzz) { m.setBuzz(AppPrefs.Buzz.END, it) }
+    ToggleItem("Buzz in Do Not Disturb", "Buzzes still come through when your watch is silenced", m.buzz[AppPrefs.Buzz.DND] == true, Icons.watch, enabled = any) { m.setBuzz(AppPrefs.Buzz.DND, it) }
     // Sync isn't a setting: a short note says how it works.
-    SectionLabel("Sync")
-    Text("Calen-Time syncs every 15 minutes, and as soon as a meeting changes. It sends yesterday to tomorrow from the calendars you picked; private events go without their title or place.",
-        style = SubStyle, modifier = Modifier.padding(horizontal = 4.dp))
+    PageHeading("Sync")
+    IconItem(Icons.sync, "Every 15 minutes", "And as soon as a meeting changes. Calen-Time sends yesterday to tomorrow from the calendars you picked.")
+    IconItem(Icons.lock, "Private events", "They go to your watch without their title or place.")
     // Setup again (also on About): calendar access, calendars and the face on the watch, from the start.
-    Spacer(Modifier.height(8.dp))
-    SectionLabel("Setup")
+    PageHeading("Setup")
     Text("Go through setup again: calendar access, which calendars to send, and putting the face on your watch.",
-        style = SubStyle, modifier = Modifier.padding(start = 4.dp, end = 4.dp, bottom = 14.dp))
+        style = PageBody, modifier = Modifier.padding(bottom = 16.dp))
     RunSetupButton(onRunSetup, Modifier.fillMaxWidth())
 }

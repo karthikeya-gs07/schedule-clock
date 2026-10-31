@@ -29,6 +29,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
@@ -245,3 +248,74 @@ fun RowDivider() = Box(Modifier.fillMaxWidth().height(1.dp).background(Color.Whi
 @Composable
 fun animatedAccent(colourway: String): Color = animateColorAsState(accentFor(colourway), label = "accent").value
 
+
+
+// ---------- Page look (About, Calendars, Settings; RULES A9) ----------
+// Today's grey stage with the colourway's glow at the top, a large title, 22 sp section headings, and items as a
+// round frosted icon beside a name and text, without cards.
+
+/** The grey stage with a soft glow of [glow] from the top. */
+fun Modifier.stagePage(glow: Color) = background(StageBackground).drawBehind {
+    drawRect(Brush.radialGradient(listOf(glow.copy(alpha = .16f), glow.copy(alpha = .05f), Color.Transparent),
+        center = Offset(size.width / 2, 0f), radius = size.width * 1.1f))
+}
+
+val PageBody = BodyStyle.copy(color = Palette.body, fontSize = 16.sp, lineHeight = 23.sp)
+private val ItemTitle = BodyStyle.copy(fontSize = 17.sp, lineHeight = 23.sp, fontWeight = FontWeight.Medium)
+
+@Composable
+fun PageTitle(title: String, subtitle: String? = null) {
+    Text(title, style = TitleStyle.copy(fontSize = 34.sp, lineHeight = 40.sp), modifier = Modifier.padding(top = 14.dp))
+    subtitle?.let { Text(it, style = SubStyle.copy(fontSize = 15.sp), modifier = Modifier.padding(top = 4.dp)) }
+}
+
+@Composable
+fun PageHeading(text: String, sub: String? = null) = Column(Modifier.padding(top = 34.dp, bottom = 16.dp)) {
+    Text(text, style = TitleStyle.copy(fontSize = 22.sp, lineHeight = 28.sp))
+    sub?.let { Text(it, style = SubStyle.copy(fontSize = 15.sp), modifier = Modifier.padding(top = 2.dp)) }
+}
+
+/** The round frosted icon of an item: an icon, or a calendar's colour as a dot. */
+@Composable
+private fun ItemIcon(icon: ImageVector?, dot: Color?, dim: Boolean = false) =
+    Box(Modifier.size(42.dp).clip(CircleShape).frostCard(CircleShape), contentAlignment = Alignment.Center) {
+        if (icon != null) Icon(icon, null, tint = if (dim) Palette.faint else Palette.text, modifier = Modifier.size(20.dp))
+        dot?.let { Box(Modifier.size(14.dp).clip(CircleShape).background(if (dim) it.copy(alpha = .4f) else it)) }
+    }
+
+/** A round frosted icon beside a name and its text. */
+@Composable
+fun IconItem(icon: ImageVector, title: String, text: String) = Row(
+    Modifier.fillMaxWidth().padding(bottom = 18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp),
+) {
+    ItemIcon(icon, null)
+    Column(Modifier.weight(1f).padding(top = 1.dp)) {
+        Text(title, style = ItemTitle)
+        Text(text, style = PageBody, modifier = Modifier.padding(top = 2.dp))
+    }
+}
+
+/** An item with a switch: the round icon (or calendar dot), name and optional text, the switch at the end. */
+@Composable
+fun ToggleItem(title: String, text: String? = null, checked: Boolean, icon: ImageVector? = null, dot: Color? = null,
+               enabled: Boolean = true, onChange: (Boolean) -> Unit) {
+    val accent = LocalAccent.current
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable(enabled = enabled, role = Role.Switch) { onChange(!checked) }
+            .padding(vertical = 9.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        ItemIcon(icon, dot, dim = !enabled)
+        Column(Modifier.weight(1f)) {
+            Text(title, style = ItemTitle.copy(color = if (enabled) Palette.text else Palette.faint))
+            text?.let { Text(it, style = PageBody.copy(fontSize = 15.sp, lineHeight = 21.sp, color = if (enabled) Palette.body else Palette.faint)) }
+        }
+        Switch(
+            checked = checked, onCheckedChange = null, enabled = enabled,
+            colors = SwitchDefaults.colors(
+                checkedTrackColor = accent, checkedThumbColor = Palette.onAccent, checkedBorderColor = accent,
+                uncheckedTrackColor = Color(0xFF34353A), uncheckedThumbColor = Palette.muted, uncheckedBorderColor = Color(0xFF34353A),
+            ),
+        )
+    }
+}

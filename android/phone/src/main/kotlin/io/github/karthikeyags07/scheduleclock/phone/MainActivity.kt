@@ -140,10 +140,10 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
                     ) { shown ->
                         if (shown == Tab.TODAY || shown == Tab.WATCHFACE)
                             HomeScreen(m, haze, watchMode = shown == Tab.WATCHFACE, onWatchStatus = { watchStatus = true }, onAbout = { about = true })
-                        else Column(Modifier.fillMaxSize().hazeSource(haze, zIndex = 0f).background(Palette.screen).statusBarsPadding().verticalScroll(rememberScrollState())
-                            .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 132.dp)) {
+                        else Column(Modifier.fillMaxSize().hazeSource(haze, zIndex = 0f).stagePage(LocalAccent.current).statusBarsPadding()
+                            .verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 132.dp)) {
                             when (shown) {
-                                Tab.CALENDARS -> { ScreenTitle("Calendars"); CalendarsList(m, allow) }
+                                Tab.CALENDARS -> { PageTitle("Calendars", "Choose which calendars go to your watch."); CalendarsList(m, allow) }
                                 else -> SettingsScreen(m) { setupStep = 0; m.restartSetup() }
                             }
                         }
