@@ -161,19 +161,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                 ))
             })
             // The watch stays still (it only moves between Today and Watchface); only the face inside it swipes.
-            Box(Modifier.offset(x = d(29f), y = d(27f) + dy).size(d(334.5f), d(498.8f))) {
-                Image(
-                    painterResource(R.drawable.watch_body), null, contentScale = ContentScale.FillBounds,
-                    colorFilter = ColorFilter.tint(Home.background, BlendMode.Multiply),   // Figma's multiply, on the watch's pixels only
-                    modifier = Modifier.fillMaxSize()
-                        .graphicsLayer { alpha = .4f; compositingStrategy = CompositingStrategy.Offscreen }
-                        .drawWithContent {
-                            drawContent()
-                            drawRect(Brush.verticalGradient(0f to Color.Transparent, .2f to Color.Black, .78f to Color.Black, 1f to Color.Transparent),
-                                blendMode = BlendMode.DstIn)
-                        },
-                )
-            }
+            WatchPhoto(Modifier.offset(x = d(29f), y = d(27f) + dy).size(d(334.5f), d(498.8f)))
             val sample = remember { SampleDay.meetings() }
             val live = !watchMode
             val meetings = if (live) m.meetings else sample
@@ -284,6 +272,26 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
         }
     }
 }
+
+/** The page colour of Today, Watchface and setup. */
+internal val StageBackground = Color(0xFF191919)
+
+/**
+ * The watch photo (Figma): 40 %, darkened with a multiply on its own pixels, strap ends faded with a mask (so
+ * nothing square shows over the glow). It fills its box; the design's box is 334.5 × 498.8.
+ */
+@Composable
+internal fun WatchPhoto(modifier: Modifier) = Image(
+    painterResource(R.drawable.watch_body), null, contentScale = ContentScale.FillBounds,
+    colorFilter = ColorFilter.tint(StageBackground, BlendMode.Multiply),
+    modifier = modifier
+        .graphicsLayer { alpha = .4f; compositingStrategy = CompositingStrategy.Offscreen }
+        .drawWithContent {
+            drawContent()
+            drawRect(Brush.verticalGradient(0f to Color.Transparent, .2f to Color.Black, .78f to Color.Black, 1f to Color.Transparent),
+                blendMode = BlendMode.DstIn)
+        },
+)
 
 /** A circle the height of its box, centred: the watch's round screen inside the full-width face pager. */
 private val CentredCircle = androidx.compose.foundation.shape.GenericShape { size, _ ->

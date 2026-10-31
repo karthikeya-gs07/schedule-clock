@@ -117,7 +117,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
     CompositionLocalProvider(LocalAccent provides animatedAccent(m.colourway), LocalTextStyle provides BodyStyle) {   // Google Sans Flex everywhere
         Box(Modifier.fillMaxSize().background(Palette.screen)) {
             when {
-                !m.setupDone -> Box(Modifier.statusBarsPadding().navigationBarsPadding()) { SetupFlow(m, setupStep, allow) }
+                !m.setupDone -> SetupFlow(m, setupStep, allow)   // full-bleed; it handles the system bars itself
                 about -> { BackHandler { about = false }; AboutScreen(onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() } }
                 else -> {
                     BackHandler(enabled = tab != Tab.TODAY || watchStatus) { if (watchStatus) watchStatus = false else tab = Tab.TODAY }
