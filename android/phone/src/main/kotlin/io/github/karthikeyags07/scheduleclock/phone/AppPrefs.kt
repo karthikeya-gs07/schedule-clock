@@ -10,7 +10,7 @@ import com.google.android.gms.wearable.Wearable
  * item `/settings`, which the watch app follows.
  */
 object AppPrefs {
-    val COLOURWAYS = listOf("solaris", "amber", "mint", "violet", "rose")
+    val COLOURWAYS = Looks.IDS
     const val SETTINGS_PATH = "/settings"
 
     private fun prefs(context: Context) = context.getSharedPreferences("app", Context.MODE_PRIVATE)

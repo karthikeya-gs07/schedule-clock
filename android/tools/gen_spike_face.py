@@ -1,10 +1,10 @@
 """Generates the Phase 1 spike watchface.xml and a preview PNG.
 
 Usage: python3 tools/gen_spike_face.py <res dir> [colourway]
-  With a colourway (amber, mint, violet, rose, solaris) the face has that colourway's colours fixed and no
+  With a colourway (any id in THEMES, or solaris) the face has that colourway's colours fixed and no
   customize options: one face per colourway, installed by the watch app with Watch Face Push and swapped
   when the phone app picks another (RULES §9). Without one, every colourway is a Colours option on the watch.
-  tools/build_faces.sh writes all five into watchface/src/<colourway>/res.
+  tools/build_faces.sh writes them all into watchface/src/<colourway>/res.
 Layers, bottom to top: track, comet trail, ticks + numbers, ring image with the selection (slot 0), settling arc
 (slot 5), now dot, date/clock/title/range (status slot 1), place line (slot 3), tap hotspots. Comments name the
 PRD §6.3 risk each block tests; slot numbers follow RULES §8.
@@ -48,7 +48,7 @@ def dash(i):
     return (f'    <PartDraw x="{x0}" y="{y0}" width="{w}" height="{h}" alpha="15">'
             f'<Transform target="alpha" value="{alpha}"/>'
             f'<Line startX="{p1[0] - x0:.1f}" startY="{p1[1] - y0:.1f}" endX="{p2[0] - x0:.1f}" endY="{p2[1] - y0:.1f}">'
-            f'<Stroke color="#ffffffff" thickness="1.2" cap="BUTT"/></Line></PartDraw>')
+            f'<Stroke color="{D.ink}" thickness="1.2" cap="BUTT"/></Line></PartDraw>')
 
 # --- Dial (R7, R8): 15-minute ticks just inside the later lane, and hour numbers 1–12 in Anta.
 FONT = "anta_regular"   # res/font/anta_regular.ttf (SIL OFL, see watchface/ANTA_FONT_LICENSE.txt)
@@ -58,7 +58,7 @@ def ticks():
     for q in range(48):
         kind = "hour" if q % 4 == 0 else "half" if q % 2 == 0 else "quarter"
         length = {"hour": 10, "half": 6, "quarter": 3}[kind]
-        color = {"hour": "#ff8e8e93", "half": "#ff4a4a50", "quarter": "#ff33333a"}[kind]
+        color = {"hour": D["tick_hour"], "half": D["tick_half"], "quarter": D["tick_quarter"]}[kind]
         width = 2.5 if kind == "hour" else 1.5
         a = math.radians(q * 7.5)
         r0, r1 = R - 14, R - 14 - length
@@ -70,7 +70,7 @@ def ticks():
 def numeral(h):
     a = math.radians(h * 30)
     x, y = CX + (R - 40) * math.sin(a), CY - (R - 40) * math.cos(a)
-    color = "#ff8e8e93" if h % 3 == 0 else "#ff5c5c62"
+    color = D["num_major"] if h % 3 == 0 else D["num_minor"]
     return (f'    <PartText x="{round(x - 22)}" y="{round(y - 16)}" width="44" height="32">'
             f'<Text align="CENTER"><Font family="{FONT}" size="24" color="{color}">'
             f'<Template><![CDATA[%s]]><Parameter expression="{h}"/></Template></Font></Text></PartText>')   # WFF schema: a Template needs a Parameter
@@ -105,8 +105,8 @@ def details_group(name, inner):
 def line_variants():
     """The place line in three colors, one shown per kind (C6, C7, C13); clash moves it under the title."""
     groups = []
-    for n, cond, color in (("muted", f"({F} == 0 || {F} == 3)", "#ff8e8e93"),
-                           ("clash", f"{F} == 1", "#ffff7a59"),
+    for n, cond, color in (("muted", f"({F} == 0 || {F} == 3)", D["muted"]),
+                           ("clash", f"{F} == 1", D["clash"]),
                            ("tomorrow", f"{F} == 2", LATER_TEXT)):
         groups.append(f'''          <Group name="line_{n}" x="0" y="74" width="450" height="30" alpha="0">
             <Transform target="x" value="{F} == 1 ? 15 : 0"/>
@@ -147,7 +147,7 @@ def scroll_slot(slot_id, name, service, arrow):
             <Transform target="x" value="{x}"/>
             <Transform target="y" value="255 - 30 * {S}">{SELECT_ANIM}</Transform>
             <Transform target="alpha" value="{alpha}"/>
-            <Text align="START"><Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="#fff2f2f2">
+            <Text align="START"><Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="{D.text}">
               <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
           </PartText>
         </Group>
@@ -177,12 +177,50 @@ THEMES = [
     ("rose", "theme_rose", ("#ffff7a9c", "#ffffc27a", "#ffffd5a6", HIDE, "#ffff7a9c")),
     ("timeshift", "theme_timeshift", (HIDE, "#ff8fa3d6", "#ffa9b8e0", "#ffffffff", "#ffff9447")),
 ]
+
+# The dial's own colours. The first five colourways sit on black; the Figma themes (Frame 6, node 38:3237) tint
+# the whole dial. Each is [background, track, clock + title, date + secondary text, minor hour numbers,
+# half-hour ticks, meeting colour, double booking, later lane], and the Palette themes add five colours that
+# the meeting arcs run through over the 12 hours ahead (drawn by the watch app on panel 3, like Solaris).
+# Keep in step with Themes.kt (watch app), Ui.kt (phone app) and prototype/index.html.
+class Colours(dict): __getattr__ = dict.__getitem__
+BLACK = Colours(bg="#ff000000", track="#ff1c1c1f", text="#fff2f2f2", muted="#ff8e8e93", num_major="#ff8e8e93",
+             num_minor="#ff5c5c62", tick_hour="#ff8e8e93", tick_half="#ff4a4a50", tick_quarter="#ff33333a",
+             divider="#ff2a2a2e", ink="#ffffffff", clash="#ffff7a59")
+FIGMA = {   # id: (name, bg, track, text, major, minor, half tick, accent, clash, later, palette)
+    "quartz": ("Rose Quartz", "25151e", "573744", "fff1f6", "c6a4b4", "957483", "957483", None, "f99bb2", "a6b4f7",
+               ("ffd5ae", "ffacaa", "f58fb8", "cc93dd", "a6b4f7")),
+    "copper": ("Copper Garden", "092021", "355454", "f4f1e7", "9fb9b6", "708d8b", "708d8b", None, "d8936b", "7ba6bf",
+               ("e8cba0", "e6aa72", "cf8467", "6ab9af", "7ba6bf")),
+    "ocean": ("Ocean", "061524", "294157", "e8f6ff", "93afc9", "647f97", "647f97", None, "3fb6e0", "b4b7ff",
+              ("8ceadb", "45ccd8", "3ba7e5", "688bff", "b4b7ff")),
+    "aurora": ("Aurora", "071a21", "34525b", "ecfff8", "91b7b9", "688b90", "688b90", None, "43cfcb", "b59aff",
+               ("9dfad0", "40d7ad", "45c9df", "6d9bff", "b59aff")),
+    "acid": ("Acid Circuit", "12180b", "38462a", "f6fbea", "a6b68e", "768562", "768562", None, "91da78", "9aacee",
+             ("e7ff8a", "bddf4b", "73d696", "4ccdc3", "9aacee")),
+    "lunar": ("Lunar Mono", "14171c", "292e36", "f5faff", "bdc5cf", "8994a2", "7e8a99", "b2bfce", "f4faff", "7b93b0", None),
+    "desert": ("Desert Dusk", "2d211f", "47332c", "fff5e7", "d7bda5", "ae8d7c", "a18772", "e79775", "f6d69a", "ffbaa6", None),
+    "lime": ("Racing Lime", "202729", "323c3d", "f7ffe9", "bdcec6", "859c94", "869b91", "d0f85a", "65d8ff", "f1ffa8", None),
+    "plum": ("Plum Rose", "2b192c", "432b44", "fff3f9", "d6b8cd", "ae86a5", "a183a0", "eea0bd", "b6a2ff", "ffe0ae", None),
+    "forest": ("Forest Signal", "112b25", "203c32", "f1fff6", "b2cdbe", "759d8b", "749687", "79e4b7", "ffbe55", "d5fca9", None),
+    "arctic": ("Arctic Lagoon", "101f30", "182c40", "f0faff", "a9c4d6", "7094ae", "6c879c", "66d6e8", "a3a5ff", "d2f7ff", None),
+}
+def argb(h): return "#ff" + h
+for i, (name, bg, track, text_, major, minor, half, accent, clash, later, palette) in FIGMA.items():
+    THEMES.append((i, f"theme_{i}", (argb(accent) if accent else HIDE, argb(later), argb(later),
+                                      "#ffffffff" if palette else HIDE, argb(accent or palette[0]))))
+D = BLACK
+if COLOURWAY in FIGMA:
+    name, bg, track, text_, major, minor, half, *_ , clash, later, palette = FIGMA[COLOURWAY]
+    D = Colours(bg=argb(bg), track=argb(track), text=argb(text_), muted=argb(major), num_major=argb(major),
+             num_minor=argb(minor), tick_hour=argb(major), tick_half=argb(half), tick_quarter=argb(track),
+             divider=argb(track), ink=argb(text_), clash=argb(clash))
 if COLOURWAY:   # one fixed colourway: its colours are written straight in, and there's nothing to customize
     ARC_TINT, LANE_COLOR, LATER_TEXT, SHIFT_TINT, EVENT = next(c for i, n, c in THEMES if i == {"solaris": "timeshift"}.get(COLOURWAY, COLOURWAY))
     USER_CONFIG = ""
 else:
     ARC_TINT, LANE_COLOR, LATER_TEXT, SHIFT_TINT, EVENT = (f"[CONFIGURATION.themeColor.{i}]" for i in range(5))
-THEME_XML = "\n".join(f'      <ColorOption id="{i}" displayName="{n}" colors="{" ".join(c)}"/>' for i, n, c in THEMES)
+THEME_XML = "\n".join(f'      <ColorOption id="{i}" displayName="{n}" colors="{" ".join(c)}"/>' for i, n, c in THEMES[:5])
 if not COLOURWAY:
     USER_CONFIG = f"""  <UserConfigurations>
     <ColorConfiguration id="themeColor" displayName="theme_label" defaultValue="amber">
@@ -193,12 +231,12 @@ if not COLOURWAY:
 xml = f'''<?xml version="1.0" encoding="utf-8"?>
 <!-- Phase 1 spike face (generated by tools/gen_spike_face.py; edit the script, not this file). -->
 <WatchFace width="450" height="450">
-{USER_CONFIG}  <Scene backgroundColor="#ff000000">
+{USER_CONFIG}  <Scene backgroundColor="{D.bg}">
 
     <!-- Ring track (R1) -->
     <PartDraw x="0" y="0" width="450" height="450">
       <Arc centerX="{CX}" centerY="{CY}" width="{2*R}" height="{2*R}" startAngle="0" endAngle="360">
-        <Stroke color="#ff1c1c1f" thickness="12"/>
+        <Stroke color="{D.track}" thickness="12"/>
       </Arc>
     </PartDraw>
 
@@ -276,9 +314,9 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
     <Group name="now" x="0" y="0" width="450" height="450" pivotX="0.5" pivotY="0.5">
       <Transform target="angle" value="{NOW_DEG}"/>
       <PartDraw x="{CX - 16}" y="{CY - R - 16}" width="32" height="32">
-        <Ellipse x="2" y="2" width="28" height="28"><Fill color="#2effffff"/></Ellipse>
-        <Ellipse x="6.5" y="6.5" width="19" height="19"><Fill color="#ff000000"/></Ellipse>
-        <Ellipse x="9.5" y="9.5" width="13" height="13"><Fill color="#ffffffff"/></Ellipse>
+        <Ellipse x="2" y="2" width="28" height="28"><Fill color="#2e{D.ink[3:]}"/></Ellipse>
+        <Ellipse x="6.5" y="6.5" width="19" height="19"><Fill color="{D.bg}"/></Ellipse>
+        <Ellipse x="9.5" y="9.5" width="13" height="13"><Fill color="{D.ink}"/></Ellipse>
       </PartDraw>
     </Group>
 
@@ -296,7 +334,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
           <Transform target="scaleY" value="1 - 0.1 * {S}">{SELECT_ANIM}</Transform>
           <PartText x="0" y="0" width="450" height="30">
             <Text align="CENTER">
-              <Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="#ff8e8e93" letterSpacing="0.08">
+              <Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="{D.muted}" letterSpacing="0.08">
                 <Upper><Template><![CDATA[%s · %s]]><Parameter expression="icuText(&quot;EEE&quot;)"/><Parameter expression="icuText(&quot;MMM d&quot;)"/></Template></Upper>
               </Font>
             </Text>
@@ -315,7 +353,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
             <Transform target="x" value="{SEAM - 450} + 16 * floor([HOUR_1_12] / 10)"/>
             <DigitalClock x="0" y="0" width="450" height="110">
               <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="12" align="END">
-                <Font family="{FONT}" size="88" color="#fff2f2f2"/>
+                <Font family="{FONT}" size="88" color="{D.text}"/>
               </TimeText>
             </DigitalClock>
           </Group>
@@ -323,7 +361,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
             <Transform target="x" value="{SEAM + 8} + 16 * floor([HOUR_1_12] / 10)"/>
             <PartText x="0" y="0" width="60" height="30">
               <Text align="START">
-                <Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="#ff8e8e93">
+                <Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="{D.muted}">
                   <Upper><Template><![CDATA[%s]]><Parameter expression="icuText(&quot;a&quot;)"/></Template></Upper>
                 </Font>
               </Text>
@@ -336,7 +374,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
           <Transform target="y" value="236 - 32 * {S}">{SELECT_ANIM}</Transform>
           <Transform target="scaleX" value="1 - 0.4 * {S}">{SELECT_ANIM}</Transform>
           <PartDraw x="0" y="0" width="140" height="4">
-            <Line startX="1" startY="2" endX="139" endY="2"><Stroke color="#ff2a2a2e" thickness="2" cap="ROUND"/></Line>
+            <Line startX="1" startY="2" endX="139" endY="2"><Stroke color="{D.divider}" thickness="2" cap="ROUND"/></Line>
           </PartDraw>
         </Group>
         <!-- Title with the look-ahead arrow (C12) and private lock (C13) before it, then the time range (C4, C8).
@@ -348,13 +386,13 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
             <PartText x="0" y="5" width="450" height="36">
               <Transform target="x" value="{EXTRA} / 2"/>
               <Transform target="alpha" value="255 * (1 - {SCROLL}) * (1 - {SMALL})"/>
-              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="30" weight="MEDIUM" color="#fff2f2f2">
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="30" weight="MEDIUM" color="{D.text}">
                 <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
             </PartText>
             <PartText x="0" y="5" width="450" height="36">
               <Transform target="x" value="{EXTRA} / 2"/>
               <Transform target="alpha" value="255 * (1 - {SCROLL}) * {SMALL}"/>
-              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="#fff2f2f2">
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="{D.text}">
                 <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
             </PartText>
           </Group>
@@ -364,13 +402,13 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
             <PartText x="0" y="5" width="450" height="36">
               <Transform target="x" value="{EXTRA} / 2"/>
               <Transform target="alpha" value="255 * (1 - {SMALL})"/>
-              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="30" weight="MEDIUM" color="#fff2f2f2">
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="30" weight="MEDIUM" color="{D.text}">
                 <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
             </PartText>
             <PartText x="0" y="5" width="450" height="36">
               <Transform target="x" value="{EXTRA} / 2"/>
               <Transform target="alpha" value="255 * {SMALL}"/>
-              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="#fff2f2f2">
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="{D.text}">
                 <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
             </PartText>
           </Group>
@@ -384,12 +422,12 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
           <PartDraw name="lock" x="0" y="12" width="16" height="22" alpha="0">
             <Transform target="x" value="{ICON_X} + 30 * {ARROW}"/>
             <Transform target="alpha" value="255 * {LOCK}"/>
-            <Arc centerX="8" centerY="9" width="9" height="9" startAngle="-90" endAngle="90"><Stroke color="#ff8e8e93" thickness="2.5" cap="BUTT"/></Arc>
-            <RoundRectangle x="0" y="9" width="16" height="12" cornerRadiusX="2.5" cornerRadiusY="2.5"><Fill color="#ff8e8e93"/></RoundRectangle>
+            <Arc centerX="8" centerY="9" width="9" height="9" startAngle="-90" endAngle="90"><Stroke color="{D.muted}" thickness="2.5" cap="BUTT"/></Arc>
+            <RoundRectangle x="0" y="9" width="16" height="12" cornerRadiusX="2.5" cornerRadiusY="2.5"><Fill color="{D.muted}"/></RoundRectangle>
           </PartDraw>
           <PartText x="0" y="44" width="450" height="30">
             <Transform target="y" value="44 + 30 * {CLASH}"/>
-            <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" color="#fff2f2f2">
+            <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" color="{D.text}">
               <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TITLE]"/></Template></Font></Text>
           </PartText>""")}
       </Complication>
@@ -406,8 +444,8 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
 {details_group("line", f"""          <PartDraw name="overlap" x="0" y="52" width="22" height="14" alpha="0">
             <Transform target="x" value="225 - ({W} + 30) / 2"/>
             <Transform target="alpha" value="{F} == 1 ? 255 : 0"/>
-            <Ellipse x="1" y="1" width="12" height="12"><Stroke color="#ffff7a59" thickness="2"/></Ellipse>
-            <Ellipse x="9" y="1" width="12" height="12"><Stroke color="#ffff7a59" thickness="2"/></Ellipse>
+            <Ellipse x="1" y="1" width="12" height="12"><Stroke color="{D.clash}" thickness="2"/></Ellipse>
+            <Ellipse x="9" y="1" width="12" height="12"><Stroke color="{D.clash}" thickness="2"/></Ellipse>
           </PartDraw>
 """ + line_variants())}
       </Complication>
@@ -429,16 +467,24 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
 (res / "raw").mkdir(parents=True, exist_ok=True)
 (res / "raw" / "watchface.xml").write_text(xml)
 
-# Preview: black face with the track and two meeting arcs (1–2, 4–5) in the colourway's accent.
-ARC_RGB = tuple(int(EVENT[i:i + 2], 16) for i in (3, 5, 7)) if COLOURWAY else (0xff, 0xb5, 0x47)
+# Preview: the face's background and track with three meeting arcs (1–2, 4–5, 7–9) in the colourway's accent,
+# or, for a Palette theme, in its colours from 12 o'clock round.
+def rgb(argb_hex): return tuple(int(argb_hex[i:i + 2], 16) for i in (3, 5, 7))
+ARC_RGB = rgb(EVENT) if COLOURWAY else (0xff, 0xb5, 0x47)
+PALETTE = [rgb(argb(c)) for c in FIGMA[COLOURWAY][10]] if COLOURWAY in FIGMA and FIGMA[COLOURWAY][10] else None
+def arc_rgb(ang):
+    if not PALETTE: return ARC_RGB
+    f = ang / 360 * (len(PALETTE) - 1)
+    a, b = PALETTE[int(f)], PALETTE[min(int(f) + 1, len(PALETTE) - 1)]
+    return tuple(round(a[k] + (b[k] - a[k]) * (f - int(f))) for k in range(3))
 W = 450
-px = bytearray(b"\x00\x00\x00" * W * W)
+px = bytearray(bytes(rgb(D["bg"])) * W * W)
 for y in range(W):
     for x in range(W):
         d = math.hypot(x - CX, y - CY)
         if 213 <= d <= 225:
             ang = (math.degrees(math.atan2(x - CX, CY - y)) + 360) % 360
-            c = ARC_RGB if (30 <= ang <= 60 or 120 <= ang <= 150) else (0x1c, 0x1c, 0x1f)
+            c = arc_rgb(ang) if (30 <= ang <= 60 or 120 <= ang <= 150 or 210 <= ang <= 270) else rgb(D["track"])
             i = (y * W + x) * 3
             px[i:i + 3] = bytes(c)
 raw = b"".join(b"\x00" + bytes(px[y * W * 3:(y + 1) * W * 3]) for y in range(W))

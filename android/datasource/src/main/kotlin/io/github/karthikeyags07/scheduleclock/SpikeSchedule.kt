@@ -170,7 +170,8 @@ object SpikeSchedule {
         val now = now(context)
         val list = placed(context, now)
         val selected = selectedIndex(context, list).takeIf { it >= 0 }?.let { list[it].meeting.key }
-        val png = RingRenderer.renderPng(list, now, selected, hiddenKey = prefs(context).getString("settling", null))
+        val png = RingRenderer.renderPng(list, now, selected, hiddenKey = prefs(context).getString("settling", null),
+            theme = Themes.of(FacePush.colourway(context)))
         MeetingBuzz.schedule(context)   // the ring redraws every 5 min and on changes: keep the next buzz set
         Log.i(TAG, "ring image: ${png.size / 1024} KB PNG, drawn+encoded in ${(SystemClock.elapsedRealtimeNanos() - t0) / 1_000_000} ms")
         val image = SmallImage.Builder(Icon.createWithData(png, 0, png.size), SmallImageType.PHOTO).build()

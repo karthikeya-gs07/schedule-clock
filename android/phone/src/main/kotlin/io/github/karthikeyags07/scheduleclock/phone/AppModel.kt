@@ -162,4 +162,4 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
     }
 }
 
-fun lookName(c: String) = c.replaceFirstChar(Char::uppercase)
+fun lookName(c: String) = Looks.of(c).name

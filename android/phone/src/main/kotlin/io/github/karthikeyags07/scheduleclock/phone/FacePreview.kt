@@ -99,8 +99,10 @@ private fun previewUrl(colourway: String, meetings: List<Meeting>, atMinute: Int
         })
     }
     val json = events.toString()
-    val theme = if (colourway == "solaris") "Amber" else colourway.replaceFirstChar(Char::uppercase)
-    val face = if (colourway == "solaris") "timeshift" else "calen"
+    // The page's themes are keyed by name; Solaris and the Palette themes are its sweeping ("timeshift") face.
+    val look = Looks.of(colourway)
+    val theme = URLEncoder.encode(if (colourway == "solaris") "Amber" else look.name, "UTF-8").replace("+", "%20")
+    val face = if (colourway == "solaris" || look.palette != null) "timeshift" else "calen"
     return "https://appassets.androidplatform.net/assets/face/index.html?embed&theme=$theme&face=$face" +
         (atMinute?.let { "&time=$it" } ?: "") +
         "&v=${json.hashCode()}#${URLEncoder.encode(json, "UTF-8").replace("+", "%20")}"

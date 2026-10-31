@@ -38,6 +38,17 @@ android {
         create("violet") { dimension = "colourway" }
         create("rose") { dimension = "colourway" }
         create("solaris") { dimension = "colourway" }
+        create("quartz") { dimension = "colourway" }
+        create("copper") { dimension = "colourway" }
+        create("ocean") { dimension = "colourway" }
+        create("aurora") { dimension = "colourway" }
+        create("acid") { dimension = "colourway" }
+        create("lunar") { dimension = "colourway" }
+        create("desert") { dimension = "colourway" }
+        create("lime") { dimension = "colourway" }
+        create("plum") { dimension = "colourway" }
+        create("forest") { dimension = "colourway" }
+        create("arctic") { dimension = "colourway" }
     }
 
     signingConfigs {

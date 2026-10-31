@@ -74,13 +74,8 @@ val SubStyle = TextStyle(fontFamily = GoogleSans, fontSize = 14.sp, lineHeight =
 /** The app's accent follows the colourway (RULES A7); Solaris takes the colour of the light now. */
 val LocalAccent = compositionLocalOf { Color(0xFFFFB547) }
 
-fun accentFor(colourway: String): Color = when (colourway) {
-    "mint" -> Color(0xFF5FD4A0)
-    "violet" -> Color(0xFFB48CFF)
-    "rose" -> Color(0xFFFF7A9C)
-    "solaris" -> sunColour(LocalTime.now().toSecondOfDay() / 60)
-    else -> Color(0xFFFFB547)
-}
+fun accentFor(colourway: String): Color =
+    if (colourway == "solaris") sunColour(LocalTime.now().toSecondOfDay() / 60) else Color(Looks.of(colourway).accent)
 
 // Solaris accent: the day's colours (RULES S3) at typical sun times (sunrise ~6:15, noon ~12:00, sunset ~17:45),
 // blended in sRGB. The face itself computes the real sun times; this only tints the app.

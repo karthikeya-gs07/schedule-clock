@@ -22,6 +22,8 @@
     --c-later: #8fa3d6; --c-later-text: #a9b8e0; --c-clash: #ff7a59; --c-clash-past: #7a3b2c;
     --c-private: #8e8e93; --c-private-sel: #c7c7cc; --c-private-sel-past: #6a6a70;
     --c-text: #f2f2f2; --c-muted: #8e8e93; --c-track: #1c1c1f;   /* overwritten by the colour theme */
+    --c-bg: #000; --c-num-major: #8e8e93; --c-num-minor: #5c5c62; --c-tick-hour: #8e8e93; --c-tick-half: #4a4a50;
+    --c-tick-quarter: #33333a; --c-divider: #2a2a2e; --c-ink: #fff;
     --arc-pct: 60%;       /* meeting arcs: solid but darker, so the time stays the focus */
     --arc-pct-hi: 90%;    /* thin lane, clash stripes, selection: a little brighter */
     --d: 520ms;           /* select / back to the normal view */
@@ -68,7 +70,7 @@
   .device.ultra { border-radius: 27%; }   /* Ultra: cushion-shaped case */
   .watch {
     position: relative; width: var(--dial); height: var(--dial);
-    border-radius: 50%; background: #000; overflow: hidden;
+    border-radius: 50%; background: var(--c-bg); overflow: hidden;
   }
   .device.large { width: auto; height: auto; background: none; box-shadow: none; border-radius: 0; }
   .device.large::before { display: none; }
@@ -182,29 +184,29 @@
     transition: opacity var(--d) var(--ease), transform var(--d) var(--ease), stroke-width var(--d) var(--ease);
   }
   #ringAll { opacity: 1; }
-  #ringAll path { stroke: var(--c-event); stroke: color-mix(in srgb, var(--c-event) var(--arc-pct), #000); stroke-width: 12px; fill: none; stroke-linecap: round;
+  #ringAll path { stroke: var(--c-event); stroke: color-mix(in srgb, var(--c-event) var(--arc-pct), var(--c-bg)); stroke-width: 12px; fill: none; stroke-linecap: round;
     transition: stroke var(--d) var(--ease), stroke-width var(--d) var(--ease), opacity var(--d) var(--ease), stroke-opacity var(--d) var(--ease); }
   #ringAll path.enter, #ringAll path.leaving { opacity: 0; }
-  #ringAll path.past { stroke: var(--c-past); stroke: color-mix(in srgb, var(--c-past) var(--arc-pct), #000); }
-  #ringAll path.later { stroke: var(--c-later); stroke: color-mix(in srgb, var(--c-later) var(--arc-pct-hi), #000); stroke-width: 4px; }
+  #ringAll path.past { stroke: var(--c-past); stroke: color-mix(in srgb, var(--c-past) var(--arc-pct), var(--c-bg)); }
+  #ringAll path.later { stroke: var(--c-later); stroke: color-mix(in srgb, var(--c-later) var(--arc-pct-hi), var(--c-bg)); stroke-width: 4px; }
   #ringAll path.arriving { visibility: hidden; }   /* the settling animation stands in for it */
   #fx path {
-    fill: none; stroke-linecap: round; stroke: var(--c-later); stroke: color-mix(in srgb, var(--c-later) var(--arc-pct-hi), #000); stroke-width: 4px;
+    fill: none; stroke-linecap: round; stroke: var(--c-later); stroke: color-mix(in srgb, var(--c-later) var(--arc-pct-hi), var(--c-bg)); stroke-width: 4px;
     transform-box: view-box; transform-origin: 225px 225px;
     transition: transform var(--promote) cubic-bezier(.22, 1, .36, 1),
                 stroke var(--promote) ease, stroke-opacity var(--promote) ease, stroke-width var(--promote) ease;
   }
   #face.selected #fx { opacity: .35; }
-  #ringAll path.later.allclash { stroke: var(--c-clash); stroke: color-mix(in srgb, var(--c-clash) var(--arc-pct-hi), #000); }   /* lane meeting on an all-day event */
+  #ringAll path.later.allclash { stroke: var(--c-clash); stroke: color-mix(in srgb, var(--c-clash) var(--arc-pct-hi), var(--c-bg)); }   /* lane meeting on an all-day event */
   #ringAll path.later.private { stroke-dasharray: 4 3; stroke: var(--c-private); stroke-linecap: butt; }
-  #ringAll path.clash-mask { stroke: #3f1f17; stroke: color-mix(in srgb, var(--c-clash) 25%, #000); stroke-width: 14px; stroke-opacity: 1; stroke-linecap: butt; }   /* dark coral between the two stripes */
-  #ringAll path.clash { stroke: var(--c-clash); stroke: color-mix(in srgb, var(--c-clash) var(--arc-pct-hi), #000); stroke-width: 5px; }
-  #ringAll path.clash.past { stroke: var(--c-clash-past); stroke: color-mix(in srgb, var(--c-clash-past) var(--arc-pct-hi), #000); }
+  #ringAll path.clash-mask { stroke: #3f1f17; stroke: color-mix(in srgb, var(--c-clash) 25%, var(--c-bg)); stroke-width: 14px; stroke-opacity: 1; stroke-linecap: butt; }   /* dark coral between the two stripes */
+  #ringAll path.clash { stroke: var(--c-clash); stroke: color-mix(in srgb, var(--c-clash) var(--arc-pct-hi), var(--c-bg)); stroke-width: 5px; }
+  #ringAll path.clash.past { stroke: var(--c-clash-past); stroke: color-mix(in srgb, var(--c-clash-past) var(--arc-pct-hi), var(--c-bg)); }
   /* Selected arc (R9): the meeting exactly as it normally looks (same colour, same width), drawn above the
      dimmed ring, so it reads as the one meeting at full strength. */
-  .selArc { fill: none; stroke-linecap: round; stroke: var(--c-event); stroke: color-mix(in srgb, var(--c-event) var(--arc-pct), #000); stroke-width: 12px; opacity: 0; }
-  .selArc.past { stroke: var(--c-past); stroke: color-mix(in srgb, var(--c-past) var(--arc-pct), #000); }
-  .selArc.later { stroke: var(--c-later); stroke: color-mix(in srgb, var(--c-later) var(--arc-pct-hi), #000); stroke-width: 4px; }
+  .selArc { fill: none; stroke-linecap: round; stroke: var(--c-event); stroke: color-mix(in srgb, var(--c-event) var(--arc-pct), var(--c-bg)); stroke-width: 12px; opacity: 0; }
+  .selArc.past { stroke: var(--c-past); stroke: color-mix(in srgb, var(--c-past) var(--arc-pct), var(--c-bg)); }
+  .selArc.later { stroke: var(--c-later); stroke: color-mix(in srgb, var(--c-later) var(--arc-pct-hi), var(--c-bg)); stroke-width: 4px; }
   #dStatus { fill: var(--accent); }
   /* Status line ("NEXT · IN 1H 30M") hidden for now; title and meta move up to close the gap. */
   #dStatus { display: none; }
@@ -237,7 +239,7 @@
   #tsWheel, #tsSelWheel { display: none; }
   #face.timeshift:not(.ambient) #tsWheel, #face.timeshift:not(.ambient) #tsSelWheel { display: inline; }
   /* The ring's own arcs become an opaque black backing, so the gradient on top is solid, not see-through (R6a) */
-  #face.timeshift:not(.ambient) #ringAll path.tsgrad, #face.timeshift:not(.ambient) .selArc.tsHide { stroke: #000; }
+  #face.timeshift:not(.ambient) #ringAll path.tsgrad, #face.timeshift:not(.ambient) .selArc.tsHide { stroke: var(--c-bg); }
   #tsWheel { transition: opacity var(--d) var(--ease); }
   #face.selected #tsWheel { opacity: .35; }
   .tsm { fill: none; stroke: #fff; stroke-width: 12px; stroke-linecap: round; stroke-opacity: var(--arc-pct); }
@@ -250,18 +252,27 @@
   /* Ambient (always-on): outlines only, no selection */
   #face.ambient #ringAll path { stroke: #9a9a9a; stroke-width: 3px; stroke-opacity: 1; }
   #face.ambient #ringAll path.past { stroke: #4a4a4a; }
-  #face.ambient #ringAll path.clash-mask { stroke: #000; stroke-width: 14px; }
+  #face.ambient #ringAll path.clash-mask { stroke: var(--c-bg); stroke-width: 14px; }
   /* Theme colours for the static parts of the face (ambient rules above stay monochrome) */
   #face #dDate, #face #dAmpm { fill: var(--c-muted); }
   #face #dTime, #face #dTitle { fill: var(--c-text); }
   #face #track { stroke: var(--c-track); }
+  #face #numerals text { fill: var(--c-num-minor); }
+  #face #numerals text.major { fill: var(--c-num-major); }
+  #face #ticks .hour { stroke: var(--c-tick-hour); }
+  #face #ticks .half { stroke: var(--c-tick-half); }
+  #face #ticks .quarter { stroke: var(--c-tick-quarter); }
+  #face #trail { stroke: var(--c-ink); }
+  #face #nowDot .ink { fill: var(--c-ink); }
+  #face #nowDot .bg { fill: var(--c-bg); }
+  #face #dDivider { stroke: var(--c-divider); }
   #face #dArrow { stroke: var(--c-event); }
   #face #dLock rect { fill: var(--c-muted); }
   #face #dLock path { stroke: var(--c-muted); }
   #face #dTodIcon { stroke: var(--c-later-text); }
   #face #dClashIcon { stroke: var(--c-clash); }
   #face #pvSel rect + rect { fill: var(--c-private); }
-  #face #pvSelPast rect + rect { fill: var(--c-private); fill: color-mix(in srgb, var(--c-private) 50%, #000); }
+  #face #pvSelPast rect + rect { fill: var(--c-private); fill: color-mix(in srgb, var(--c-private) 50%, var(--c-bg)); }
   #face.ambient #dArrow { stroke: #8e8e93; }
   #face.ambient #ringAll path.later { stroke: #5c5c62; }
   #face.ambient #trail { opacity: 0; }
@@ -596,7 +607,7 @@ const T = (id, x, y, size, opts = {}) => {
 let numerals = '';
 for (let h = 1; h <= 12; h++) {
   const [x, y] = polar(h * 30, R - 40);
-  numerals += `<text x="${x.toFixed(1)}" y="${(y + 8.5).toFixed(1)}" font-size="24" font-weight="500" text-anchor="middle" fill="${h % 3 ? '#5c5c62' : '#8e8e93'}">${h}</text>`;
+  numerals += `<text x="${x.toFixed(1)}" y="${(y + 8.5).toFixed(1)}" font-size="24" font-weight="500" text-anchor="middle" class="${h % 3 ? '' : 'major'}" fill="${h % 3 ? '#5c5c62' : '#8e8e93'}">${h}</text>`;
 }
 
 // Tick marks every 15 min: hour (long), half-hour (medium), quarters (short).
@@ -607,7 +618,7 @@ for (let q = 0; q < 48; q++) {
   const len = { hour: 10, half: 6, quarter: 3 }[kind];
   const [x0, y0] = polar(q * 7.5, R - 14), [x1, y1] = polar(q * 7.5, R - 14 - len);
   const stroke = { hour: '#8e8e93', half: '#4a4a50', quarter: '#33333a' }[kind];
-  ticks += `<line x1="${x0.toFixed(2)}" y1="${y0.toFixed(2)}" x2="${x1.toFixed(2)}" y2="${y1.toFixed(2)}" stroke="${stroke}" stroke-width="${kind === 'hour' ? 2.5 : 1.5}" stroke-linecap="round"/>`;
+  ticks += `<line class="${kind}" x1="${x0.toFixed(2)}" y1="${y0.toFixed(2)}" x2="${x1.toFixed(2)}" y2="${y1.toFixed(2)}" stroke="${stroke}" stroke-width="${kind === 'hour' ? 2.5 : 1.5}" stroke-linecap="round"/>`;
 }
 
 svg.innerHTML = `
@@ -639,7 +650,7 @@ svg.innerHTML = `
   <path id="selArcPast" class="m selArc past"/>
   <path id="selArc" class="m selArc"/>
   <g id="tsSelWheel" mask="url(#tsSelMask)" fill="none" stroke-width="26"></g>
-  <g id="nowDot"><circle r="14" fill="#fff" opacity=".18"/><circle r="9.5" fill="#000"/><circle r="6.5" fill="#fff"/></g>
+  <g id="nowDot"><circle class="ink" r="14" fill="#fff" opacity=".18"/><circle class="bg" r="9.5" fill="#000"/><circle class="ink" r="6.5" fill="#fff"/></g>
 
   <g id="defaultUI">
     <g id="dDateG" class="m">${T('dDate', CX, 122, 24, { fill: C.muted, spacing: 2, weight: 500 })}</g>
@@ -952,14 +963,20 @@ let wheelKey = '';
 function paintSunWheels() {
   const live = events().filter(e => !e.allDay && e.s < nowMin && e.e > nowMin);
   const winStart = Math.min(nowMin, ...live.map(e => e.s));
-  const key = `${winStart}|${place().lat}|${place().lon}|${new Date().toDateString()}`;
+  const pal = C.palette;   // a Palette theme: its colours from the window's start round to its end
+  const key = `${winStart}|${place().lat}|${place().lon}|${new Date().toDateString()}|${pal || ''}`;
   if (key === wheelKey) return;
   wheelKey = key;
   for (const segs of Object.values(wheelSegs)) for (const { p, a } of segs) {
     const m = a * 2;                                                  // dial minute (720 per turn)
     const t = winStart + ((m - winStart) % 720 + 720) % 720;          // the time this angle shows in the window
-    p.setAttribute('stroke', sunColor(t));
+    p.setAttribute('stroke', pal ? alongPalette(pal, (t - winStart) / 720) : sunColor(t));
   }
+}
+
+function alongPalette(pal, f) {
+  const x = Math.min(Math.max(f, 0), 1) * (pal.length - 1), i = Math.min(Math.floor(x), pal.length - 2);
+  return mixHex(pal[i + 1], pal[i], x - i);
 }
 
 // Panel: the day's colour bar, sunrise/sunset and where they were computed for.
@@ -1530,19 +1547,48 @@ const TOKENS = [   // [token, CSS variable, label]
   ['laterText', '--c-later-text', 'Later / tomorrow text'], ['clash', '--c-clash', 'Double booking'],
   ['clashPast', '--c-clash-past', 'Double booking, elapsed'], ['private', '--c-private', 'Private stripes'],
   ['text', '--c-text', 'Clock and title'], ['muted', '--c-muted', 'Secondary text'], ['track', '--c-track', 'Ring track'],
+  ['bg', '--c-bg', 'Dial background'], ['numMajor', '--c-num-major', 'Numbers 3, 6, 9, 12'], ['numMinor', '--c-num-minor', 'Other numbers'],
+  ['tickHour', '--c-tick-hour', 'Hour ticks'], ['tickHalf', '--c-tick-half', 'Half-hour ticks'], ['tickQuarter', '--c-tick-quarter', 'Quarter ticks'],
+  ['divider', '--c-divider', 'Divider'], ['ink', '--c-ink', 'Now dot and trail'],
 ];
 const AMBER = { event: '#ffb547', past: '#6e4f22', selected: '#ffd27f', selectedPast: '#8a6a35', selectedLater: '#c3d0f2',
   later: '#8fa3d6', laterText: '#a9b8e0', clash: '#ff7a59', clashPast: '#7a3b2c', private: '#8e8e93', privateSel: '#c7c7cc',
-  privateSelPast: '#6a6a70', text: '#f2f2f2', muted: '#8e8e93', track: '#1c1c1f' };
+  privateSelPast: '#6a6a70', text: '#f2f2f2', muted: '#8e8e93', track: '#1c1c1f', bg: '#000000', numMajor: '#8e8e93',
+  numMinor: '#5c5c62', tickHour: '#8e8e93', tickHalf: '#4a4a50', tickQuarter: '#33333a', divider: '#2a2a2e', ink: '#ffffff' };
+const mixHex = (a, b, f) => '#' + [1, 3, 5].map(i => Math.round(parseInt(a.substr(i, 2), 16) * f + parseInt(b.substr(i, 2), 16) * (1 - f))
+  .toString(16).padStart(2, '0')).join('');
+// The Figma themes (Frame 6, node 38:3237) tint the whole dial. A Palette theme's arcs run through five colours over
+// the 12 hours ahead (on the sweeping face, like Solaris). Keep in step with tools/gen_spike_face.py.
+function figmaTheme(bg, track, text, major, minor, half, accent, clash, later, palette) {
+  const ev = accent || palette[0];
+  return { event: ev, past: mixHex(ev, bg, .45), selected: mixHex(ev, '#ffffff', .7), selectedPast: mixHex(ev, bg, .6),
+    later, selectedLater: mixHex(later, '#ffffff', .7), laterText: later, clash, clashPast: mixHex(clash, bg, .48),
+    private: minor, privateSel: major, privateSelPast: mixHex(major, bg, .5), text, muted: major, track, bg,
+    numMajor: major, numMinor: minor, tickHour: major, tickHalf: half, tickQuarter: track, divider: track, ink: text,
+    ...(palette ? { palette } : {}) };
+}
 // The first is the real design; the others are examples of the mechanism, to be replaced with your colours.
 const THEMES = {
   Amber: AMBER,
   Mint: { ...AMBER, event: '#5fd4a0', past: '#2c5f49', selected: '#a8f0d0', selectedPast: '#3f7f64', later: '#8fb4d6', selectedLater: '#c3dcf2', laterText: '#a9c8e0' },
   Violet: { ...AMBER, event: '#b48cff', past: '#4e3a7a', selected: '#d6c0ff', selectedPast: '#6a529e', later: '#7fd3e0', selectedLater: '#bfeaf2', laterText: '#a6e0ea', clash: '#ff7a8a', clashPast: '#7a3b44' },
   Rose: { ...AMBER, event: '#ff7a9c', past: '#7a3a4c', selected: '#ffb3c6', selectedPast: '#9a4c63', later: '#ffc27a', selectedLater: '#ffe0b5', laterText: '#ffd5a6' },
+  'Rose Quartz': figmaTheme('#25151e', '#573744', '#fff1f6', '#c6a4b4', '#957483', '#957483', null, '#f99bb2', '#a6b4f7', ['#ffd5ae', '#ffacaa', '#f58fb8', '#cc93dd', '#a6b4f7']),
+  'Copper Garden': figmaTheme('#092021', '#355454', '#f4f1e7', '#9fb9b6', '#708d8b', '#708d8b', null, '#d8936b', '#7ba6bf', ['#e8cba0', '#e6aa72', '#cf8467', '#6ab9af', '#7ba6bf']),
+  Ocean: figmaTheme('#061524', '#294157', '#e8f6ff', '#93afc9', '#647f97', '#647f97', null, '#3fb6e0', '#b4b7ff', ['#8ceadb', '#45ccd8', '#3ba7e5', '#688bff', '#b4b7ff']),
+  Aurora: figmaTheme('#071a21', '#34525b', '#ecfff8', '#91b7b9', '#688b90', '#688b90', null, '#43cfcb', '#b59aff', ['#9dfad0', '#40d7ad', '#45c9df', '#6d9bff', '#b59aff']),
+  'Acid Circuit': figmaTheme('#12180b', '#38462a', '#f6fbea', '#a6b68e', '#768562', '#768562', null, '#91da78', '#9aacee', ['#e7ff8a', '#bddf4b', '#73d696', '#4ccdc3', '#9aacee']),
+  'Lunar Mono': figmaTheme('#14171c', '#292e36', '#f5faff', '#bdc5cf', '#8994a2', '#7e8a99', '#b2bfce', '#f4faff', '#7b93b0'),
+  'Desert Dusk': figmaTheme('#2d211f', '#47332c', '#fff5e7', '#d7bda5', '#ae8d7c', '#a18772', '#e79775', '#f6d69a', '#ffbaa6'),
+  'Racing Lime': figmaTheme('#202729', '#323c3d', '#f7ffe9', '#bdcec6', '#859c94', '#869b91', '#d0f85a', '#65d8ff', '#f1ffa8'),
+  'Plum Rose': figmaTheme('#2b192c', '#432b44', '#fff3f9', '#d6b8cd', '#ae86a5', '#a183a0', '#eea0bd', '#b6a2ff', '#ffe0ae'),
+  'Forest Signal': figmaTheme('#112b25', '#203c32', '#f1fff6', '#b2cdbe', '#759d8b', '#749687', '#79e4b7', '#ffbe55', '#d5fca9'),
+  'Arctic Lagoon': figmaTheme('#101f30', '#182c40', '#f0faff', '#a9c4d6', '#7094ae', '#6c879c', '#66d6e8', '#a3a5ff', '#d2f7ff'),
 };
 let themeName = 'Amber', custom = null;
 function applyColors(t) {
+  t = { ...AMBER, ...t };   // themes saved before a token existed get its default
+  delete C.palette;
   Object.assign(C, t);
   for (const [k, v] of TOKENS) document.documentElement.style.setProperty(v, t[k]);
   // Pieces that read C when they are built or updated

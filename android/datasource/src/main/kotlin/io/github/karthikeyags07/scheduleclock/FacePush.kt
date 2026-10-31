@@ -19,7 +19,7 @@ import java.io.File
  * how to pick it on the watch (RULES A1).
  */
 object FacePush {
-    val COLOURWAYS = listOf("amber", "mint", "violet", "rose", "solaris")
+    val COLOURWAYS = Themes.IDS
     const val FACE_PACKAGE = "io.github.karthikeyags07.scheduleclock.watchfacepush.calentime"
     const val ACTIVATE_PERMISSION = "com.google.wear.permission.SET_PUSHED_WATCH_FACE_AS_ACTIVE"
 
@@ -71,16 +71,27 @@ object FacePush {
         val manager = manager(context)
         val slot = manager.listWatchFaces().installedWatchFaceDetails.firstOrNull()
         val token = JSONObject(context.assets.open("faces/tokens.json").bufferedReader().readText()).getString(colourway)
-        apk(context, colourway).use { fd ->
-            if (slot == null) manager.addWatchFace(fd, token) else manager.updateWatchFace(slot.slotId, fd, token)
+        // Saved first: the new face asks for its ring image as it loads, and the ring is drawn in its colours.
+        val before = prefs(context).getString("colourway", null)
+        prefs(context).edit().putString("colourway", colourway).commit()
+        try {
+            apk(context, colourway).use { fd ->
+                if (slot == null) manager.addWatchFace(fd, token) else manager.updateWatchFace(slot.slotId, fd, token)
+            }
+        } catch (e: Exception) {
+            prefs(context).edit().putString("colourway", before).commit()
+            throw e
         }
-        prefs(context).edit().putString("colourway", colourway).apply()
+        SpikeSchedule.requestUpdate(context.applicationContext)
         Log.i(TAG, "face push: ${if (slot == null) "added" else "swapped to"} $colourway")
         if (slot == null) status(context) else cachedStatus(context, colourway)   // no active check right after a swap
     }
 
     private fun cachedStatus(context: Context, colourway: String) = Status(supported = true, installed = true,
         active = prefs(context).getBoolean("active", false), colourway = colourway, activateUsed = prefs(context).getBoolean("activateUsed", false))
+
+    /** The colourway of the face on the watch (the last one put there), for drawing the ring in its colours. */
+    fun colourway(context: Context): String? = prefs(context).getString("colourway", null)
 
     fun canActivate(context: Context) =
         context.checkSelfPermission(ACTIVATE_PERMISSION) == PackageManager.PERMISSION_GRANTED

@@ -81,18 +81,19 @@ class ColourSwapActivity : Activity(), CoroutineScope by MainScope() {
         private const val SETTLE_MS = 1600L
     }
 
-    /** Black, a ring track, the new colourway sweeping round it, and the colourway's name. */
-    private class SwapView(context: Context, private val colourway: String) : View(context) {
+    /** The new face's background, a ring track, the new colourway sweeping round it, and the colourway's name. */
+    private class SwapView(context: Context, colourway: String) : View(context) {
+        private val theme = Themes.of(colourway)
         private var progress = 0f
         private fun dp(v: Float) = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v, resources.displayMetrics)
-        private val track = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = dp(6f); color = Color.parseColor("#1c1c1f") }
+        private val track = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = dp(6f); color = Color.argb(40, 255, 255, 255) }
         private val arc = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = dp(6f); strokeCap = Paint.Cap.ROUND }
         private val name = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.parseColor("#f2f2f2"); textAlign = Paint.Align.CENTER; textSize = dp(22f)
             typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
         }
         private val caption = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.parseColor("#8e8e93"); textAlign = Paint.Align.CENTER; textSize = dp(13f)
+            color = Color.argb(150, 255, 255, 255); textAlign = Paint.Align.CENTER; textSize = dp(13f)
         }
         private val box = RectF()
 
@@ -106,24 +107,26 @@ class ColourSwapActivity : Activity(), CoroutineScope by MainScope() {
         override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
             val r = minOf(w, h) / 2f - dp(10f)
             box.set(w / 2f - r, h / 2f - r, w / 2f + r, h / 2f + r)
-            arc.shader = if (colourway == "solaris") SweepGradient(w / 2f, h / 2f,
-                SOLARIS.map(Color::parseColor).toIntArray(), null).apply {
-                setLocalMatrix(Matrix().apply { setRotate(-90f, w / 2f, h / 2f) })   // the day starts at 12
-            } else null
-            if (colourway != "solaris") arc.color = Color.parseColor(COLOURS.getValue(colourway))
+            // Solaris sweeps through the day's colours, a Palette theme through its own; the rest are one colour.
+            val colours = if (theme.id == "solaris") SOLARIS.map(Color::parseColor).toIntArray() else theme.palette
+            arc.shader = colours?.let {
+                SweepGradient(w / 2f, h / 2f, it, null).apply {
+                    setLocalMatrix(Matrix().apply { setRotate(-90f, w / 2f, h / 2f) })   // starting at 12
+                }
+            }
+            arc.color = theme.accent
         }
 
         override fun onDraw(canvas: Canvas) {
-            canvas.drawColor(Color.BLACK)
+            canvas.drawColor(theme.background)
             canvas.drawArc(box, 0f, 360f, false, track)
             canvas.drawArc(box, -90f, 360f * progress, false, arc)
             val cx = width / 2f
-            canvas.drawText(colourway.replaceFirstChar(Char::uppercase), cx, height / 2f + dp(4f), name)
+            canvas.drawText(theme.name, cx, height / 2f + dp(4f), name)
             canvas.drawText("Changing colours", cx, height / 2f + dp(26f), caption)
         }
 
         private companion object {
-            val COLOURS = mapOf("amber" to "#ffb547", "mint" to "#5fd4a0", "violet" to "#b48cff", "rose" to "#ff7a9c")
             val SOLARIS = listOf("#3f66e6", "#e88ab2", "#ffcc5c", "#fff06a", "#ff7438", "#a957dc", "#3f66e6")
         }
     }

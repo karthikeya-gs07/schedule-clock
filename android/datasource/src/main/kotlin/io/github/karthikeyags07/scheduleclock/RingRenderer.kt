@@ -25,7 +25,9 @@ import java.io.ByteArrayOutputStream
  * - panel 1, tinted with the theme's lane colour: the later lane in white;
  * - panel 2, untinted: fixed colours (private stripes, double bookings, coral lane on an all-day event);
  * - panel 3, untinted: the Solaris face's main-ring meetings (RULES §10), coloured by the light at each
- *   minute. The face's Style option shows panel 3 instead of panel 0.
+ *   minute, or a Palette theme's, running through its colours over the 12 hours ahead. Those faces show
+ *   panel 3 instead of panel 0.
+ * The untinted panels are drawn in the colours of [Theme] (the face on the watch), and dim toward its background.
  */
 object RingRenderer {
     const val SIZE = 450
@@ -39,18 +41,25 @@ object RingRenderer {
     private const val THEMED = Color.WHITE                 // × the theme colour on the face
     private const val PAST_FACTOR = 0.45f
     private val THEMED_PAST = Color.rgb(115, 115, 115)      // × 0.45: the elapsed part (amber → #73511f ≈ #6e4f22)
-    private val PRIVATE = Color.parseColor("#8e8e93")
-    private val PRIVATE_PAST = Color.parseColor("#48484c")
-    private val CLASH = Color.parseColor("#ff7a59")
-    private val CLASH_PAST = Color.parseColor("#7a3b2c")
-    private val CLASH_MASK = Color.parseColor("#3f1f17")   // dark coral between the two stripes, never empty (R6a)
+    // Fixed colours (panel 2) come from the theme: private stripes, double bookings and the dark band between
+    // the two clash stripes, never empty (R6a). Elapsed and dimmed copies blend toward the face's background.
+    private var PRIVATE = 0
+    private var PRIVATE_PAST = 0
+    private var CLASH = 0
+    private var CLASH_PAST = 0
+    private var CLASH_MASK = 0
+    private var ground = Color.BLACK
     private const val DIM = 0.35f           // everything but the selected meeting, while one is selected (R9)
 
     /**
      * @param selectedKey dims everything else to 35 % and draws this meeting on top, unchanged (R9).
      * @param hiddenKey left out entirely (a meeting the settle arc is carrying, M3).
      */
-    fun renderPng(list: List<Placed>, now: Int, selectedKey: String?, hiddenKey: String? = null): ByteArray {
+    @Synchronized
+    fun renderPng(list: List<Placed>, now: Int, selectedKey: String?, hiddenKey: String? = null, theme: Theme = Themes.of(null)): ByteArray {
+        ground = theme.background
+        PRIVATE = theme.private; PRIVATE_PAST = blend(theme.private, 0.5f)
+        CLASH = theme.clash; CLASH_PAST = blend(theme.clash, 0.48f); CLASH_MASK = blend(theme.clash, 0.25f)
         val bitmap = Bitmap.createBitmap(SIZE * PANELS, SIZE, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         val stroke = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeCap = Paint.Cap.BUTT }
@@ -68,8 +77,8 @@ object RingRenderer {
         // Panel 1: the later lane (R5), thin and rounded.
         panel(1) { for (p in last(shown.filter { it.lane == Lane.LATER && !fixed(it) })) drawLater(canvas, stroke, p, dim && p !== selected) }
 
-        // Panel 3: Solaris (S2), the same meetings as panel 0, drawn through the day's colour sweep.
-        val sweep = SunSweep(shown, now)
+        // Panel 3: Solaris (S2) or a Palette theme, the same meetings as panel 0, drawn through the colour sweep.
+        val sweep = Sweep(shown, now, theme)
         panel(3) { for (p in last(shown.filter { it.lane == Lane.MAIN && !fixed(it) })) drawShift(canvas, stroke, p, now, sweep, dim && p !== selected) }
 
         panel(2) {
@@ -107,7 +116,7 @@ object RingRenderer {
         }
     }
 
-    private fun drawShift(canvas: Canvas, stroke: Paint, p: Placed, now: Int, sweep: SunSweep, dim: Boolean) {
+    private fun drawShift(canvas: Canvas, stroke: Paint, p: Placed, now: Int, sweep: Sweep, dim: Boolean) {
         val split = if (ScheduleRules.isLive(p, now)) now else p.cs
         stroke.pathEffect = null
         stroke.strokeCap = Paint.Cap.ROUND
@@ -123,11 +132,11 @@ object RingRenderer {
     }
 
     /**
-     * The day's colours around the dial (S2): each degree is coloured for the time it shows inside the visible
-     * 12 h window (from now, or a live meeting's start, W2), so morning and evening never mix. Darker copies
-     * for elapsed parts and dimmed meetings.
+     * The colours around the dial. Solaris (S2): each degree is coloured for the time it shows inside the visible
+     * 12 h window (from now, or a live meeting's start, W2), so morning and evening never mix. A Palette theme:
+     * its colours in turn from the window's start to its end. Darker copies for elapsed parts and dimmed meetings.
      */
-    private class SunSweep(shown: List<Placed>, now: Int) {
+    private class Sweep(shown: List<Placed>, now: Int, theme: Theme) {
         private val colors: IntArray
         private val cache = HashMap<Float, Shader>()
 
@@ -137,9 +146,12 @@ object RingRenderer {
             val today = LocalDate.now(zone)
             val place = SunColors.place(zone)
             val days = HashMap<Int, List<Pair<Double, DoubleArray>>>()
+            val palette = theme.palette
             colors = IntArray(361) { i ->
                 val m = i * 2                                                   // dial minute (720 per turn)
-                val t = winStart + Math.floorMod(m - winStart, ScheduleRules.DIAL_MIN)   // the time this angle shows
+                val ahead = Math.floorMod(m - winStart, ScheduleRules.DIAL_MIN)
+                if (palette != null) return@IntArray along(palette, ahead / ScheduleRules.DIAL_MIN.toFloat())
+                val t = winStart + ahead                                        // the time this angle shows
                 val day = Math.floorDiv(t, 1440)
                 val stops = days.getOrPut(day) { SunColors.stops(SunColors.sunTimes(today.plusDays(day.toLong()), place, zone)) }
                 SunColors.colorAt(stops, Math.floorMod(t, 1440).toDouble())
@@ -147,14 +159,27 @@ object RingRenderer {
         }
 
         fun shader(factor: Float): Shader = cache.getOrPut(factor) {
-            val c = IntArray(colors.size) { i ->
-                val x = colors[i]
-                Color.rgb((Color.red(x) * factor).toInt(), (Color.green(x) * factor).toInt(), (Color.blue(x) * factor).toInt())
-            }
+            val c = IntArray(colors.size) { i -> blend(colors[i], factor) }
             SweepGradient(C, C, c, FloatArray(c.size) { it / 360f }).apply {
                 setLocalMatrix(Matrix().apply { setRotate(-90f, C, C) })   // 0 at 12 o'clock
             }
         }
+    }
+
+    /** The colour [f] (0..1) of the way through [palette], blended evenly between neighbours. */
+    private fun along(palette: IntArray, f: Float): Int {
+        val x = f * (palette.size - 1)
+        val i = x.toInt().coerceIn(0, palette.size - 2)
+        val t = x - i
+        val a = palette[i]; val b = palette[i + 1]
+        fun ch(ca: Int, cb: Int) = (ca + (cb - ca) * t).toInt()
+        return Color.rgb(ch(Color.red(a), Color.red(b)), ch(Color.green(a), Color.green(b)), ch(Color.blue(a), Color.blue(b)))
+    }
+
+    /** [f] of [color] over the face's background (black on the first five colourways). */
+    private fun blend(color: Int, f: Float): Int {
+        fun ch(c: Int, g: Int) = (c * f + g * (1 - f)).toInt()
+        return Color.rgb(ch(Color.red(color), Color.red(ground)), ch(Color.green(color), Color.green(ground)), ch(Color.blue(color), Color.blue(ground)))
     }
 
     /** A minute range with another one taken out (0, 1 or 2 pieces). */
@@ -183,9 +208,16 @@ object RingRenderer {
         stroke.pathEffect = null
     }
 
-    /** 35 % of the color over black: what the prototype's 35 % opacity ring looks like on the black face. */
-    private fun dimmed(color: Int, dim: Boolean) =
-        if (!dim) color else Color.rgb((Color.red(color) * DIM).toInt(), (Color.green(color) * DIM).toInt(), (Color.blue(color) * DIM).toInt())
+    /**
+     * 35 % of the color over the background: what the prototype's 35 % opacity ring looks like. The tinted
+     * panels' white and grey dim toward black, since the face multiplies them by the theme colour.
+     */
+    private fun dimmed(color: Int, dim: Boolean) = when {
+        !dim -> color
+        color == THEMED || color == THEMED_PAST ->
+            Color.rgb((Color.red(color) * DIM).toInt(), (Color.green(color) * DIM).toInt(), (Color.blue(color) * DIM).toInt())
+        else -> blend(color, DIM)
+    }
 
     private fun paintArc(canvas: Canvas, paint: Paint, from: Int, to: Int, r: Float, color: Int, private: Boolean) {
         if (to <= from) return

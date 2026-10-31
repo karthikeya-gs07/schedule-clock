@@ -181,6 +181,7 @@ Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.sched
 
 | Date | Change | Rules |
 |---|---|---|
+| 2026-10-31 | Eleven Figma themes added (16 colourways): six tinted-dial themes with one arc colour, five Palette themes whose arcs run through five colours over the 12 hours ahead. Double bookings and private stripes take each theme's colours. | §9 |
 | 2026-10-31 | Colourway change plays as a transition on the watch, hiding Wear OS's stand-in clock. | §9 |
 | 2026-10-31 | Setup redesigned in the app's own look. | §12 A1 |
 | 2026-10-31 | Drawer: drag anywhere on it, not just its top, to move it. | §12 A2 |
@@ -248,7 +249,16 @@ Every colour the face draws with is a token (the table in §2: meeting arcs, ela
 
 **Chosen in the phone app (from 2026-10-30, Watch Face Push):** each colourway is its own copy of the face with its colours fixed and no customize options; the watch app swaps the chosen one into its slot, keeping it the active face. The watch's own Customize → Colours option is gone, so the phone and watch can never disagree. *(Before: the five colourways were one Colours option (WFF `ColorConfiguration`) in the watch's customize screen, tinting the ring image's panels.)* Panel tinting still works the same way inside each copy: the four themes are one **Colours** option (WFF `ColorConfiguration`) in the watch's customize screen; each carries three colours: meeting arcs, later lane, later/tomorrow text. The watch app can't see the chosen theme, so the ring image is three 450 px panels side by side and the face draws it three times, shifted so one panel is on screen each time. The face multiplies each copy by a tint: panel 0 (meeting arcs in white, elapsed parts at 45 % grey) × the arc colour, panel 1 (the later lane in white) × the lane colour, panel 2 untinted (private stripes, double bookings, coral lane). The look-ahead arrow, the settle animation and the "Tomorrow" text use the theme colours directly. Differences from the prototype: the elapsed shade is always 45 % of the arc colour (the prototype's are within a few points of that); double bookings stay coral in every theme (Violet's pink-coral isn't used); there is no Custom theme (the customize screen offers a fixed list).
 
-**Changing colourway, seen on the watch (2026-10-31):** swapping a pushed face makes Wear OS show its own plain stand-in clock between the old face and the new one. So a change from the phone plays as a short transition on the watch: a black cover fades in, a ring sweeps round in the new colourway (Solaris: its day's gradient) with the name in the middle, the swap happens underneath (the cover returns to the front whenever the swap pushes the face in front of it), and after ~1.6 s more for the new face to load, it fades out onto it. The `/settings` catch-up (watch was away) still swaps silently.
+**The Figma themes (2026-10-31, Figma "Calen-Time" Frame 6, node 38:3237):** eleven more colourways, each its own face like the first five. They tint the whole dial: background, ring track, ticks, hour numbers (3, 6, 9, 12 lighter), date and secondary text, clock and title, divider, comet trail and now dot. Two kinds:
+
+| Kind | Themes | Meeting arcs |
+|---|---|---|
+| Tinted dial | Lunar Mono, Desert Dusk, Racing Lime, Plum Rose, Forest Signal, Arctic Lagoon | One colour (panel 0 tinted, as Amber). |
+| Palette | Rose Quartz, Copper Garden, Ocean, Aurora, Acid Circuit | Five colours in turn from the visible window's start (now, or a live meeting's start) to 12 hours ahead, drawn by the watch app on panel 3 like Solaris. The arrow and settle animation use the first colour. |
+
+In these themes the double-booking stripes and their line, and the later lane, use the theme's own colours (from Figma), and private stripes use its dim number colour; the watch app knows which face is on the watch and draws panel 2 in its colours, with elapsed and dimmed parts blending toward the dial's background. The first five keep coral double bookings and grey private stripes. The colour tables live in `tools/gen_spike_face.py` (faces), `Themes.kt` (watch app), `Looks.kt` (phone app) and `prototype/index.html`, and are kept in step by hand.
+
+**Changing colourway, seen on the watch (2026-10-31):** swapping a pushed face makes Wear OS show its own plain stand-in clock between the old face and the new one. So a change from the phone plays as a short transition on the watch: a cover in the new face's background fades in, a ring sweeps round in the new colourway (Solaris: its day's gradient; a Palette theme: its five colours) with the name in the middle, the swap happens underneath (the cover returns to the front whenever the swap pushes the face in front of it), and after ~1.6 s more for the new face to load, it fades out onto it. The `/settings` catch-up (watch was away) still swaps silently.
 
 ## 10. Solaris face
 

@@ -103,14 +103,7 @@ private object Home {
     const val DESIGN_WIDTH = 393f          // the frame's width; the watch block scales with the screen width
 }
 
-private val COLOURWAYS = listOf("solaris", "amber", "mint", "violet", "rose")
-private val COLOURWAY_LINES = mapOf(
-    "solaris" to "Colours that follow the sun through your day.",
-    "amber" to "Warm amber arcs, the original Calen-Time.",
-    "mint" to "Cool mint arcs with a soft blue lane.",
-    "violet" to "Violet arcs with a cyan lane.",
-    "rose" to "Rose arcs with a peach lane.",
-)
+private val COLOURWAYS = Looks.IDS
 
 /**
  * Today and Watchface share one stage (RULES A2, A5), so moving between them is one animation:
@@ -247,14 +240,16 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                 COLOURWAYS.forEachIndexed { i, id ->
                     val on = i == pager.currentPage
                     val dot = Modifier.height(6.dp).width(if (on) 18.dp else 6.dp).clip(CircleShape)
-                    // Selected, Solaris's dot is its day in miniature (night blue → dawn → noon gold → sunset coral → violet);
-                    // unselected, every dot is the same plain grey.
+                    // Selected, Solaris's dot is its day in miniature (night blue → dawn → noon gold → sunset coral → violet)
+                    // and a Palette theme's runs through its colours; unselected, every dot is the same plain grey.
+                    val palette = Looks.of(id).palette
                     if (id == "solaris" && on) Box(dot.background(SOLARIS_DOT))
+                    else if (palette != null && on) Box(dot.background(Brush.horizontalGradient(palette.map { Color(it) })))
                     else Box(dot.background(if (on) accentFor(id) else Color.White.copy(alpha = .25f)))
                 }
             }
             Text(lookName(shown), style = TitleStyle)
-            Text(COLOURWAY_LINES[shown].orEmpty(), style = SubStyle, modifier = Modifier.padding(top = 4.dp, bottom = 20.dp))
+            Text(Looks.of(shown).line, style = SubStyle, modifier = Modifier.padding(top = 4.dp, bottom = 20.dp))
             val face = m.link.face
             val canUse = m.link.watch != null && face?.installed == true
             // A plain frosted button, like Today's; it reads "On your watch" for the colourway in use.
@@ -613,12 +608,14 @@ fun AboutScreen(onBack: () -> Unit, onRunSetup: () -> Unit) {
                 "Arcs" to "Each meeting is an arc at its time on the 12-hour ring. The part already gone is dimmer.",
                 "The white dot" to "Now. The faint trail behind it fades over the last two hours.",
                 "Inner line" to "Meetings later today that don't fit the next 12 hours yet. They move onto the ring 30 minutes after their slot frees up.",
-                "Coral stripes" to "A double booking: two meetings at the same time.",
+                "Two thin stripes" to "A double booking: two meetings at the same time.",
                 "Grey stripes" to "A private meeting. Its title and place never leave your phone.",
                 "Middle" to "The time, and what's next. Tap an hour on the ring to see what's on then; tap the details to go back.",
             ))
             AboutSection("Colourways", listOf(
                 "Amber, Mint, Violet, Rose" to "Pick one on the Watchface tab; your watch changes in a few seconds.",
+                "Lunar Mono to Arctic Lagoon" to "One arc colour on a dial tinted to match.",
+                "Rose Quartz to Acid Circuit" to "Palette themes: the arcs run through five colours, from now to 12 hours ahead.",
                 "Solaris" to "The ring takes the colour of the light at each hour: dawn rose, noon gold, sunset coral, night indigo, from your sunrise and sunset.",
             ))
             AboutSection("Buzzes", listOf(
