@@ -139,44 +139,52 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
 
         // Everything but the drawer is the "page" the drawer and the floating nav blur.
         Box(Modifier.fillMaxSize().hazeSource(haze, zIndex = 0f)) {
-            // A soft glow of the colourway rising from the bottom of the page (the background colour stays).
+            // A soft glow of the colourway rising from the bottom of the page (the background colour stays). On
+            // Watchface it's fainter and sits lower, so the face is the brightest thing on screen.
             Box(Modifier.fillMaxSize().drawBehind {
+                val k = 1f - .55f * p
                 drawRect(Brush.radialGradient(
-                    listOf(glow.copy(alpha = .22f), glow.copy(alpha = .08f), Color.Transparent),
-                    center = Offset(size.width / 2, size.height * .86f), radius = size.width * 1.1f,
+                    listOf(glow.copy(alpha = .22f * k), glow.copy(alpha = .08f * k), Color.Transparent),
+                    center = Offset(size.width / 2, size.height * (.86f + .2f * p)), radius = size.width * (1.1f - .2f * p),
                 ))
             })
-            // One watch per colourway, side by side; on Today only the one in use is shown and it can't be swiped.
-            HorizontalPager(pager, Modifier.fillMaxSize().offset(y = dy), userScrollEnabled = watchMode && p > .98f) { page ->
-                val id = COLOURWAYS[page]
-                val sample = remember { SampleDay.meetings() }
-                val live = !watchMode
-                Box(Modifier.fillMaxSize()) {
-                    // The watch photo at 40 %, its strap ends faded out with a mask (nothing square over the glow).
-                    Box(Modifier.offset(x = d(29f), y = d(27f)).size(d(334.5f), d(498.8f))) {
-                        Image(
-                            painterResource(R.drawable.watch_body), null, contentScale = ContentScale.FillBounds,
-                            colorFilter = ColorFilter.tint(Home.background, BlendMode.Multiply),   // Figma's multiply, on the watch's pixels only
-                            modifier = Modifier.fillMaxSize()
-                                .graphicsLayer { alpha = .4f; compositingStrategy = CompositingStrategy.Offscreen }
-                                .drawWithContent {
-                                    drawContent()
-                                    drawRect(Brush.verticalGradient(0f to Color.Transparent, .2f to Color.Black, .78f to Color.Black, 1f to Color.Transparent),
-                                        blendMode = BlendMode.DstIn)
-                                },
-                        )
-                    }
-                    val meetings = if (live) m.meetings else sample
-                    val at = if (live) null else SampleDay.SAMPLE_MINUTE
-                    // Glow: a blurred copy of the face, only for the watch at rest (48 dp of room so the blur isn't cut square).
-                    if (page == pager.settledPage) {
-                        val glowPad = 48.dp
-                        Box(Modifier.offset(x = d(79.2f) - glowPad, y = d(158.8f) - glowPad).size(faceSize + glowPad * 2)
-                            .graphicsLayer { renderEffect = BlurEffect(18.dp.toPx(), 18.dp.toPx(), TileMode.Decal); alpha = .7f; scaleX = 1.04f; scaleY = 1.04f },
-                            contentAlignment = Alignment.Center) { WatchFacePreview(id, meetings, faceSize, atMinute = at) }
-                    }
-                    Box(Modifier.offset(x = d(79.2f), y = d(158.8f)).size(faceSize)) {
-                        WatchFacePreview(id, meetings, faceSize, interactive = live, atMinute = at)
+            // The watch stays still (it only moves between Today and Watchface); only the face inside it swipes.
+            Box(Modifier.offset(x = d(29f), y = d(27f) + dy).size(d(334.5f), d(498.8f))) {
+                Image(
+                    painterResource(R.drawable.watch_body), null, contentScale = ContentScale.FillBounds,
+                    colorFilter = ColorFilter.tint(Home.background, BlendMode.Multiply),   // Figma's multiply, on the watch's pixels only
+                    modifier = Modifier.fillMaxSize()
+                        .graphicsLayer { alpha = .4f; compositingStrategy = CompositingStrategy.Offscreen }
+                        .drawWithContent {
+                            drawContent()
+                            drawRect(Brush.verticalGradient(0f to Color.Transparent, .2f to Color.Black, .78f to Color.Black, 1f to Color.Transparent),
+                                blendMode = BlendMode.DstIn)
+                        },
+                )
+            }
+            val sample = remember { SampleDay.meetings() }
+            val live = !watchMode
+            val meetings = if (live) m.meetings else sample
+            val at = if (live) null else SampleDay.SAMPLE_MINUTE
+            // Glow: a blurred copy of the face at rest (48 dp of room so the blur isn't cut square); hidden mid-swipe.
+            if (!pager.isScrollInProgress) {
+                val glowPad = 48.dp
+                Box(Modifier.offset(x = d(79.2f) - glowPad, y = d(158.8f) + dy - glowPad).size(faceSize + glowPad * 2)
+                    .graphicsLayer { renderEffect = BlurEffect(18.dp.toPx(), 18.dp.toPx(), TileMode.Decal); alpha = .7f; scaleX = 1.04f; scaleY = 1.04f },
+                    contentAlignment = Alignment.Center) { WatchFacePreview(COLOURWAYS[pager.settledPage], meetings, faceSize, atMinute = at) }
+            }
+            // The faces, one per colourway, sliding through the watch's round screen. The band is full width, so a
+            // swipe anywhere across the watch works; drawing is clipped to the screen.
+            HorizontalPager(
+                pager,
+                Modifier.offset(y = d(158.8f) + dy).fillMaxWidth().height(faceSize).clip(CentredCircle),
+                userScrollEnabled = watchMode && p > .98f,
+                // On Watchface the faces either side are loaded ahead, so a swipe never shows one still loading.
+                beyondViewportPageCount = if (watchMode) 1 else 0,
+            ) { page ->
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Box(Modifier.size(faceSize)) {
+                        WatchFacePreview(COLOURWAYS[page], meetings, faceSize, interactive = live, atMinute = at)
                         // On Watchface the face is a picture: swipes go to the pager, not into the face.
                         if (!live) Box(Modifier.matchParentSize().pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } })
                     }
@@ -222,29 +230,37 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
             Row(Modifier.padding(top = 16.dp, bottom = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 COLOURWAYS.forEachIndexed { i, id ->
                     val on = i == pager.currentPage
-                    Box(Modifier.height(6.dp).width(if (on) 18.dp else 6.dp).clip(CircleShape)
-                        .background(if (on) accentFor(id) else Color.White.copy(alpha = .25f)))
+                    val dot = Modifier.height(6.dp).width(if (on) 18.dp else 6.dp).clip(CircleShape)
+                    // Solaris's dot is its day in miniature: night blue → dawn → noon gold → sunset coral → violet.
+                    if (id == "solaris") Box(dot.graphicsLayer { alpha = if (on) 1f else .55f }.background(SOLARIS_DOT))
+                    else Box(dot.background(if (on) accentFor(id) else Color.White.copy(alpha = .25f)))
                 }
             }
             val face = m.link.face
             val canUse = m.link.watch != null && face?.installed == true
-            when {
-                shown == m.colourway -> Row(
-                    Modifier.height(52.dp).clip(RoundedCornerShape(26.dp)).frosted(haze, RoundedCornerShape(26.dp)).padding(horizontal = 26.dp),
-                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Icon(Icons.check, null, tint = accentFor(shown), modifier = Modifier.size(18.dp))
-                    Text("On your watch", style = BodyStyle.copy(fontWeight = FontWeight.Medium))
-                }
-                // The button takes the colour of the colourway on show, not the one in use.
-                else -> CompositionLocalProvider(LocalAccent provides glow) {
-                    PrimaryButton("Use watch face", Modifier.width(220.dp).height(52.dp), enabled = canUse && watchMode) { m.pickColourway(shown) }
-                }
+            // A plain frosted button, like Today's; it reads "On your watch" for the colourway in use.
+            val inUse = shown == m.colourway
+            Row(
+                Modifier.height(52.dp).clip(RoundedCornerShape(26.dp)).frosted(haze, RoundedCornerShape(26.dp))
+                    .clickable(enabled = !inUse && canUse && watchMode, role = Role.Button) { m.pickColourway(shown) }
+                    .padding(horizontal = 28.dp).graphicsLayer { alpha = if (inUse || canUse) 1f else .45f },
+                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                if (inUse) Icon(Icons.check, null, tint = Palette.text, modifier = Modifier.size(18.dp))
+                Text(if (inUse) "On your watch" else "Use watch face", style = BodyStyle.copy(fontWeight = FontWeight.Medium))
             }
             if (!canUse) Text("Connect your watch with Calen-Time on it to change faces.", style = HintStyle, modifier = Modifier.padding(top = 10.dp))
         }
     }
 }
+
+/** A circle the height of its box, centred: the watch's round screen inside the full-width face pager. */
+private val CentredCircle = androidx.compose.foundation.shape.GenericShape { size, _ ->
+    val r = size.height / 2
+    addOval(androidx.compose.ui.geometry.Rect(Offset(size.width / 2, r), r))
+}
+
+private val SOLARIS_DOT = Brush.horizontalGradient(listOf(Color(0xFF3F66E6), Color(0xFFE88AB2), Color(0xFFFFCC5C), Color(0xFFFF7438), Color(0xFFA957DC)))
 
 /** Frosted glass over the page: the watch and glow show through, blurred and lightly tinted, with a hairline edge. */
 private fun Modifier.frosted(haze: HazeState, shape: androidx.compose.ui.graphics.Shape) = this
