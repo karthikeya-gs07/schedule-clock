@@ -8,6 +8,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.ui.unit.lerp
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloatAsState
@@ -50,6 +51,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -67,7 +71,11 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -355,15 +363,40 @@ private fun MeetingsDrawer(m: AppModel, haze: HazeState, collapsedTop: androidx.
     val density = LocalDensity.current
     val down = with(density) { collapsedTop.toPx() }
     val up = with(density) { expandedTop.toPx() }
-    val top = remember { Animatable(down) }
+    // Where the drawer's top is, in px; set directly while dragging (so the list's own scrolling can hand its
+    // drags over), animated to up or down when let go.
+    var top by remember { mutableFloatStateOf(down) }
     val scope = rememberCoroutineScope()
-    fun settle(velocity: Float = 0f) = scope.launch {
-        val target = when {
+    var settling by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    fun settle(velocity: Float = 0f, target: Float? = null) {
+        settling?.cancel()
+        val to = target ?: when {
             velocity < -800 -> up
             velocity > 800 -> down
-            else -> if (top.value < (up + down) / 2) up else down
+            else -> if (top < (up + down) / 2) up else down
         }
-        top.animateTo(target, spring(dampingRatio = .85f, stiffness = 500f))
+        settling = scope.launch { animate(top, to, velocity, spring(dampingRatio = .85f, stiffness = 500f)) { v, _ -> top = v } }
+    }
+    fun dragBy(dy: Float): Float {   // moves the drawer, returns how much of dy it used
+        settling?.cancel()
+        val next = (top + dy).coerceIn(up, down)
+        val used = next - top
+        top = next
+        return used
+    }
+    // Drags anywhere on the drawer move it: pulling up raises it before the list scrolls; pulling down with the
+    // list at its top lowers it. A fling settles it open or closed.
+    val drag = remember(up, down) {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset =
+                if (available.y < 0 && top > up) Offset(0f, dragBy(available.y)) else Offset.Zero
+            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset =
+                if (available.y > 0 && source == NestedScrollSource.UserInput) Offset(0f, dragBy(available.y)) else Offset.Zero
+            override suspend fun onPreFling(available: Velocity): Velocity {
+                if (top > up + 1 && top < down - 1) { settle(available.y); return available }
+                return Velocity.Zero
+            }
+        }
     }
     val now = System.currentTimeMillis()
     val zone = ZoneId.systemDefault()
@@ -371,7 +404,8 @@ private fun MeetingsDrawer(m: AppModel, haze: HazeState, collapsedTop: androidx.
     val left = m.meetings.filter { !it.allDay && it.end > now && it.begin < endOfToday }
 
     Column(
-        Modifier.offset { IntOffset(0, (top.value + awayPx).roundToInt()) }.fillMaxWidth().height(height - expandedTop)
+        Modifier.offset { IntOffset(0, (top + awayPx).roundToInt()) }.fillMaxWidth().height(height - expandedTop)
+            .nestedScroll(drag)
             .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
             // Strong blur of the watch and glow behind it; also a layer the floating nav blurs in turn.
             .hazeSource(haze, zIndex = 1f)
@@ -387,11 +421,11 @@ private fun MeetingsDrawer(m: AppModel, haze: HazeState, collapsedTop: androidx.
                         onVerticalDrag = { change, amount ->
                             change.consume()
                             dragVelocity = amount * 60f
-                            scope.launch { top.snapTo((top.value + amount).coerceIn(up, down)) }
+                            dragBy(amount)
                         },
                     )
                 }
-                .clickable(role = Role.Button) { scope.launch { top.animateTo(if (top.value > (up + down) / 2) up else down, spring(.85f, 500f)) } }
+                .clickable(role = Role.Button) { settle(target = if (top > (up + down) / 2) up else down) }
                 .semantics { contentDescription = "Meetings. Pull up to see them all" }
                 .padding(top = 14.dp, bottom = 14.dp),
             horizontalAlignment = Alignment.CenterHorizontally,

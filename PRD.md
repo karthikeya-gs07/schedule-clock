@@ -392,6 +392,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 - **v0.70:** Phone app: the Look tab is now **Watchface**; the selected colourway card has a subtle 1 px border; more space between each preview and its name.
 - **v0.71:** Phone app tidy-up and setup fallback: Calendars and Watchface lose their subtitles and the account letter circles; the confirm step shows the real face with the watch's question below it; a new **It didn't show up** path explains how to pick the face on the watch and offers **Send it again** (RULES A1).
 - **v0.72:** Setup has a round back button beside the main button on steps 2–4 (RULES A1).
+- **v0.93:** Today's drawer moves with a drag anywhere on it, not only its top: the list hands its drags to the drawer through nested scrolling (up raises the drawer first; down at the list's top lowers it). Checked on the Fold.
 - **v0.92:** Watchface: while browsing, the nav's selected icon takes the colour of the colourway on show (fades over 300 ms); leaving Watchface it returns to the colourway in use. Seen on the Fold (violet while Violet was shown).
 - **v0.91:** Watchface: Solaris's page dot shows its gradient only when selected; unselected it's plain grey like the others. Checked on the Fold.
 - **v0.90:** Watchface: swipe anywhere on the page to change the face (a page-wide drag layer drives the face pager), page dots moved above the name, and the face glow hides mid-swipe. Tabs slide in from the side they sit on in the nav (RULES A10). Checked on the Fold.
