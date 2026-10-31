@@ -131,48 +131,6 @@ fun bold(s: String) = buildAnnotatedString {
     s.split("**").forEachIndexed { i, part -> if (i % 2 == 1) withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = Palette.text)) { append(part) } else append(part) }
 }
 
-// ---------- Watchface (RULES A5) ----------
-@Composable
-fun WatchfaceScreen(m: AppModel) {
-    ScreenTitle("Watchface")
-    val face = m.link.face
-    val enabled = m.link.watch != null && face?.installed == true
-    if (!enabled) Text("Connect your watch with the watch face on it to change its colours.", style = SubStyle, modifier = Modifier.padding(bottom = 18.dp))
-    else Spacer(Modifier.height(12.dp))
-    val alpha = if (enabled) 1f else .45f
-    LookCard("solaris", "Solaris", "Colours that follow the sun through your day.", m, enabled, alpha, wide = true)
-    Spacer(Modifier.height(12.dp))
-    listOf("amber", "mint", "violet", "rose").chunked(2).forEach { pair ->
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(bottom = 12.dp)) {
-            pair.forEach { LookCard(it, lookName(it), null, m, enabled, alpha, Modifier.weight(1f)) }
-        }
-    }
-}
-
-@Composable
-private fun LookCard(id: String, name: String, text: String?, m: AppModel, enabled: Boolean, alpha: Float, modifier: Modifier = Modifier, wide: Boolean = false) {
-    val selected = m.colourway == id
-    val sample = remember { SampleDay.meetings() }   // a busy sample day, so every colourway shows its arcs
-    val accent = LocalAccent.current
-    val shape = RoundedCornerShape(20.dp)
-    // Same frosted glass as Today's buttons: a light grey tint with a hairline edge (accent edge when chosen).
-    val box = modifier.fillMaxWidth().clip(shape).frostCard(shape, edge = if (selected) accent.copy(alpha = .45f) else Color.White.copy(alpha = .07f))
-        .clickable(enabled = enabled, role = Role.RadioButton) { m.pickColourway(id) }
-    val title: @Composable () -> Unit = {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(name, style = BodyStyle.copy(color = Palette.text.copy(alpha = alpha)), fontWeight = FontWeight.Medium)
-            if (selected) { Spacer(Modifier.width(6.dp)); Icon(Icons.check, null, tint = accent, modifier = Modifier.size(18.dp)) }
-        }
-    }
-    if (wide) Row(box.padding(15.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-        WatchFacePreview(id, sample, 120.dp, atMinute = SampleDay.SAMPLE_MINUTE) { if (enabled) m.pickColourway(id) }
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) { title(); text?.let { Text(it, style = HintStyle) } }
-    } else Column(box.padding(top = 15.dp, bottom = 13.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        WatchFacePreview(id, sample, 136.dp, atMinute = SampleDay.SAMPLE_MINUTE) { if (enabled) m.pickColourway(id) }
-        title()
-    }
-}
-
 // ---------- Settings (RULES A6) ----------
 @Composable
 fun SettingsScreen(m: AppModel) {

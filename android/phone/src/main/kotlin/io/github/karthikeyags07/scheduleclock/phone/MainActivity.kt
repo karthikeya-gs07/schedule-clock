@@ -84,7 +84,7 @@ class MainActivity : ComponentActivity() {
 }
 
 private enum class Tab(val label: String, val icon: ImageVector) {
-    TODAY("Today", Icons.home), CALENDARS("Calendars", Icons.calendar), WATCHFACE("Watchface", Icons.look), SETTINGS("Settings", Icons.settings)
+    TODAY("Today", Icons.home), WATCHFACE("Watchface", Icons.look), CALENDARS("Calendars", Icons.calendar), SETTINGS("Settings", Icons.settings)
 }
 
 @Composable
@@ -111,12 +111,13 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
                 about -> { BackHandler { about = false }; AboutScreen(onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() } }
                 else -> {
                     BackHandler(enabled = tab != Tab.TODAY || watchStatus) { if (watchStatus) watchStatus = false else tab = Tab.TODAY }
-                    if (tab == Tab.TODAY) HomeScreen(m, haze, onWatchStatus = { watchStatus = true }, onAbout = { about = true })
+                    // Today and Watchface are one stage, so switching between them animates (RULES A2, A5).
+                    if (tab == Tab.TODAY || tab == Tab.WATCHFACE)
+                        HomeScreen(m, haze, watchMode = tab == Tab.WATCHFACE, onWatchStatus = { watchStatus = true }, onAbout = { about = true })
                     else Column(Modifier.fillMaxSize().hazeSource(haze, zIndex = 0f).background(Palette.screen).statusBarsPadding().verticalScroll(rememberScrollState())
                         .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 132.dp)) {
                         when (tab) {
                             Tab.CALENDARS -> { ScreenTitle("Calendars"); CalendarsList(m, allow) }
-                            Tab.WATCHFACE -> WatchfaceScreen(m)
                             else -> SettingsScreen(m)
                         }
                     }

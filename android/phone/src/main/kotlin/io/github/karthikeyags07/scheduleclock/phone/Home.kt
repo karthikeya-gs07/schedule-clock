@@ -1,6 +1,12 @@
 package io.github.karthikeyags07.scheduleclock.phone
 
 import android.text.format.DateUtils
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.ui.unit.lerp
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -38,6 +44,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -85,78 +92,157 @@ private object Home {
     const val DESIGN_WIDTH = 393f          // the frame's width; the watch block scales with the screen width
 }
 
+private val COLOURWAYS = listOf("solaris", "amber", "mint", "violet", "rose")
+private val COLOURWAY_LINES = mapOf(
+    "solaris" to "Colours that follow the sun through your day.",
+    "amber" to "Warm amber arcs, the original Calen-Time.",
+    "mint" to "Cool mint arcs with a soft blue lane.",
+    "violet" to "Violet arcs with a cyan lane.",
+    "rose" to "Rose arcs with a peach lane.",
+)
+
 /**
- * Today (RULES A2, redesigned 2026-10-31 from Figma): the live face inside a watch, the sync pill (1) and
- * sync button (2) under it, the watch status (7) and About (6) buttons at the top, and the drawer of
- * upcoming meetings (5) that pulls up from under the floating navigation (4).
+ * Today and Watchface share one stage (RULES A2, A5), so moving between them is one animation:
+ *
+ * - **Today:** the live face inside a watch, the sync pill (1) and sync button (2) under it, the watch status (7)
+ *   and About (6) buttons at the top, and the drawer of today's meetings (5) under the floating navigation (4).
+ * - **Watchface:** the watch glides to the middle, the drawer slides away and the buttons dissolve. Swipe left
+ *   and right to see each colourway on the busy sample day; **Use watch face** sends the one shown to the watch.
+ *
+ * [watchMode] picks the screen; the change animates both ways.
  */
 @Composable
-fun HomeScreen(m: AppModel, haze: HazeState, onWatchStatus: () -> Unit, onAbout: () -> Unit) {
+fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: () -> Unit, onAbout: () -> Unit) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Home.background)) {
-        val accent = LocalAccent.current
         val s = maxWidth.value / Home.DESIGN_WIDTH          // design px → dp on this screen
         fun d(v: Float) = (v * s).dp
         val faceSize = d(234.3f)
         val pillTop = d(477f)
         val drawerTop = d(559f)
+        val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+
+        // 0 = Today, 1 = Watchface; everything below follows this one value.
+        val p by animateFloatAsState(if (watchMode) 1f else 0f, tween(650, easing = FastOutSlowInEasing), label = "stage")
+        val pager = rememberPagerState(initialPage = COLOURWAYS.indexOf(m.colourway).coerceAtLeast(0)) { COLOURWAYS.size }
+        // Back on Today (or when the colourway changes there), the watch shows the colourway in use.
+        LaunchedEffect(watchMode, m.colourway) {
+            val inUse = COLOURWAYS.indexOf(m.colourway).coerceAtLeast(0)
+            if (!watchMode && pager.currentPage != inUse) pager.animateScrollToPage(inUse)
+        }
+        val shown = if (watchMode) COLOURWAYS[pager.currentPage] else m.colourway
+        val glow by animateColorAsState(accentFor(shown), tween(400), label = "glow")
+
+        // Where the face sits: under the top buttons on Today, in the middle (above the name and button) on Watchface.
+        val faceTopHome = d(158.8f)
+        val faceTopCentre = statusBar + (maxHeight - statusBar - 300.dp - faceSize) / 2
+        val dy = lerp(0.dp, faceTopCentre - faceTopHome, p)
 
         // Everything but the drawer is the "page" the drawer and the floating nav blur.
         Box(Modifier.fillMaxSize().hazeSource(haze, zIndex = 0f)) {
-        // A soft glow of the colourway rising from the bottom of the page (the background colour stays).
-        Box(Modifier.fillMaxSize().drawBehind {
-            drawRect(Brush.radialGradient(
-                listOf(accent.copy(alpha = .22f), accent.copy(alpha = .08f), Color.Transparent),
-                center = Offset(size.width / 2, size.height * .86f), radius = size.width * 1.1f,
-            ))
-        })
-
-        // ---- The watch: photo at 40 %, its strap ends faded out, with the live face glowing in its screen ----
-        // The fade is a mask on the photo itself (not grey boxes on top), so nothing square shows over the glow.
-        Box(Modifier.offset(x = d(29f), y = d(27f)).size(d(334.5f), d(498.8f))) {
-            Image(
-                painterResource(R.drawable.watch_body), null, contentScale = ContentScale.FillBounds,
-                colorFilter = ColorFilter.tint(Home.background, BlendMode.Multiply),   // Figma's multiply, on the watch's pixels only
-                modifier = Modifier.fillMaxSize()
-                    .graphicsLayer { alpha = .4f; compositingStrategy = CompositingStrategy.Offscreen }
-                    .drawWithContent {
-                        drawContent()
-                        drawRect(Brush.verticalGradient(0f to Color.Transparent, .2f to Color.Black, .78f to Color.Black, 1f to Color.Transparent),
-                            blendMode = BlendMode.DstIn)
-                    },
-            )
-        }
-        // Glow: a blurred copy of the face behind it, so the arcs light up the watch around them. Its layer is
-        // 48 dp bigger on every side, so the blur fades out before the layer's edge instead of being cut square.
-        val glowPad = 48.dp
-        Box(Modifier.offset(x = d(79.2f) - glowPad, y = d(158.8f) - glowPad).size(faceSize + glowPad * 2)
-            .graphicsLayer { renderEffect = BlurEffect(18.dp.toPx(), 18.dp.toPx(), TileMode.Decal); alpha = .7f; scaleX = 1.04f; scaleY = 1.04f },
-            contentAlignment = Alignment.Center) { WatchFacePreview(m.colourway, m.meetings, faceSize) }
-        Box(Modifier.offset(x = d(79.2f), y = d(158.8f)).size(faceSize)) {
-            WatchFacePreview(m.colourway, m.meetings, faceSize, interactive = true)
-        }
-        }
-
-        // ---- (7) watch status and (6) About (frosted, like the pill and sync button) ----
-        Row(Modifier.fillMaxWidth().statusBarsPadding().padding(top = 44.dp, start = d(31f), end = d(31f)), horizontalArrangement = Arrangement.SpaceBetween) {
-            RoundButton("Watch status", haze, onWatchStatus) {
-                Icon(Icons.clock, null, tint = Palette.text, modifier = Modifier.size(24.dp))
-                Box(Modifier.align(Alignment.TopEnd).padding(top = 14.dp, end = 13.dp).size(9.dp).clip(CircleShape)
-                    .background(Color(0xFF3A3A3E)).padding(1.5.dp).clip(CircleShape).background(watchColour(m)))
+            // A soft glow of the colourway rising from the bottom of the page (the background colour stays).
+            Box(Modifier.fillMaxSize().drawBehind {
+                drawRect(Brush.radialGradient(
+                    listOf(glow.copy(alpha = .22f), glow.copy(alpha = .08f), Color.Transparent),
+                    center = Offset(size.width / 2, size.height * .86f), radius = size.width * 1.1f,
+                ))
+            })
+            // One watch per colourway, side by side; on Today only the one in use is shown and it can't be swiped.
+            HorizontalPager(pager, Modifier.fillMaxSize().offset(y = dy), userScrollEnabled = watchMode && p > .98f) { page ->
+                val id = COLOURWAYS[page]
+                val sample = remember { SampleDay.meetings() }
+                val live = !watchMode
+                Box(Modifier.fillMaxSize()) {
+                    // The watch photo at 40 %, its strap ends faded out with a mask (nothing square over the glow).
+                    Box(Modifier.offset(x = d(29f), y = d(27f)).size(d(334.5f), d(498.8f))) {
+                        Image(
+                            painterResource(R.drawable.watch_body), null, contentScale = ContentScale.FillBounds,
+                            colorFilter = ColorFilter.tint(Home.background, BlendMode.Multiply),   // Figma's multiply, on the watch's pixels only
+                            modifier = Modifier.fillMaxSize()
+                                .graphicsLayer { alpha = .4f; compositingStrategy = CompositingStrategy.Offscreen }
+                                .drawWithContent {
+                                    drawContent()
+                                    drawRect(Brush.verticalGradient(0f to Color.Transparent, .2f to Color.Black, .78f to Color.Black, 1f to Color.Transparent),
+                                        blendMode = BlendMode.DstIn)
+                                },
+                        )
+                    }
+                    val meetings = if (live) m.meetings else sample
+                    val at = if (live) null else SampleDay.SAMPLE_MINUTE
+                    // Glow: a blurred copy of the face, only for the watch at rest (48 dp of room so the blur isn't cut square).
+                    if (page == pager.settledPage) {
+                        val glowPad = 48.dp
+                        Box(Modifier.offset(x = d(79.2f) - glowPad, y = d(158.8f) - glowPad).size(faceSize + glowPad * 2)
+                            .graphicsLayer { renderEffect = BlurEffect(18.dp.toPx(), 18.dp.toPx(), TileMode.Decal); alpha = .7f; scaleX = 1.04f; scaleY = 1.04f },
+                            contentAlignment = Alignment.Center) { WatchFacePreview(id, meetings, faceSize, atMinute = at) }
+                    }
+                    Box(Modifier.offset(x = d(79.2f), y = d(158.8f)).size(faceSize)) {
+                        WatchFacePreview(id, meetings, faceSize, interactive = live, atMinute = at)
+                        // On Watchface the face is a picture: swipes go to the pager, not into the face.
+                        if (!live) Box(Modifier.matchParentSize().pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } })
+                    }
+                }
             }
-            RoundButton("About Calen-Time", haze, onAbout) { Icon(Icons.info, null, tint = Palette.text, modifier = Modifier.size(24.dp)) }
         }
 
-        // ---- (1) sync pill and (2) sync button ----
-        Row(Modifier.fillMaxWidth().offset(y = pillTop), horizontalArrangement = Arrangement.Center) {
-            SyncPill(m, haze, Modifier.width(184.dp))
-            Spacer(Modifier.width(18.dp))
-            SyncButton(m, haze)
+        // ---- Today's controls: they dissolve away on Watchface ----
+        val todayAlpha = (1f - p * 2f).coerceIn(0f, 1f)
+        if (todayAlpha > 0f) {
+            // (7) watch status and (6) About (frosted, like the pill and sync button)
+            Row(Modifier.fillMaxWidth().statusBarsPadding().padding(top = 44.dp, start = d(31f), end = d(31f)).graphicsLayer { alpha = todayAlpha },
+                horizontalArrangement = Arrangement.SpaceBetween) {
+                RoundButton("Watch status", haze, onWatchStatus) {
+                    Icon(Icons.clock, null, tint = Palette.text, modifier = Modifier.size(24.dp))
+                    Box(Modifier.align(Alignment.TopEnd).padding(top = 14.dp, end = 13.dp).size(9.dp).clip(CircleShape)
+                        .background(Color(0xFF3A3A3E)).padding(1.5.dp).clip(CircleShape).background(watchColour(m)))
+                }
+                RoundButton("About Calen-Time", haze, onAbout) { Icon(Icons.info, null, tint = Palette.text, modifier = Modifier.size(24.dp)) }
+            }
+            // (1) sync pill and (2) sync button
+            Row(Modifier.fillMaxWidth().offset(y = pillTop).graphicsLayer { alpha = todayAlpha }, horizontalArrangement = Arrangement.Center) {
+                SyncPill(m, haze, Modifier.width(184.dp))
+                Spacer(Modifier.width(18.dp))
+                SyncButton(m, haze)
+            }
         }
 
-        // ---- (5) the meetings drawer ----
+        // ---- (5) the meetings drawer: slides off the bottom on Watchface, back up on Today ----
         // Pulled up, the drawer stops just under the top buttons (status bar + 44 + 57 + 16 dp).
-        val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-        MeetingsDrawer(m, haze, collapsedTop = drawerTop, expandedTop = statusBar + 117.dp, height = maxHeight)
+        MeetingsDrawer(m, haze, collapsedTop = drawerTop, expandedTop = statusBar + 117.dp, height = maxHeight,
+            away = lerp(0.dp, maxHeight, p))
+
+        // ---- Watchface: the colourway's name, the page dots and Use watch face ----
+        val pickAlpha = ((p - .45f) / .55f).coerceIn(0f, 1f)
+        if (pickAlpha > 0f) Column(
+            Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(start = 24.dp, end = 24.dp, bottom = 28.dp + 80.dp + 24.dp)
+                .graphicsLayer { alpha = pickAlpha; translationY = (1f - pickAlpha) * 24.dp.toPx() },
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(lookName(shown), style = TitleStyle)
+            Text(COLOURWAY_LINES[shown].orEmpty(), style = SubStyle, modifier = Modifier.padding(top = 4.dp))
+            Row(Modifier.padding(top = 16.dp, bottom = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                COLOURWAYS.forEachIndexed { i, id ->
+                    val on = i == pager.currentPage
+                    Box(Modifier.height(6.dp).width(if (on) 18.dp else 6.dp).clip(CircleShape)
+                        .background(if (on) accentFor(id) else Color.White.copy(alpha = .25f)))
+                }
+            }
+            val face = m.link.face
+            val canUse = m.link.watch != null && face?.installed == true
+            when {
+                shown == m.colourway -> Row(
+                    Modifier.height(52.dp).clip(RoundedCornerShape(26.dp)).frosted(haze, RoundedCornerShape(26.dp)).padding(horizontal = 26.dp),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Icon(Icons.check, null, tint = accentFor(shown), modifier = Modifier.size(18.dp))
+                    Text("On your watch", style = BodyStyle.copy(fontWeight = FontWeight.Medium))
+                }
+                // The button takes the colour of the colourway on show, not the one in use.
+                else -> CompositionLocalProvider(LocalAccent provides glow) {
+                    PrimaryButton("Use watch face", Modifier.width(220.dp).height(52.dp), enabled = canUse && watchMode) { m.pickColourway(shown) }
+                }
+            }
+            if (!canUse) Text("Connect your watch with Calen-Time on it to change faces.", style = HintStyle, modifier = Modifier.padding(top = 10.dp))
+        }
     }
 }
 
@@ -224,7 +310,9 @@ private fun SyncButton(m: AppModel, haze: HazeState) {
  * navigation sits on top of its lower part, so the list leaves room for it.
  */
 @Composable
-private fun MeetingsDrawer(m: AppModel, haze: HazeState, collapsedTop: androidx.compose.ui.unit.Dp, expandedTop: androidx.compose.ui.unit.Dp, height: androidx.compose.ui.unit.Dp) {
+private fun MeetingsDrawer(m: AppModel, haze: HazeState, collapsedTop: androidx.compose.ui.unit.Dp, expandedTop: androidx.compose.ui.unit.Dp,
+                           height: androidx.compose.ui.unit.Dp, away: androidx.compose.ui.unit.Dp = 0.dp) {
+    val awayPx = with(LocalDensity.current) { away.toPx() }
     val density = LocalDensity.current
     val down = with(density) { collapsedTop.toPx() }
     val up = with(density) { expandedTop.toPx() }
@@ -244,7 +332,7 @@ private fun MeetingsDrawer(m: AppModel, haze: HazeState, collapsedTop: androidx.
     val left = m.meetings.filter { !it.allDay && it.end > now && it.begin < endOfToday }
 
     Column(
-        Modifier.offset { IntOffset(0, top.value.roundToInt()) }.fillMaxWidth().height(height - expandedTop)
+        Modifier.offset { IntOffset(0, (top.value + awayPx).roundToInt()) }.fillMaxWidth().height(height - expandedTop)
             .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
             // Strong blur of the watch and glow behind it; also a layer the floating nav blurs in turn.
             .hazeSource(haze, zIndex = 1f)
