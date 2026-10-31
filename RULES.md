@@ -181,6 +181,7 @@ Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.sched
 
 | Date | Change | Rules |
 |---|---|---|
+| 2026-10-31 | Watch status: Bluetooth and Wi-Fi shortcuts when the watch or face can't be reached. About: Share section (Play Store link via the share sheet); no lines between buzz items, only between sections. | §12 A2, A3 |
 | 2026-10-31 | Unfolded About: close button level with Today's info button, far right of the title row. Hairlines between sections in Settings and between accounts in Calendars. | §12 A4, A6, A11 |
 | 2026-10-31 | No page subtitles; Solids/Gradients tabs a fixed frosted pill in both states; darker face cards with the folded screen's 52 dp button; About opens over the right pane (close button) when unfolded; About has hairlines between items and sections; more room above the nav. | §12 A5, A9, A11 |
 | 2026-10-31 | Pages: 28 sp titles, 19 sp headings, 16 sp item names, 14 sp grey descriptions; wide Watchface tabs centred; in-use card edge at 35 %. | §12 A9, A11 |

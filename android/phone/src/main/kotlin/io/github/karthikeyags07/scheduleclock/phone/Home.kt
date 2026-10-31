@@ -636,6 +636,17 @@ fun WatchStatusPanel(m: AppModel, haze: HazeState, onAllow: () -> Unit, onInstal
                 else -> null
             }
             if (fix != null) { Spacer(Modifier.height(18.dp)); PrimaryButton(fix.first, Modifier.fillMaxWidth(), onClick = fix.second) }
+            // When the watch isn't reachable or the face can't get there: shortcuts to the phone's connection settings,
+            // to reconnect the watch (Bluetooth) or check the network it can also use (Wi-Fi).
+            if (watch == null || face == null || !face.installed) {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                fun open(action: String) = runCatching { context.startActivity(android.content.Intent(action)) }
+                Spacer(Modifier.height(if (fix != null) 10.dp else 18.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    SettingsShortcut(Icons.bluetooth, "Bluetooth", Modifier.weight(1f)) { open(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS) }
+                    SettingsShortcut(Icons.wifi, "Wi-Fi", Modifier.weight(1f)) { open(android.provider.Settings.ACTION_WIFI_SETTINGS) }
+                }
+            }
         }
     }
 }
@@ -697,9 +708,7 @@ fun AboutScreen(colourway: String, onBack: () -> Unit, closable: Boolean = false
             ItemDivider(Modifier.padding(top = 8.dp))
             PageHeading("Buzzes")
             IconItem(Icons.buzz, "2 min before", "One short buzz to wrap up and join.")
-            ItemDivider()
             IconItem(Icons.clock, "Halfway", "One long buzz, for meetings of 15 minutes or more.")
-            ItemDivider()
             IconItem(Icons.buzz, "5 min before the end", "Two short buzzes, for meetings of 10 minutes or more.")
             ItemDivider(Modifier.padding(top = 8.dp))
             PageHeading("Privacy")
@@ -707,6 +716,10 @@ fun AboutScreen(colourway: String, onBack: () -> Unit, closable: Boolean = false
             ItemDivider(Modifier.padding(top = 8.dp))
             PageHeading("Credits")
             IconItem(Icons.info, "Fonts", "Google Sans Flex and Anta, under the SIL Open Font License.")
+            ItemDivider(Modifier.padding(top = 8.dp))
+            PageHeading("Share")
+            IconItem(Icons.share, "Tell a friend", "Send the Play Store link to anyone with a Wear OS watch.")
+            ShareButton(Modifier.fillMaxWidth().padding(bottom = 12.dp))
 
             Spacer(Modifier.height(20.dp))
             RunSetupButton(onRunSetup, Modifier.fillMaxWidth())
@@ -726,6 +739,39 @@ private fun FacePart(colourway: String, detail: String, day: List<Meeting>, at: 
         Text(text, style = ItemTextStyle, modifier = Modifier.padding(top = 2.dp))
     }
     if (divider) ItemDivider(Modifier.padding(bottom = 22.dp))
+}
+
+/** Calen-Time's Play Store page (live once the app is published there; PRD §6.5). */
+const val PLAY_LINK = "https://play.google.com/store/apps/details?id=io.github.karthikeyags07.scheduleclock"
+
+/** Opens Android's share sheet with the Play Store link (About). */
+@Composable
+private fun ShareButton(modifier: Modifier) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    Row(
+        modifier.height(52.dp).clip(RoundedCornerShape(26.dp)).frostCard(RoundedCornerShape(26.dp)).clickable(role = Role.Button) {
+            val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain")
+                .putExtra(android.content.Intent.EXTRA_SUBJECT, "Calen-Time")
+                .putExtra(android.content.Intent.EXTRA_TEXT, "Calen-Time puts your meetings on your Wear OS watch face: $PLAY_LINK")
+            context.startActivity(android.content.Intent.createChooser(send, "Share Calen-Time"))
+        },
+        horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.share, null, tint = Palette.text, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(10.dp))
+        Text("Share Calen-Time", style = BodyStyle.copy(fontSize = 16.sp, fontWeight = FontWeight.Medium))
+    }
+}
+
+/** A frosted button that opens one of the phone's settings screens (watch status). */
+@Composable
+private fun SettingsShortcut(icon: ImageVector, text: String, modifier: Modifier, onClick: () -> Unit) = Row(
+    modifier.height(52.dp).clip(RoundedCornerShape(26.dp)).frostCard(RoundedCornerShape(26.dp)).clickable(role = Role.Button, onClick = onClick),
+    horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
+) {
+    Icon(icon, null, tint = Palette.text, modifier = Modifier.size(18.dp))
+    Spacer(Modifier.width(8.dp))
+    Text(text, style = BodyStyle.copy(fontWeight = FontWeight.Medium))
 }
 
 /** Run setup again: a full-width frosted button (About and Settings). */

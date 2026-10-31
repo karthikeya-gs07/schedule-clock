@@ -124,6 +124,9 @@ object Icons {
     val back = strokeIcon("M19 12H5M11 6l-6 6 6 6")
     val close = strokeIcon("M6 6l12 12M18 6 6 18")
     val clock = strokeIcon("M12 3.5a8.5 8.5 0 1 1 0 17a8.5 8.5 0 1 1 0-17z", "M12 7.5V12l3 2")
+    val share = strokeIcon("M12 14.5V4M8 7.5 12 3.5l4 4", "M7 10.5H6.5A1.5 1.5 0 0 0 5 12v7a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 19v-7a1.5 1.5 0 0 0-1.5-1.5H17")
+    val bluetooth = strokeIcon("m7 7.5 10 9-5 4.5V3l5 4.5-10 9")
+    val wifi = strokeIcon("M3.5 9.5a12 12 0 0 1 17 0M6.5 12.8a7.5 7.5 0 0 1 11 0M9.5 16a3.2 3.2 0 0 1 5 0", "M12 19.2v.1")
     val info = strokeIcon("M12 3.5a8.5 8.5 0 1 1 0 17a8.5 8.5 0 1 1 0-17z", "M12 11v5.5M12 7.8v.1")
 }
 
