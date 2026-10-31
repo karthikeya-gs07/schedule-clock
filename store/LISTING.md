@@ -1,4 +1,4 @@
-# Calen-Time: Play Store listing (draft)
+# CalenTime: Play Store listing (draft)
 
 Everything Play Console asks for, ready to paste. Phase 4 of PRD §6.5. Items marked **You** need your account or a decision.
 
@@ -6,7 +6,7 @@ Everything Play Console asks for, ready to paste. Phase 4 of PRD §6.5. Items ma
 
 | Field | Value |
 |---|---|
-| App name (30) | Calen-Time |
+| App name (30) | CalenTime |
 | Package | `io.github.karthikeyags07.scheduleclock` (phone and watch apps share it) |
 | Category | Productivity |
 | Tags | Calendar, Watch faces, Productivity |
@@ -23,7 +23,7 @@ Everything Play Console asks for, ready to paste. Phase 4 of PRD §6.5. Items ma
 
 > **Your day, around the clock.**
 >
-> Calen-Time turns your Wear OS watch face into a picture of your day. Every meeting is an arc on the ring, so a glance at your wrist shows how busy the next 12 hours are, what's next, and how much free time you have before it.
+> CalenTime turns your Wear OS watch face into a picture of your day. Every meeting is an arc on the ring, so a glance at your wrist shows how busy the next 12 hours are, what's next, and how much free time you have before it.
 >
 > **On your watch**
 > • Meetings as arcs on a 12-hour ring, with the time in the middle
@@ -43,7 +43,7 @@ Everything Play Console asks for, ready to paste. Phase 4 of PRD §6.5. Items ma
 > • Setup puts the watch face on your watch for you
 >
 > **Private by design**
-> Your calendar goes only from your phone to your own watch. Calen-Time has no internet access, no accounts, no ads and no tracking. Private events reach the watch without their title or place.
+> Your calendar goes only from your phone to your own watch. CalenTime has no internet access, no accounts, no ads and no tracking. Private events reach the watch without their title or place.
 >
 > **Needs**
 > An Android phone (Android 10 or newer) and a Wear OS 6 or newer watch, such as the Galaxy Watch8 or a Galaxy Watch updated to One UI 8 Watch.
@@ -70,8 +70,8 @@ Everything Play Console asks for, ready to paste. Phase 4 of PRD §6.5. Items ma
 
 ### Sensitive permissions
 
-- **`USE_EXACT_ALARM`** (watch): Play only allows it for alarm and calendar apps. Declaration: "Calen-Time is a calendar watch face; it buzzes at exact times around each meeting (2 min before start, halfway, 5 min before end)."
-- **Watch Face Push**: Google's docs say the push API is meant for apps that run their own watch face marketplace, and that faces published on Play itself should use Watch Face Studio/Designer. Calen-Time pushes only its own face. Play review may ask about this; the answer is that the face needs its watch app for calendar data, so it can't be a standalone face listing.
+- **`USE_EXACT_ALARM`** (watch): Play only allows it for alarm and calendar apps. Declaration: "CalenTime is a calendar watch face; it buzzes at exact times around each meeting (2 min before start, halfway, 5 min before end)."
+- **Watch Face Push**: Google's docs say the push API is meant for apps that run their own watch face marketplace, and that faces published on Play itself should use Watch Face Studio/Designer. CalenTime pushes only its own face. Play review may ask about this; the answer is that the face needs its watch app for calendar data, so it can't be a standalone face listing.
 
 ## Content rating
 
@@ -94,7 +94,7 @@ Questionnaire: utility/productivity app, no user-generated content, no sharing, 
 ## Steps in Play Console (you)
 
 1. Create a developer account at play.google.com/console (one-time $25; identity check can take a few days).
-2. **Create app** → name Calen-Time, app, free.
+2. **Create app** → name CalenTime, app, free.
 3. **Setup → Advanced settings → Form factors**: add **Wear OS**.
 4. Fill the store listing, data safety, content rating, target audience and privacy policy URL from this page.
 5. **Testing → Internal testing** → create release → upload the phone `.aab`; then the Wear OS track → upload the watch `.aab`.

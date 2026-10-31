@@ -206,7 +206,7 @@ object SpikeSchedule {
         if (needsCalendarSetup(context)) {
             // No calendar yet: point to the phone app. A tap on the ring asks for the watch's own calendar
             // instead (watches whose calendar apps share their events, PRD §6.3f).
-            val (title, width) = TextFit.title("Open Calen-Time", 260)
+            val (title, width) = TextFit.title("Open CalenTime", 260)
             return ranged(0f, 0f, 1f + width, title, "on your phone to sync")
         }
         val selected = selectedIndex(context, list)

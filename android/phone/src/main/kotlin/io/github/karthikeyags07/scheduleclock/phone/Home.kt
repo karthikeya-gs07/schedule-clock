@@ -100,7 +100,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import kotlin.math.roundToInt
 
-/** The Today screen's own colours (Figma "Calen-Time", node 28:3). */
+/** The Today screen's own colours (Figma "CalenTime", node 28:3). */
 private object Home {
     val background = Color(0xFF191919)
     const val DESIGN_WIDTH = 393f          // the frame's size; the watch block scales to fit the screen
@@ -215,7 +215,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                     Box(Modifier.align(Alignment.TopEnd).padding(top = 14.dp, end = 13.dp).size(9.dp).clip(CircleShape)
                         .background(Color(0xFF3A3A3E)).padding(1.5.dp).clip(CircleShape).background(watchColour(m)))
                 }
-                RoundButton("About Calen-Time", haze, onAbout) { Icon(Icons.info, null, tint = Palette.text, modifier = Modifier.size(24.dp)) }
+                RoundButton("About CalenTime", haze, onAbout) { Icon(Icons.info, null, tint = Palette.text, modifier = Modifier.size(24.dp)) }
             }
             // (1) sync pill and (2) sync button
             Row(Modifier.fillMaxWidth().offset(y = pillTop).graphicsLayer { alpha = todayAlpha }, horizontalArrangement = Arrangement.Center) {
@@ -298,7 +298,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                 if (inUse) Icon(Icons.check, null, tint = Palette.text, modifier = Modifier.size(18.dp))
                 Text(if (inUse) "On your watch" else "Use watch face", style = BodyStyle.copy(fontWeight = FontWeight.Medium))
             }
-            if (!canUse) Text("Connect your watch with Calen-Time on it to change faces.", style = HintStyle, modifier = Modifier.padding(top = 10.dp))
+            if (!canUse) Text("Connect your watch with CalenTime on it to change faces.", style = HintStyle, modifier = Modifier.padding(top = 10.dp))
         }
     }
 }
@@ -557,15 +557,15 @@ fun WatchStatusPanel(m: AppModel, haze: HazeState, onAllow: () -> Unit, onInstal
     val (title, line, colour) = when {
         watch == null -> Triple("Watch not connected", "Open Galaxy Wearable and check your watch is paired and nearby.", Palette.muted)
         !m.hasPermission -> Triple("Calendar access is off", "Allow it so your meetings can reach the watch.", amber)
-        face == null -> Triple("Calen-Time isn't on your watch", "Get the watch app to put the face on.", amber)
-        !face.supported -> Triple("Your watch needs an update", "Calen-Time needs Wear OS 6 or newer. Check for an update in Galaxy Wearable.", amber)
+        face == null -> Triple("CalenTime isn't on your watch", "Get the watch app to put the face on.", amber)
+        !face.supported -> Triple("Your watch needs an update", "CalenTime needs Wear OS 6 or newer. Check for an update in Galaxy Wearable.", amber)
         !face.installed -> Triple("The face isn't on your watch", "Put it on, then confirm on the watch.", amber)
-        !face.active -> Triple("Not your watch face right now", "Touch and hold your watch face, then swipe to Calen-Time and tap it.", amber)
+        !face.active -> Triple("Not your watch face right now", "Touch and hold your watch face, then swipe to CalenTime and tap it.", amber)
         else -> Triple("All good", "Your meetings sync to your watch on their own.", Palette.ok)
     }
     val items = listOf(
         StatusItem(Icons.watch, "Connection", if (watch != null) "Connected" else "Not connected", watch != null),
-        StatusItem(Icons.info, "Calen-Time on the watch",
+        StatusItem(Icons.info, "CalenTime on the watch",
             when { watch == null -> "Unknown"; face == null -> "Not installed"; !face.supported -> "Needs Wear OS 6"; else -> "Installed" },
             if (watch == null) null else face != null && face.supported),
         StatusItem(Icons.look, "Watch face",
@@ -657,7 +657,7 @@ fun WatchStatusPanel(m: AppModel, haze: HazeState, onAllow: () -> Unit, onInstal
 
 // ---------- (6) About ----------
 /**
- * About Calen-Time (RULES A2): what it is, how to read the face, buzzes, privacy and credits. In the look of Today
+ * About CalenTime (RULES A2): what it is, how to read the face, buzzes, privacy and credits. In the look of Today
  * and setup: the grey stage with the colourway's glow, a large heading, close-ups of the face in your colourway
  * with the part's name and meaning under each, round icons beside the buzzes, and a frosted button at the end.
  */
@@ -671,7 +671,7 @@ fun AboutScreen(colourway: String, onBack: () -> Unit, onRunSetup: () -> Unit) {
             // The title, and close (×) on the far right, level with Today's info button (status bar + 44 dp, 57 dp
             // round): the same folded and in the unfolded right pane.
             Row(Modifier.fillMaxWidth().padding(top = 32.dp).height(57.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Calen-Time", style = TitleStyle, modifier = Modifier.weight(1f))
+                Text("CalenTime", style = TitleStyle, modifier = Modifier.weight(1f))
                 Box(Modifier.size(57.dp).clip(CircleShape).frostCard(CircleShape)
                     .clickable(role = Role.Button, onClick = onBack).semantics { contentDescription = "Close" },
                     contentAlignment = Alignment.Center) {
@@ -679,7 +679,7 @@ fun AboutScreen(colourway: String, onBack: () -> Unit, onRunSetup: () -> Unit) {
                 }
             }
             Text("Version $version", style = SubStyle, modifier = Modifier.padding(top = 4.dp, bottom = 18.dp))
-            Text("Your day, around the clock. Calen-Time turns your watch face into a picture of the next 12 hours: every meeting is an arc on the ring, so one glance tells you how busy you are, what's next and how much time you have before it.",
+            Text("Your day, around the clock. CalenTime turns your watch face into a picture of the next 12 hours: every meeting is an arc on the ring, so one glance tells you how busy you are, what's next and how much time you have before it.",
                 style = PageBody)
 
             // Each part of the face as a close-up of the face in your colourway, on the sample day (plus a late call,
@@ -698,6 +698,7 @@ fun AboutScreen(colourway: String, onBack: () -> Unit, onRunSetup: () -> Unit) {
                 "A private meeting. Its title and place never leave your phone.")
             FacePart(colourway, "middle", day, SampleDay.SAMPLE_MINUTE, "Middle",
                 "The time, and what's next. Tap an hour on the ring to see what's on then; tap the details to go back.")
+            IconItem(Icons.calendar, "All your calendars, one ring", "Work, personal, family: every calendar you turn on shows together on the same ring, in the same colours. The watch doesn't tell them apart.")
             IconItem(Icons.calendar, "All-day events", "Not shown on the watch, and they never count as a double booking: your meetings that day look as usual.")
 
             ItemDivider(Modifier.padding(top = 8.dp))
@@ -707,7 +708,7 @@ fun AboutScreen(colourway: String, onBack: () -> Unit, onRunSetup: () -> Unit) {
             IconItem(Icons.buzz, "5 min before the end", "Two short buzzes, for meetings of 10 minutes or more.")
             ItemDivider(Modifier.padding(top = 8.dp))
             PageHeading("Privacy")
-            IconItem(Icons.lock, "Phone to watch only", "Your calendar goes from your phone to your own watch and nowhere else. Calen-Time has no internet access, no accounts, no ads and no tracking.")
+            IconItem(Icons.lock, "Phone to watch only", "Your calendar goes from your phone to your own watch and nowhere else. CalenTime has no internet access, no accounts, no ads and no tracking.")
             ItemDivider(Modifier.padding(top = 8.dp))
             PageHeading("Credits")
             IconItem(Icons.info, "Fonts", "Google Sans Flex and Anta, under the SIL Open Font License.")
@@ -736,7 +737,7 @@ private fun FacePart(colourway: String, detail: String, day: List<Meeting>, at: 
     if (divider) ItemDivider(Modifier.padding(bottom = 22.dp))
 }
 
-/** Calen-Time's Play Store page (live once the app is published there; PRD §6.5). */
+/** CalenTime's Play Store page (live once the app is published there; PRD §6.5). */
 const val PLAY_LINK = "https://play.google.com/store/apps/details?id=io.github.karthikeyags07.scheduleclock"
 
 /** Opens Android's share sheet with the Play Store link (About). */
@@ -746,15 +747,15 @@ private fun ShareButton(modifier: Modifier) {
     Row(
         modifier.height(52.dp).clip(RoundedCornerShape(26.dp)).frostCard(RoundedCornerShape(26.dp)).clickable(role = Role.Button) {
             val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain")
-                .putExtra(android.content.Intent.EXTRA_SUBJECT, "Calen-Time")
-                .putExtra(android.content.Intent.EXTRA_TEXT, "Calen-Time puts your meetings on your Wear OS watch face: $PLAY_LINK")
-            context.startActivity(android.content.Intent.createChooser(send, "Share Calen-Time"))
+                .putExtra(android.content.Intent.EXTRA_SUBJECT, "CalenTime")
+                .putExtra(android.content.Intent.EXTRA_TEXT, "CalenTime puts your meetings on your Wear OS watch face: $PLAY_LINK")
+            context.startActivity(android.content.Intent.createChooser(send, "Share CalenTime"))
         },
         horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(Icons.share, null, tint = Palette.text, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(10.dp))
-        Text("Share Calen-Time", style = BodyStyle.copy(fontSize = 16.sp, fontWeight = FontWeight.Medium))
+        Text("Share CalenTime", style = BodyStyle.copy(fontSize = 16.sp, fontWeight = FontWeight.Medium))
     }
 }
 

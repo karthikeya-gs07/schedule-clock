@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="watch_face_name">Calen-Time</string>
+    <string name="watch_face_name">CalenTime</string>
     <string name="slot_ring">Schedule ring</string>
     <string name="slot_status">Schedule details</string>
     <string name="slot_details">Meeting place</string>

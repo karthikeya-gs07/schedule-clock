@@ -12,7 +12,7 @@ import org.json.JSONObject
 import java.io.File
 
 /**
- * Watch Face Push (PRD §6.5): this app installs the Calen-Time face itself instead of it having its own
+ * Watch Face Push (PRD §6.5): this app installs the CalenTime face itself instead of it having its own
  * store listing. It carries one face per colourway (assets/faces/<colourway>.apk, all with the same id) and
  * the validator's token for each; picking a colourway swaps that face into our one slot (RULES §9).
  * Making it the active face is allowed once, with the user's permission; after that the phone app shows

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Calen-Time Phone App</title>
+<title>CalenTime Phone App</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@400..700&display=block" rel="stylesheet">
@@ -231,7 +231,7 @@
     <div class="scrim" id="scrim">
       <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
         <svg class="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 16H5V9h14z"/></svg>
-        <h3 id="dlgTitle">Allow <b>Calen-Time</b> to access your calendar?</h3>
+        <h3 id="dlgTitle">Allow <b>CalenTime</b> to access your calendar?</h3>
         <button data-perm="allow">Allow</button>
         <button data-perm="deny">Don't allow</button>
       </div>
@@ -240,7 +240,7 @@
 
   <aside class="controls">
     <div>
-      <h1>Calen-Time phone app</h1>
+      <h1>CalenTime phone app</h1>
       <p>Design prototype. Tap through the app on the left; use these switches to see each state.</p>
     </div>
     <div class="group"><span class="group-title">Start</span>
@@ -359,8 +359,8 @@ const sw = on => `<span class="switch${on ? ' on' : ''}" aria-hidden="true"></sp
 function homeScreen() {
   const watchOk = state.watch === 'connected';
   let banners = '';
-  if (state.perm === 'off') banners += banner('warn', 'Calendar access is off', 'Calen-Time can’t see your meetings, so the watch shows an empty day.', 'Allow access', 'perm');
-  if (state.watch === 'old') banners += banner('warn', 'This watch needs an update', 'Calen-Time needs Wear OS 6 or newer. Check for a watch update in Galaxy Wearable.', null);
+  if (state.perm === 'off') banners += banner('warn', 'Calendar access is off', 'CalenTime can’t see your meetings, so the watch shows an empty day.', 'Allow access', 'perm');
+  if (state.watch === 'old') banners += banner('warn', 'This watch needs an update', 'CalenTime needs Wear OS 6 or newer. Check for a watch update in Galaxy Wearable.', null);
   else if (watchOk && state.face === 'off') banners += banner('info', 'Watch face isn’t on your watch', 'Install it, then confirm on the watch to make it your watch face.', 'Install on watch', 'install');
 
   const syncLabel = state.syncing ? '<span class="spinner"></span>Syncing…' : `${icon('sync', 18)}Sync now`;
@@ -425,7 +425,7 @@ function lookScreen() {
 function settingsScreen() {
   const b = state.buzz, on = b.start || b.middle || b.end;
   const row = (k, label, hint) => `<button class="row" role="switch" aria-checked="${b[k]}" data-buzz="${k}"><span class="grow"><span class="label">${label}</span><span class="hint">${hint}</span></span>${sw(b[k])}</button>`;
-  return `<h2 class="title">Settings</h2><p class="sub">Calen-Time 1.0</p>
+  return `<h2 class="title">Settings</h2><p class="sub">CalenTime 1.0</p>
     <div class="section"><span style="display:flex;gap:8px;align-items:center">${icon('buzz', 18)}Meeting buzzes</span></div>
     <div class="rows">
       ${row('start', '2 min before it starts', 'One short buzz')}
@@ -457,13 +457,13 @@ function setupScreen() {
   if (s === 0) {
     body = `<div class="hero">${face(state.look, { size: 230 })}</div>
       <h2 class="title">Your day, around the clock</h2>
-      <p class="sub">Calen-Time draws your meetings as arcs on your watch, so you see how busy the next 12 hours are at a glance.</p>
+      <p class="sub">CalenTime draws your meetings as arcs on your watch, so you see how busy the next 12 hours are at a glance.</p>
       <ul class="bullets">${bullet('cal', 'Reads the calendars you choose on this phone')}${bullet('watch', 'Installs the watch face on your Galaxy Watch')}${bullet('buzz', 'Buzzes before, during and near the end of each meeting')}</ul>`;
     actions = `<button class="btn block" data-act="next">Get started</button>`;
   } else if (s === 1) {
     const denied = state.perm === 'off' && state.asked;
     body = `<h2 class="title">Allow calendar access</h2>
-      <p class="sub">Calen-Time reads today’s and tomorrow’s meetings so it can send them to your watch.</p>
+      <p class="sub">CalenTime reads today’s and tomorrow’s meetings so it can send them to your watch.</p>
       <ul class="bullets">${bullet('lock', 'Only sent to your own watch, never to a server')}${bullet('lock', 'Private events go without their title or place')}${bullet('cal', 'You choose which calendars on the next step')}</ul>
       ${denied ? banner('warn', 'Access is off', 'Without it the watch shows an empty day. You can allow it in Android settings later.', null) : ''}`;
     actions = state.perm === 'on' && state.asked ? `<button class="btn block" data-act="next">Continue</button>`
@@ -475,18 +475,18 @@ function setupScreen() {
     const st = state.installing;
     const watchOk = state.watch === 'connected';
     body = `<h2 class="title">Put it on your watch</h2>
-      <p class="sub">${state.watch === 'old' ? 'Your watch runs Wear OS 5. Calen-Time needs Wear OS 6 or newer: check for a watch update in Galaxy Wearable.'
+      <p class="sub">${state.watch === 'old' ? 'Your watch runs Wear OS 5. CalenTime needs Wear OS 6 or newer: check for a watch update in Galaxy Wearable.'
         : !watchOk ? 'Your watch isn’t connected. Open Galaxy Wearable and check it’s paired and nearby.'
-        : 'Calen-Time installs its watch face on your Galaxy Watch8. You’ll confirm it on the watch.'}</p>
+        : 'CalenTime installs its watch face on your Galaxy Watch8. You’ll confirm it on the watch.'}</p>
       ${st === 0 ? `<div class="hero">${face(state.look, { size: 200 })}</div>` : ''}
       ${st === 1 || st === 2 ? `<div class="progress"><i style="width:${st === 1 ? 60 : 100}%"></i></div><p class="sub">${st === 1 ? 'Sending to your watch…' : 'Installed. Confirm on your watch.'}</p>` : ''}
       ${st === 2 ? `<div class="confirm"><div class="hero">${face(state.look, { size: 200 })}</div>
-        <span class="q">Use Calen-Time as your watch face?</span></div>` : ''}
+        <span class="q">Use CalenTime as your watch face?</span></div>` : ''}
       ${st === 3 ? `<div class="banner info"><span style="color:var(--accent)">${icon('watch')}</span><div><b>No prompt on your watch?</b>
-        <p>Calen-Time is already on your watch. You can pick it yourself:</p></div></div>
+        <p>CalenTime is already on your watch. You can pick it yourself:</p></div></div>
         <ol class="howto">
           <li>Wake your watch, then <b>touch and hold</b> the watch face.</li>
-          <li>Swipe to <b>Calen-Time</b>. Not there? Swipe to the end, tap <b>+ Add</b> and pick it from the list.</li>
+          <li>Swipe to <b>CalenTime</b>. Not there? Swipe to the end, tap <b>+ Add</b> and pick it from the list.</li>
           <li>Tap it to make it your watch face.</li>
         </ol>
         <p class="sub">Still nothing? Keep the watch close to your phone with Bluetooth on, then send it again.</p>` : ''}`;
@@ -497,7 +497,7 @@ function setupScreen() {
   } else {
     body = `<div class="hero">${face(state.look, { size: 230 })}</div><h2 class="title">You’re set</h2>
       <p class="sub">Your meetings are on your watch and stay in sync on their own. Change colours and buzzes in the app any time.</p>`;
-    actions = `<button class="btn block" data-act="app">Open Calen-Time</button>`;
+    actions = `<button class="btn block" data-act="app">Open CalenTime</button>`;
   }
   // The first button is the main one; Back goes beside it, any others stay below.
   const cut = actions.indexOf('</button>') + '</button>'.length;

@@ -145,7 +145,7 @@ fun SettingsScreen(m: AppModel, onRunSetup: () -> Unit) {
     // Sync isn't a setting: a short note says how it works.
     ItemDivider(Modifier.padding(top = 8.dp))   // hairlines between the sections
     PageHeading("Sync")
-    IconItem(Icons.sync, "Every 15 minutes", "And as soon as a meeting changes. Calen-Time sends yesterday to tomorrow from the calendars you picked.")
+    IconItem(Icons.sync, "Every 15 minutes", "And as soon as a meeting changes. CalenTime sends yesterday to tomorrow from the calendars you picked.")
     IconItem(Icons.lock, "Private events", "They go to your watch without their title or place.")
     // Setup again (also on About): calendar access, calendars and the face on the watch, from the start.
     ItemDivider(Modifier.padding(top = 8.dp))

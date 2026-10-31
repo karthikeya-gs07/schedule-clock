@@ -14,7 +14,7 @@ data class Look(val id: String, val name: String, val accent: Long, val line: St
 
 object Looks {
     val ALL = listOf(
-        Look("amber", "Amber", 0xFFFFB547, "Warm amber arcs, the original Calen-Time."),
+        Look("amber", "Amber", 0xFFFFB547, "Warm amber arcs, the original CalenTime."),
         Look("mint", "Mint", 0xFF5FD4A0, "Cool mint arcs with a soft blue lane."),
         Look("violet", "Violet", 0xFFB48CFF, "Violet arcs with a cyan lane."),
         Look("rose", "Rose", 0xFFFF7A9C, "Rose arcs with a peach lane."),

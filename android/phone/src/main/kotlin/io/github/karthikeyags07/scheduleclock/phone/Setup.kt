@@ -131,7 +131,7 @@ fun SetupFlow(m: AppModel, startStep: Int, onAllow: () -> Unit) {
                             Spacer(Modifier.height(40.dp))
                             Badge(Icons.calendar)
                             Heading("Allow calendar access")
-                            Lead("Calen-Time reads today's and tomorrow's meetings so it can show them on your watch.")
+                            Lead("CalenTime reads today's and tomorrow's meetings so it can show them on your watch.")
                             Spacer(Modifier.height(22.dp))
                             IconRows(Icons.lock to "Only sent to your own watch, never to a server",
                                 Icons.lock to "Private events go without their title or place",
@@ -154,9 +154,9 @@ fun SetupFlow(m: AppModel, startStep: Int, onAllow: () -> Unit) {
                                 Heading("Put it on your watch", centred = true)
                                 Lead(when {
                                     m.link.watch == null -> "Your watch isn't connected. Open Galaxy Wearable and check it's paired and nearby."
-                                    face == null -> "First, get the Calen-Time watch app: tap below, then tap Install on your watch."
+                                    face == null -> "First, get the CalenTime watch app: tap below, then tap Install on your watch."
                                     !face.supported -> "Your watch needs Wear OS 6 or newer. Check for a watch update in Galaxy Wearable."
-                                    else -> "Calen-Time puts its face on your ${m.link.watch?.name?.substringBefore(" (") ?: "watch"}. You'll confirm it there."
+                                    else -> "CalenTime puts its face on your ${m.link.watch?.name?.substringBefore(" (") ?: "watch"}. You'll confirm it there."
                                 }, centred = true)
                             }
                             Install.SENDING -> {
@@ -171,16 +171,16 @@ fun SetupFlow(m: AppModel, startStep: Int, onAllow: () -> Unit) {
                             Install.CONFIRM -> {
                                 WatchHero(m, 230.dp)
                                 Heading("Confirm on your watch", centred = true)
-                                Lead("Tap Allow on your watch to make Calen-Time your watch face. This page moves on by itself.", centred = true)
+                                Lead("Tap Allow on your watch to make CalenTime your watch face. This page moves on by itself.", centred = true)
                             }
                             Install.NO_PROMPT -> {
                                 Spacer(Modifier.height(32.dp))
                                 Badge(Icons.watch)
                                 Heading("No prompt on your watch?")
-                                Lead("Calen-Time is already on your watch. You can pick it yourself:")
+                                Lead("CalenTime is already on your watch. You can pick it yourself:")
                                 Spacer(Modifier.height(18.dp))
                                 NumberedRows("Wake your watch, then **touch and hold** the watch face.",
-                                    "Swipe to **Calen-Time**. Not there? Swipe to the end, tap **+ Add** and pick it.",
+                                    "Swipe to **CalenTime**. Not there? Swipe to the end, tap **+ Add** and pick it.",
                                     "Tap it to make it your watch face.")
                                 Text("Still nothing? Keep the watch close to your phone with Bluetooth on, then send it again.",
                                     style = SubStyle, modifier = Modifier.padding(top = 14.dp, start = 4.dp))
@@ -217,7 +217,7 @@ fun SetupFlow(m: AppModel, startStep: Int, onAllow: () -> Unit) {
                             Install.CONFIRM -> SetupButton("I've confirmed it", main) { scope.launch { m.refreshWatch().join(); install = Install.IDLE; step = 4 } }
                             Install.NO_PROMPT -> SetupButton("It's on my watch now", main) { scope.launch { m.refreshWatch().join(); install = Install.IDLE; step = 4 } }
                         }
-                        else -> SetupButton("Open Calen-Time", main) { m.finishSetup() }
+                        else -> SetupButton("Open CalenTime", main) { m.finishSetup() }
                     }
                 }
                 when {

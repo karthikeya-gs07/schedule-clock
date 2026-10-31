@@ -14,7 +14,7 @@ import org.json.JSONObject
 
 /**
  * The phone's side of the face on the watch (Watch Face Push, PRD §6.5): which watch is connected, whether
- * Calen-Time's face is on it and active, putting it there, and switching its colourway. The watch app's
+ * CalenTime's face is on it and active, putting it there, and switching its colourway. The watch app's
  * `FaceRequestService` answers `/face/status` and `/face/colour`; the first install opens its
  * `FaceSetupActivity` on the watch, since the watch may need to ask a permission on its own screen.
  */
@@ -75,7 +75,7 @@ object WatchLink {
         }
     }
 
-    /** Opens Calen-Time's Play Store page on the watch, for when the watch app isn't installed there. */
+    /** Opens CalenTime's Play Store page on the watch, for when the watch app isn't installed there. */
     suspend fun openPlayOnWatch(context: Context): Boolean {
         val watch = watch(context) ?: return false
         val intent = Intent(Intent.ACTION_VIEW)

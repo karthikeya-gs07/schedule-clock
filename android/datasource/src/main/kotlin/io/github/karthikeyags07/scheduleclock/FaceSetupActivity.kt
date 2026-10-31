@@ -14,7 +14,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * Puts the Calen-Time face on the watch (Watch Face Push, PRD §6.5) in a colourway, and with [EXTRA_ACTIVATE]
+ * Puts the CalenTime face on the watch (Watch Face Push, PRD §6.5) in a colourway, and with [EXTRA_ACTIVATE]
  * also makes it the watch face, asking for that permission first. It shows a line of progress, since the
  * permission prompt needs a visible screen. For now it's opened by the debug link
  * `app://<package>/face?colour=mint&activate=1`; the phone app will open it during setup (RULES A1).

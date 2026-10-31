@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Calen-Time</string>
+    <string name="app_name">CalenTime</string>
     <string name="ring_label">Schedule ring</string>
     <string name="status_label">Schedule details</string>
     <string name="details_label">Meeting place</string>
     <string name="promote_label">Settling meeting</string>
     <string name="title_scroll_label">Scrolling title</string>
-    <string name="permission_label">Calen-Time</string>
-    <string name="permission_why">Calen-Time shows today\'s meetings on your watch face. It reads your calendar on the watch only; nothing leaves the watch.</string>
+    <string name="permission_label">CalenTime</string>
+    <string name="permission_why">CalenTime shows today\'s meetings on your watch face. It reads your calendar on the watch only; nothing leaves the watch.</string>
     <string name="permission_denied">Calendar access is off, so the face can\'t show your meetings. Tap here to turn it on.</string>
-    <string name="face_installing">Putting Calen-Time on your watch…</string>
-    <string name="face_installed">Calen-Time is on your watch.</string>
-    <string name="face_active">Calen-Time is your watch face.</string>
-    <string name="face_pick_yourself">Calen-Time is on your watch. Touch and hold the watch face, then pick Calen-Time.</string>
-    <string name="face_failed">Couldn\'t put Calen-Time on your watch. Try again from the phone app.</string>
-    <string name="face_needs_wear6">Calen-Time needs Wear OS 6 or newer. Check for a watch update.</string>
+    <string name="face_installing">Putting CalenTime on your watch…</string>
+    <string name="face_installed">CalenTime is on your watch.</string>
+    <string name="face_active">CalenTime is your watch face.</string>
+    <string name="face_pick_yourself">CalenTime is on your watch. Touch and hold the watch face, then pick CalenTime.</string>
+    <string name="face_failed">Couldn\'t put CalenTime on your watch. Try again from the phone app.</string>
+    <string name="face_needs_wear6">CalenTime needs Wear OS 6 or newer. Check for a watch update.</string>
 </resources>
