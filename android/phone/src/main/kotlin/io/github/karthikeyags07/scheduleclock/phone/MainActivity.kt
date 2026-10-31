@@ -108,7 +108,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
         Box(Modifier.fillMaxSize().background(Palette.screen)) {
             when {
                 !m.setupDone -> Box(Modifier.statusBarsPadding().navigationBarsPadding()) { SetupFlow(m, setupStep, allow) }
-                about -> { BackHandler { about = false }; AboutScreen { about = false } }
+                about -> { BackHandler { about = false }; AboutScreen(onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() } }
                 else -> {
                     BackHandler(enabled = tab != Tab.TODAY || watchStatus) { if (watchStatus) watchStatus = false else tab = Tab.TODAY }
                     if (tab == Tab.TODAY) HomeScreen(m, haze, onWatchStatus = { watchStatus = true }, onAbout = { about = true })
@@ -117,7 +117,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
                         when (tab) {
                             Tab.CALENDARS -> { ScreenTitle("Calendars"); CalendarsList(m, allow) }
                             Tab.WATCHFACE -> WatchfaceScreen(m)
-                            else -> SettingsScreen(m) { setupStep = 0; m.restartSetup() }
+                            else -> SettingsScreen(m)
                         }
                     }
                     NavBar(tab, haze, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp)) { tab = it }

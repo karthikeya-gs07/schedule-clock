@@ -309,7 +309,8 @@ private fun DrawerMeeting(meeting: Meeting, live: Boolean, clash: Boolean, color
             Text(meeting.title.ifEmpty { "Busy" }, maxLines = 2, overflow = TextOverflow.Ellipsis,
                 style = BodyStyle.copy(fontSize = 17.sp, lineHeight = 23.sp, fontWeight = FontWeight.Medium))
             // The place, on its own line under the title, when the event has one.
-            if (meeting.where.isNotEmpty()) Text(meeting.where, maxLines = 1, overflow = TextOverflow.Ellipsis, style = SubStyle.copy(color = Palette.body))
+            if (meeting.where.isNotEmpty()) Text(meeting.where, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                style = SubStyle.copy(color = Palette.muted.copy(alpha = .75f)))   // quieter than the title and time
             val note = listOfNotNull("Private on the watch".takeIf { meeting.private }, "Double booked".takeIf { clash }).joinToString(" · ")
             if (note.isNotEmpty()) Text(note, maxLines = 1, style = SubStyle.copy(color = if (clash) Color(0xFFFF9D82) else Palette.muted))
         }
@@ -425,7 +426,7 @@ fun WatchStatusPanel(m: AppModel, haze: HazeState, onAllow: () -> Unit, onInstal
 // ---------- (6) About ----------
 /** About Calen-Time: what it is, how to read the face, privacy, and credits. */
 @Composable
-fun AboutScreen(onBack: () -> Unit) {
+fun AboutScreen(onBack: () -> Unit, onRunSetup: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val version = context.packageManager.getPackageInfo(context.packageName, 0).versionName
     Column(Modifier.fillMaxSize().background(Palette.screen).statusBarsPadding()) {
@@ -462,6 +463,8 @@ fun AboutScreen(onBack: () -> Unit) {
             AboutSection("Credits", listOf(
                 "Fonts" to "Google Sans Flex and Anta, under the SIL Open Font License.",
             ))
+            Spacer(Modifier.height(8.dp))
+            TonalButton("Run setup again", modifier = Modifier.fillMaxWidth(), onClick = onRunSetup)
         }
     }
 }

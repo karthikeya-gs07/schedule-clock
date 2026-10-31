@@ -175,7 +175,7 @@ private fun LookCard(id: String, name: String, text: String?, m: AppModel, enabl
 
 // ---------- Settings (RULES A6) ----------
 @Composable
-fun SettingsScreen(m: AppModel, onRunSetup: () -> Unit) {
+fun SettingsScreen(m: AppModel) {
     ScreenTitle("Settings")
     val context = LocalContext.current
     Text("Calen-Time ${context.packageManager.getPackageInfo(context.packageName, 0).versionName}", style = SubStyle)
@@ -192,27 +192,8 @@ fun SettingsScreen(m: AppModel, onRunSetup: () -> Unit) {
         RowDivider()
         SwitchRow("Buzz in Do Not Disturb", "Buzzes still come through when your watch is silenced", m.buzz[AppPrefs.Buzz.DND] == true, enabled = any) { m.setBuzz(AppPrefs.Buzz.DND, it) }
     }
+    // Sync isn't a setting: a short note says how it works.
     SectionLabel("Sync")
-    Rows {
-        InfoRow("Automatic", "Every 15 minutes, and as soon as a meeting changes")
-        RowDivider()
-        InfoRow("What's sent", "Yesterday to tomorrow, from the calendars you picked. Private events go without title or place.")
-    }
-    SectionLabel("About")
-    Rows {
-        InfoRow("Run setup again", null) { onRunSetup() }
-        RowDivider()
-        InfoRow("Privacy", "Your calendar stays on your phone and watch. Calen-Time has no internet access.")
-        RowDivider()
-        InfoRow("Fonts", "Google Sans Flex and Anta, under the SIL Open Font License")
-    }
-}
-
-@Composable
-private fun InfoRow(label: String, hint: String?, onClick: (() -> Unit)? = null) = Column(
-    Modifier.fillMaxWidth().then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
-        .padding(horizontal = 18.dp, vertical = 14.dp),
-) {
-    Text(label, style = BodyStyle)
-    hint?.let { Text(it, style = HintStyle) }
+    Text("Calen-Time syncs every 15 minutes, and as soon as a meeting changes. It sends yesterday to tomorrow from the calendars you picked; private events go without their title or place.",
+        style = SubStyle, modifier = Modifier.padding(horizontal = 4.dp))
 }
