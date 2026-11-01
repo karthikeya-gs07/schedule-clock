@@ -33,10 +33,12 @@ Everything Play Console asks for, ready to paste. Phase 4 of PRD §6.5. Items ma
 > • Meetings later today wait on a thin inner ring until there's room
 > • Gentle buzzes 2 minutes before a meeting, halfway through, and 5 minutes before it ends
 >
-> **Five looks**
-> Amber, Mint, Violet and Rose, or Solaris, where the ring takes the colour of the light through your day: dawn rose, noon gold, sunset coral, night indigo.
+> **16 looks**
+> Solids with one arc colour, like Amber, Arctic Lagoon and Forest Signal, or Gradients whose arcs run through several colours, like Aurora and Ocean. Solaris takes the colour of the light through your day: dawn rose, noon gold, sunset coral, night indigo.
 >
 > **On your phone**
+> • A home-screen widget to sync with one tap
+> • Works on phones and foldables, with a two-pane layout when unfolded
 > • Choose which calendars go to your watch: Google, Samsung, Outlook and Teams (with Outlook's calendar sync on)
 > • Pick the watch face's colours and see it live before you choose
 > • Turn each buzz on or off, and choose whether they come through Do Not Disturb
@@ -86,10 +88,10 @@ Questionnaire: utility/productivity app, no user-generated content, no sharing, 
 | Item | Value |
 |---|---|
 | Testing track first | **Internal testing** (up to 100 testers by email) |
-| Phone bundle | `android/phone/build/outputs/bundle/release/phone-release.aab` (version 0.9.1, code 1002) |
-| Wear OS bundle | `android/datasource/build/outputs/bundle/release/datasource-release.aab` (version 0.9.1, code 2002), uploaded under the **Wear OS** form factor of the same app |
+| Phone bundle | `android/phone/build/outputs/bundle/release/phone-release.aab` (version 0.10.0, code 1003) |
+| Wear OS bundle | `android/datasource/build/outputs/bundle/release/datasource-release.aab` (version 0.10.0, code 2003), uploaded under the **Wear OS** form factor of the same app |
 | Signing | Play App Signing on. Upload key: `~/.android/calen-time/upload.jks` (**back it up**). Watch faces are signed separately with `~/.android/calen-time/faces.jks`. |
-| Release notes | "First test release: meetings on your watch face, five colourways, calendar choice and meeting buzzes." |
+| Release notes | "First test release: meetings on your watch face, 16 watch faces, calendar choice and meeting buzzes." |
 
 ## Steps in Play Console (you)
 
