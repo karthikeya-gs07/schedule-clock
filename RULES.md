@@ -181,6 +181,7 @@ Taps: 12 `Launch` hotspots on the band → `app://io.github.karthikeyags07.sched
 
 | Date | Change | Rules |
 |---|---|---|
+| 2026-11-01 | Selected meeting: the others dim to 60 %, not 35 %, so the day stays readable. | R9 |
 | 2026-10-31 | Home-screen Sync widget. | §12 A12 |
 | 2026-10-31 | Darker dials for Arctic Lagoon, Forest Signal, Plum Rose, Desert Dusk and Copper Garden (about 30 % darker, same hue). | §9 |
 | 2026-10-31 | 3+ overlapping meetings: a stripe splits in two where a third runs, both where four or more do (R4a). Tap-to-focus faster: text slots first, one calendar read per tap, the last ring reused. | R4, M1 |

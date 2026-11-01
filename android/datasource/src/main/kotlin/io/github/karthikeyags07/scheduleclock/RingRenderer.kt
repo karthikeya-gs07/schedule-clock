@@ -49,7 +49,7 @@ object RingRenderer {
     private var CLASH_PAST = 0
     private var CLASH_MASK = 0
     private var ground = Color.BLACK
-    private const val DIM = 0.35f           // everything but the selected meeting, while one is selected (R9)
+    private const val DIM = 0.6f            // everything but the selected meeting, while one is selected (R9): still clearly above the track
 
     /**
      * @param selectedKey dims everything else to 35 % and draws this meeting on top, unchanged (R9).
