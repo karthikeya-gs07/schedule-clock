@@ -596,37 +596,6 @@ function arcPath(fromMin, toMin, r, w = 12) {
   return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${sweep > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
 }
 
-// ---------- Data source simulation: WEIGHTED_ELEMENTS payload ----------
-// Segments start at 12 o'clock and go round once. Free time is transparent.
-// segments: [[fromMin, toMin, color], ...] → { colors, weights } for one slot.
-function dialPayload(segments) {
-  const marks = [];
-  // Map minutes to positions on the 12h dial, splitting across 12 o'clock.
-  for (const [from, to, color] of segments) {
-    if (to <= from) continue;
-    const a = ((from % 720) + 720) % 720, b = a + (to - from);
-    if (b > 720) { marks.push([a, 720, color]); marks.push([0, b - 720, color]); }
-    else marks.push([a, b, color]);
-  }
-  marks.sort((x, y) => x[0] - y[0]);
-  const colors = [], weights = [];
-  let cursor = 0;
-  for (const [a, b, color] of marks) {
-    if (b <= cursor) continue;                         // fully covered by an overlapping meeting
-    if (a > cursor) { colors.push('#00000000'); weights.push(a - cursor); }
-    colors.push(color);
-    weights.push(b - Math.max(a, cursor));
-    cursor = b;
-  }
-  if (cursor < 720) { colors.push('#00000000'); weights.push(720 - cursor); }
-  return { colors, weights };
-}
-// Elapsed part of a live meeting gets its own, dimmer color.
-const eventSegments = (e, color, pastColor) => {
-  const split = isLive(e) ? nowMin : e.cs;
-  return [[e.cs, split, pastColor], [split, e.ce, color]];
-};
-
 // ---------- Scene (built once, then updated in place so transitions can run) ----------
 const svg = document.getElementById('face');
 const T = (id, x, y, size, opts = {}) => {

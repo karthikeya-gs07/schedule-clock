@@ -210,7 +210,7 @@ object SpikeSchedule {
             return ranged(0f, 0f, 1f + width, title, "on your phone to sync")
         }
         val selected = selectedIndex(context, list)
-        val i = if (selected >= 0) selected else ScheduleRules.defaultIndex(list, now)
+        val i = shownIndex(selected, list, now)
         if (i < 0) return ranged(0f, 0f, 1f + 10000f * 32, "", "")   // C3: no meetings, flag 32 centers the clock
         val p = list[i]
         val arrow = ScheduleRules.showsArrow(list, i, now)
@@ -231,6 +231,10 @@ object SpikeSchedule {
         return ranged(if (selected >= 0) 1f else 0f, 0f, 1f + width + 10000f * flags, title, range)
     }
 
+    /** The meeting the face shows: the tapped one, else the default (R6); -1 when there is none. */
+    private fun shownIndex(selected: Int, list: List<Placed>, now: Int) =
+        if (selected >= 0) selected else ScheduleRules.defaultIndex(list, now)
+
     /** C9a: pixels by which the full title at 24 px overflows its window; 0 if it fits or is private. */
     private fun scrollOver(p: Placed, arrow: Boolean): Int {
         if (p.meeting.private) return 0
@@ -246,7 +250,7 @@ object SpikeSchedule {
         val now = now(context)
         val list = placed(context, now)
         val selected = selectedIndex(context, list)
-        val i = if (selected >= 0) selected else ScheduleRules.defaultIndex(list, now)
+        val i = shownIndex(selected, list, now)
         if (i < 0) return NoDataComplicationData()
         val p = list[i]
         val arrow = ScheduleRules.showsArrow(list, i, now)
@@ -265,7 +269,7 @@ object SpikeSchedule {
         val now = now(context)
         val list = placed(context, now)
         val selected = selectedIndex(context, list)
-        val i = if (selected >= 0) selected else ScheduleRules.defaultIndex(list, now)
+        val i = shownIndex(selected, list, now)
         if (i < 0) return ranged(0f, 0f, 1f, "", "")
         val p = list[i]
         val clashes = ScheduleRules.clashesFor(list, p)

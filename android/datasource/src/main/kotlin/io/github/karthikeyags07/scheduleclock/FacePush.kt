@@ -20,7 +20,6 @@ import java.io.File
  */
 object FacePush {
     val COLOURWAYS = Themes.IDS
-    const val FACE_PACKAGE = "io.github.karthikeyags07.scheduleclock.watchfacepush.calentime"
     const val ACTIVATE_PERMISSION = "com.google.wear.permission.SET_PUSHED_WATCH_FACE_AS_ACTIVE"
 
     /** What the phone app needs to know: is the face on the watch, is it the watch face, in which colours. */

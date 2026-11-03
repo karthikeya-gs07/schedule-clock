@@ -115,8 +115,7 @@ private fun FaceWebView(
  * `v` changes with the meetings so a change reloads.
  */
 private fun previewUrl(colourway: String, meetings: List<Meeting>, atMinute: Int?): Pair<String, String> {
-    val zone = ZoneId.systemDefault()
-    val midnight = LocalDate.now(zone).atStartOfDay(zone).toInstant().toEpochMilli()
+    val midnight = todayMidnight()
     fun hhmm(minutes: Long) = "%02d:%02d".format(minutes / 60, minutes % 60)
     val events = JSONArray()
     meetings.forEach { m ->
@@ -144,12 +143,17 @@ private fun previewUrl(colourway: String, meetings: List<Meeting>, atMinute: Int
         "&v=${json.hashCode()}#${URLEncoder.encode(json, "UTF-8").replace("+", "%20")}" to json
 }
 
+/** Today's midnight in this phone's time zone, in epoch ms. */
+private fun todayMidnight(): Long {
+    val zone = ZoneId.systemDefault()
+    return LocalDate.now(zone).atStartOfDay(zone).toInstant().toEpochMilli()
+}
+
 /** The same colourway and face (only the meetings or time differ), so the loaded page can sweep to the change. */
 private fun sameFace(a: String, b: String): Boolean {
     fun base(u: String) = u.substringBefore("&time=").substringBefore("&v=")
     return base(a) == base(b)
 }
-
 
 /**
  * A busy sample day for showing what each colourway looks like (RULES A5), the same day as the design
@@ -159,8 +163,7 @@ object SampleDay {
     const val SAMPLE_MINUTE = 10 * 60 + 13
 
     fun meetings(): List<Meeting> {
-        val zone = ZoneId.systemDefault()
-        val midnight = LocalDate.now(zone).atStartOfDay(zone).toInstant().toEpochMilli()
+        val midnight = todayMidnight()
         fun m(start: Int, end: Int, title: String, where: String, calendar: Long, private: Boolean = false) =
             Meeting(midnight + start * 60_000L, midnight + end * 60_000L, title, where, allDay = false, private = private, calendarId = calendar)
         return listOf(
@@ -177,8 +180,7 @@ object SampleDay {
 
     /** A call after the 12 hours shown at 10:13, so the inner line (later today) has a meeting on it (About). */
     fun lateCall(): Meeting {
-        val zone = ZoneId.systemDefault()
-        val midnight = LocalDate.now(zone).atStartOfDay(zone).toInstant().toEpochMilli()
+        val midnight = todayMidnight()
         return Meeting(midnight + 1350 * 60_000L, midnight + 1410 * 60_000L, "Late call", "", allDay = false, private = false, calendarId = WORK)
     }
 

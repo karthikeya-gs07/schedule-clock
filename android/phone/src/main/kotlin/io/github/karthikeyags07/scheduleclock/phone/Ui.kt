@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,7 +23,6 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,9 +50,6 @@ import java.time.LocalTime
 object Palette {
     val screen = Color(0xFF0B0B0D)
     val surface = Color(0xFF17181B)
-    val surface2 = Color(0xFF202125)
-    val divider = Color(0xFF222327)
-    val nav = Color(0xFF121316)
     val text = Color(0xFFF2F2F2)
     val body = Color(0xFFC9C9CE)
     val muted = Color(0xFF8E8E93)
@@ -131,28 +126,12 @@ object Icons {
 }
 
 // ---------- Shared pieces ----------
-@Composable
-fun ScreenTitle(text: String) = Text(text, style = TitleStyle, modifier = Modifier.padding(top = 14.dp, bottom = 4.dp))
-
-@Composable
-fun Card(modifier: Modifier = Modifier, content: @Composable () -> Unit) =
-    Box(modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).frostCard(RoundedCornerShape(20.dp))) { content() }
-
 /**
  * The frosted look of Today's buttons, for cards on the other screens: a light grey tint and a hairline edge.
  * (Over a plain background there's nothing to blur, so it's the tint and edge alone.)
  */
 fun Modifier.frostCard(shape: androidx.compose.ui.graphics.Shape, edge: Color = Color.White.copy(alpha = .07f)) =
     background(Color(0xFF3A3A3E).copy(alpha = .45f)).border(1.dp, edge, shape)
-
-@Composable
-fun SectionLabel(text: String, trailing: String = "") = Row(
-    Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 22.dp, bottom = 10.dp),
-    horizontalArrangement = Arrangement.SpaceBetween,
-) {
-    Text(text, style = HintStyle)
-    if (trailing.isNotEmpty()) Text(trailing, style = HintStyle)
-}
 
 @Composable
 fun PrimaryButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, busy: Boolean = false, onClick: () -> Unit) {
@@ -168,26 +147,6 @@ fun PrimaryButton(text: String, modifier: Modifier = Modifier, enabled: Boolean 
         Text(text, color = Palette.onAccent, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
     }
 }
-
-@Composable
-fun TonalButton(text: String, icon: ImageVector? = null, modifier: Modifier = Modifier, enabled: Boolean = true, busy: Boolean = false, onClick: () -> Unit) = Row(
-    modifier.height(48.dp).clip(RoundedCornerShape(24.dp)).background(Palette.surface2)
-        .clickable(enabled = enabled && !busy, role = Role.Button, onClick = onClick).padding(horizontal = 22.dp),
-    horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
-) {
-    val color = if (enabled) Palette.text else Palette.text.copy(alpha = .4f)
-    if (busy) CircularProgressIndicator(Modifier.size(16.dp), color = color, strokeWidth = 2.dp)
-    else icon?.let { Icon(it, null, tint = color, modifier = Modifier.size(18.dp)) }
-    if (busy || icon != null) Spacer(Modifier.width(8.dp))
-    Text(text, color = color, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
-}
-
-@Composable
-fun TextButton(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) = Box(
-    modifier.fillMaxWidth().heightIn(min = 44.dp).clip(RoundedCornerShape(22.dp))
-        .clickable(role = Role.Button, onClick = onClick),
-    contentAlignment = Alignment.Center,
-) { Text(text, color = LocalAccent.current, fontWeight = FontWeight.SemiBold, fontSize = 15.sp) }
 
 /** A warning or info banner with one optional action (RULES A3). */
 @Composable
@@ -214,44 +173,8 @@ fun Banner(title: String, text: String, info: Boolean = false, action: String? =
 fun lerpColor(a: Color, b: Color, f: Float) = Color(
     a.red + (b.red - a.red) * f, a.green + (b.green - a.green) * f, a.blue + (b.blue - a.blue) * f)
 
-/** A row with a switch; the whole row toggles it. */
-@Composable
-fun SwitchRow(label: String, hint: String? = null, checked: Boolean, enabled: Boolean = true, dot: Color? = null, onChange: (Boolean) -> Unit) {
-    val accent = LocalAccent.current
-    Row(
-        Modifier.fillMaxWidth().heightIn(min = 60.dp)
-            .clickable(enabled = enabled, role = Role.Switch) { onChange(!checked) }
-            .padding(horizontal = 18.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        dot?.let { Box(Modifier.size(12.dp).clip(CircleShape).background(it)) }
-        Column(Modifier.weight(1f)) {
-            Text(label, style = BodyStyle.copy(color = if (enabled) Palette.text else Palette.faint))
-            hint?.let { Text(it, style = HintStyle) }
-        }
-        Switch(
-            checked = checked, onCheckedChange = null, enabled = enabled,
-            colors = SwitchDefaults.colors(
-                checkedTrackColor = accent, checkedThumbColor = Palette.onAccent, checkedBorderColor = accent,
-                uncheckedTrackColor = Color(0xFF34353A), uncheckedThumbColor = Palette.muted, uncheckedBorderColor = Color(0xFF34353A),
-            ),
-        )
-    }
-}
-
-/** Rows inside one rounded card, with thin dividers. */
-@Composable
-fun Rows(content: @Composable () -> Unit) = Column(
-    Modifier.fillMaxWidth().padding(bottom = 14.dp).clip(RoundedCornerShape(20.dp)).frostCard(RoundedCornerShape(20.dp)),
-) { content() }
-
-@Composable
-fun RowDivider() = Box(Modifier.fillMaxWidth().height(1.dp).background(Color.White.copy(alpha = .07f)))
-
 @Composable
 fun animatedAccent(colourway: String): Color = animateColorAsState(accentFor(colourway), label = "accent").value
-
-
 
 // ---------- Page look (About, Calendars, Settings; RULES A9) ----------
 // Today's grey stage with the colourway's glow at the top, a large title, 22 sp section headings, and items as a
