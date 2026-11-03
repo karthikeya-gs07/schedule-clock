@@ -152,7 +152,7 @@
 | M2 | The **shown meeting changes** (selecting a meeting other than "next", or switching A → B) | Text fades out and drops 6 px over **170 ms**, the content swaps, and it fades back in over **280 ms**. The layout keeps scaling, with no second screen (P2). Selecting the meeting that's already shown doesn't dip. |
 | M3 | **Lane → main ring** (W8) | The blue arc grows outward from R − 10 to R about the center, 4 → 12 px, blue → amber, **900 ms**, eased with no overshoot (`cubic-bezier(.22,1,.36,1)`), so it "sits down" into the band. |
 | M4 | Meetings ↔ **empty** (C3) | Date and clock move down to the center (clock 115 %) and the divider fades, with the M1 timing. |
-| M4b | Arcs **appear, disappear and recolor** (new day, new meeting, ambient on/off) | Arcs fade in and out and ease between colors over the select duration, instead of snapping. | Rebuilt-on-every-update arcs looked abrupt. |
+| M4b | Arcs **appear, disappear and recolor** (new day, new meeting, ambient on/off) | Arcs fade in and out and ease between colors over the select duration, instead of snapping (arcs rebuilt on every update looked abrupt). |
 | M5 | System **reduced motion** is on | All of the above are instant. |
 | M6 | Prototype review aids | **Slow motion ×5** (M1 1.8 s, M2 0.7 s out / 1.2 s in, M3 3.5 s) and **Fast-forward time** (1 simulated min / 40 ms). |
 
@@ -268,6 +268,7 @@ The phone app is where people set CalenTime up and change it: a first-run setup 
 | Date | Change | Rules |
 |---|---|---|
 | 2026-11-03 | Rules rewritten for clarity, no behaviour change: working rules (X1–X11) added; R9, M1, §8 and §10 now say 60 % everywhere; §9 and §10 describe colourways as chosen in the phone app; §12 describes the built app; About section headings 19 sp (as A9); rules put in order. | all |
+| 2026-11-03 | M4b row tidied (its reason moved into the rule; the table has no Why column). No behaviour change. | M4b |
 | 2026-11-01 | Selected meeting: the others dim to 60 %, not 35 %, so the day stays readable. | R9 |
 | 2026-10-31 | Home-screen Sync widget. | §12 A12 |
 | 2026-10-31 | Darker dials for Arctic Lagoon, Forest Signal, Plum Rose, Desert Dusk and Copper Garden (about 30 % darker, same hue). | §9 |
