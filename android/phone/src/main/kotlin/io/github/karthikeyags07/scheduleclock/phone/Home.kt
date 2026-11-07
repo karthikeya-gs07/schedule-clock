@@ -709,6 +709,10 @@ fun AboutScreen(colourway: String, onBack: () -> Unit, onRunSetup: () -> Unit) {
             ItemDivider(Modifier.padding(top = 8.dp))
             PageHeading("Privacy")
             IconItem(Icons.lock, "Phone to watch only", "Your calendar goes from your phone to your own watch and nowhere else. CalenTime has no internet access, no accounts, no ads and no tracking.")
+            val context = androidx.compose.ui.platform.LocalContext.current
+            SettingsShortcut(Icons.lock, "Read the privacy policy", Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+                runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(PRIVACY_LINK))) }
+            }
             ItemDivider(Modifier.padding(top = 8.dp))
             PageHeading("Credits")
             IconItem(Icons.info, "Fonts", "Google Sans Flex and Anta, under the SIL Open Font License.")
@@ -739,6 +743,9 @@ private fun FacePart(colourway: String, detail: String, day: List<Meeting>, at: 
 
 /** CalenTime's Play Store page (live once the app is published there; PRD §6.5). */
 const val PLAY_LINK = "https://play.google.com/store/apps/details?id=io.github.karthikeyags07.scheduleclock"
+
+/** The privacy policy, on GitHub Pages (Play requires a link in the app). */
+const val PRIVACY_LINK = "https://karthikeya-gs07.github.io/schedule-clock/docs/privacy.html"
 
 /** Opens Android's share sheet with the Play Store link (About). */
 @Composable
