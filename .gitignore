@@ -1,1 +1,4 @@
 .DS_Store
+
+# Release bundles copied out for Play upload
+store/upload/
