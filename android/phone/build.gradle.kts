@@ -25,8 +25,8 @@ android {
         minSdk = 29
         targetSdk = 36
         // Phone and watch apps share one Play listing, so their version codes must differ: phone 1xxx, watch 2xxx.
-        versionCode = 1003
-        versionName = "0.10.0"
+        versionCode = 1004
+        versionName = "0.10.1"
     }
 
     buildFeatures { compose = true; buildConfig = true }   // BuildConfig.DEBUG: demo mode
