@@ -11,7 +11,7 @@ Everything Play Console asks for, ready to paste. Phase 4 of PRD §6.5. Items ma
 | Category | Productivity |
 | Tags | Calendar, Watch faces, Productivity |
 | Contact email | **You** (shown publicly on the listing) |
-| Privacy policy URL | **You**: publish `docs/privacy.html` (see below) |
+| Privacy policy URL | https://karthikeya-gs07.github.io/schedule-clock/docs/privacy.html (live, GitHub Pages) |
 
 ### Short description (80 characters max)
 
