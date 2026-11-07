@@ -88,8 +88,8 @@ Questionnaire: utility/productivity app, no user-generated content, no sharing, 
 | Item | Value |
 |---|---|
 | Testing track first | **Internal testing** (up to 100 testers by email) |
-| Phone bundle | `android/phone/build/outputs/bundle/release/phone-release.aab` (version 0.10.1, code 1004) |
-| Wear OS bundle | `android/datasource/build/outputs/bundle/release/datasource-release.aab` (version 0.10.2, code 2005), uploaded under the **Wear OS** form factor of the same app |
+| Phone bundle | `android/phone/build/outputs/bundle/release/phone-release.aab` (version 0.10.2, code 1005) |
+| Wear OS bundle | `android/datasource/build/outputs/bundle/release/datasource-release.aab` (version 0.10.3, code 2006), uploaded under the **Wear OS** form factor of the same app |
 | Signing | Play App Signing on. Upload key: `~/.android/calen-time/upload.jks` (**back it up**). Watch faces are signed separately with `~/.android/calen-time/faces.jks`. |
 | Release notes | "First test release: meetings on your watch face, 16 watch faces, calendar choice and meeting buzzes." |
 

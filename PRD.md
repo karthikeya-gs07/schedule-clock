@@ -394,6 +394,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 - **v0.72:** Setup has a round back button beside the main button on steps 2–4 (RULES A1).
 - **v1.29:** New version codes for Play (2004 and 1003 were already taken in Play Console), no code change: watch app 0.10.2 (2005), phone app 0.10.1 (1004).
 - **v1.30:** About has a **Read the privacy policy** button (Play requires a link in the app). Not in the 0.10.1 (1004) bundle; the next phone upload needs code 1005.
+- **v1.31:** New release bundles with the privacy link: phone app 0.10.2 (1005), watch app 0.10.3 (2006, no code change). Next codes: phone 1006+, watch 2007+.
 - **v1.28:** Code clean-up, no behaviour change: removed unused phone UI pieces (old buttons, cards, switch row, meeting row), ten unused strings, an unused watch constant and the prototype's old payload simulation; repeated date and selection code shared; launcher icons in `mipmap-anydpi`. Tested on the Pixel 9 and Wear OS emulators. RULES.md rewritten for clarity, with the working rules (X1–X11) and contradictions fixed.
 - **v1.27:** R9: while a meeting is selected the others dim to 60 % (was 35 %, which sank into the track on tinted dials, so they looked gone). Watch 0.10.1 (2004).
 - **v1.26:** The product photo behind the face is replaced by our own generic round watch (`design/make_watch_body.py`): no branding, slim strap, curved joins, so there's no image-rights question.
