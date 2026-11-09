@@ -135,6 +135,17 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
         AppPrefs.sendSettings(context)
     }
 
+    var clock24 by mutableStateOf(AppPrefs.clock24(context))
+    var showAmPm by mutableStateOf(AppPrefs.showAmPm(context))
+    private fun clockParam() = if (clock24) "24" else if (showAmPm) "12" else "12plain"
+    init { FaceClock.param = clockParam() }
+    fun setClock(clock24: Boolean = this.clock24, showAmPm: Boolean = this.showAmPm) {
+        AppPrefs.setClock(context, clock24, showAmPm)
+        this.clock24 = clock24; this.showAmPm = showAmPm
+        FaceClock.param = clockParam()
+        AppPrefs.sendSettings(context)
+    }
+
     fun finishSetup() {
         AppPrefs.setSetupDone(context, true)
         setupDone = true

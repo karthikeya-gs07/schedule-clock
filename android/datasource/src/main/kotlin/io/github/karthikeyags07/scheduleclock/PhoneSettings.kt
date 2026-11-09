@@ -16,9 +16,13 @@ object PhoneSettings {
     fun save(context: Context, map: DataMap) {
         prefs(context).edit().apply {
             map.getString("colourway")?.let { putString("colourway", it) }
-            listOf("buzzStart", "buzzMiddle", "buzzEnd", "buzzDnd").forEach { if (map.containsKey(it)) putBoolean(it, map.getBoolean(it)) }
+            listOf("buzzStart", "buzzMiddle", "buzzEnd", "buzzDnd", "clock24", "showAmPm").forEach { if (map.containsKey(it)) putBoolean(it, map.getBoolean(it)) }
         }.apply()
     }
+
+    /** Clock format chosen on the phone (RULES T6): 12-hour with AM/PM until it says otherwise. */
+    fun clock24(context: Context) = prefs(context).getBoolean("clock24", false)
+    fun showAmPm(context: Context) = prefs(context).getBoolean("showAmPm", true)
 
     fun colourway(context: Context): String? = prefs(context).getString("colourway", null)
 

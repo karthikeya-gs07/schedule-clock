@@ -138,10 +138,13 @@ private fun previewUrl(colourway: String, meetings: List<Meeting>, atMinute: Int
     val look = Looks.of(colourway)
     val theme = URLEncoder.encode(if (colourway == "solaris") "Amber" else look.name, "UTF-8").replace("+", "%20")
     val face = if (colourway == "solaris" || look.palette != null) "timeshift" else "calen"
-    return "https://appassets.androidplatform.net/assets/face/index.html?embed&theme=$theme&face=$face" +
+    return "https://appassets.androidplatform.net/assets/face/index.html?embed&theme=$theme&face=$face&clock=${FaceClock.param}" +
         (atMinute?.let { "&time=$it" } ?: "") +
         "&v=${json.hashCode()}#${URLEncoder.encode(json, "UTF-8").replace("+", "%20")}" to json
 }
+
+/** The clock format the previews show (RULES T6), kept in step with the Settings switches by [AppModel]. */
+object FaceClock { var param = "12" }
 
 /** Today's midnight in this phone's time zone, in epoch ms. */
 private fun todayMidnight(): Long {

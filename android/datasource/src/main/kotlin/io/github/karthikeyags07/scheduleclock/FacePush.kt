@@ -65,14 +65,15 @@ object FacePush {
         require(colourway in COLOURWAYS) { "unknown colourway $colourway" }
         // Already showing it (often because the other path just swapped it): answer from what we know rather
         // than asking "is it active?" so soon after a swap, which can stall past the phone's timeout.
-        if (prefs(context).getString("colourway", null) == colourway &&
+        // An app update carries a new face, so the same colourway is put on again after one (see FaceUpdateReceiver).
+        if (prefs(context).getString("colourway", null) == colourway && prefs(context).getLong("appVersion", 0) == appVersion(context) &&
             manager(context).listWatchFaces().installedWatchFaceDetails.isNotEmpty()) return@withLock cachedStatus(context, colourway)
         val manager = manager(context)
         val slot = manager.listWatchFaces().installedWatchFaceDetails.firstOrNull()
         val token = JSONObject(context.assets.open("faces/tokens.json").bufferedReader().readText()).getString(colourway)
         // Saved first: the new face asks for its ring image as it loads, and the ring is drawn in its colours.
         val before = prefs(context).getString("colourway", null)
-        prefs(context).edit().putString("colourway", colourway).commit()
+        prefs(context).edit().putString("colourway", colourway).putLong("appVersion", appVersion(context)).commit()
         try {
             apk(context, colourway).use { fd ->
                 if (slot == null) manager.addWatchFace(fd, token) else manager.updateWatchFace(slot.slotId, fd, token)
@@ -85,6 +86,8 @@ object FacePush {
         Log.i(TAG, "face push: ${if (slot == null) "added" else "swapped to"} $colourway")
         if (slot == null) status(context) else cachedStatus(context, colourway)   // no active check right after a swap
     }
+
+    private fun appVersion(context: Context) = context.packageManager.getPackageInfo(context.packageName, 0).longVersionCode
 
     private fun cachedStatus(context: Context, colourway: String) = Status(supported = true, installed = true,
         active = prefs(context).getBoolean("active", false), colourway = colourway, activateUsed = prefs(context).getBoolean("activateUsed", false))

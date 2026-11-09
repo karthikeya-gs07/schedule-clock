@@ -120,6 +120,7 @@
 |---|---|
 | T1 | **Minimum text size 24 px** (≈ 12 sp). Sizes: clock 88 (Anta, see T5) · title 30 (→ 24) · date 24 · AM/PM 24 · time range 24 · place 24 · hour numbers 24. |
 | T5 | **Clock digits and the 1–12 dial numbers use [Anta](https://fonts.google.com/specimen/Anta)** (Google Fonts, Regular); everything else (date, AM/PM, meeting text) stays in the system sans, so numbers read as one family and words stay neutral. Anta is fairly narrow (≈ 177 px for "10:55" at 70 px), so the clock stays at **88 px**. Time + AM/PM are **centered as one unit** (AM/PM 8 px after the measured digit width). **License:** SIL Open Font License, so it can be bundled in the published face. The prototype loads it from Google Fonts; the watch build bundles the TTF. |
+| T6 | **Clock format (2026-11-09):** the phone app's Settings → Clock picks **12-hour with AM/PM** (default), **12-hour without AM/PM**, or **24-hour** ("20:28"). Without AM/PM, and in 24-hour, the time is centered alone. In 24-hour the meeting times are 24-hour too ("20:45 – 21:45"). The watch gets it with the other settings (`/settings`: `clock24`, `showAmPm`) and the status slot carries it as flags 64 (24-hour) and 128 (no AM/PM). The phone's watch previews follow it. |
 | T2 | **Default positions (baselines):** date 122 · time 206 · divider 238 · title 284 · time range 318 · place 348. |
 | T3 | **No overlaps:** no text may touch an hour number or other text in any state. Checked automatically in the prototype across 183 states (3 sample days, 17 times incl. live and private meetings, late evening and the widest time "10:55", every selection), including the C12 arrow and C13 lock. The same check confirms no private title or place ever appears on the face. Re-run after any layout change. |
 | T4 | Fixed scale origins (WFF `pivotX`/`pivotY`): date (225, 110), clock (225, 170), divider (225, 238), details (225, 310), so changing text never shifts the scaling. |
@@ -163,7 +164,7 @@
 | # | Rule | Why |
 |---|---|---|
 | A1 | Black background. Meeting arcs become **3 px grey** lines; elapsed `#4a4a4a`; later lane `#5c5c62`; a double booking shows as two grey lines; a private meeting shows as grey stripes. | Low power, low burn-in. Structure survives without color. |
-| A2 | Trail hidden; ticks and numbers at 60 %; time range and place hidden; title stays; the C12 arrow turns grey. | Minimum lit pixels while still showing what's next. |
+| A2 | Trail, now dot and settle arc hidden; ticks and numbers at 60 %; track faint; time range and place hidden; title stays; the C12 arrow turns grey. **On the watch (2026-11-09):** background black for every colourway, meeting arcs and the later lane in grey (filled, not 3 px outlines yet), double bookings and private stripes at about half strength. | Minimum lit pixels while still showing what's next. |
 | A2a | A long title in ambient | No scrolling: the **first characters and an ellipsis** ("Quarterly roadmap a…"). | Nothing moves in always-on mode (power, burn-in). |
 | A3 | No selection; taps ignored. | |
 | A4 | **Dim (low power)** toggle | The same face, unchanged layout, at about 42 % brightness and 75 % colour. Separate from A1–A3 (outlines only). Tapping still works in the prototype. | A dimmer always-on version that keeps the meetings readable. |
@@ -271,6 +272,7 @@ The phone app is where people set CalenTime up and change it: a first-run setup 
 | 2026-11-03 | Rules rewritten for clarity, no behaviour change: working rules (X1–X11) added; R9, M1, §8 and §10 now say 60 % everywhere; §9 and §10 describe colourways as chosen in the phone app; §12 describes the built app; About section headings 19 sp (as A9); rules put in order. | all |
 | 2026-11-03 | M4b row tidied (its reason moved into the rule; the table has no Why column). No behaviour change. | M4b |
 | 2026-11-07 | About: **Read the privacy policy** button under Privacy (opens the GitHub Pages policy in the browser). | §12 A6 |
+| 2026-11-09 | Always-on (AOD) look on the watch; clock format setting (12/24-hour, AM/PM on or off); the face is put on again after a watch app update. | T6, A1, A2 |
 | 2026-11-09 | Watch app home screen: companion note, face status and the next step (go to face, set it, or put it on). | §12 A13 |
 | 2026-11-01 | Selected meeting: the others dim to 60 %, not 35 %, so the day stays readable. | R9 |
 | 2026-10-31 | Home-screen Sync widget. | §12 A12 |

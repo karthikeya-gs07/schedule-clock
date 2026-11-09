@@ -124,11 +124,15 @@ object ScheduleRules {
             (p.cs until p.ce).any { ((it % DIAL_MIN) + DIAL_MIN) % DIAL_MIN / 60 == hour }
         }.sortedWith(compareBy({ list[it].lane == Lane.LATER }, { it }))
 
-    /** C8: "1:00 – 2:00 PM", or AM/PM on both ends when they differ. */
-    fun formatRange(m: Meeting): String {
+    /** C8: "1:00 – 2:00 PM", or AM/PM on both ends when they differ; "13:00 – 14:00" on a 24-hour clock (T6). */
+    fun formatRange(m: Meeting, h24: Boolean = false): String {
+        if (h24) return "${clock24(m.startMin)} – ${clock24(m.endMin)}"
         val sameHalf = (Math.floorMod(m.startMin, DAY_MIN) < 720) == (Math.floorMod(m.endMin, DAY_MIN) < 720)
         return "${clock(m.startMin, !sameHalf)} – ${clock(m.endMin, true)}"
     }
+
+    private fun clock24(min: Int) =
+        "${Math.floorMod(Math.floorDiv(min, 60), 24).toString().padStart(2, '0')}:${Math.floorMod(min, 60).toString().padStart(2, '0')}"
 
     private fun clock(min: Int, suffix: Boolean): String {
         val h24 = Math.floorMod(Math.floorDiv(min, 60), 24)   // a meeting can start yesterday (min < 0)

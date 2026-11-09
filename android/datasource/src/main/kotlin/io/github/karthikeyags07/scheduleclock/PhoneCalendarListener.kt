@@ -27,6 +27,7 @@ class PhoneCalendarListener : WearableListenerService() {
                 }
                 PhoneSettings.PATH -> {
                     PhoneSettings.save(this, map)
+                    SpikeSchedule.requestUpdate(applicationContext)   // clock format (T6)
                     MeetingBuzz.schedule(this)
                     catchUpColourway()
                 }

@@ -28,6 +28,7 @@ internal const val TAG = "ScheduleClockSpike"
  * RANGED_VALUE MAX; VALUE stays 0/1 for "selected"):
  * - status:  MAX = 1 + titleWidth + 10000 × flags, flags = 1 arrow (C12) + 2 lock (C13) + 4 clash (C7)
  *            + 8 title scrolls (C9a) + 16 title at 24 px (C9) + 32 no meetings (C3)
+ *            + 64 24-hour clock + 128 hide AM/PM (T6)
  * - details: MAX = 1 + lineWidth + 10000 × kind, kind 0 place · 1 clash · 2 tomorrow · 3 private
  */
 object SpikeSchedule {
@@ -207,11 +208,11 @@ object SpikeSchedule {
             // No calendar yet: point to the phone app. A tap on the ring asks for the watch's own calendar
             // instead (watches whose calendar apps share their events, PRD §6.3f).
             val (title, width) = TextFit.title("Open CalenTime", 260)
-            return ranged(0f, 0f, 1f + width, title, "on your phone to sync")
+            return ranged(0f, 0f, 1f + width + 10000f * clockFlags(context), title, "on your phone to sync")
         }
         val selected = selectedIndex(context, list)
         val i = shownIndex(selected, list, now)
-        if (i < 0) return ranged(0f, 0f, 1f + 10000f * 32, "", "")   // C3: no meetings, flag 32 centers the clock
+        if (i < 0) return ranged(0f, 0f, 1f + 10000f * (32 + clockFlags(context)), "", "")   // C3: no meetings, flag 32 centers the clock
         val p = list[i]
         val arrow = ScheduleRules.showsArrow(list, i, now)
         val lock = p.meeting.private
@@ -226,10 +227,14 @@ object SpikeSchedule {
         val (title, fitted) = if (small) TextFit.titleSmall(shown, 260 - iconSpace) else big to bigWidth
         val scrolls = scrollOver(p, arrow) > 0
         val width = if (scrolls) 260 - iconSpace else fitted   // icons sit at the edge of the full window
-        val (range, _) = TextFit.line(ScheduleRules.formatRange(p.meeting), 255)
-        val flags = (if (arrow) 1 else 0) + (if (lock) 2 else 0) + (if (clash) 4 else 0) + (if (scrolls) 8 else 0) + (if (small) 16 else 0)
+        val (range, _) = TextFit.line(ScheduleRules.formatRange(p.meeting, PhoneSettings.clock24(context)), 255)
+        val flags = (if (arrow) 1 else 0) + (if (lock) 2 else 0) + (if (clash) 4 else 0) + (if (scrolls) 8 else 0) + (if (small) 16 else 0) + clockFlags(context)
         return ranged(if (selected >= 0) 1f else 0f, 0f, 1f + width + 10000f * flags, title, range)
     }
+
+    /** T6: 64 = 24-hour clock, 128 = 12-hour without AM/PM. */
+    private fun clockFlags(context: Context) =
+        if (PhoneSettings.clock24(context)) 64 else if (PhoneSettings.showAmPm(context)) 0 else 128
 
     /** The meeting the face shows: the tapped one, else the default (R6); -1 when there is none. */
     private fun shownIndex(selected: Int, list: List<Placed>, now: Int) =

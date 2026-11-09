@@ -35,11 +35,19 @@ object AppPrefs {
     fun buzz(context: Context, b: Buzz) = prefs(context).getBoolean(b.key, true)
     fun setBuzz(context: Context, b: Buzz, on: Boolean) = prefs(context).edit().putBoolean(b.key, on).apply()
 
+    /** Clock on the watch face (RULES T6): 24-hour, and in 12-hour mode whether AM/PM shows. */
+    fun clock24(context: Context) = prefs(context).getBoolean("clock24", false)
+    fun showAmPm(context: Context) = prefs(context).getBoolean("showAmPm", true)
+    fun setClock(context: Context, clock24: Boolean, showAmPm: Boolean) =
+        prefs(context).edit().putBoolean("clock24", clock24).putBoolean("showAmPm", showAmPm).apply()
+
     /** Sends the colourway and buzz choices to the watch (it keeps the latest; nothing private in it). */
     fun sendSettings(context: Context) {
         val request = PutDataMapRequest.create(SETTINGS_PATH).apply {
             dataMap.putString("colourway", colourway(context))
             Buzz.entries.forEach { dataMap.putBoolean(it.key, buzz(context, it)) }
+            dataMap.putBoolean("clock24", clock24(context))
+            dataMap.putBoolean("showAmPm", showAmPm(context))
         }.asPutDataRequest().setUrgent()
         Wearable.getDataClient(context).putDataItem(request)
     }

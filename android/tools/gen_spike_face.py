@@ -86,6 +86,9 @@ CLASH = f"(floor({F} / 4) % 2)"
 SCROLL = f"(floor({F} / 8) % 2)"
 SMALL = f"(floor({F} / 16) % 2)"   # C9: the title only fits at 24 px
 EMPTY = f"(floor({F} / 32) % 2)"   # C3: no meetings, the clock takes the center
+H24 = f"(floor({F} / 64) % 2)"     # T6: 24-hour clock (phone app setting)
+NOAP = f"(floor({F} / 128) % 2)"   # T6: 12-hour clock without AM/PM
+AMB = '<Variant mode="AMBIENT" target="alpha" value="0"/>'   # hidden in always-on (A1, A2)
 EXTRA = f"(30 * {ARROW} + 25 * {LOCK})"
 ICON_X = f"(225 - ({W} + {EXTRA}) / 2)"
 
@@ -233,21 +236,34 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
 <WatchFace width="450" height="450">
 {USER_CONFIG}  <Scene backgroundColor="{D.bg}">
 
-    <!-- Ring track (R1) -->
+    <!-- Always-on (A1): black background, whatever the colourway -->
+    <PartDraw x="0" y="0" width="450" height="450" alpha="0">
+      <Variant mode="AMBIENT" target="alpha" value="255"/>
+      <Rectangle x="0" y="0" width="450" height="450"><Fill color="#ff000000"/></Rectangle>
+    </PartDraw>
+
+    <!-- Ring track (R1); faint in always-on -->
     <PartDraw x="0" y="0" width="450" height="450">
+      <Variant mode="AMBIENT" target="alpha" value="110"/>
       <Arc centerX="{CX}" centerY="{CY}" width="{2*R}" height="{2*R}" startAngle="0" endAngle="360">
         <Stroke color="{D.track}" thickness="12"/>
       </Arc>
     </PartDraw>
 
     <!-- Risk 6: comet trail (R6). Face-side, driven by the clock only; under the ring image so it shows on free time. -->
+    <Group name="trail" x="0" y="0" width="450" height="450">
+      {AMB}
 {chr(10).join(dash(i) for i in range(240))}
+    </Group>
 
     <!-- Dial: 15-minute ticks (R7) and hour numbers (R8) -->
-    <PartDraw x="0" y="0" width="450" height="450">
+    <Group name="dial" x="0" y="0" width="450" height="450">
+      <Variant mode="AMBIENT" target="alpha" value="153"/>
+      <PartDraw x="0" y="0" width="450" height="450">
 {ticks()}
-    </PartDraw>
+      </PartDraw>
 {chr(10).join(numeral(h) for h in range(1, 13))}
+    </Group>
 
     <!-- Slot 1 `ring` (spike 2): the whole ring as one image from the data source (fixes the 7-segment
          limit; carries lane, clash and private layers). SMALL_IMAGE: PHOTO_IMAGE is rejected for our provider. -->
@@ -259,18 +275,34 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
         <!-- Four panels side by side (RingRenderer): each copy puts one on screen; the face multiplies by the tint.
              Meeting arcs: panel 0 tinted with the colourway, or panel 3 in the light's colours (Solaris);
              the colourway hides the other with a transparent tint. -->
-        <PartImage x="0" y="0" width="1800" height="450" tintColor="{ARC_TINT}">
-          <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
-        </PartImage>
-        <PartImage x="-1350" y="0" width="1800" height="450" tintColor="{SHIFT_TINT}">
-          <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
-        </PartImage>
-        <PartImage x="-450" y="0" width="1800" height="450" tintColor="{LANE_COLOR}">
-          <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
-        </PartImage>
-        <PartImage x="-900" y="0" width="1800" height="450">
-          <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
-        </PartImage>
+        <Group name="ring_colour" x="0" y="0" width="450" height="450">
+          {AMB}
+          <PartImage x="0" y="0" width="1800" height="450" tintColor="{ARC_TINT}">
+            <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
+          </PartImage>
+          <PartImage x="-1350" y="0" width="1800" height="450" tintColor="{SHIFT_TINT}">
+            <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
+          </PartImage>
+          <PartImage x="-450" y="0" width="1800" height="450" tintColor="{LANE_COLOR}">
+            <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
+          </PartImage>
+        </Group>
+        <!-- Always-on (A1): meetings and the later lane in grey, no colour -->
+        <Group name="ring_ambient" x="0" y="0" width="450" height="450" alpha="0">
+          <Variant mode="AMBIENT" target="alpha" value="255"/>
+          <PartImage x="0" y="0" width="1800" height="450" tintColor="#ff8e8e93">
+            <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
+          </PartImage>
+          <PartImage x="-450" y="0" width="1800" height="450" tintColor="#ff5c5c62">
+            <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
+          </PartImage>
+        </Group>
+        <Group name="ring_fixed" x="0" y="0" width="450" height="450">
+          <Variant mode="AMBIENT" target="alpha" value="140"/>
+          <PartImage x="-900" y="0" width="1800" height="450">
+            <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
+          </PartImage>
+        </Group>
       </Complication>
     </ComplicationSlot>
 
@@ -284,6 +316,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
       <BoundingOval x="0" y="0" width="450" height="450"/>
       <Complication type="RANGED_VALUE">
         <Group name="settle" x="0" y="0" width="450" height="450" pivotX="0.5" pivotY="0.5">
+          {AMB}
           <Transform target="scaleX" value="1 + {R / R_LATER - 1:.5f} * {P}">{SETTLE_ANIM}</Transform>
           <Transform target="scaleY" value="1 + {R / R_LATER - 1:.5f} * {P}">{SETTLE_ANIM}</Transform>
           <PartDraw x="0" y="0" width="450" height="450">
@@ -312,6 +345,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
 
     <!-- Now dot (R6): rotates with the clock; above the ring layers -->
     <Group name="now" x="0" y="0" width="450" height="450" pivotX="0.5" pivotY="0.5">
+      {AMB}
       <Transform target="angle" value="{NOW_DEG}"/>
       <PartDraw x="{CX - 16}" y="{CY - R - 16}" width="32" height="32">
         <Ellipse x="2" y="2" width="28" height="28"><Fill color="#2e{D.ink[3:]}"/></Ellipse>
@@ -348,9 +382,11 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
           <!-- AM/PM (C11): WFF can't measure text, so time + AM/PM are centered as a unit with fixed widths. The time is
                right-aligned to a seam; AM/PM starts 8 px after it. A two-digit hour (10-12) is ~32 px wider, so both
                move 16 px right (half the extra width). Widths measured from the prototype's Anta render: 1-digit
-               hour ~185 px, 2-digit ~217, AM/PM ~38. Re-check on the emulator. -->
+               hour ~185 px, 2-digit ~217, AM/PM ~38. Re-check on the emulator.
+               T6: the phone app picks 12-hour with AM/PM (this pair), 12-hour without it, or 24-hour (both centered). -->
           <Group name="clock_time" x="{SEAM - 450}" y="0" width="450" height="110">
             <Transform target="x" value="{SEAM - 450} + 16 * floor([HOUR_1_12] / 10)"/>
+            <Transform target="alpha" value="255 * (1 - {H24}) * (1 - {NOAP})"/>
             <DigitalClock x="0" y="0" width="450" height="110">
               <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="12" align="END">
                 <Font family="{FONT}" size="88" color="{D.text}"/>
@@ -359,6 +395,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
           </Group>
           <Group name="clock_ampm" x="{SEAM + 8}" y="62" width="60" height="30">
             <Transform target="x" value="{SEAM + 8} + 16 * floor([HOUR_1_12] / 10)"/>
+            <Transform target="alpha" value="255 * (1 - {H24}) * (1 - {NOAP})"/>
             <PartText x="0" y="0" width="60" height="30">
               <Text align="START">
                 <Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="{D.muted}">
@@ -366,6 +403,22 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
                 </Font>
               </Text>
             </PartText>
+          </Group>
+          <Group name="clock_12_plain" x="0" y="0" width="450" height="110" alpha="0">
+            <Transform target="alpha" value="255 * (1 - {H24}) * {NOAP}"/>
+            <DigitalClock x="0" y="0" width="450" height="110">
+              <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="12" align="CENTER">
+                <Font family="{FONT}" size="88" color="{D.text}"/>
+              </TimeText>
+            </DigitalClock>
+          </Group>
+          <Group name="clock_24" x="0" y="0" width="450" height="110" alpha="0">
+            <Transform target="alpha" value="255 * {H24}"/>
+            <DigitalClock x="0" y="0" width="450" height="110">
+              <TimeText x="0" y="0" width="450" height="110" format="hh:mm" hourFormat="24" align="CENTER">
+                <Font family="{FONT}" size="88" color="{D.text}"/>
+              </TimeText>
+            </DigitalClock>
           </Group>
         </Group>
         <!-- Divider (T2): selected: up 32 px, 60 % wide; fades out when empty (C3) -->
@@ -426,6 +479,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
             <RoundRectangle x="0" y="9" width="16" height="12" cornerRadiusX="2.5" cornerRadiusY="2.5"><Fill color="{D.muted}"/></RoundRectangle>
           </PartDraw>
           <PartText x="0" y="44" width="450" height="30">
+            {AMB}
             <Transform target="y" value="44 + 30 * {CLASH}"/>
             <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" color="{D.text}">
               <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TITLE]"/></Template></Font></Text>
@@ -441,7 +495,8 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
       {provider("DetailsDataSourceService", "RANGED_VALUE")}
       <BoundingOval x="0" y="0" width="450" height="450"/>
       <Complication type="RANGED_VALUE">
-{details_group("line", f"""          <PartDraw name="overlap" x="0" y="52" width="22" height="14" alpha="0">
+{details_group("line", f"""          {AMB}
+          <PartDraw name="overlap" x="0" y="52" width="22" height="14" alpha="0">
             <Transform target="x" value="225 - ({W} + 30) / 2"/>
             <Transform target="alpha" value="{F} == 1 ? 255 : 0"/>
             <Ellipse x="1" y="1" width="12" height="12"><Stroke color="{D.clash}" thickness="2"/></Ellipse>

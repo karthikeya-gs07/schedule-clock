@@ -104,6 +104,10 @@ fun SettingsScreen(m: AppModel, onRunSetup: () -> Unit) {
     ToggleItem("Halfway through", "One long buzz · meetings of 15 min or more", m.buzz[AppPrefs.Buzz.MIDDLE] == true, Icons.clock) { m.setBuzz(AppPrefs.Buzz.MIDDLE, it) }
     ToggleItem("5 min before it ends", "Two short buzzes · meetings of 10 min or more", m.buzz[AppPrefs.Buzz.END] == true, Icons.buzz) { m.setBuzz(AppPrefs.Buzz.END, it) }
     ToggleItem("Buzz in Do Not Disturb", "Buzzes still come through when your watch is silenced", m.buzz[AppPrefs.Buzz.DND] == true, Icons.watch, enabled = any) { m.setBuzz(AppPrefs.Buzz.DND, it) }
+    ItemDivider(Modifier.padding(top = 8.dp))
+    PageHeading("Clock")
+    ToggleItem("24-hour time", if (m.clock24) "Shows 14:30" else "Shows 2:30", m.clock24, Icons.clock) { m.setClock(clock24 = it) }
+    ToggleItem("Show AM/PM", "Next to the time in 12-hour mode", m.showAmPm, Icons.clock, enabled = !m.clock24) { m.setClock(showAmPm = it) }
     // Sync isn't a setting: a short note says how it works.
     ItemDivider(Modifier.padding(top = 8.dp))   // hairlines between the sections
     PageHeading("Sync")

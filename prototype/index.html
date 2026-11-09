@@ -575,8 +575,11 @@ function flatArc(fromMin, toMin, r, inStart, inEnd) {
 }
 
 // ---------- Formatting ----------
+// T6: the phone app's clock choice (?clock=24 or ?clock=12plain); 12-hour with AM/PM otherwise.
+const CLOCK = new URLSearchParams(location.search).get('clock') || '12';
 function fmtClock(min, withSuffix = true) {
   const h24 = Math.floor(min / 60) % 24, m = min % 60;
+  if (CLOCK === '24') return `${String(h24).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   const h = h24 % 12 || 12;
   return `${h}:${String(m).padStart(2, '0')}${withSuffix ? (h24 < 12 ? ' AM' : ' PM') : ''}`;
 }
@@ -834,16 +837,17 @@ function renderBase(list) {
   renderTrail();
 
   const timeStr = fmtClock(nowMin, false);
-  const ampm = nowMin % 1440 < 720 ? 'AM' : 'PM';
+  const ampm = CLOCK === '12' ? (nowMin % 1440 < 720 ? 'AM' : 'PM') : '';
   const day = new Date(); day.setDate(day.getDate() + Math.floor(nowMin / 1440));   // real date, rolls over past midnight
   const part = o => day.toLocaleDateString('en-US', o).toUpperCase();
   setText('dDate', `${part({ weekday: 'short' })} · ${part({ month: 'short' })} ${day.getDate()}`);
   setText('dTime', timeStr);
-  setText('dAmpm', nowMin % 1440 < 720 ? 'AM' : 'PM');
+  setText('dAmpm', ampm);
   // Center time + AM/PM as one unit (the clock font's width varies, so the pair is measured).
-  const tw = $('dTime').getComputedTextLength(), aw = $('dAmpm').getComputedTextLength();
-  $('dTime').setAttribute('x', CX - (8 + aw) / 2);
-  $('dAmpm').setAttribute('x', CX - (8 + aw) / 2 + tw / 2 + 8);
+  const tw = $('dTime').getComputedTextLength(), aw = ampm ? $('dAmpm').getComputedTextLength() : 0;
+  const gap = ampm ? 8 : 0;
+  $('dTime').setAttribute('x', CX - (gap + aw) / 2);
+  $('dAmpm').setAttribute('x', CX - (gap + aw) / 2 + tw / 2 + gap);
   setText('dAmpm', ampm);
 }
 

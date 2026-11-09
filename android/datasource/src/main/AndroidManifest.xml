@@ -70,6 +70,13 @@
             </intent-filter>
         </receiver>
 
+        <!-- After an app update, the new face replaces the pushed copy (FaceUpdateReceiver). -->
+        <receiver android:name=".FaceUpdateReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
         <!-- The phone app asks about the face and switches its colourway (Data Layer requests `/face/...`). -->
         <service
             android:name=".FaceRequestService"
