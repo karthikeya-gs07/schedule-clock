@@ -15,4 +15,14 @@
     <string name="face_pick_yourself">CalenTime is on your watch. Touch and hold the watch face, then pick CalenTime.</string>
     <string name="face_failed">Couldn\'t put CalenTime on your watch. Try again from the phone app.</string>
     <string name="face_needs_wear6">CalenTime needs Wear OS 6 or newer. Check for a watch update.</string>
+    <string name="home_companion">Companion app: brings today\'s meetings from your phone to the CalenTime watch face.</string>
+    <string name="home_about">There\'s nothing else to do here. Pick colours and calendars in the CalenTime phone app.</string>
+    <string name="home_active">✓ CalenTime is your watch face. You\'re all set.</string>
+    <string name="home_go_to_face">Go to watch face</string>
+    <string name="home_installed">The CalenTime face is on your watch, but it isn\'t your watch face.</string>
+    <string name="home_set_face">Set as watch face</string>
+    <string name="home_installed_pick">The CalenTime face is on your watch, but it isn\'t your watch face. Go to the watch face, touch and hold it, then swipe to CalenTime and tap it.</string>
+    <string name="home_missing">The CalenTime face isn\'t on your watch yet.</string>
+    <string name="home_install_face">Put the face on my watch</string>
+    <string name="home_access_button">Turn on calendar access</string>
 </resources>

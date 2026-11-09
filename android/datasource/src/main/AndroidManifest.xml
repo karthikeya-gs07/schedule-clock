@@ -40,11 +40,18 @@
             android:excludeFromRecents="true"
             android:theme="@android:style/Theme.DeviceDefault" />
 
-        <!-- Calendar access (READ_CALENDAR): opened by a ring tap while it's missing, or from the app list. -->
+        <!-- Calendar access (READ_CALENDAR): opened by a ring tap while it's missing, or from the watch app's home screen. -->
         <activity
             android:name=".PermissionActivity"
             android:exported="true"
             android:label="@string/permission_label"
+            android:theme="@android:style/Theme.DeviceDefault" />
+
+        <!-- The app list's CalenTime: says it's a companion app, whether the face is set, and the next step. -->
+        <activity
+            android:name=".WatchHomeActivity"
+            android:exported="true"
+            android:label="@string/app_name"
             android:theme="@android:style/Theme.DeviceDefault">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

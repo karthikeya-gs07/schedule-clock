@@ -12,7 +12,7 @@ import android.widget.TextView
 
 /**
  * Asks for calendar access (READ_CALENDAR), the one permission the face needs. Opened by a tap on the
- * ring while access is missing, or from the app list. Once answered, the face redraws and this closes.
+ * ring while access is missing, or from the watch app's home screen ([WatchHomeActivity]). Once answered, the face redraws and this closes.
  * If Android won't ask again (denied twice), a tap here opens the app's settings instead.
  */
 class PermissionActivity : Activity() {
