@@ -68,6 +68,15 @@
     background: repeating-conic-gradient(#5d5f66 0deg 1.6deg, #2a2b2f 1.6deg 6deg);
   }
   .device.ultra { border-radius: 27%; }   /* Ultra: cushion-shaped case */
+  /* Apple Watch concept: a rounded-rectangle case and screen, with the Digital Crown and side button */
+  .device.apple { height: var(--case-h); border-radius: 30% / 25.5%; overflow: visible;
+    background: linear-gradient(160deg, #6a6c73, #2f3035 45%, #4a4c52); }
+  .device.apple::before { height: var(--glass-h); border-radius: 26% / 22%; }
+  .device.apple .watch { height: var(--dial-h); border-radius: 22.2% / 18.6%; }
+  .device.apple::after { content: ""; position: absolute; right: calc(var(--case) * -.06); top: 25%;
+    width: calc(var(--case) * .08); height: 14%; border-radius: 3px; box-shadow: 0 calc(var(--case) * .42) 0 calc(var(--case) * -.012) #3a3c41;
+    background: repeating-linear-gradient(180deg, #7a7c83 0 2px, #45474d 2px 4px); }
+  .device.large.apple-large .watch { width: calc(var(--large) * .838); height: var(--large); border-radius: 22.2% / 18.6%; }
   .watch {
     position: relative; width: var(--dial); height: var(--dial);
     border-radius: 50%; background: var(--c-bg); overflow: hidden;
@@ -199,7 +208,7 @@
   #ringAll path.arriving { visibility: hidden; }   /* the settling animation stands in for it */
   #fx path {
     fill: none; stroke-linecap: round; stroke: var(--c-later); stroke: color-mix(in srgb, var(--c-later) var(--arc-pct-hi), var(--c-bg)); stroke-width: 4px;
-    transform-box: view-box; transform-origin: 225px 225px;
+    transform-box: view-box; transform-origin: 225px var(--cy, 225px);
     transition: transform var(--promote) cubic-bezier(.22, 1, .36, 1),
                 stroke var(--promote) ease, stroke-opacity var(--promote) ease, stroke-width var(--promote) ease;
   }
@@ -442,7 +451,12 @@ const C = {
   private: '#8e8e93', privatePast: '#48484c', privateSel: '#c7c7cc', privateSelPast: '#6a6a70',
   text: '#f2f2f2', muted: '#8e8e93',
 };
-const CX = 225, CY = 225, R = 219;   // band 213–225: flush with the screen edge
+// Apple Watch concept (device tabs "Apple Watch"): the same face on a rounded-rectangle screen. The shape is
+// chosen before the scene is built, so switching to or from it reloads the page. Never in the phone app's embed.
+const SHAPE = (() => { try { return !/[?&]embed\b/.test(location.search) && /^apple/.test(localStorage.getItem('sc.device') || '') ? 'rect' : 'round'; } catch { return 'round'; } })();
+const VB_H = SHAPE === 'rect' ? 537 : 450;     // Apple Watch 46 mm screen: 416 × 496 px, here 450 × 537
+const RECT_CR = 100;                            // its corner radius in the same units (about 22 % of the width)
+const CX = 225, CY = VB_H / 2, R = 219;   // band 213–225: flush with the screen edge
 const R_LATER = R - 10;      // thin inner lane for meetings later today, beyond the 12 h window
 const CLASH_OFFSET = 4.5;    // double booking: two 5 px stripes at R ± 4.5 inside the 12 px band
 const WINDOW_MIN = 12 * 60;
@@ -557,8 +571,7 @@ function flatArc(fromMin, toMin, r, inStart, inEnd) {
   const inset = GAP_DEG + 2.5 / R * 180 / Math.PI;
   const a0 = angleOf(fromMin) + (inStart ? inset : 0), sweep = ((toMin - fromMin) / 720) * 360 - (inStart ? inset : 0) - (inEnd ? inset : 0);
   if (sweep <= 0) return '';
-  const [x0, y0] = polar(a0, r), [x1, y1] = polar(a0 + sweep, r);
-  return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${sweep > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+  return arcD(a0, sweep, r);
 }
 
 // ---------- Formatting ----------
@@ -581,9 +594,37 @@ function statusFor(e) {
 
 // ---------- Geometry ----------
 const angleOf = min => ((min % 720) / 720) * 360;               // 0° = 12 o'clock, clockwise
+// On the round face a point is r from the center. On the rectangle the ring follows the screen's edge, inset
+// by the same amount (225 − r): the point is where the ray at that angle meets the inset rounded rectangle,
+// like the hour markers of a rectangular analog face.
+const rectHits = new Map();
 function polar(deg, r) {
-  const a = (deg - 90) * Math.PI / 180;
-  return [CX + r * Math.cos(a), CY + r * Math.sin(a)];
+  const a = (deg - 90) * Math.PI / 180, dx = Math.cos(a), dy = Math.sin(a);
+  if (SHAPE === 'round') return [CX + r * dx, CY + r * dy];
+  const key = `${deg.toFixed(3)}|${r}`;
+  let t = rectHits.get(key);
+  if (t === undefined) {
+    const inset = 225 - r, hx = CX - inset, hy = CY - inset, rc = Math.max(RECT_CR - inset, 1);
+    let lo = 0, hi = Math.hypot(hx, hy) + 1;
+    for (let i = 0; i < 30; i++) {                       // the edge along the ray (signed distance to the box)
+      const m = (lo + hi) / 2, qx = Math.abs(m * dx) - (hx - rc), qy = Math.abs(m * dy) - (hy - rc);
+      const sd = Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - rc;
+      if (sd < 0) lo = m; else hi = m;
+    }
+    rectHits.set(key, t = lo);
+  }
+  return [CX + t * dx, CY + t * dy];
+}
+// One stretch of the ring as SVG: a true arc on the round face, a fine polyline along the rectangle's edge.
+function arcD(a0, sweep, r) {
+  if (SHAPE === 'round') {
+    const [x0, y0] = polar(a0, r), [x1, y1] = polar(a0 + sweep, r);
+    return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${sweep > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+  }
+  const n = Math.max(1, Math.ceil(sweep / 0.75));
+  let d = '';
+  for (let i = 0; i <= n; i++) { const [x, y] = polar(a0 + sweep * i / n, r); d += `${i ? 'L' : 'M'}${x.toFixed(2)} ${y.toFixed(2)}`; }
+  return d;
 }
 // GAP_DEG keeps back-to-back events visually separate (WFF: WeightedStroke discreteGap).
 const GAP_DEG = 1;
@@ -592,12 +633,12 @@ const GAP_DEG = 1;
 function arcPath(fromMin, toMin, r, w = 12) {
   const cap = (w / 2) / r * 180 / Math.PI;
   const a0 = angleOf(fromMin) + GAP_DEG + cap, sweep = Math.max(0.01, ((toMin - fromMin) / 720) * 360 - 2 * (GAP_DEG + cap));
-  const [x0, y0] = polar(a0, r), [x1, y1] = polar(a0 + sweep, r);
-  return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${sweep > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+  return arcD(a0, sweep, r);
 }
 
 // ---------- Scene (built once, then updated in place so transitions can run) ----------
 const svg = document.getElementById('face');
+svg.setAttribute('viewBox', `0 0 450 ${VB_H}`);
 const T = (id, x, y, size, opts = {}) => {
   const { weight = 400, spacing = 0, anchor = 'middle', fill = C.text } = opts;
   return `<text id="${id}" x="${x}" y="${y}" font-size="${size}" font-weight="${weight}" letter-spacing="${spacing}" text-anchor="${anchor}" fill="${fill}"></text>`;
@@ -624,19 +665,20 @@ for (let q = 0; q < 48; q++) {
 svg.innerHTML = `
   <defs>
     <clipPath id="titleClip"><rect id="titleClipRect" x="0" y="246" width="450" height="52"/></clipPath>
-    <filter id="modeFx" filterUnits="userSpaceOnUse" x="0" y="0" width="450" height="450" color-interpolation-filters="sRGB">
+    <filter id="modeFx" filterUnits="userSpaceOnUse" x="0" y="0" width="450" height="${VB_H}" color-interpolation-filters="sRGB">
       <feColorMatrix id="modeMx" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
     </filter>
   </defs>
   <g id="scene">
   <g id="ticks">${ticks}</g>
   <g id="numerals">${numerals}</g>
-  <circle id="track" cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${C.track}" stroke-width="12"/>
+  ${SHAPE === 'round' ? `<circle id="track" cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${C.track}" stroke-width="12"/>`
+    : `<path id="track" d="${arcD(0, 360, R)}Z" fill="none" stroke="${C.track}" stroke-width="12"/>`}
   <g id="trail" fill="none" stroke="#fff" stroke-width="1.2"></g>
   <defs id="ringDefs"></defs>
   <defs>
-    <mask id="tsMask" maskUnits="userSpaceOnUse" x="0" y="0" width="450" height="450"><g id="tsMaskArcs"></g></mask>
-    <mask id="tsSelMask" maskUnits="userSpaceOnUse" x="0" y="0" width="450" height="450">
+    <mask id="tsMask" maskUnits="userSpaceOnUse" x="0" y="0" width="450" height="${VB_H}"><g id="tsMaskArcs"></g></mask>
+    <mask id="tsSelMask" maskUnits="userSpaceOnUse" x="0" y="0" width="450" height="${VB_H}">
       <path id="tsSelPast" class="m tsSel past"/><path id="tsSelNow" class="m tsSel"/>
     </mask>
   </defs>
@@ -652,7 +694,7 @@ svg.innerHTML = `
   <g id="tsSelWheel" mask="url(#tsSelMask)" fill="none" stroke-width="26"></g>
   <g id="nowDot"><circle class="ink" r="14" fill="#fff" opacity=".18"/><circle class="bg" r="9.5" fill="#000"/><circle class="ink" r="6.5" fill="#fff"/></g>
 
-  <g id="defaultUI">
+  <g id="defaultUI" transform="translate(0 ${CY - 225})">
     <g id="dDateG" class="m">${T('dDate', CX, 122, 24, { fill: C.muted, spacing: 2, weight: 500 })}</g>
     <g id="dClock" class="m">
       ${T('dTime', CX, 206, 88, { weight: 400 })}
@@ -963,9 +1005,8 @@ function sunColor(t) {
 const WHEEL_STEP = 1.5, wheelSegs = { tsWheel: [], tsSelWheel: [] };
 for (const [id, r] of [['tsWheel', R], ['tsSelWheel', R - 3]]) {
   for (let a = 0; a < 360; a += WHEEL_STEP) {
-    const [x0, y0] = polar(a, r), [x1, y1] = polar(a + WHEEL_STEP + 0.6, r);
     const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    p.setAttribute('d', `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`);
+    p.setAttribute('d', arcD(a, WHEEL_STEP + 0.6, r));
     $(id).appendChild(p);
     wheelSegs[id].push({ p, a: a + WHEEL_STEP / 2 });
   }
@@ -1417,6 +1458,10 @@ const DEVICES = [
   { id: 'classic', tab: 'Classic 46 mm', name: 'Galaxy Watch8 Classic · 46 mm',   inch: 1.34, px: 438, caseMm: 46, shape: 'classic' },
   { id: 'ultra',   tab: 'Ultra 47 mm',   name: 'Galaxy Watch Ultra 2 · 47 mm',    inch: 1.52, px: 498, caseMm: 47, shape: 'ultra' },
   { id: 'large',   tab: 'Large',         name: 'Large preview (not to scale)' },
+  // Concept only: watchOS does not allow third-party watch faces (the real thing would be a complication or widget).
+  // Series 10/11 46 mm: 416 × 496 px at 326 ppi = 32.4 × 38.6 mm screen; case 46 × 39 mm.
+  { id: 'apple',   tab: 'Apple Watch',   name: 'Apple Watch 46 mm · concept', shape: 'apple', mm: [32.4, 38.6], px: [416, 496], caseMm: [39, 46] },
+  { id: 'apple-large', tab: 'Apple · Large', name: 'Apple Watch concept, large (not to scale)', shape: 'apple' },
 ];
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -1498,14 +1543,28 @@ function currentScale() {
 }
 
 let deviceId = DEVICES.some(d => d.id === store.get('sc.device')) ? store.get('sc.device') : '44';
+if (SHAPE === 'round' && /^apple/.test(deviceId)) deviceId = '44';   // the concept never shows in the phone app's embed
+document.documentElement.style.setProperty('--cy', `${CY}px`);
 const mmToPx = (mm, cssPerIn) => mm / 25.4 * cssPerIn;
 
 function applyDevice() {
   const d = DEVICES.find(x => x.id === deviceId), el = $('device');
   $('deviceTabs').querySelectorAll('button').forEach(b => b.setAttribute('aria-selected', b.dataset.id === deviceId));
-  el.className = 'device' + (d.id === 'large' ? ' large' : d.shape ? ' ' + d.shape : '');
-  if (d.id === 'large') {
-    $('sizeInfo').innerHTML = `<b>${d.name}</b>. Fills the screen; pick a size above to see the real dimensions.`;
+  el.className = 'device' + (d.id === 'large' ? ' large' : d.id === 'apple-large' ? ' large apple-large' : d.shape ? ' ' + d.shape : '');
+  const concept = ' A design concept: watchOS doesn\'t allow third-party watch faces, so on a real Apple Watch this would be a complication or widget.';
+  if (d.id === 'large' || d.id === 'apple-large') {
+    $('sizeInfo').innerHTML = `<b>${d.name}</b>. Fills the screen; pick a size above to see the real dimensions.${d.id === 'apple-large' ? concept : ''}`;
+    return;
+  }
+  if (d.shape === 'apple') {
+    const { cssPerIn, source, rough } = currentScale(), px = mm => `${mmToPx(mm, cssPerIn)}px`;
+    const [w, h] = d.mm, [cw, ch] = d.caseMm;
+    el.style.setProperty('--dial', px(w)); el.style.setProperty('--dial-h', px(h));
+    el.style.setProperty('--glass', px(w + 2)); el.style.setProperty('--glass-h', px(h + 2));
+    el.style.setProperty('--case', px(cw)); el.style.setProperty('--case-h', px(ch));
+    $('sizeInfo').innerHTML = `<b>${d.name}</b>: ${w} × ${h} mm screen, ${d.px[0]}×${d.px[1]} px.${concept}<br>` +
+      `Actual size (${source}${rough ? ', may be off' : ''}). <button class="linkish" id="calibOpen">Calibrate</button>`;
+    $('calibOpen').onclick = openCalib;
     return;
   }
   const { cssPerIn, source, rough } = currentScale();
@@ -1524,7 +1583,12 @@ DEVICES.forEach(d => {
   b.textContent = d.tab;
   b.dataset.id = d.id;
   b.setAttribute('role', 'tab');
-  b.onclick = () => { deviceId = d.id; store.set('sc.device', d.id); closeCalib(); applyDevice(); };
+  b.onclick = () => {
+    store.set('sc.device', d.id);
+    // The Apple Watch concept draws a different screen shape, which is set up when the page loads.
+    if ((d.shape === 'apple') !== (SHAPE === 'rect')) { location.reload(); return; }
+    deviceId = d.id; closeCalib(); applyDevice();
+  };
   $('deviceTabs').appendChild(b);
 });
 
