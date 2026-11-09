@@ -399,6 +399,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 - **v1.33:** Watch app 0.10.4 (2007) with the home screen, for Play. Next codes: phone 1006+, watch 2008+.
 - **v1.34:** Phone app 0.10.3 (1006), new version number only. Next codes: phone 1007+, watch 2008+.
 - **v1.35:** Watch app 0.10.5 (2008), new version number only. Next codes: phone 1007+, watch 2009+.
+- **v1.38:** Phone 0.11.0 (1007) and watch 0.11.0 (2009) built for the internal test track, to test v1.37 on real devices.
 - **v1.37:** Always-on mode on the watch face (black, grey arcs, no trail or now dot, dim dial, title only). Settings → Clock in the phone app: 24-hour time, and Show AM/PM for 12-hour; the face, the meeting times and the phone previews follow it. After a watch app update the face is put on the watch again, so updates reach it. Tested on the Wear OS 6 emulator (24-hour, 12-hour without AM/PM, AOD, refresh after update).
 - **v1.36:** Editable SVGs of the five phone pages at the Fold cover size (1080 × 2520) in design/phone-screens/, with the script that makes them.
 - **v1.28:** Code clean-up, no behaviour change: removed unused phone UI pieces (old buttons, cards, switch row, meeting row), ten unused strings, an unused watch constant and the prototype's old payload simulation; repeated date and selection code shared; launcher icons in `mipmap-anydpi`. Tested on the Pixel 9 and Wear OS emulators. RULES.md rewritten for clarity, with the working rules (X1–X11) and contradictions fixed.
