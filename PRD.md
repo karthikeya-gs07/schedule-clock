@@ -398,6 +398,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 - **v1.32:** Watch app home screen (RULES A13): opening the app shows that it's a companion app, whether the CalenTime face is set, and a button to go back to the face, set it, or put it on the watch. Before, it closed straight away and Play's Open button looked broken. Needs a new watch bundle (2007+).
 - **v1.33:** Watch app 0.10.4 (2007) with the home screen, for Play. Next codes: phone 1006+, watch 2008+.
 - **v1.34:** Phone app 0.10.3 (1006), new version number only. Next codes: phone 1007+, watch 2008+.
+- **v1.35:** Watch app 0.10.5 (2008), new version number only. Next codes: phone 1007+, watch 2009+.
 - **v1.28:** Code clean-up, no behaviour change: removed unused phone UI pieces (old buttons, cards, switch row, meeting row), ten unused strings, an unused watch constant and the prototype's old payload simulation; repeated date and selection code shared; launcher icons in `mipmap-anydpi`. Tested on the Pixel 9 and Wear OS emulators. RULES.md rewritten for clarity, with the working rules (X1–X11) and contradictions fixed.
 - **v1.27:** R9: while a meeting is selected the others dim to 60 % (was 35 %, which sank into the track on tinted dials, so they looked gone). Watch 0.10.1 (2004).
 - **v1.26:** The product photo behind the face is replaced by our own generic round watch (`design/make_watch_body.py`): no branding, slim strap, curved joins, so there's no image-rights question.
