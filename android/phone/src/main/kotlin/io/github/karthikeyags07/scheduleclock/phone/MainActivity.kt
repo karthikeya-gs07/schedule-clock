@@ -263,7 +263,7 @@ private fun NavBar(current: Tab, haze: HazeState, preview: String?, modifier: Mo
                     .semantics { contentDescription = t.label; this.selected = selected }
                     .drawBehind {
                         if (glow > 0f) drawCircle(Brush.radialGradient(
-                            listOf(selectedTint.copy(alpha = .16f * glow), selectedTint.copy(alpha = .05f * glow), Color.Transparent),
+                            *glowStops(selectedTint, .16f * glow),
                             center = center, radius = 22.dp.toPx(),
                         ), radius = 22.dp.toPx())
                     },

@@ -160,7 +160,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
         val dy = lerp(0.dp, faceTopCentre - faceTopHome, p)
 
         // Everything but the drawer is the "page" the drawer and the floating nav blur.
-        Box(Modifier.fillMaxSize().hazeSource(haze, zIndex = 0f)) {
+        Box(Modifier.fillMaxSize().hazeSource(haze, zIndex = 0f).dither()) {
             // A soft glow of the colourway rising from the bottom of the page (the background colour stays). On
             // Watchface it's fainter and sits lower, so the face is the brightest thing on screen.
             // For a gradient face the glow carries its colours across, faded by the same round falloff.
@@ -168,7 +168,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                 val k = 1f - .55f * p
                 drawRect(Brush.horizontalGradient(glows))
                 drawRect(Brush.radialGradient(
-                    listOf(Color.Black.copy(alpha = .22f * k), Color.Black.copy(alpha = .08f * k), Color.Transparent),
+                    *glowStops(Color.Black, .22f * k),
                     center = Offset(size.width / 2, size.height * (.86f + .2f * p)), radius = size.width * (1.1f - .2f * p),
                 ), blendMode = BlendMode.DstIn)
             })
@@ -334,12 +334,14 @@ internal val StageBackground = Color(0xFF191919)
 @Composable
 internal fun WatchPhoto(modifier: Modifier) = Image(
     painterResource(R.drawable.watch_body), null, contentScale = ContentScale.FillBounds,
-    colorFilter = ColorFilter.tint(StageBackground, BlendMode.Multiply),
+    // Modulate, not Multiply: Compose's Multiply also fills the image's transparent pixels with the tint, which
+    // drew a faint rectangle round the watch on the darker unfolded page.
+    colorFilter = ColorFilter.tint(StageBackground, BlendMode.Modulate),
     modifier = modifier
         .graphicsLayer { alpha = .4f; compositingStrategy = CompositingStrategy.Offscreen }
         .drawWithContent {
             drawContent()
-            drawRect(Brush.verticalGradient(0f to Color.Transparent, .2f to Color.Black, .78f to Color.Black, 1f to Color.Transparent),
+            drawRect(Brush.verticalGradient(*(easeStops(0f, .24f, fadeIn = true) + easeStops(.74f, 1f, fadeIn = false)).toTypedArray()),
                 blendMode = BlendMode.DstIn)
         },
 )

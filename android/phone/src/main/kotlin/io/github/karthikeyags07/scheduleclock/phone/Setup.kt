@@ -105,9 +105,9 @@ fun SetupFlow(m: AppModel, startStep: Int, onAllow: () -> Unit) {
     val canBack = step in 1 until STEPS - 1 && install != Install.SENDING
     val accent = LocalAccent.current
 
-    Box(Modifier.fillMaxSize().background(StageBackground).drawBehind {
+    Box(Modifier.fillMaxSize().background(StageBackground).dither().drawBehind {
         // Today's glow of the colourway, rising from the bottom.
-        drawRect(Brush.radialGradient(listOf(accent.copy(alpha = .2f), accent.copy(alpha = .07f), Color.Transparent),
+        drawRect(Brush.radialGradient(*glowStops(accent, .2f),
             center = Offset(size.width / 2, size.height * .95f), radius = size.width * 1.1f))
     }) {
         Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
