@@ -176,7 +176,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
             WatchPhoto(Modifier.offset(x = left + d(29f), y = d(27f) + dy).size(d(334.5f), d(498.8f)))
             val sample = remember { SampleDay.meetings() }
             val live = !watchMode
-            val meetings = if (live) m.meetings else sample
+            val meetings = if (live) m.shownMeetings else sample
             val at = if (live && !m.demo) null else SampleDay.SAMPLE_MINUTE
             // Glow: a blurred copy of the face at rest (48 dp of room so the blur isn't cut square); hidden mid-swipe.
             if (!pager.isScrollInProgress && kotlin.math.abs(pager.currentPageOffsetFraction) < .01f) {
@@ -470,6 +470,8 @@ private fun MeetingsDrawer(m: AppModel, haze: HazeState, collapsedTop: androidx.
     val zone = ZoneId.systemDefault()
     val endOfToday = LocalDate.now(zone).plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
     val left = m.meetings.filter { !it.allDay && it.end > now && it.begin < endOfToday }
+    var pickingApp by remember { mutableStateOf(false) }
+    if (pickingApp) NewEventPicker(m) { pickingApp = false }
 
     Column(
         Modifier.offset { IntOffset(0, (top + awayPx).roundToInt()) }.fillMaxWidth().height(height - expandedTop)
@@ -502,7 +504,15 @@ private fun MeetingsDrawer(m: AppModel, haze: HazeState, collapsedTop: androidx.
             Row(Modifier.fillMaxWidth().padding(start = 28.dp, end = 28.dp, top = 22.dp), horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically) {
                 Text("Today's calendar", style = BodyStyle.copy(fontSize = 18.sp, fontWeight = FontWeight.Medium))
-                if (left.isNotEmpty()) Text("${left.size} meeting${if (left.size == 1) "" else "s"}", style = HintStyle)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    val hiddenCount = left.count(m::isHidden)
+                    if (left.isNotEmpty()) Text("${left.size} meeting${if (left.size == 1) "" else "s"}" +
+                        (if (hiddenCount > 0) " · $hiddenCount hidden" else ""), style = HintStyle)
+                    // New event (RULES A16): pick a calendar app, which opens on its own "new event" screen.
+                    Box(Modifier.size(36.dp).clip(CircleShape).background(Color.White.copy(alpha = .08f))
+                        .clickable(role = Role.Button) { pickingApp = true }.semantics { contentDescription = "New event" },
+                        contentAlignment = Alignment.Center) { Icon(Icons.plus, null, tint = Palette.text, modifier = Modifier.size(20.dp)) }
+                }
             }
         }
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 28.dp, end = 28.dp, top = 8.dp, bottom = 132.dp)) {
@@ -512,40 +522,61 @@ private fun MeetingsDrawer(m: AppModel, haze: HazeState, collapsedTop: androidx.
             )
             left.forEachIndexed { i, meeting ->
                 if (i > 0) Box(Modifier.fillMaxWidth().height(1.dp).background(Color.White.copy(alpha = .08f)))
-                DrawerMeeting(meeting, live = meeting.begin <= now, clash = left.any { it !== meeting && it.begin < meeting.end && meeting.begin < it.end },
-                    color = m.calendars.firstOrNull { it.id == meeting.calendarId }?.color?.let { Color(it) } ?: Palette.muted)
+                val hidden = m.isHidden(meeting)
+                val calendar = m.calendars.firstOrNull { it.id == meeting.calendarId }
+                // A hidden meeting can't clash on the watch, and doesn't make others clash either.
+                DrawerMeeting(meeting, live = meeting.begin <= now, hidden = hidden,
+                    clash = !hidden && left.any { it !== meeting && !m.isHidden(it) && it.begin < meeting.end && meeting.begin < it.end },
+                    color = calendar?.color?.let { Color(it) } ?: Palette.muted, calendarName = calendar?.name.orEmpty()) { m.toggleHidden(meeting) }
             }
         }
     }
 }
 
 private val DRAWER_TIME = java.time.format.DateTimeFormatter.ofPattern("h:mm a")
+private val DRAWER_DATE = java.time.format.DateTimeFormatter.ofPattern("EEE, MMM d")
 
 /**
- * One meeting in the drawer: the title on the left (up to two lines) and its time on the right, with the place
- * (or the private / clash note) under the title.
+ * One meeting in the drawer (RULES A15): its calendar, the title (up to two lines) and the place on the left; the
+ * start time, date and length on the right; and at the far right the eye that shows or hides it on the watch.
+ * A hidden meeting keeps its place in the list, dimmed.
  */
 @Composable
-private fun DrawerMeeting(meeting: Meeting, live: Boolean, clash: Boolean, color: Color) {
-    val zone = ZoneId.systemDefault()
-    fun t(ms: Long) = java.time.Instant.ofEpochMilli(ms).atZone(zone).format(DRAWER_TIME)
+private fun DrawerMeeting(meeting: Meeting, live: Boolean, hidden: Boolean, clash: Boolean, color: Color, calendarName: String,
+                          onToggleHidden: () -> Unit) {
+    val start = java.time.Instant.ofEpochMilli(meeting.begin).atZone(ZoneId.systemDefault())
+    val minutes = ((meeting.end - meeting.begin) / 60_000L).toInt()
+    val length = when { minutes < 60 -> "$minutes min"; minutes % 60 == 0 -> "${minutes / 60} h"; else -> "${minutes / 60} h ${minutes % 60} min" }
+    val dim by animateFloatAsState(if (hidden) .4f else 1f, tween(250), label = "hiddenDim")
     Row(
-        Modifier.fillMaxWidth().padding(vertical = 18.dp),
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        Modifier.fillMaxWidth().padding(vertical = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top,
     ) {
-        Box(Modifier.padding(top = 7.dp).size(10.dp).clip(CircleShape).background(color))
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(meeting.title.ifEmpty { "Busy" }, maxLines = 2, overflow = TextOverflow.Ellipsis,
-                style = BodyStyle.copy(fontSize = 17.sp, lineHeight = 23.sp, fontWeight = FontWeight.Medium))
-            // The place, on its own line under the title, when the event has one.
-            if (meeting.where.isNotEmpty()) Text(meeting.where, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                style = SubStyle.copy(color = Palette.muted.copy(alpha = .75f)))   // quieter than the title and time
-            val note = listOfNotNull("Private on the watch".takeIf { meeting.private }, "Double booked".takeIf { clash }).joinToString(" · ")
-            if (note.isNotEmpty()) Text(note, maxLines = 1, style = SubStyle.copy(color = if (clash) Color(0xFFFF9D82) else Palette.muted))
+        Row(Modifier.weight(1f).graphicsLayer { alpha = dim }, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(Modifier.padding(top = 5.dp).size(10.dp).clip(CircleShape).background(color))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                if (calendarName.isNotEmpty()) Text(calendarName, maxLines = 1, overflow = TextOverflow.Ellipsis, style = HintStyle.copy(fontSize = 12.sp))
+                Text(meeting.title.ifEmpty { "Busy" }, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                    style = BodyStyle.copy(fontSize = 17.sp, lineHeight = 23.sp, fontWeight = FontWeight.Medium))
+                // The place, on its own line under the title, when the event has one.
+                if (meeting.where.isNotEmpty()) Text(meeting.where, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    style = SubStyle.copy(color = Palette.muted.copy(alpha = .75f)))   // quieter than the title and time
+                val note = listOfNotNull("Hidden on the watch".takeIf { hidden }, "Private on the watch".takeIf { meeting.private && !hidden },
+                    "Double booked".takeIf { clash }).joinToString(" · ")
+                if (note.isNotEmpty()) Text(note, maxLines = 1, style = SubStyle.copy(color = if (clash) Color(0xFFFF9D82) else Palette.muted))
+            }
+            Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(top = 1.dp)) {
+                Text(start.format(DRAWER_TIME), style = BodyStyle.copy(fontSize = 15.sp, color = if (live && !hidden) LocalAccent.current else Palette.text))
+                Text(start.format(DRAWER_DATE), style = SubStyle.copy(fontSize = 12.sp))
+                Text(length, style = SubStyle.copy(fontSize = 12.sp))
+            }
         }
-        Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(top = 1.dp)) {
-            Text(t(meeting.begin), style = BodyStyle.copy(fontSize = 15.sp, color = if (live) LocalAccent.current else Palette.text))
-            Text(t(meeting.end), style = SubStyle)
+        // Far right: show or hide on the watch face. Not dimmed, so it stays easy to find and tap.
+        Box(Modifier.size(40.dp).clip(CircleShape).background(Color.White.copy(alpha = if (hidden) .04f else .08f))
+            .clickable(role = Role.Switch, onClick = onToggleHidden)
+            .semantics { contentDescription = if (hidden) "Show on watch" else "Hide from watch" },
+            contentAlignment = Alignment.Center) {
+            Icon(if (hidden) Icons.eyeOff else Icons.eye, null, tint = if (hidden) Palette.muted else Palette.text, modifier = Modifier.size(20.dp))
         }
     }
 }

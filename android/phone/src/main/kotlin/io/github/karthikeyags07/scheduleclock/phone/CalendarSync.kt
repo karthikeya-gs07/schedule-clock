@@ -26,7 +26,12 @@ data class PhoneCalendar(val id: Long, val name: String, val account: String, va
 data class Meeting(
     val begin: Long, val end: Long, val title: String, val where: String,
     val allDay: Boolean, val private: Boolean, val calendarId: Long,
-)
+    /** The calendar event's id (one per series); with [begin] it names this one occurrence. */
+    val eventId: Long = 0,
+) {
+    /** Names this occurrence, for hiding it from the watch (RULES A15). */
+    val key get() = "$eventId@$begin"
+}
 
 /**
  * Reads the phone's calendar from yesterday (a meeting may still be live) to the end of tomorrow and
@@ -89,6 +94,7 @@ object CalendarSync {
                     allDay = int(c, Instances.ALL_DAY) == 1,
                     private = access == Events.ACCESS_PRIVATE || access == Events.ACCESS_CONFIDENTIAL,
                     calendarId = calendarId,
+                    eventId = long(c, Instances.EVENT_ID) ?: 0,
                 )
             }
         }
@@ -97,7 +103,9 @@ object CalendarSync {
 
     /** Reads and sends; blocking, so call it off the main thread. Returns the number of events sent. */
     fun send(context: Context): Int {
-        val events = ArrayList(meetings(context).map { m ->
+        // Meetings hidden in the app's drawer stay on the phone (RULES A15).
+        val hidden = AppPrefs.hiddenEvents(context)
+        val events = ArrayList(meetings(context).filter { it.key !in hidden }.map { m ->
             DataMap().apply {
                 putLong("begin", m.begin)
                 putLong("end", m.end)

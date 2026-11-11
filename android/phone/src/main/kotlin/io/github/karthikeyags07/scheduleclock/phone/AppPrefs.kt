@@ -28,6 +28,15 @@ object AppPrefs {
         prefs(context).edit().putStringSet("calendars", next.map { it.toString() }.toSet()).apply()
     }
 
+    /** Meetings hidden from the watch in Today's drawer (RULES A15), by [Meeting.key]. */
+    fun hiddenEvents(context: Context): Set<String> = prefs(context).getStringSet("hiddenEvents", emptySet())!!.toSet()
+    fun setHiddenEvents(context: Context, keys: Set<String>) {
+        // Occurrences that ended more than two days ago can't come back into the sync window: drop them.
+        val cutoff = System.currentTimeMillis() - 2 * 86_400_000L
+        val kept = keys.filter { k -> k.substringAfter('@').toLongOrNull()?.let { it > cutoff } ?: false }.toSet()
+        prefs(context).edit().putStringSet("hiddenEvents", kept).apply()
+    }
+
     fun colourway(context: Context) = prefs(context).getString("colourway", "amber")!!
     fun setColourway(context: Context, colourway: String) = prefs(context).edit().putString("colourway", colourway).apply()
 

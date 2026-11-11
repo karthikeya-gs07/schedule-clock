@@ -31,6 +31,25 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
 
     fun isOn(c: PhoneCalendar) = enabled?.contains(c.id) ?: true
 
+    /** Meetings hidden from the watch (RULES A15). They stay in the drawer, in order, dimmed. */
+    var hidden by mutableStateOf(AppPrefs.hiddenEvents(context))
+    fun isHidden(meeting: Meeting) = meeting.key in hidden
+    /** The meetings the watch shows: everything but the hidden ones. */
+    val shownMeetings get() = meetings.filter { it.key !in hidden }
+
+    fun toggleHidden(meeting: Meeting) {
+        val hide = !isHidden(meeting)
+        hidden = if (hide) hidden + meeting.key else hidden - meeting.key
+        if (demo) return
+        AppPrefs.setHiddenEvents(context, hidden)
+        val name = meeting.title.ifEmpty { "Meeting" }
+        say(if (hide) "$name hidden on your watch" else "$name shown on your watch")
+        syncNow(quiet = true)
+    }
+
+    /** Set when a calendar app was opened to add an event, so coming back syncs the new event to the watch. */
+    var syncOnReturn = false
+
     /**
      * Demo mode, for store screenshots: the sample busy day and sample calendars at 10:13 AM instead of the
      * phone's real calendar, and a connected watch. Started with `adb shell am start … --ez demo true`; nothing

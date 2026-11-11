@@ -257,7 +257,7 @@ private fun WatchHero(m: AppModel, width: Dp, dim: Boolean = false) {
         Box(Modifier.size(width, k * 498.8f)) {
             WatchPhoto(Modifier.fillMaxSize())
             Box(Modifier.offset(x = k * 50.2f, y = k * 131.8f).size(k * 234.3f)) {
-                WatchFacePreview(m.colourway, m.meetings, k * 234.3f)
+                WatchFacePreview(m.colourway, m.shownMeetings, k * 234.3f)
                 if (dim) Box(Modifier.matchParentSize().clip(CircleShape).background(Color.Black.copy(alpha = .45f)))
             }
         }

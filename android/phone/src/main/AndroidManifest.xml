@@ -3,6 +3,14 @@
 
     <uses-permission android:name="android.permission.READ_CALENDAR" />
 
+    <!-- New event (RULES A16): lets the app list the calendar apps that can add an event, for the person to pick. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.INSERT" />
+            <data android:mimeType="vnd.android.cursor.dir/event" />
+        </intent>
+    </queries>
+
     <application
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"

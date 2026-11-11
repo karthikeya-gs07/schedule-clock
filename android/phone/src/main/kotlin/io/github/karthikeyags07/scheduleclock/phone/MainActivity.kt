@@ -104,6 +104,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         model.reload()
         model.refreshWatch()
+        if (model.syncOnReturn) { model.syncOnReturn = false; if (model.hasPermission) model.syncNow(quiet = true) }   // back from adding an event
         if (model.setupDone && CalendarSync.hasPermission(this) && !model.demo) SyncWorker.schedule(this)
         checkForAppUpdate()
     }
