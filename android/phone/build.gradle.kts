@@ -14,6 +14,10 @@ fun signingKey(name: String, block: (file: File, password: String, alias: String
     block(file(file), file(keystore.getProperty("${name}PasswordFile")).readText().trim(), keystore.getProperty("${name}Alias"))
 }
 
+// The watch app's version code, read from its build file so the two can't drift apart.
+val watchVersionCode = Regex("""versionCode\s*=\s*(\d+)""")
+    .find(rootProject.file("datasource/build.gradle.kts").readText())!!.groupValues[1]
+
 android {
     namespace = "io.github.karthikeyags07.scheduleclock.phone"
     compileSdk = 36
@@ -27,6 +31,8 @@ android {
         // Phone and watch apps share one Play listing, so their version codes must differ: phone 1xxx, watch 2xxx.
         versionCode = 1007
         versionName = "0.11.0"
+        // The watch app released with this phone app: a watch with an older one is offered the update (RULES A14).
+        buildConfigField("int", "WATCH_VERSION_CODE", watchVersionCode)
     }
 
     buildFeatures { compose = true; buildConfig = true }   // BuildConfig.DEBUG: demo mode
@@ -77,5 +83,6 @@ dependencies {
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.webkit)
     implementation(libs.wear.remote.interactions)
+    implementation(libs.play.app.update)          // "update available" prompt (RULES A14)
     implementation(libs.haze)                     // frosted nav bar and blurred drawer
 }

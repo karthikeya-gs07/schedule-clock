@@ -66,6 +66,13 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
+import com.google.android.play.core.appupdate.AppUpdateInfo
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.appupdate.AppUpdateOptions
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.UpdateAvailability
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
@@ -80,6 +87,9 @@ import dev.chrisbanes.haze.rememberHazeState
  */
 class MainActivity : ComponentActivity() {
     private lateinit var model: AppModel
+    /** Google Play's in-app updates (RULES A14): only answers for apps installed from Play, testing tracks included. */
+    private val updates by lazy { AppUpdateManagerFactory.create(this) }
+    private val updateFlow = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -87,7 +97,7 @@ class MainActivity : ComponentActivity() {
         model = AppModel(applicationContext, lifecycleScope)
         // Demo mode (sample day, for screenshots) only in debug builds, and nothing of it is saved.
         if (BuildConfig.DEBUG && intent.getBooleanExtra("demo", false)) { model.startDemo(); model.setupDone = true }
-        setContent { CalenTimeApp(model, ::openAppSettings) }
+        setContent { CalenTimeApp(model, ::openAppSettings) { startAppUpdate() } }
     }
 
     override fun onResume() {
@@ -95,6 +105,28 @@ class MainActivity : ComponentActivity() {
         model.reload()
         model.refreshWatch()
         if (model.setupDone && CalendarSync.hasPermission(this) && !model.demo) SyncWorker.schedule(this)
+        checkForAppUpdate()
+    }
+
+    /** Asks Play whether a newer CalenTime is out; the prompt shows if so. */
+    private fun checkForAppUpdate() = lifecycleScope.launch {
+        if (model.demo) return@launch
+        val info = runCatching { updates.appUpdateInfo.await() }.getOrNull() ?: return@launch
+        when (info.updateAvailability()) {
+            UpdateAvailability.UPDATE_AVAILABLE -> model.appUpdateReady = true
+            // An update started from the prompt and left half-way: Play expects the app to carry on with it.
+            UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS -> startAppUpdate(info)
+            else -> model.appUpdateReady = false
+        }
+    }
+
+    /** Play's full-screen update; if Play can't run it here, its CalenTime page instead. */
+    private fun startAppUpdate(known: AppUpdateInfo? = null) = lifecycleScope.launch {
+        val info = known ?: runCatching { updates.appUpdateInfo.await() }.getOrNull()
+        val options = AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build()
+        if (info != null && info.isUpdateTypeAllowed(options)) updates.startUpdateFlowForResult(info, updateFlow, options)
+        else runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName"))) }
+            .onFailure { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$packageName"))) }
     }
 
     private fun openAppSettings() =
@@ -106,7 +138,7 @@ private enum class Tab(val label: String, val icon: ImageVector) {
 }
 
 @Composable
-private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
+private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: () -> Unit) {
     var tab by rememberSaveable { mutableStateOf(Tab.TODAY) }
     var setupStep by rememberSaveable { mutableStateOf(0) }
     var deniedOnce by rememberSaveable { mutableStateOf(false) }
@@ -198,6 +230,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit) {
                 }
             }
             m.toast?.let { Toast(it, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 124.dp)) }
+            if (m.setupDone) UpdatePrompts(m, updateApp)
         }
     }
 }

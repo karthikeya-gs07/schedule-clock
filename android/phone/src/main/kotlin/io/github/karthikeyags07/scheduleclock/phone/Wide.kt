@@ -42,7 +42,7 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 
 /**
- * Watchface in the wide (unfolded) view (RULES A11): the colourways as a 2-column grid of cards under the Solids /
+ * Watchface in the wide (unfolded) view (RULES A14): the colourways as a 2-column grid of cards under the Solids /
  * Gradients tabs, each the real face on the sample day with its name, one line and its own Use watch face button.
  * The card of the colourway in use has an edge in the accent and reads On your watch.
  */

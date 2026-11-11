@@ -50,7 +50,9 @@ class FaceRequestService : WearableListenerService() {
 
     private fun json(s: FacePush.Status) = JSONObject()
         .put("supported", s.supported).put("installed", s.installed).put("active", s.active)
-        .put("colourway", s.colourway ?: "").put("activateUsed", s.activateUsed).toString()
+        .put("colourway", s.colourway ?: "").put("activateUsed", s.activateUsed)
+        .put("version", BuildConfig.VERSION_CODE)   // the phone offers an update when this is older (RULES A14)
+        .toString()
 
     companion object {
         const val STATUS = "/face/status"

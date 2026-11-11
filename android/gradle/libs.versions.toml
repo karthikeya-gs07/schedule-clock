@@ -12,7 +12,8 @@ activityCompose = "1.13.0"
 lifecycle = "2.10.0"
 webkit = "1.18.0"
 remoteInteractions = "1.2.0"
-haze = "1.6.10"            # frosted-glass blur; 1.7+ needs Compose 1.12
+haze = "1.6.10"
+appUpdate = "2.1.0"         # Play In-App Updates: the "update available" prompt (RULES A14)            # frosted-glass blur; 1.7+ needs Compose 1.12
 
 [libraries]
 wear-complications-data-source-ktx = { module = "androidx.wear.watchface:watchface-complications-data-source-ktx", version.ref = "wearComplications" }
@@ -33,6 +34,7 @@ lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-com
 webkit = { module = "androidx.webkit:webkit", version.ref = "webkit" }
 haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 wear-remote-interactions = { module = "androidx.wear:wear-remote-interactions", version.ref = "remoteInteractions" }
+play-app-update = { module = "com.google.android.play:app-update-ktx", version.ref = "appUpdate" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }

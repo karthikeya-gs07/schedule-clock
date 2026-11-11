@@ -44,7 +44,7 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
         calendars = SampleDay.calendars()
         enabled = calendars.filter { it.name != "Holidays" }.map { it.id }.toSet()
         meetings = SampleDay.meetings()
-        link = WatchLink.State(WatchLink.Watch("demo", "Galaxy Watch8"), WatchLink.FaceStatus(true, true, true, colourway, true))
+        link = WatchLink.State(WatchLink.Watch("demo", "Galaxy Watch8"), WatchLink.FaceStatus(true, true, true, colourway, true, BuildConfig.WATCH_VERSION_CODE))
         linkChecked = true
         lastSync = System.currentTimeMillis() - 120_000
     }
@@ -161,6 +161,27 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
             delay(3000)
             link = WatchLink.state(context)
             if (link.face != null) return@launch
+        }
+    }
+
+    // ---- Updates (RULES A14) ----
+    /** A newer CalenTime is on Play for this phone; the prompt shows when the app opens. */
+    var appUpdateReady by mutableStateOf(false)
+    var appUpdateDismissed by mutableStateOf(false)
+    /** The watch app is older than the one released with this phone app. */
+    val watchUpdateReady get() = !demo && link.face?.let { it.version < BuildConfig.WATCH_VERSION_CODE } == true
+    var watchUpdateDismissed by mutableStateOf(false)
+
+    /** Opens CalenTime's Play page on the watch so it can update there, then waits for the new version. */
+    fun updateWatchApp() = scope.launch {
+        watchUpdateDismissed = true
+        if (!WatchLink.openPlayOnWatch(context)) { say("Couldn't reach your watch"); return@launch }
+        say("Tap Update on your watch")
+        repeat(60) {   // ~3 min
+            delay(3000)
+            val next = WatchLink.state(context)
+            if (next.face != null) link = next
+            if (link.face != null && !watchUpdateReady) { say("CalenTime is up to date on your watch"); return@launch }
         }
     }
 

@@ -213,7 +213,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                 RoundButton("Watch status", haze, onWatchStatus) {
                     Icon(Icons.clock, null, tint = Palette.text, modifier = Modifier.size(24.dp))
                     Box(Modifier.align(Alignment.TopEnd).padding(top = 14.dp, end = 13.dp).size(9.dp).clip(CircleShape)
-                        .background(Color(0xFF3A3A3E)).padding(1.5.dp).clip(CircleShape).background(watchColour(m)))
+                        .background(Color(0xFF3A3A3E)).padding(1.5.dp).clip(CircleShape).background(watchColour(m, LocalAccent.current)))
                 }
                 RoundButton("About CalenTime", haze, onAbout) { Icon(Icons.info, null, tint = Palette.text, modifier = Modifier.size(24.dp)) }
             }
@@ -358,11 +358,19 @@ private fun Modifier.frosted(haze: HazeState, shape: androidx.compose.ui.graphic
     .hazeEffect(haze, HazeStyle(Home.background, HazeTint(Color(0xFF3A3A3E).copy(alpha = .45f)), blurRadius = 22.dp, noiseFactor = .12f))
     .border(1.dp, Color.White.copy(alpha = .07f), shape)
 
-private fun watchColour(m: AppModel): Color = when {
+/** The status dot: the watch face's own colour when all is well (RULES A3), amber when something needs fixing. */
+private fun watchColour(m: AppModel, ok: Color): Color = when {
     !m.linkChecked -> Palette.faint
     m.link.watch == null -> Palette.faint
-    m.link.face?.active == true -> Palette.ok
-    else -> Color(0xFFFFB547)   // connected, but something to fix
+    m.link.face?.active == true && !m.watchUpdateReady -> ok
+    else -> warnColour(ok)   // connected, but something to fix
+}
+
+/** Amber for "needs fixing", or coral when the watch face's own colour is amber-like, so it never reads as all good. */
+internal fun warnColour(accent: Color): Color {
+    val amber = Color(0xFFFFB547)
+    val distance = kotlin.math.abs(accent.red - amber.red) + kotlin.math.abs(accent.green - amber.green) + kotlin.math.abs(accent.blue - amber.blue)
+    return if (distance < .3f) Palette.danger else amber
 }
 
 @Composable
@@ -553,7 +561,8 @@ private data class StatusItem(val icon: androidx.compose.ui.graphics.vector.Imag
 fun WatchStatusPanel(m: AppModel, haze: HazeState, onAllow: () -> Unit, onInstall: () -> Unit, onClose: () -> Unit) {
     val face = m.link.face
     val watch = m.link.watch
-    val amber = Color(0xFFFFB547)
+    val ok = LocalAccent.current   // all-good marks take the watch face's colour (RULES A3)
+    val amber = warnColour(ok)
     val (title, line, colour) = when {
         watch == null -> Triple("Watch not connected", "Open Galaxy Wearable and check your watch is paired and nearby.", Palette.muted)
         !m.hasPermission -> Triple("Calendar access is off", "Allow it so your meetings can reach the watch.", amber)
@@ -561,13 +570,14 @@ fun WatchStatusPanel(m: AppModel, haze: HazeState, onAllow: () -> Unit, onInstal
         !face.supported -> Triple("Your watch needs an update", "CalenTime needs Wear OS 6 or newer. Check for an update in Galaxy Wearable.", amber)
         !face.installed -> Triple("The face isn't on your watch", "Put it on, then confirm on the watch.", amber)
         !face.active -> Triple("Not your watch face right now", "Touch and hold your watch face, then swipe to CalenTime and tap it.", amber)
-        else -> Triple("All good", "Your meetings sync to your watch on their own.", Palette.ok)
+        m.watchUpdateReady -> Triple("Watch app update available", "Install it from here: the Play Store opens on your watch.", amber)
+        else -> Triple("All good", "Your meetings sync to your watch on their own.", ok)
     }
     val items = listOf(
         StatusItem(Icons.watch, "Connection", if (watch != null) "Connected" else "Not connected", watch != null),
         StatusItem(Icons.info, "CalenTime on the watch",
-            when { watch == null -> "Unknown"; face == null -> "Not installed"; !face.supported -> "Needs Wear OS 6"; else -> "Installed" },
-            if (watch == null) null else face != null && face.supported),
+            when { watch == null -> "Unknown"; face == null -> "Not installed"; !face.supported -> "Needs Wear OS 6"; m.watchUpdateReady -> "Update available"; else -> "Installed" },
+            if (watch == null) null else face != null && face.supported && !m.watchUpdateReady),
         StatusItem(Icons.look, "Watch face",
             when { face == null || !face.supported -> "—"; !face.installed -> "Not on the watch"; face.active -> "In use · ${lookName(face.colourway ?: m.colourway)}"; else -> "On the watch, not in use" },
             if (face == null || !face.supported) null else face.active),
@@ -594,7 +604,7 @@ fun WatchStatusPanel(m: AppModel, haze: HazeState, onAllow: () -> Unit, onInstal
             // Verdict
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 Box(Modifier.size(52.dp).clip(CircleShape).background(colour.copy(alpha = .16f)), contentAlignment = Alignment.Center) {
-                    Icon(if (colour == Palette.ok) Icons.check else if (watch == null) Icons.watch else Icons.warn, null, tint = colour, modifier = Modifier.size(26.dp))
+                    Icon(if (title == "All good") Icons.check else if (watch == null) Icons.watch else Icons.warn, null, tint = colour, modifier = Modifier.size(26.dp))
                 }
                 Column(Modifier.weight(1f)) {
                     Text(title, style = BodyStyle.copy(fontSize = 19.sp, lineHeight = 24.sp, fontWeight = FontWeight.Medium))
@@ -618,10 +628,10 @@ fun WatchStatusPanel(m: AppModel, haze: HazeState, onAllow: () -> Unit, onInstal
                             Text(item.label, style = BodyStyle)
                             Text(item.value, style = HintStyle)
                         }
-                        Box(Modifier.size(22.dp).clip(CircleShape).background(when (item.ok) { true -> Palette.ok.copy(alpha = .18f); false -> amber.copy(alpha = .18f); null -> Color.White.copy(alpha = .06f) }),
+                        Box(Modifier.size(22.dp).clip(CircleShape).background(when (item.ok) { true -> ok.copy(alpha = .18f); false -> amber.copy(alpha = .18f); null -> Color.White.copy(alpha = .06f) }),
                             contentAlignment = Alignment.Center) {
                             when (item.ok) {
-                                true -> Icon(Icons.check, null, tint = Palette.ok, modifier = Modifier.size(14.dp))
+                                true -> Icon(Icons.check, null, tint = ok, modifier = Modifier.size(14.dp))
                                 false -> Text("!", color = amber, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                                 null -> {}
                             }
@@ -636,6 +646,7 @@ fun WatchStatusPanel(m: AppModel, haze: HazeState, onAllow: () -> Unit, onInstal
                 !m.hasPermission -> "Allow calendar access" to onAllow
                 face == null -> "Get the watch app" to { m.getWatchApp(); onClose() }
                 !face.supported -> null
+                m.watchUpdateReady -> "Update the watch app" to { m.updateWatchApp(); onClose() }
                 !face.installed -> "Put the face on your watch" to { onClose(); onInstall() }
                 else -> null
             }
