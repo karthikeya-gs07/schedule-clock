@@ -27,8 +27,8 @@ android {
         minSdk = 36 // Wear OS 6: Watch Face Push, which installs the face (Play only offers it to watches that can use it)
         targetSdk = 36
         // Phone and watch apps share one Play listing, so their version codes must differ: phone 1xxx, watch 2xxx.
-        versionCode = 2009
-        versionName = "0.11.0"
+        versionCode = 2010
+        versionName = "0.11.1"
     }
 
     signingConfigs {

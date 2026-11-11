@@ -399,6 +399,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 - **v1.33:** Watch app 0.10.4 (2007) with the home screen, for Play. Next codes: phone 1006+, watch 2008+.
 - **v1.34:** Phone app 0.10.3 (1006), new version number only. Next codes: phone 1007+, watch 2008+.
 - **v1.35:** Watch app 0.10.5 (2008), new version number only. Next codes: phone 1007+, watch 2009+.
+- **v1.41:** Phone 0.11.1 (1008) and watch 0.11.1 (2010) built with v1.37–v1.40. The in-app update library brought in an old Fragment that failed the release lint check, so the phone app now depends on Fragment 1.8.9.
 - **v1.40:** Phone app: hide or show each meeting on the watch from Today's drawer (eye button at the far right; hidden rows stay in order, dimmed; the row now shows calendar, title, place, then time, date and length) and **+ New event**, which lists the phone's calendar apps and opens the chosen one on its new-event screen (no write permission; syncs on return) (RULES A15, A16). Not yet built.
 - **v1.39:** Phone app: "Update available" prompt from Google Play's in-app updates; "Watch app update" prompt when the watch app is older than the one released with the phone app (the watch now reports its version code), with Update on watch opening Play there; status dot and all-good marks take the watch face's colour instead of green (RULES A7, A14). Not yet built.
 - **v1.38:** Phone 0.11.0 (1007) and watch 0.11.0 (2009) built for the internal test track, to test v1.37 on real devices.
