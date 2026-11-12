@@ -196,7 +196,7 @@ fun Modifier.stagePage(glow: Color, dark: Boolean = false) = background(if (dark
 val DarkPage = Color(0xFF111113)
 
 val PageBody = BodyStyle.copy(color = Palette.body, fontSize = 16.sp, lineHeight = 23.sp)
-private val ItemTitle = BodyStyle.copy(fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Medium)
+val ItemTitle = BodyStyle.copy(fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Medium)
 // Under an item's name: smaller and quieter than it, so the name leads.
 val ItemTextStyle = BodyStyle.copy(fontSize = 14.sp, lineHeight = 20.sp, color = Palette.muted)
 
@@ -236,6 +236,13 @@ fun IconItem(icon: ImageVector, title: String, text: String) = Row(
     }
 }
 
+/** A name and its text, with no icon (Settings, RULES A6). */
+@Composable
+fun TextItem(title: String, text: String) = Column(Modifier.fillMaxWidth().padding(bottom = 18.dp)) {
+    Text(title, style = ItemTitle)
+    Text(text, style = ItemTextStyle, modifier = Modifier.padding(top = 2.dp))
+}
+
 /** An item with a switch: the round icon (or calendar dot), name and optional text, the switch at the end. */
 @Composable
 fun ToggleItem(title: String, text: String? = null, checked: Boolean, icon: ImageVector? = null, dot: Color? = null,
@@ -246,7 +253,7 @@ fun ToggleItem(title: String, text: String? = null, checked: Boolean, icon: Imag
             .padding(vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        ItemIcon(icon, dot, dim = !enabled)
+        if (icon != null || dot != null) ItemIcon(icon, dot, dim = !enabled)
         Column(Modifier.weight(1f)) {
             Text(title, style = ItemTitle.copy(color = if (enabled) Palette.text else Palette.faint))
             text?.let { Text(it, style = ItemTextStyle.copy(color = if (enabled) Palette.muted else Palette.faint), modifier = Modifier.padding(top = 1.dp)) }

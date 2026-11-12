@@ -17,6 +17,8 @@ fun signingKey(name: String, block: (file: File, password: String, alias: String
 // The watch app's version code, read from its build file so the two can't drift apart.
 val watchVersionCode = Regex("""versionCode\s*=\s*(\d+)""")
     .find(rootProject.file("datasource/build.gradle.kts").readText())!!.groupValues[1]
+val watchVersionName = Regex("""versionName\s*=\s*"([^"]+)"""")
+    .find(rootProject.file("datasource/build.gradle.kts").readText())!!.groupValues[1]
 
 android {
     namespace = "io.github.karthikeyags07.scheduleclock.phone"
@@ -33,6 +35,7 @@ android {
         versionName = "0.11.2"
         // The watch app released with this phone app: a watch with an older one is offered the update (RULES A14).
         buildConfigField("int", "WATCH_VERSION_CODE", watchVersionCode)
+        buildConfigField("String", "WATCH_VERSION_NAME", "\"$watchVersionName\"")
     }
 
     buildFeatures { compose = true; buildConfig = true }   // BuildConfig.DEBUG: demo mode

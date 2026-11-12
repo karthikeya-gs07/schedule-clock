@@ -1,17 +1,10 @@
 package io.github.karthikeyags07.scheduleclock.phone
 
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 /**
  * Update prompts (RULES A14), shown when the app opens: first a newer phone app on Play, then a watch app older
- * than the one released with this phone app. "Later" hides a prompt until the app is opened again.
+ * than the one released with this phone app; and the answer to Settings → Check for updates. "Later" hides a prompt until the app is opened again.
  */
 @Composable
 fun UpdatePrompts(m: AppModel, updateApp: () -> Unit) {
@@ -23,6 +16,9 @@ fun UpdatePrompts(m: AppModel, updateApp: () -> Unit) {
             onConfirm = { m.appUpdateDismissed = true; updateApp() },
             onLater = { m.appUpdateDismissed = true },
         )
+        m.notice != null -> m.notice?.let { (title, text) ->
+            CalenPrompt(title, text, "Done", onConfirm = { m.notice = null }, onClose = { m.notice = null }, later = null)
+        }
         m.watchUpdateReady && !m.watchUpdateDismissed -> UpdateDialog(
             title = "Watch app update",
             text = "The latest version of CalenTime for your watch is available. Install it from here: " +
@@ -35,12 +31,5 @@ fun UpdatePrompts(m: AppModel, updateApp: () -> Unit) {
 }
 
 @Composable
-private fun UpdateDialog(title: String, text: String, confirm: String, onConfirm: () -> Unit, onLater: () -> Unit) = AlertDialog(
-    onDismissRequest = onLater,
-    confirmButton = { TextButton(onClick = onConfirm) { Text(confirm, style = BodyStyle.copy(color = LocalAccent.current, fontWeight = FontWeight.Medium)) } },
-    dismissButton = { TextButton(onClick = onLater) { Text("Later", style = BodyStyle.copy(color = Palette.muted)) } },
-    title = { Text(title, style = BodyStyle.copy(fontSize = 20.sp, lineHeight = 26.sp, fontWeight = FontWeight.Medium)) },
-    text = { Text(text, style = SubStyle.copy(color = Palette.body)) },
-    containerColor = Palette.surface,
-    shape = RoundedCornerShape(28.dp),
-)
+private fun UpdateDialog(title: String, text: String, confirm: String, onConfirm: () -> Unit, onLater: () -> Unit) =
+    CalenPrompt(title, text, confirm, onConfirm, onLater)

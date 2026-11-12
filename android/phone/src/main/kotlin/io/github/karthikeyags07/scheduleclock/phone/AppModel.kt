@@ -42,8 +42,6 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
         hidden = if (hide) hidden + meeting.key else hidden - meeting.key
         if (demo) return
         AppPrefs.setHiddenEvents(context, hidden)
-        val name = meeting.title.ifEmpty { "Meeting" }
-        say(if (hide) "$name hidden on your watch" else "$name shown on your watch")
         syncNow(quiet = true)
     }
 
@@ -134,16 +132,14 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
             // the swap); otherwise, or if the watch can't open it, the swap goes by request or waits for the watch.
             val shown = link.face?.installed == true && WatchLink.openColourChange(context, c)
             if (shown) {
-                say("Changing to ${lookName(c)}…")
                 delay(4500)   // the swap and the new face loading, under the transition
                 AppPrefs.sendSettings(context)   // after the swap, so the watch's catch-up finds it already done
                 link = WatchLink.state(context)
-                say("${lookName(c)} is on your watch")
             } else {
                 AppPrefs.sendSettings(context)
                 val status = WatchLink.setColourway(context, c)
                 if (status != null) link = link.copy(face = status)
-                say(if (status?.installed == true) "${lookName(c)} is on your watch" else "Saved. It's used when the face is on your watch")
+                if (status?.installed != true) say("Saved. It's used when the face is on your watch")
             }
         }
     }
@@ -201,6 +197,28 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
             val next = WatchLink.state(context)
             if (next.face != null) link = next
             if (link.face != null && !watchUpdateReady) { say("CalenTime is up to date on your watch"); return@launch }
+        }
+    }
+
+    /** A message pop-up (title, text), such as the answer to "Check for updates" (RULES A14). */
+    var notice by mutableStateOf<Pair<String, String>?>(null)
+    var checkingApp by mutableStateOf(false)
+    var checkingWatch by mutableStateOf(false)
+    /** Asks Play for a newer phone app; set by the activity, which owns Play's update manager. */
+    var checkAppUpdate: () -> Unit = {}
+
+    /** Settings → Check for watch update: asks the watch its version, then prompts to update or says it's current. */
+    fun checkWatchUpdate() = scope.launch {
+        if (demo) { notice = "Your watch is up to date" to "CalenTime on your watch is the latest version."; return@launch }
+        checkingWatch = true
+        val next = WatchLink.state(context)
+        checkingWatch = false
+        link = next; linkChecked = true
+        notice = when {
+            next.watch == null -> "Watch not connected" to "Open Galaxy Wearable and check your watch is paired and nearby, then try again."
+            next.face == null -> "CalenTime isn't on your watch" to "Get the watch app from the watch status on Today."
+            watchUpdateReady -> { watchUpdateDismissed = false; null }   // the update prompt shows
+            else -> "Your watch is up to date" to "CalenTime on your watch is the latest version."
         }
     }
 

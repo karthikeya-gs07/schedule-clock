@@ -29,6 +29,8 @@ object WatchLink {
         val colourway: String?, val activateUsed: Boolean,
         /** The watch app's version code; 0 from watch apps older than 0.11.1, which didn't send it. */
         val version: Int = 0,
+        /** The watch app's version name, such as "0.11.2"; empty from watch apps older than 0.11.2. */
+        val versionName: String = "",
     )
 
     suspend fun watch(context: Context): Watch? = try {
@@ -95,7 +97,7 @@ object WatchLink {
         val bytes = withTimeout(8_000) { Wearable.getMessageClient(context).sendRequest(watch.id, path, body).await() }
         val j = JSONObject(bytes.decodeToString())
         FaceStatus(j.getBoolean("supported"), j.getBoolean("installed"), j.getBoolean("active"),
-            j.optString("colourway").ifEmpty { null }, j.getBoolean("activateUsed"), j.optInt("version", 0))
+            j.optString("colourway").ifEmpty { null }, j.getBoolean("activateUsed"), j.optInt("version", 0), j.optString("versionName"))
     } catch (e: Exception) {
         Log.w(TAG, "watch didn't answer $path: ${e.message}"); null
     }

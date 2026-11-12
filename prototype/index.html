@@ -578,6 +578,7 @@ function flatArc(fromMin, toMin, r, inStart, inEnd) {
 // T6: the phone app's clock choice (?clock=24 or ?clock=12plain); 12-hour with AM/PM otherwise.
 const CLOCK = new URLSearchParams(location.search).get('clock') || '12';
 function fmtClock(min, withSuffix = true) {
+  min = ((Math.round(min) % 1440) + 1440) % 1440;   // the sweep can start before midnight (negative minutes)
   const h24 = Math.floor(min / 60) % 24, m = min % 60;
   if (CLOCK === '24') return `${String(h24).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   const h = h24 % 12 || 12;

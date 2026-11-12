@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.provider.CalendarContract
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,10 +12,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.ui.draw.rotate
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -26,9 +27,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -63,35 +62,27 @@ private fun newEventIntent(): Intent {
 fun NewEventPicker(m: AppModel, onClose: () -> Unit) {
     val context = LocalContext.current
     val apps = remember { calendarApps(context) }
-    AlertDialog(
-        onDismissRequest = onClose,
-        confirmButton = { TextButton(onClick = onClose) { Text("Cancel", style = BodyStyle.copy(color = Palette.muted)) } },
-        title = { Text("Add an event in…", style = BodyStyle.copy(fontSize = 20.sp, lineHeight = 26.sp, fontWeight = FontWeight.Medium)) },
-        text = {
-            if (apps.isEmpty()) Text("No calendar app on this phone can add events. Install one, such as Google Calendar, and try again.",
-                style = SubStyle.copy(color = Palette.body))
-            else Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Pick the app to add it in. Your new event reaches the watch when you come back.",
-                    style = SubStyle.copy(color = Palette.body), modifier = Modifier.padding(bottom = 8.dp))
-                apps.forEach { app ->
-                    Row(
-                        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(androidx.compose.ui.graphics.Color.White.copy(alpha = .05f))
-                            .clickable(role = Role.Button) {
-                                onClose()
-                                runCatching { context.startActivity(newEventIntent().setPackage(app.packageName)) }
-                                    .onSuccess { m.syncOnReturn = true }
-                                    .onFailure { m.say("Couldn't open ${app.label}") }
-                            }
-                            .padding(horizontal = 14.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
-                    ) {
-                        Image(app.icon, null, Modifier.size(36.dp))
-                        Text(app.label, style = BodyStyle.copy(fontSize = 16.sp))
-                    }
+    CalenPopup("Add an event", onClose,
+        if (apps.isEmpty()) "No calendar app on this phone can add events. Install one, such as Google Calendar, and try again."
+        else "Pick the app to add it in. Your new event reaches the watch when you come back.") {
+        if (apps.isNotEmpty()) {
+            Spacer(Modifier.height(18.dp))
+            PopupRows(apps.size) { i ->
+                val app = apps[i]
+                Row(
+                    Modifier.fillMaxWidth().clickable(role = Role.Button) {
+                        onClose()
+                        runCatching { context.startActivity(newEventIntent().setPackage(app.packageName)) }
+                            .onSuccess { m.syncOnReturn = true }
+                            .onFailure { m.say("Couldn't open ${app.label}") }
+                    }.padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    Image(app.icon, null, Modifier.size(36.dp).clip(CircleShape))
+                    Text(app.label, style = BodyStyle, modifier = Modifier.weight(1f))
+                    Icon(Icons.chevron, null, tint = Palette.muted, modifier = Modifier.size(18.dp).rotate(-90f))
                 }
             }
-        },
-        containerColor = Palette.surface,
-        shape = RoundedCornerShape(28.dp),
-    )
+        }
+    }
 }

@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -100,23 +102,56 @@ fun SettingsScreen(m: AppModel, onRunSetup: () -> Unit) {
     PageTitle("Settings")
     PageHeading("Meeting buzzes")
     val any = m.buzz[AppPrefs.Buzz.START] == true || m.buzz[AppPrefs.Buzz.MIDDLE] == true || m.buzz[AppPrefs.Buzz.END] == true
-    ToggleItem("2 min before it starts", "One short buzz", m.buzz[AppPrefs.Buzz.START] == true, Icons.buzz) { m.setBuzz(AppPrefs.Buzz.START, it) }
-    ToggleItem("Halfway through", "One long buzz · meetings of 15 min or more", m.buzz[AppPrefs.Buzz.MIDDLE] == true, Icons.clock) { m.setBuzz(AppPrefs.Buzz.MIDDLE, it) }
-    ToggleItem("5 min before it ends", "Two short buzzes · meetings of 10 min or more", m.buzz[AppPrefs.Buzz.END] == true, Icons.buzz) { m.setBuzz(AppPrefs.Buzz.END, it) }
-    ToggleItem("Buzz in Do Not Disturb", "Buzzes still come through when your watch is silenced", m.buzz[AppPrefs.Buzz.DND] == true, Icons.watch, enabled = any) { m.setBuzz(AppPrefs.Buzz.DND, it) }
+    ToggleItem("2 min before it starts", "One short buzz", m.buzz[AppPrefs.Buzz.START] == true) { m.setBuzz(AppPrefs.Buzz.START, it) }
+    ToggleItem("Halfway through", "One long buzz · meetings of 15 min or more", m.buzz[AppPrefs.Buzz.MIDDLE] == true) { m.setBuzz(AppPrefs.Buzz.MIDDLE, it) }
+    ToggleItem("5 min before it ends", "Two short buzzes · meetings of 10 min or more", m.buzz[AppPrefs.Buzz.END] == true) { m.setBuzz(AppPrefs.Buzz.END, it) }
+    ToggleItem("Buzz in Do Not Disturb", "Buzzes still come through when your watch is silenced", m.buzz[AppPrefs.Buzz.DND] == true, enabled = any) { m.setBuzz(AppPrefs.Buzz.DND, it) }
     ItemDivider(Modifier.padding(top = 8.dp))
     PageHeading("Clock")
-    ToggleItem("24-hour time", if (m.clock24) "Shows 14:30" else "Shows 2:30", m.clock24, Icons.clock) { m.setClock(clock24 = it) }
-    ToggleItem("Show AM/PM", "Next to the time in 12-hour mode", m.showAmPm, Icons.clock, enabled = !m.clock24) { m.setClock(showAmPm = it) }
+    ToggleItem("24-hour time", if (m.clock24) "Shows 14:30" else "Shows 2:30", m.clock24) { m.setClock(clock24 = it) }
+    ToggleItem("Show AM/PM", "Next to the time in 12-hour mode", m.showAmPm, enabled = !m.clock24) { m.setClock(showAmPm = it) }
     // Sync isn't a setting: a short note says how it works.
     ItemDivider(Modifier.padding(top = 8.dp))   // hairlines between the sections
     PageHeading("Sync")
-    IconItem(Icons.sync, "Every 15 minutes", "And as soon as a meeting changes. CalenTime sends yesterday to tomorrow from the calendars you picked.")
-    IconItem(Icons.lock, "Private events", "They go to your watch without their title or place.")
+    TextItem("Every 15 minutes", "And as soon as a meeting changes. CalenTime sends yesterday to tomorrow from the calendars you picked.")
+    TextItem("Private events", "They go to your watch without their title or place.")
+    // Versions and update checks (RULES A14).
+    ItemDivider(Modifier.padding(top = 8.dp))
+    PageHeading("Updates")
+    val face = m.link.face
+    VersionRow("Phone app", BuildConfig.VERSION_NAME)
+    VersionRow("Watch app", when {
+        face == null -> if (m.link.watch == null) "Not connected" else "Not installed"
+        face.versionName.isNotEmpty() -> face.versionName
+        face.version == BuildConfig.WATCH_VERSION_CODE -> BuildConfig.WATCH_VERSION_NAME
+        face.version > 0 -> "Build ${face.version}"
+        else -> "Older than 0.11.1"
+    })
+    Spacer(Modifier.height(14.dp))
+    FrostButton("Check for app update", m.checkingApp, Modifier.fillMaxWidth()) { m.checkAppUpdate() }
+    Spacer(Modifier.height(10.dp))
+    FrostButton("Check for watch update", m.checkingWatch, Modifier.fillMaxWidth()) { m.checkWatchUpdate() }
     // Setup again (also on About): calendar access, calendars and the face on the watch, from the start.
     ItemDivider(Modifier.padding(top = 8.dp))
     PageHeading("Setup")
     Text("Go through setup again: calendar access, which calendars to send, and putting the face on your watch.",
         style = ItemTextStyle, modifier = Modifier.padding(bottom = 16.dp))
     RunSetupButton(onRunSetup, Modifier.fillMaxWidth())
+}
+
+@Composable
+private fun VersionRow(name: String, value: String) = Row(Modifier.fillMaxWidth().padding(vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
+    Text(name, style = ItemTitle, modifier = Modifier.weight(1f))
+    Text(value, style = ItemTextStyle)
+}
+
+/** A frosted pill button, as "Run setup again"; shows a spinner while [busy]. */
+@Composable
+private fun FrostButton(text: String, busy: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) = Row(
+    modifier.height(52.dp).clip(RoundedCornerShape(26.dp)).frostCard(RoundedCornerShape(26.dp))
+        .clickable(enabled = !busy, role = Role.Button, onClick = onClick),
+    horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
+) {
+    if (busy) { CircularProgressIndicator(Modifier.size(16.dp), color = Palette.text, strokeWidth = 2.dp); Spacer(Modifier.width(10.dp)) }
+    Text(text, style = BodyStyle.copy(fontSize = 16.sp, fontWeight = FontWeight.Medium))
 }

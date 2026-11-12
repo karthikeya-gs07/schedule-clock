@@ -97,6 +97,7 @@ class MainActivity : ComponentActivity() {
         model = AppModel(applicationContext, lifecycleScope)
         // Demo mode (sample day, for screenshots) only in debug builds, and nothing of it is saved.
         if (BuildConfig.DEBUG && intent.getBooleanExtra("demo", false)) { model.startDemo(); model.setupDone = true }
+        model.checkAppUpdate = { checkForAppUpdate(asked = true) }
         setContent { CalenTimeApp(model, ::openAppSettings) { startAppUpdate() } }
     }
 
@@ -110,14 +111,20 @@ class MainActivity : ComponentActivity() {
     }
 
     /** Asks Play whether a newer CalenTime is out; the prompt shows if so. */
-    private fun checkForAppUpdate() = lifecycleScope.launch {
-        if (model.demo) return@launch
-        val info = runCatching { updates.appUpdateInfo.await() }.getOrNull() ?: return@launch
+    private fun checkForAppUpdate(asked: Boolean = false) = lifecycleScope.launch {
+        if (model.demo) { if (asked) model.notice = LATEST; return@launch }
+        if (asked) model.checkingApp = true
+        val info = runCatching { updates.appUpdateInfo.await() }.getOrNull()
+        model.checkingApp = false
+        if (info == null) {
+            if (asked) model.notice = "Couldn't check for updates" to "Play Store didn't answer. Check you're online and try again."
+            return@launch
+        }
         when (info.updateAvailability()) {
-            UpdateAvailability.UPDATE_AVAILABLE -> model.appUpdateReady = true
+            UpdateAvailability.UPDATE_AVAILABLE -> { model.appUpdateReady = true; if (asked) model.appUpdateDismissed = false }
             // An update started from the prompt and left half-way: Play expects the app to carry on with it.
             UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS -> startAppUpdate(info)
-            else -> model.appUpdateReady = false
+            else -> { model.appUpdateReady = false; if (asked) model.notice = LATEST }
         }
     }
 
@@ -129,6 +136,8 @@ class MainActivity : ComponentActivity() {
         else runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName"))) }
             .onFailure { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$packageName"))) }
     }
+
+    private val LATEST get() = "You're on the latest version" to "CalenTime ${BuildConfig.VERSION_NAME} is the newest version on Play."
 
     private fun openAppSettings() =
         startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)))
