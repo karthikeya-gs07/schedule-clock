@@ -399,6 +399,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 - **v1.33:** Watch app 0.10.4 (2007) with the home screen, for Play. Next codes: phone 1006+, watch 2008+.
 - **v1.34:** Phone app 0.10.3 (1006), new version number only. Next codes: phone 1007+, watch 2008+.
 - **v1.35:** Watch app 0.10.5 (2008), new version number only. Next codes: phone 1007+, watch 2009+.
+- **v1.53:** Moving between tabs is a plain slide: the new page pushes the old one out at the same speed, instead of the old one drifting a third of the way and fading under the new one. Folded and the unfolded right pane.
 - **v1.52:** About slides up from the bottom over the page (450 ms, eased, with a quick fade) and back down when closed, folded and unfolded. Before, it appeared at once on the folded screen.
 - **v1.51:** Watchface: the page dots and name sit back where they were before the description went (24 dp higher), with more room above the button.
 - **v1.50:** Watchface: the one-line description under each colourway's name is gone (folded and unfolded); just the name and the button.

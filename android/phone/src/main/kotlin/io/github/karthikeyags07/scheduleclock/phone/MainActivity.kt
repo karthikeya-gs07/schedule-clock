@@ -200,7 +200,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
                                     val forward = targetState.ordinal > initialState.ordinal
                                     val ease = tween<IntOffset>(420, easing = FastOutSlowInEasing)
                                     (slideInHorizontally(ease) { w -> if (forward) w else -w } togetherWith
-                                        slideOutHorizontally(ease) { w -> if (forward) -w / 3 else w / 3 } + fadeOut(tween(420)))
+                                        slideOutHorizontally(ease) { w -> if (forward) -w else w })   // a plain slide: both pages move together
                                 },
                                 label = "rightPane",
                             ) { shown -> if (shown == Tab.WATCHFACE) WatchfaceGrid(m, rightHaze) else workPage(shown, rightHaze) }
@@ -225,7 +225,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
                             val forward = targetState.ordinal > initialState.ordinal
                             val ease = tween<IntOffset>(420, easing = FastOutSlowInEasing)
                             (slideInHorizontally(ease) { w -> if (forward) w else -w } togetherWith
-                                slideOutHorizontally(ease) { w -> if (forward) -w / 3 else w / 3 } + fadeOut(tween(420)))
+                                slideOutHorizontally(ease) { w -> if (forward) -w else w })   // a plain slide: both pages move together
                         },
                         label = "tabs",
                     ) { shown ->
