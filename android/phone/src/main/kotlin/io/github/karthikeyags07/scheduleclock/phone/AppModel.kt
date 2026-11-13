@@ -136,14 +136,15 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
                 AppPrefs.sendSettings(context)
                 if (!WatchLink.install(context, c)) { say("Couldn't reach your watch"); return@launch }
                 val usedBefore = link.face?.activateUsed == true
-                repeat(10) {   // ~20 s for the face to go on
+                // The watch can't switch faces itself any more: show the steps here too, at the same time.
+                if (usedBefore) notice = PICK_ON_WATCH
+                repeat(if (usedBefore) 45 else 10) {   // ~20 s for the face to go on; ~90 s for the person to pick it
                     delay(2000)
                     val next = WatchLink.state(context)
                     if (next.face != null) link = next
-                    if (link.face?.active == true) return@launch
+                    if (link.face?.active == true) { if (notice == PICK_ON_WATCH) notice = null; return@launch }   // picked: the steps close
                 }
-                if (usedBefore || link.face?.activateUsed == true) notice = "Pick CalenTime on your watch" to
-                    "Touch and hold your watch face, swipe to CalenTime and tap it."
+                if (!usedBefore && link.face?.activateUsed == true) notice = PICK_ON_WATCH
                 return@launch
             }
             val shown = WatchLink.openColourChange(context, c)
@@ -246,5 +247,7 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
         if (toast == text) toast = null
     }
 }
+
+private val PICK_ON_WATCH = "Pick CalenTime on your watch" to "Touch and hold your watch face, swipe to CalenTime and tap it."
 
 fun lookName(c: String) = Looks.of(c).name
