@@ -35,7 +35,18 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
     var hidden by mutableStateOf(AppPrefs.hiddenEvents(context))
     fun isHidden(meeting: Meeting) = meeting.key in hidden
     /** The meetings the watch shows: everything but the hidden ones. */
-    val shownMeetings get() = meetings.filter { it.key !in hidden }
+    val shownMeetings get() = meetings.filter { it.key !in hidden }.map { if (it.key in locked) it.copy(private = true) else it }
+
+    /** Meetings made private in the drawer (RULES A17): sent without title or place, shown as private on the face. */
+    var locked by mutableStateOf(AppPrefs.lockedEvents(context))
+    fun isPrivate(meeting: Meeting) = meeting.private || meeting.key in locked
+    fun toggleLocked(meeting: Meeting) {
+        if (meeting.private) return   // private in the calendar itself: stays private
+        locked = if (meeting.key in locked) locked - meeting.key else locked + meeting.key
+        if (demo) return
+        AppPrefs.setLockedEvents(context, locked)
+        syncNow(quiet = true)
+    }
 
     fun toggleHidden(meeting: Meeting) {
         val hide = !isHidden(meeting)

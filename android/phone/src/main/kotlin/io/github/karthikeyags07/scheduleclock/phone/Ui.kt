@@ -119,6 +119,7 @@ object Icons {
     val back = strokeIcon("M19 12H5M11 6l-6 6 6 6")
     val close = strokeIcon("M6 6l12 12M18 6 6 18")
     val plus = strokeIcon("M12 5v14M5 12h14")
+    val lockOpen = strokeIcon("M7.5 10.5h9a2.5 2.5 0 0 1 2.5 2.5v5a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 18v-5a2.5 2.5 0 0 1 2.5-2.5z", "M8 10.5V8a4 4 0 0 1 7.7-1.5")
     val eye = strokeIcon("M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z", "M12 9a3 3 0 1 1 0 6a3 3 0 1 1 0-6z")
     val eyeOff = strokeIcon("M2.5 12S6 5.5 12 5.5c2.3 0 4.2.9 5.7 2.1M21.5 12S18 18.5 12 18.5c-2.3 0-4.2-.9-5.7-2.1", "M4 4l16 16")
     val clock = strokeIcon("M12 3.5a8.5 8.5 0 1 1 0 17a8.5 8.5 0 1 1 0-17z", "M12 7.5V12l3 2")

@@ -37,6 +37,14 @@ object AppPrefs {
         prefs(context).edit().putStringSet("hiddenEvents", kept).apply()
     }
 
+    /** Meetings made private in Today's drawer (RULES A17), by [Meeting.key]; kept and pruned like hidden ones. */
+    fun lockedEvents(context: Context): Set<String> = prefs(context).getStringSet("lockedEvents", emptySet())!!.toSet()
+    fun setLockedEvents(context: Context, keys: Set<String>) {
+        val cutoff = System.currentTimeMillis() - 2 * 86_400_000L
+        val kept = keys.filter { k -> k.substringAfter('@').toLongOrNull()?.let { it > cutoff } ?: false }.toSet()
+        prefs(context).edit().putStringSet("lockedEvents", kept).apply()
+    }
+
     fun colourway(context: Context) = prefs(context).getString("colourway", "amber")!!
     fun setColourway(context: Context, colourway: String) = prefs(context).edit().putString("colourway", colourway).apply()
 

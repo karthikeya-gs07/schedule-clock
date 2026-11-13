@@ -525,7 +525,8 @@ private fun MeetingsDrawer(m: AppModel, haze: HazeState, collapsedTop: androidx.
                 val hidden = m.isHidden(meeting)
                 val calendar = m.calendars.firstOrNull { it.id == meeting.calendarId }
                 // A hidden meeting can't clash on the watch, and doesn't make others clash either.
-                DrawerMeeting(meeting, live = meeting.begin <= now, hidden = hidden,
+                DrawerMeeting(meeting, live = meeting.begin <= now, hidden = hidden, private = m.isPrivate(meeting),
+                    onToggleLocked = { m.toggleLocked(meeting) },
                     clash = !hidden && left.any { it !== meeting && !m.isHidden(it) && it.begin < meeting.end && meeting.begin < it.end },
                     color = calendar?.color?.let { Color(it) } ?: Palette.muted) { m.toggleHidden(meeting) }
             }
@@ -541,7 +542,7 @@ private val DRAWER_TIME = java.time.format.DateTimeFormatter.ofPattern("h:mm a")
  * A hidden meeting keeps its place in the list, dimmed.
  */
 @Composable
-private fun DrawerMeeting(meeting: Meeting, live: Boolean, hidden: Boolean, clash: Boolean, color: Color,
+private fun DrawerMeeting(meeting: Meeting, live: Boolean, hidden: Boolean, private: Boolean, onToggleLocked: () -> Unit, clash: Boolean, color: Color,
                           onToggleHidden: () -> Unit) {
     val start = java.time.Instant.ofEpochMilli(meeting.begin).atZone(ZoneId.systemDefault())
     val end = java.time.Instant.ofEpochMilli(meeting.end).atZone(ZoneId.systemDefault())
@@ -558,7 +559,7 @@ private fun DrawerMeeting(meeting: Meeting, live: Boolean, hidden: Boolean, clas
                 // The place, on its own line under the title, when the event has one.
                 if (meeting.where.isNotEmpty()) Text(meeting.where, maxLines = 1, overflow = TextOverflow.Ellipsis,
                     style = SubStyle.copy(color = Palette.muted.copy(alpha = .75f)))   // quieter than the title and time
-                val note = listOfNotNull("Hidden on the watch".takeIf { hidden }, "Private on the watch".takeIf { meeting.private && !hidden },
+                val note = listOfNotNull("Hidden on the watch".takeIf { hidden }, "Private on the watch".takeIf { private && !hidden },
                     "Double booked".takeIf { clash }).joinToString(" · ")
                 if (note.isNotEmpty()) Text(note, maxLines = 1, style = SubStyle.copy(color = if (clash) Color(0xFFFF9D82) else Palette.muted))
             }
@@ -567,15 +568,25 @@ private fun DrawerMeeting(meeting: Meeting, live: Boolean, hidden: Boolean, clas
                 Text(end.format(DRAWER_TIME), style = SubStyle.copy(fontSize = 12.sp))
             }
         }
-        // Far right: show or hide on the watch face. Not dimmed, so it stays easy to find and tap.
-        Box(Modifier.size(40.dp).clip(CircleShape)
-            .clickable(role = Role.Switch, onClick = onToggleHidden)
-            .semantics { contentDescription = if (hidden) "Show on watch" else "Hide from watch" },
-            contentAlignment = Alignment.Center) {
-            Icon(if (hidden) Icons.eyeOff else Icons.eye, null, tint = if (hidden) Palette.muted else Palette.text, modifier = Modifier.size(20.dp))
+        // Far right: private (lock) and show/hide (eye) on the watch face, in a quiet grey. Not dimmed with the row.
+        // A meeting private in the calendar itself keeps its lock on.
+        Row {
+            DrawerToggle(if (private) Icons.lock else Icons.lockOpen, on = private, enabled = !meeting.private && !hidden,
+                label = if (private) "Make not private" else "Make private", onClick = onToggleLocked)
+            DrawerToggle(if (hidden) Icons.eyeOff else Icons.eye, on = !hidden, enabled = true,
+                label = if (hidden) "Show on watch" else "Hide from watch", onClick = onToggleHidden)
         }
     }
 }
+
+/** A plain icon toggle in a drawer row: muted grey, a little brighter when on, faint when it can't be changed. */
+@Composable
+private fun DrawerToggle(icon: androidx.compose.ui.graphics.vector.ImageVector, on: Boolean, enabled: Boolean, label: String, onClick: () -> Unit) =
+    Box(Modifier.size(40.dp).clip(CircleShape).clickable(enabled = enabled, role = Role.Switch, onClick = onClick)
+        .semantics { contentDescription = label }, contentAlignment = Alignment.Center) {
+        Icon(icon, null, modifier = Modifier.size(19.dp),
+            tint = when { !enabled -> Palette.muted.copy(alpha = .45f); on -> Palette.muted; else -> Palette.muted.copy(alpha = .6f) })
+    }
 
 // ---------- (7) Watch status ----------
 private data class StatusItem(val icon: androidx.compose.ui.graphics.vector.ImageVector, val label: String, val value: String, val ok: Boolean?)

@@ -105,7 +105,9 @@ object CalendarSync {
     fun send(context: Context): Int {
         // Meetings hidden in the app's drawer stay on the phone (RULES A15).
         val hidden = AppPrefs.hiddenEvents(context)
-        val events = ArrayList(meetings(context).filter { it.key !in hidden }.map { m ->
+        // Meetings locked in the drawer go as private, like ones marked private in the calendar (RULES A17).
+        val locked = AppPrefs.lockedEvents(context)
+        val events = ArrayList(meetings(context).filter { it.key !in hidden }.map { if (it.key in locked) it.copy(private = true) else it }.map { m ->
             DataMap().apply {
                 putLong("begin", m.begin)
                 putLong("end", m.end)
