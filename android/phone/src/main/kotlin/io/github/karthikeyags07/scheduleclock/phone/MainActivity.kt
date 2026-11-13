@@ -181,7 +181,6 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
             }
             when {
                 !m.setupDone -> SetupFlow(m, setupStep, allow)   // full-bleed; it handles the system bars itself
-                about && !wide -> { BackHandler { about = false }; AboutScreen(m.colourway, onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() } }
                 wide -> {
                     // Right pane: Watchface (a 2-column grid), Calendars or Settings, with its own three-tab nav.
                     val right = if (tab == Tab.TODAY) Tab.WATCHFACE else tab
@@ -206,8 +205,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
                                 label = "rightPane",
                             ) { shown -> if (shown == Tab.WATCHFACE) WatchfaceGrid(m, rightHaze) else workPage(shown, rightHaze) }
                             // About opens over the right pane, with a close button; Today stays on the left.
-                            androidx.compose.animation.AnimatedVisibility(about, enter = slideInHorizontally { it } + fadeIn(),
-                                exit = slideOutHorizontally { it } + fadeOut()) {
+                            androidx.compose.animation.AnimatedVisibility(about, enter = ABOUT_IN, exit = ABOUT_OUT) {
                                 BackHandler { about = false }
                                 AboutScreen(m.colourway, onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() }
                             }
@@ -237,6 +235,11 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
                     }
                     NavBar(tab, haze, m.previewColourway.takeIf { tab == Tab.WATCHFACE }, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp)) { tab = it }
                     if (watchStatus) WatchStatusPanel(m, haze, allow, install) { watchStatus = false }
+                    // About slides up over the page from the bottom, and back down when closed.
+                    androidx.compose.animation.AnimatedVisibility(about, enter = ABOUT_IN, exit = ABOUT_OUT) {
+                        BackHandler { about = false }
+                        AboutScreen(m.colourway, onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() }
+                    }
                 }
             }
             m.toast?.let { Toast(it, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 124.dp)) }
@@ -281,6 +284,12 @@ private fun NavBar(current: Tab, haze: HazeState, preview: String?, modifier: Mo
         }
     }
 }
+
+/** About's entry and exit: up from the bottom with a quick fade, and back down (RULES A2). */
+private val ABOUT_IN = androidx.compose.animation.slideInVertically(tween(450, easing = FastOutSlowInEasing)) { it } +
+    fadeIn(tween(250))
+private val ABOUT_OUT = androidx.compose.animation.slideOutVertically(tween(380, easing = FastOutSlowInEasing)) { it } +
+    fadeOut(tween(300, delayMillis = 80))
 
 @Composable
 private fun Toast(text: String, modifier: Modifier) = Text(
