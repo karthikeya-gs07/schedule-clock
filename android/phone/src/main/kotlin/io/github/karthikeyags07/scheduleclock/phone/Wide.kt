@@ -83,8 +83,6 @@ private fun FaceCard(m: AppModel, look: Look, sample: List<Meeting>) {
             WatchFacePreview(look.id, sample, maxWidth * .86f, atMinute = SampleDay.SAMPLE_MINUTE)
         }
         Text(look.name, style = BodyStyle.copy(fontSize = 17.sp, fontWeight = FontWeight.Medium), modifier = Modifier.padding(top = 12.dp))
-        Text(look.line, style = SubStyle, maxLines = 2, overflow = TextOverflow.Ellipsis, minLines = 2,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(top = 2.dp))
         Row(
             // The same button as on the folded screen: 52 dp, frosted, 15 sp.
             Modifier.padding(top = 14.dp).fillMaxWidth().height(52.dp).clip(RoundedCornerShape(26.dp))
