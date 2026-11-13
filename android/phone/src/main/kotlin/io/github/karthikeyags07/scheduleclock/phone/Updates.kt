@@ -23,7 +23,7 @@ fun UpdatePrompts(m: AppModel, updateApp: () -> Unit) {
             title = "Watch app update",
             text = "The latest version of CalenTime for your watch is available. Install it from here: " +
                 "the Play Store opens on your watch, then tap Update there.",
-            confirm = "Update on watch",
+            confirm = "Update",
             onConfirm = { m.updateWatchApp() },
             onLater = { m.watchUpdateDismissed = true },
         )

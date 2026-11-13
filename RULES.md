@@ -247,7 +247,7 @@ Vibrations use the alarm channel, so they play with the screen off and **even in
 
 The phone app is where people set CalenTime up and change it: a first-run setup and four tabs (Today, Watchface, Calendars, Settings), built in Jetpack Compose. The first design prototype was `prototype/phone.html` (2026-10-30); the app has since moved on from it, so the rules below win.
 
-**Design rules (2026-11-12):** don't change a design unless asked. List items have **no icon in front** (a calendar's colour dot is the one exception). Pop-ups use the app's own card (`CalenPopup`: dark rounded card, hairline border, title and × on one row, accent button), never the system's Material dialog; a system screen that isn't ours (such as Play's update) is left as it is. No toast for things the person can see happen (hiding a meeting, a face reaching the watch); toasts are for errors and actions whose result isn't on screen.
+**Design rules (2026-11-12):** don't change a design unless asked. List items have **no icon in front** (a calendar's colour dot is the one exception). Pop-ups use the app's own card (`CalenPopup`: dark rounded card, hairline border, title, text, buttons at the bottom; no × in the corner (2026-11-13). Nothing to do: one full-width **Done**. An action to take: two buttons side by side, the quiet close (Later/Cancel) on the left and the action in the accent on the right), never the system's Material dialog; a system screen that isn't ours (such as Play's update) is left as it is. No toast for things the person can see happen (hiding a meeting, a face reaching the watch); toasts are for errors and actions whose result isn't on screen.
 
 | # | Where | Rule | Why |
 |---|---|---|---|

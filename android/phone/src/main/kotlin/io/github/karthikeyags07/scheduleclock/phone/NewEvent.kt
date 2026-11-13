@@ -84,5 +84,8 @@ fun NewEventPicker(m: AppModel, onClose: () -> Unit) {
                 }
             }
         }
+        // Nothing to confirm here (picking an app is the action): one button to close.
+        Spacer(Modifier.height(20.dp))
+        SecondaryButton("Cancel", Modifier.fillMaxWidth(), onClose)
     }
 }

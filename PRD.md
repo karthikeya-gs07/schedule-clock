@@ -399,6 +399,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 - **v1.33:** Watch app 0.10.4 (2007) with the home screen, for Play. Next codes: phone 1006+, watch 2008+.
 - **v1.34:** Phone app 0.10.3 (1006), new version number only. Next codes: phone 1007+, watch 2008+.
 - **v1.35:** Watch app 0.10.5 (2008), new version number only. Next codes: phone 1007+, watch 2009+.
+- **v1.49:** Phone pop-ups lose the × in the corner. A pop-up with nothing to do has one full-width Done button; one that suggests an action (update the app or the watch app) has two side by side: Later on the left, the action on the right. Add an event ends with a Cancel button. The watch update button now just says Update.
 - **v1.48:** Watchface: swiping past the last Solid carries on into Gradients (and back) with the tab following, instead of stopping at the end of each tab.
 - **v1.47:** Drawer: a lock icon beside the eye makes a meeting private on the watch (no title or place; the face shows it as private). The lock and eye are now a muted grey instead of bright white.
 - **v1.46:** When the watch can't switch faces itself any more, the phone shows "Pick CalenTime on your watch" with the steps at the same time as the watch does, and closes it on its own once CalenTime is picked.
