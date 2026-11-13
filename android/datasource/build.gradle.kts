@@ -55,7 +55,8 @@ android {
 // checked by Google's validator, whose token the install call needs. The amber face is also the
 // "default watch face" the push library expects at assets/default_watchface.apk.
 val colourways = listOf("amber", "mint", "violet", "rose", "solaris",
-    "quartz", "copper", "ocean", "aurora", "acid", "lunar", "desert", "lime", "plum", "forest", "arctic")
+    "quartz", "copper", "ocean", "aurora", "acid", "lunar", "desert", "lime", "plum", "forest", "arctic",
+    "denim", "pacific", "orange")
 val faceValidator: Configuration by configurations.creating { isTransitive = false }
 
 abstract class BundleFacesTask : DefaultTask() {

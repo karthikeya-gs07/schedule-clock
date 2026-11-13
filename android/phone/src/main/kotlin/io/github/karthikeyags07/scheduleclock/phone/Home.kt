@@ -17,6 +17,8 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -270,7 +272,26 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                 .graphicsLayer { alpha = pickAlpha; translationY = (1f - pickAlpha) * 24.dp.toPx() },
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Row(Modifier.padding(bottom = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // At most 7 dots show; the row scrolls to keep the current one in the middle, and its edges fade where
+            // more dots lie beyond (no fade at either end of the list).
+            val dotScroll = rememberScrollState()
+            val density = androidx.compose.ui.platform.LocalDensity.current
+            val at = group.indexOf(pager.currentPage).coerceAtLeast(0)
+            LaunchedEffect(at, group.size) {
+                with(density) { dotScroll.animateScrollTo((at * 14.dp.toPx() + 9.dp.toPx() - 52.dp.toPx()).toInt().coerceAtLeast(0), tween(300)) }
+            }
+            Row(Modifier.padding(bottom = 18.dp).widthIn(max = 104.dp)
+                .graphicsLayer { compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen }
+                .drawWithContent {
+                    drawContent()
+                    val fade = 22.dp.toPx()
+                    val l = (dotScroll.value / fade).coerceIn(0f, 1f)
+                    val r = ((dotScroll.maxValue - dotScroll.value) / fade).coerceIn(0f, 1f)
+                    val e = fade / size.width
+                    drawRect(Brush.horizontalGradient(0f to Color.Black.copy(alpha = 1f - l), e to Color.Black,
+                        1f - e to Color.Black, 1f to Color.Black.copy(alpha = 1f - r)), blendMode = androidx.compose.ui.graphics.BlendMode.DstIn)
+                }
+                .horizontalScroll(dotScroll, enabled = false), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 group.forEach { i ->
                     val id = COLOURWAYS[i]
                     val on = i == pager.currentPage

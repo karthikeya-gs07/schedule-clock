@@ -207,6 +207,10 @@ FIGMA = {   # id: (name, bg, track, text, major, minor, half tick, accent, clash
     "plum": ("Plum Rose", "1e121f", "432b44", "fff3f9", "d6b8cd", "ae86a5", "a183a0", "eea0bd", "b6a2ff", "ffe0ae", None),
     "forest": ("Forest Signal", "0c1e1a", "203c32", "f1fff6", "b2cdbe", "759d8b", "749687", "79e4b7", "ffbe55", "d5fca9", None),
     "arctic": ("Arctic Lagoon", "0b1622", "182c40", "f0faff", "a9c4d6", "7094ae", "6c879c", "66d6e8", "a3a5ff", "d2f7ff", None),
+    # Figma node 76:1394: Racing Lime's dial on #1a1f21; the later lane is the arc colour.
+    "denim": ("Faded Denim", "1a1f21", "323c3d", "f7ffe9", "bdcec6", "859c94", "869b91", "8bb8c5", "e3a682", "8bb8c5", None),
+    "pacific": ("Pacific Radio", "1a1f21", "323c3d", "f7ffe9", "bdcec6", "859c94", "869b91", "69b4ab", "e6a66a", "69b4ab", None),
+    "orange": ("Burnt Orange", "1a1f21", "323c3d", "f7ffe9", "bdcec6", "859c94", "869b91", "ed9c5f", "95c3c0", "ed9c5f", None),
 }
 def argb(h): return "#ff" + h
 for i, (name, bg, track, text_, major, minor, half, accent, clash, later, palette) in FIGMA.items():
