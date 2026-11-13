@@ -242,7 +242,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                         velocity < -600 -> kotlin.math.floor(page).toInt() + 1
                         velocity > 600 -> kotlin.math.ceil(page).toInt() - 1
                         else -> kotlin.math.round(page).toInt()
-                    }.coerceIn(group.first(), group.last())   // a swipe stays inside the tab
+                    }.coerceIn(0, COLOURWAYS.lastIndex)   // past the last Solid it carries on into Gradients (the tab follows)
                     scope.launch { pager.animateScrollToPage(target) }
                 },
             ))

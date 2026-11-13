@@ -399,6 +399,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 - **v1.33:** Watch app 0.10.4 (2007) with the home screen, for Play. Next codes: phone 1006+, watch 2008+.
 - **v1.34:** Phone app 0.10.3 (1006), new version number only. Next codes: phone 1007+, watch 2008+.
 - **v1.35:** Watch app 0.10.5 (2008), new version number only. Next codes: phone 1007+, watch 2009+.
+- **v1.48:** Watchface: swiping past the last Solid carries on into Gradients (and back) with the tab following, instead of stopping at the end of each tab.
 - **v1.47:** Drawer: a lock icon beside the eye makes a meeting private on the watch (no title or place; the face shows it as private). The lock and eye are now a muted grey instead of bright white.
 - **v1.46:** When the watch can't switch faces itself any more, the phone shows "Pick CalenTime on your watch" with the steps at the same time as the watch does, and closes it on its own once CalenTime is picked.
 - **v1.45:** Picking a face on the phone now makes it the watch face. Before, it only copied the face to the watch when CalenTime wasn't already the watch face (for example when setup's face step was skipped), and the button still said "On your watch". Now, if CalenTime isn't the watch face, picking one opens the watch's face setup, which puts it on and makes it active (the watch asks once to allow this). Android allows an app to do that only once; after that the phone says how to pick it on the watch. "On your watch" shows only for the face actually showing. Checked on the Fold7 and Galaxy Watch8.
