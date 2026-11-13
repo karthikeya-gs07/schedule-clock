@@ -306,7 +306,9 @@
   #face.scrubbing #trail line { transition: none; }
   #numerals, #ticks, #dRange, #dPlace, #dClashIcon, #dTodIcon, #dArrow { transition: opacity var(--d) var(--ease), stroke var(--d) var(--ease); }
   #face.ambient #dStatus { fill: #8e8e93; }
-  #face.ambient #dRange, #face.ambient #dPlace, #face.ambient #dClashIcon, #face.ambient #dTodIcon { opacity: 0; }
+  #face.ambient #dPlace, #face.ambient #dClashIcon { opacity: 0; }
+  /* A2b: the meeting's time and the now dot stay in always-on, dimmed (static, redrawn with the clock once a minute) */
+  #face.ambient #dRange, #face.ambient #dTodIcon, #face.ambient #nowDot { opacity: .75; }
   #face.ambient #dArrow { stroke: #8e8e93; }
 </style>
 </head>
@@ -1162,7 +1164,9 @@ function renderDetails(list) {
   // ("Tomorrow · …", the range line is too narrow for it). A double booking wins the place line, in coral.
   const clash = clashesFor(list, e), tomorrow = e.s >= dayEndOf(nowMin), laterToday = e.lane === 'later' && !tomorrow;
   // Double booking (C7): title, then the clashing meeting, then the time range.
-  const rangeY = clash.length ? 348 : 318, placeY = clash.length ? 318 : 348;
+  // In always-on the clash line is hidden, so the time sits straight under the title (A2b).
+  const swapRows = clash.length && !ambient;
+  const rangeY = swapRows ? 348 : 318, placeY = swapRows ? 318 : 348;
   $('dRange').setAttribute('y', rangeY); $('dPlace').setAttribute('y', placeY);
   // Later-lane meetings: a time-of-day icon (morning / afternoon / evening / night) precedes the
   // time range instead of the word "Later" (C5).

@@ -349,7 +349,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
 
     <!-- Now dot (R6): rotates with the clock; above the ring layers -->
     <Group name="now" x="0" y="0" width="450" height="450" pivotX="0.5" pivotY="0.5">
-      {AMB}
+      <Variant mode="AMBIENT" target="alpha" value="190"/>   <!-- dimmed, not hidden, in always-on (A2b); it moves once a minute with the clock -->
       <Transform target="angle" value="{NOW_DEG}"/>
       <PartDraw x="{CX - 16}" y="{CY - R - 16}" width="32" height="32">
         <Ellipse x="2" y="2" width="28" height="28"><Fill color="#2e{D.ink[3:]}"/></Ellipse>
@@ -485,6 +485,12 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
           <PartText x="0" y="44" width="450" height="30">
             {AMB}
             <Transform target="y" value="44 + 30 * {CLASH}"/>
+            <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" color="{D.text}">
+              <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TITLE]"/></Template></Font></Text>
+          </PartText>
+          <!-- Always-on time range (A2b): dimmed, straight under the title (the clash line it would sit under is hidden) -->
+          <PartText x="0" y="44" width="450" height="30" alpha="0">
+            <Variant mode="AMBIENT" target="alpha" value="190"/>
             <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" color="{D.text}">
               <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TITLE]"/></Template></Font></Text>
           </PartText>""")}
