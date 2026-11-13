@@ -283,7 +283,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                     else Box(dot.background(if (on) accentFor(id) else Color.White.copy(alpha = .25f)))
                 }
             }
-            Text(lookName(shown), style = TitleStyle, modifier = Modifier.padding(bottom = 20.dp))
+            Text(lookName(shown), style = TitleStyle, modifier = Modifier.padding(bottom = 44.dp))   // where it sat with the old description line
             val face = m.link.face
             val canUse = m.link.watch != null && face?.supported == true
             // A plain frosted button, like Today's; it reads "On your watch" only for the colourway showing on the watch.
