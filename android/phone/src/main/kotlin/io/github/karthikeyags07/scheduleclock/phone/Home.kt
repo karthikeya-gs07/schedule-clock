@@ -136,7 +136,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
         val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
         // 0 = Today, 1 = Watchface; everything below follows this one value.
-        val p by animateFloatAsState(if (watchMode) 1f else 0f, tween(650, easing = FastOutSlowInEasing), label = "stage")
+        val p by animateFloatAsState(if (watchMode) 1f else 0f, tween(800, easing = androidx.compose.animation.core.CubicBezierEasing(.3f, 0f, .1f, 1f)), label = "stage")   // a gentle start and a long, soft finish
         val pager = rememberPagerState(initialPage = COLOURWAYS.indexOf(m.colourway).coerceAtLeast(0)) { COLOURWAYS.size }
         // Back on Today (or when the colourway changes there), the watch shows the colourway in use.
         LaunchedEffect(watchMode, m.colourway) {
@@ -207,7 +207,9 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
         }
 
         // ---- Today's controls: they dissolve away on Watchface ----
-        val todayAlpha = (1f - p * 2f).coerceIn(0f, 1f)
+        // Soft fades (smoothstep), not straight lines: Today's buttons go over the first 40 %, the tabs come in over the last half.
+        fun soft(t: Float) = t.coerceIn(0f, 1f).let { it * it * (3f - 2f * it) }
+        val todayAlpha = 1f - soft(p / .4f)
         if (todayAlpha > 0f) {
             // (7) watch status and (6) About (frosted, like the pill and sync button)
             Row(Modifier.fillMaxWidth().statusBarsPadding().padding(top = 44.dp, start = left + d(31f), end = left + d(31f)).graphicsLayer { alpha = todayAlpha },
@@ -251,7 +253,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
         }
 
         // ---- Watchface: Solids / Gradients tabs above the watch ----
-        val pickAlpha = ((p - .45f) / .55f).coerceIn(0f, 1f)
+        val pickAlpha = soft((p - .5f) / .5f)
         if (pickAlpha > 0f) {
             val scope = rememberCoroutineScope()
             LookTabs(gradients, haze,
