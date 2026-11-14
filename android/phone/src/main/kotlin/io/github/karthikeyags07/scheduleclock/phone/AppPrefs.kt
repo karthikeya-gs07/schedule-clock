@@ -53,6 +53,9 @@ object AppPrefs {
     fun setBuzz(context: Context, b: Buzz, on: Boolean) = prefs(context).edit().putBoolean(b.key, on).apply()
 
     /** Clock on the watch face (RULES T6): 24-hour, and in 12-hour mode whether AM/PM shows. */
+    /** Tapping the 12 on the face opens the compass (RULES A19); off until switched on in Settings. */
+    fun compass(context: Context) = prefs(context).getBoolean("compass", false)
+    fun setCompass(context: Context, on: Boolean) = prefs(context).edit().putBoolean("compass", on).apply()
     fun clock24(context: Context) = prefs(context).getBoolean("clock24", false)
     fun showAmPm(context: Context) = prefs(context).getBoolean("showAmPm", true)
     fun setClock(context: Context, clock24: Boolean, showAmPm: Boolean) =
@@ -65,6 +68,7 @@ object AppPrefs {
             Buzz.entries.forEach { dataMap.putBoolean(it.key, buzz(context, it)) }
             dataMap.putBoolean("clock24", clock24(context))
             dataMap.putBoolean("showAmPm", showAmPm(context))
+            dataMap.putBoolean("compass", compass(context))
         }.asPutDataRequest().setUrgent()
         Wearable.getDataClient(context).putDataItem(request)
     }

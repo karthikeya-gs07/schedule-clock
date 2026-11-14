@@ -204,6 +204,13 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
         AppPrefs.sendSettings(context)
     }
 
+    var compass by mutableStateOf(AppPrefs.compass(context))
+    fun switchCompass(on: Boolean) {
+        AppPrefs.setCompass(context, on)
+        compass = on
+        AppPrefs.sendSettings(context)
+    }
+
     var clock24 by mutableStateOf(AppPrefs.clock24(context))
     var showAmPm by mutableStateOf(AppPrefs.showAmPm(context))
     private fun clockParam() = if (clock24) "24" else if (showAmPm) "12" else "12plain"

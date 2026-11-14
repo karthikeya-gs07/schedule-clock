@@ -34,7 +34,10 @@ class TapActivity : Activity() {
         if (uri?.path == "/select" && SpikeSchedule.needsCalendarSetup(this)) {
             startActivity(Intent(this, PermissionActivity::class.java))
         } else if (uri?.path == "/compass") {
-            startActivity(Intent(this, CompassActivity::class.java))
+            // Settings → Compass on the phone; off, the 12 acts like the rest of the 12–1 hour.
+            if (PhoneSettings.compass(this)) startActivity(Intent(this, CompassActivity::class.java))
+            else if (SpikeSchedule.needsCalendarSetup(this)) startActivity(Intent(this, PermissionActivity::class.java))
+            else SpikeSchedule.tapHour(this, 0)
         } else if (uri?.path == "/release") {
             SpikeSchedule.release(this)
         } else if (test && uri?.path == "/buzz") {

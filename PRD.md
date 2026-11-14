@@ -392,6 +392,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 - **v0.70:** Phone app: the Look tab is now **Watchface**; the selected colourway card has a subtle 1 px border; more space between each preview and its name.
 - **v0.71:** Phone app tidy-up and setup fallback: Calendars and Watchface lose their subtitles and the account letter circles; the confirm step shows the real face with the watch's question below it; a new **It didn't show up** path explains how to pick the face on the watch and offers **Send it again** (RULES A1).
 - **v0.72:** Setup has a round back button beside the main button on steps 2–4 (RULES A1).
+- **v1.70:** Settings → Compass: a "Tap 12 for compass" switch (off by default), sent to the watch with the other settings. Off, tapping the 12 acts like the rest of the 12–1 hour; on, it opens the compass. Checked on the Fold7 and Watch8 (off: face stays; on: compass opens).
 - **v1.69:** Compass: the spokes start at the very edge of the screen (and the arrow with them), the numbers moved out to match, and the inner ring is removed. Checked on the Watch8.
 - **v1.68:** Compass: N, E, S and W are larger (30 instead of 21) and bold. Checked on the Watch8.
 - **v1.67:** Compass: the 0, 90, 180 and 270 numbers on the dial are replaced by N, E, S and W (N stays in the accent). Checked on the Watch8.
