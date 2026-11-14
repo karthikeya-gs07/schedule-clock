@@ -5,13 +5,13 @@
 
     <!-- Always-on (A1): black background, whatever the colourway -->
     <PartDraw x="0" y="0" width="450" height="450" alpha="0">
-      <Variant mode="AMBIENT" target="alpha" value="255"/>
+      <Variant mode="AMBIENT" target="alpha" value="255" duration="0.7"/>
       <Rectangle x="0" y="0" width="450" height="450"><Fill color="#ff000000"/></Rectangle>
     </PartDraw>
 
     <!-- Ring track (R1); faint in always-on -->
     <PartDraw x="0" y="0" width="450" height="450">
-      <Variant mode="AMBIENT" target="alpha" value="110"/>
+      <Variant mode="AMBIENT" target="alpha" value="110" duration="0.7"/>
       <Arc centerX="225" centerY="225" width="438" height="438" startAngle="0" endAngle="360">
         <Stroke color="#ff47332c" thickness="12"/>
       </Arc>
@@ -19,7 +19,7 @@
 
     <!-- Risk 6: comet trail (R6). Face-side, driven by the clock only; under the ring image so it shows on free time. -->
     <Group name="trail" x="0" y="0" width="450" height="450">
-      <Variant mode="AMBIENT" target="alpha" value="0"/>
+      <Variant mode="AMBIENT" target="alpha" value="0" duration="0.7"/>
     <PartDraw x="223" y="-1" width="4" height="14" alpha="15"><Transform target="alpha" value="15 + 140 * pow(clamp(1 - (((([HOUR_0_11] * 60 + [MINUTE]) * 0.5) - 0.0 + 360) % 360) / 55, 0, 1), 2)"/><Line startX="2.0" startY="12.0" endX="2.0" endY="2.0"><Stroke color="#fffff5e7" thickness="1.2" cap="BUTT"/></Line></PartDraw>
     <PartDraw x="228" y="-1" width="5" height="15" alpha="15"><Transform target="alpha" value="15 + 140 * pow(clamp(1 - (((([HOUR_0_11] * 60 + [MINUTE]) * 0.5) - 1.5 + 360) % 360) / 55, 0, 1), 2)"/><Line startX="2.6" startY="12.1" endX="2.9" endY="2.1"><Stroke color="#fffff5e7" thickness="1.2" cap="BUTT"/></Line></PartDraw>
     <PartDraw x="234" y="-1" width="5" height="15" alpha="15"><Transform target="alpha" value="15 + 140 * pow(clamp(1 - (((([HOUR_0_11] * 60 + [MINUTE]) * 0.5) - 3.0 + 360) % 360) / 55, 0, 1), 2)"/><Line startX="2.2" startY="12.3" endX="2.7" endY="2.3"><Stroke color="#fffff5e7" thickness="1.2" cap="BUTT"/></Line></PartDraw>
@@ -264,7 +264,7 @@
 
     <!-- Dial: 15-minute ticks (R7) and hour numbers (R8) -->
     <Group name="dial" x="0" y="0" width="450" height="450">
-      <Variant mode="AMBIENT" target="alpha" value="153"/>
+      <Variant mode="AMBIENT" target="alpha" value="153" duration="0.7"/>
       <PartDraw x="0" y="0" width="450" height="450">
       <Line startX="225.0" startY="20.0" endX="225.0" endY="30.0"><Stroke color="#ffd7bda5" thickness="4.5" cap="ROUND"/></Line>
       <Line startX="251.8" startY="21.8" endX="251.4" endY="24.7"><Stroke color="#ff47332c" thickness="1.5" cap="ROUND"/></Line>
@@ -341,7 +341,7 @@
              Meeting arcs: panel 0 tinted with the colourway, or panel 3 in the light's colours (Solaris);
              the colourway hides the other with a transparent tint. -->
         <Group name="ring_colour" x="0" y="0" width="450" height="450">
-          <Variant mode="AMBIENT" target="alpha" value="0"/>
+          <Variant mode="AMBIENT" target="alpha" value="0" duration="0.7"/>
           <PartImage x="0" y="0" width="1800" height="450" tintColor="#ffe79775">
             <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
           </PartImage>
@@ -354,7 +354,7 @@
         </Group>
         <!-- Always-on (A1): meetings and the later lane in grey, no colour -->
         <Group name="ring_ambient" x="0" y="0" width="450" height="450" alpha="0">
-          <Variant mode="AMBIENT" target="alpha" value="255"/>
+          <Variant mode="AMBIENT" target="alpha" value="255" duration="0.7"/>
           <PartImage x="0" y="0" width="1800" height="450" tintColor="#ff8e8e93">
             <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
           </PartImage>
@@ -363,7 +363,7 @@
           </PartImage>
         </Group>
         <Group name="ring_fixed" x="0" y="0" width="450" height="450">
-          <Variant mode="AMBIENT" target="alpha" value="140"/>
+          <Variant mode="AMBIENT" target="alpha" value="140" duration="0.7"/>
           <PartImage x="-900" y="0" width="1800" height="450">
             <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
           </PartImage>
@@ -382,7 +382,7 @@
       <BoundingOval x="0" y="0" width="450" height="450"/>
       <Complication type="RANGED_VALUE">
         <Group name="settle" x="0" y="0" width="450" height="450" pivotX="0.5" pivotY="0.5">
-          <Variant mode="AMBIENT" target="alpha" value="0"/>
+          <Variant mode="AMBIENT" target="alpha" value="0" duration="0.7"/>
           <Transform target="scaleX" value="1 + 0.04785 * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1)"><Animation duration="0.9" interpolation="CUBIC_BEZIER" controls="0.22 1 0.36 1"/></Transform>
           <Transform target="scaleY" value="1 + 0.04785 * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1)"><Animation duration="0.9" interpolation="CUBIC_BEZIER" controls="0.22 1 0.36 1"/></Transform>
           <PartDraw x="0" y="0" width="450" height="450">
@@ -411,7 +411,7 @@
 
     <!-- Now dot (R6): rotates with the clock; above the ring layers -->
     <Group name="now" x="0" y="0" width="450" height="450" pivotX="0.5" pivotY="0.5">
-      <Variant mode="AMBIENT" target="alpha" value="190"/>   <!-- dimmed, not hidden, in always-on (A2b); it moves once a minute with the clock -->
+      <Variant mode="AMBIENT" target="alpha" value="190" duration="0.7"/>   <!-- dimmed, not hidden, in always-on (A2b); it moves once a minute with the clock -->
       <Transform target="angle" value="(([HOUR_0_11] * 60 + [MINUTE]) * 0.5)"/>
       <PartDraw x="209" y="-10" width="32" height="32">
         <Ellipse x="2" y="2" width="28" height="28"><Fill color="#2efff5e7"/></Ellipse>
@@ -430,7 +430,7 @@
       <BoundingOval x="0" y="0" width="450" height="450"/>
       <Complication type="RANGED_VALUE">
         <Group name="zone_marker" x="0" y="0" width="450" height="450" pivotX="0.5" pivotY="0.5">
-          <Variant mode="AMBIENT" target="alpha" value="190"/>
+          <Variant mode="AMBIENT" target="alpha" value="190" duration="0.7"/>
           <Transform target="angle" value="(([HOUR_0_11] * 60 + [MINUTE]) * 0.5) + ([COMPLICATION.RANGED_VALUE_VALUE] - 2000) * 0.5"/>
           <PartImage x="209" y="-10" width="32" height="32" alpha="0">
             <Transform target="alpha" value="([COMPLICATION.RANGED_VALUE_VALUE] &gt; 2000) * 255"/>
@@ -452,9 +452,11 @@
           primaryProvider="io.github.karthikeyags07.scheduleclock/io.github.karthikeyags07.scheduleclock.StatusDataSourceService" primaryProviderType="RANGED_VALUE"/>
       <BoundingOval x="0" y="0" width="450" height="450"/>
       <Complication type="RANGED_VALUE">
-        <!-- Date, clock and divider awake; hidden in always-on, where the copy below takes over (A2c) -->
-        <Group name="head_live" x="0" y="0" width="450" height="450">
-          <Variant mode="AMBIENT" target="alpha" value="0"/>
+        <!-- Date, clock and divider. Two copies; "Hide details in always-on" (A2c) picks one. The first stays put in
+             always-on. The second glides to the centre as the watch dims, as on an empty day (fixed values: the watch
+             animates fixed always-on values but ignores calculated ones). -->
+        <Group name="head" x="0" y="0" width="450" height="450">
+          <Transform target="alpha" value="255 * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 256) % 2))"/>
           <!-- Day + date (C1, T1): 24 px, muted; shrinks to 90 % in place when selected; down 55 px when empty (C3) -->
           <Group name="date" x="0" y="98" width="450" height="30" pivotX="0.5" pivotY="0.5">
             <Transform target="y" value="98 + 55 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 32) % 2)"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
@@ -525,15 +527,14 @@
             </PartDraw>
           </Group>
         </Group>
-        <!-- Always-on copy: centred like an empty day (C3) when there are no meetings or the details are hidden
-             (A2c); still, no selection motion. One position change as the watch dims, nothing running after. -->
-        <Group name="head_aod" x="0" y="0" width="450" height="450" alpha="0">
-          <Variant mode="AMBIENT" target="alpha" value="255"/>
+        <Group name="head_centred" x="0" y="0" width="450" height="450">
+          <Transform target="alpha" value="255 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 256) % 2)"/>
           <!-- Day + date (C1, T1): 24 px, muted; shrinks to 90 % in place when selected; down 55 px when empty (C3) -->
-          <Group name="date_aod" x="0" y="98" width="450" height="30" pivotX="0.5" pivotY="0.5">
-            <Transform target="y" value="98 + 55 * clamp((floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 32) % 2) + (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 256) % 2), 0, 1)"></Transform>
-            <Transform target="scaleX" value="1 - 0.1 * 0"></Transform>
-            <Transform target="scaleY" value="1 - 0.1 * 0"></Transform>
+          <Group name="date_c" x="0" y="98" width="450" height="30" pivotX="0.5" pivotY="0.5">
+            <Variant mode="AMBIENT" target="y" value="153" duration="0.7"/>
+            <Transform target="y" value="98 + 55 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 32) % 2)"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
+            <Transform target="scaleX" value="1 - 0.1 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
+            <Transform target="scaleY" value="1 - 0.1 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
             <PartText x="0" y="0" width="450" height="30">
               <Text align="CENTER">
                 <Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="#ffd7bda5" letterSpacing="0.08">
@@ -543,16 +544,19 @@
             </PartText>
           </Group>
           <!-- Clock (T5): Anta 88 px; selected: 55 %, up 10 px; empty (C3): 115 %, down 60 px to the center -->
-          <Group name="clock_aod" x="0" y="119" width="450" height="110" pivotX="0.5" pivotY="0.5">
-            <Transform target="y" value="119 - 10 * 0 + 60 * clamp((floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 32) % 2) + (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 256) % 2), 0, 1)"></Transform>
-            <Transform target="scaleX" value="1 - 0.45 * 0 + 0.15 * clamp((floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 32) % 2) + (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 256) % 2), 0, 1)"></Transform>
-            <Transform target="scaleY" value="1 - 0.45 * 0 + 0.15 * clamp((floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 32) % 2) + (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 256) % 2), 0, 1)"></Transform>
+          <Group name="clock_c" x="0" y="119" width="450" height="110" pivotX="0.5" pivotY="0.5">
+            <Variant mode="AMBIENT" target="y" value="179" duration="0.7"/>
+            <Variant mode="AMBIENT" target="scaleX" value="1.15" duration="0.7"/>
+            <Variant mode="AMBIENT" target="scaleY" value="1.15" duration="0.7"/>
+            <Transform target="y" value="119 - 10 * [COMPLICATION.RANGED_VALUE_VALUE] + 60 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 32) % 2)"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
+            <Transform target="scaleX" value="1 - 0.45 * [COMPLICATION.RANGED_VALUE_VALUE] + 0.15 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 32) % 2)"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
+            <Transform target="scaleY" value="1 - 0.45 * [COMPLICATION.RANGED_VALUE_VALUE] + 0.15 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 32) % 2)"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
             <!-- AM/PM (C11): WFF can't measure text, so time + AM/PM are centered as a unit with fixed widths. The time is
                  right-aligned to a seam; AM/PM starts 8 px after it. A two-digit hour (10-12) is ~32 px wider, so both
                  move 16 px right (half the extra width). Widths measured from the prototype's Anta render: 1-digit
                  hour ~185 px, 2-digit ~217, AM/PM ~38. Re-check on the emulator.
                  T6: the phone app picks 12-hour with AM/PM (this pair), 12-hour without it, or 24-hour (both centered). -->
-            <Group name="clock_time_aod" x="-156" y="0" width="450" height="110">
+            <Group name="clock_time_c" x="-156" y="0" width="450" height="110">
               <Transform target="x" value="-156 + 16 * floor([HOUR_1_12] / 10)"/>
               <Transform target="alpha" value="255 * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 64) % 2)) * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 128) % 2))"/>
               <DigitalClock x="0" y="0" width="450" height="110">
@@ -561,7 +565,7 @@
                 </TimeText>
               </DigitalClock>
             </Group>
-            <Group name="clock_ampm_aod" x="302" y="62" width="60" height="30">
+            <Group name="clock_ampm_c" x="302" y="62" width="60" height="30">
               <Transform target="x" value="302 + 16 * floor([HOUR_1_12] / 10)"/>
               <Transform target="alpha" value="255 * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 64) % 2)) * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 128) % 2))"/>
               <PartText x="0" y="0" width="60" height="30">
@@ -572,7 +576,7 @@
                 </Text>
               </PartText>
             </Group>
-            <Group name="clock_12_plain_aod" x="0" y="0" width="450" height="110" alpha="0">
+            <Group name="clock_12_plain_c" x="0" y="0" width="450" height="110" alpha="0">
               <Transform target="alpha" value="255 * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 64) % 2)) * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 128) % 2)"/>
               <DigitalClock x="0" y="0" width="450" height="110">
                 <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="12" align="CENTER">
@@ -580,7 +584,7 @@
                 </TimeText>
               </DigitalClock>
             </Group>
-            <Group name="clock_24_aod" x="0" y="0" width="450" height="110" alpha="0">
+            <Group name="clock_24_c" x="0" y="0" width="450" height="110" alpha="0">
               <Transform target="alpha" value="255 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 64) % 2)"/>
               <DigitalClock x="0" y="0" width="450" height="110">
                 <TimeText x="0" y="0" width="450" height="110" format="hh:mm" hourFormat="24" align="CENTER">
@@ -590,10 +594,11 @@
             </Group>
           </Group>
           <!-- Divider (T2): selected: up 32 px, 60 % wide; fades out when empty (C3) -->
-          <Group name="divider_aod" x="155" y="236" width="140" height="4" pivotX="0.5" pivotY="0.5">
-            <Transform target="alpha" value="255 * (1 - clamp((floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 32) % 2) + (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 256) % 2), 0, 1))"></Transform>
-            <Transform target="y" value="236 - 32 * 0"></Transform>
-            <Transform target="scaleX" value="1 - 0.4 * 0"></Transform>
+          <Group name="divider_c" x="155" y="236" width="140" height="4" pivotX="0.5" pivotY="0.5">
+            <Variant mode="AMBIENT" target="alpha" value="0" duration="0.7"/>
+            <Transform target="alpha" value="255 * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 32) % 2))"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
+            <Transform target="y" value="236 - 32 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
+            <Transform target="scaleX" value="1 - 0.4 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
             <PartDraw x="0" y="0" width="140" height="4">
               <Line startX="1" startY="2" endX="139" endY="2"><Stroke color="#ff47332c" thickness="2" cap="ROUND"/></Line>
             </PartDraw>
@@ -608,7 +613,7 @@
           <!-- Live title: hidden while the full title scrolls in slot 4/6 (C9a), and in ambient -->
           <!-- C9: 30 px, or 24 px when it only fits at that size (flag 16); one of the two is visible -->
           <Group name="title_live" x="0" y="0" width="450" height="60">
-            <Variant mode="AMBIENT" target="alpha" value="0"/>
+            <Variant mode="AMBIENT" target="alpha" value="0" duration="0.7"/>
             <PartText x="0" y="5" width="450" height="36">
               <Transform target="x" value="(30 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2) + 25 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 2) % 2)) / 2"/>
               <Transform target="alpha" value="255 * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 8) % 2)) * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 16) % 2))"/>
@@ -624,7 +629,7 @@
           </Group>
           <!-- Ambient title (A2a): the shortened title, first characters and an ellipsis; nothing moves -->
           <Group name="title_ambient" x="0" y="0" width="450" height="60" alpha="0">
-            <Variant mode="AMBIENT" target="alpha" value="255"/>
+            <Variant mode="AMBIENT" target="alpha" value="255" duration="0.7"/>
             <!-- A2c: hidden with "Hide details in always-on" (an inner group: the Variant above sets this group's alpha) -->
             <Group name="title_ambient_shown" x="0" y="0" width="450" height="60">
               <Transform target="alpha" value="255 * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 256) % 2))"/>
@@ -644,7 +649,7 @@
             </Group>
           </Group>
           <Group name="icons_live" x="0" y="0" width="450" height="60">
-            <Variant mode="AMBIENT" target="alpha" value="0"/>
+            <Variant mode="AMBIENT" target="alpha" value="0" duration="0.7"/>
             <PartDraw name="arrow" x="0" y="13" width="20" height="20" alpha="0">
               <Transform target="x" value="(225 - ((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000) + (30 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2) + 25 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 2) % 2))) / 2)"/>
               <Transform target="alpha" value="255 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2)"/>
@@ -661,7 +666,7 @@
           </Group>
           <!-- Always-on copies of the arrow and lock; hidden with "Hide details in always-on" (A2c) -->
           <Group name="icons_ambient" x="0" y="0" width="450" height="60" alpha="0">
-            <Variant mode="AMBIENT" target="alpha" value="255"/>
+            <Variant mode="AMBIENT" target="alpha" value="255" duration="0.7"/>
             <Group name="icons_ambient_shown" x="0" y="0" width="450" height="60">
               <Transform target="alpha" value="255 * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 256) % 2))"/>
   
@@ -681,7 +686,7 @@
             </Group>
           </Group>
           <PartText x="0" y="44" width="450" height="30">
-            <Variant mode="AMBIENT" target="alpha" value="0"/>
+            <Variant mode="AMBIENT" target="alpha" value="0" duration="0.7"/>
             <Transform target="y" value="44 + 30 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 4) % 2)"/>
             <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" color="#fffff5e7">
               <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TITLE]"/></Template></Font></Text>
@@ -689,7 +694,7 @@
           <!-- Always-on time range (A2b): dimmed, straight under the title (the clash line it would sit under is hidden);
                hidden with "Hide details in always-on" (A2c) -->
           <Group name="range_ambient" x="0" y="0" width="450" height="80" alpha="0">
-            <Variant mode="AMBIENT" target="alpha" value="190"/>
+            <Variant mode="AMBIENT" target="alpha" value="190" duration="0.7"/>
             <Group name="range_ambient_shown" x="0" y="0" width="450" height="80">
               <Transform target="alpha" value="255 * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 256) % 2))"/>
               <PartText x="0" y="44" width="450" height="30">
@@ -715,7 +720,7 @@
           <Transform target="y" value="250 - 30 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
           <Transform target="scaleX" value="1 + 0.15 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
           <Transform target="scaleY" value="1 + 0.15 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
-          <Variant mode="AMBIENT" target="alpha" value="0"/>
+          <Variant mode="AMBIENT" target="alpha" value="0" duration="0.7"/>
           <PartDraw name="overlap" x="0" y="52" width="22" height="14" alpha="0">
             <Transform target="x" value="225 - ((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000) + 30) / 2"/>
             <Transform target="alpha" value="round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) == 1 ? 255 : 0"/>
@@ -753,7 +758,7 @@
       <BoundingBox x="95" y="215" width="260" height="85"/>
       <Complication type="RANGED_VALUE">
         <Group name="scroll_live" x="0" y="0" width="450" height="450">
-          <Variant mode="AMBIENT" target="alpha" value="0"/>
+          <Variant mode="AMBIENT" target="alpha" value="0" duration="0.7"/>
           <PartText x="95" y="255" width="900" height="36" alpha="0">
             <Transform target="x" value="95 - (((([MINUTE] * 60 + [SECOND_MILLISECOND]) * 1000) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) &lt; (1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 260 ? (([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000) * (clamp((((([MINUTE] * 60 + [SECOND_MILLISECOND]) * 1000) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) - 1400) / (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333), 0, 1) * clamp((((([MINUTE] * 60 + [SECOND_MILLISECOND]) * 1000) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) - 1400) / (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333), 0, 1) * (3 - 2 * clamp((((([MINUTE] * 60 + [SECOND_MILLISECOND]) * 1000) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) - 1400) / (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333), 0, 1))) : 0)"/>
             <Transform target="y" value="255 - 30 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
@@ -773,7 +778,7 @@
       <BoundingBox x="125" y="215" width="230" height="85"/>
       <Complication type="RANGED_VALUE">
         <Group name="scroll_live" x="0" y="0" width="450" height="450">
-          <Variant mode="AMBIENT" target="alpha" value="0"/>
+          <Variant mode="AMBIENT" target="alpha" value="0" duration="0.7"/>
           <PartText x="125" y="255" width="900" height="36" alpha="0">
             <Transform target="x" value="125 - (((([MINUTE] * 60 + [SECOND_MILLISECOND]) * 1000) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) &lt; (1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 260 ? (([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000) * (clamp((((([MINUTE] * 60 + [SECOND_MILLISECOND]) * 1000) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) - 1400) / (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333), 0, 1) * clamp((((([MINUTE] * 60 + [SECOND_MILLISECOND]) * 1000) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) - 1400) / (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333), 0, 1) * (3 - 2 * clamp((((([MINUTE] * 60 + [SECOND_MILLISECOND]) * 1000) % ((1400 + (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333) + 1300) + 520)) - 1400) / (clamp((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000), 1, 9999) * 33.3333), 0, 1))) : 0)"/>
             <Transform target="y" value="255 - 30 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
