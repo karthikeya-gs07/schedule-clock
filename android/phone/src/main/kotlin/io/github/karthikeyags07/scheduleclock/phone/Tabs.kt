@@ -125,7 +125,7 @@ fun SettingsScreen(m: AppModel, onRunSetup: () -> Unit) {
         }
         SettingSwitch(m.shortcutsOn) { m.switchShortcuts(it) }
     }
-    androidx.compose.animation.AnimatedVisibility(m.shortcutsOn) { Column { NUMBERS.forEach { n -> ShortcutRow(m, n) } } }
+    NUMBERS.forEach { n -> ShortcutRow(m, n, enabled = m.shortcutsOn) }   // greyed out, not hidden, while the section is off
     // Sync isn't a setting: a short note says how it works.
     ItemDivider(Modifier.padding(top = 8.dp))   // hairlines between the sections
     PageHeading("Sync")
@@ -173,11 +173,14 @@ private fun FrostButton(text: String, busy: Boolean, modifier: Modifier = Modifi
 
 /** A switch in the app's colours. */
 @Composable
-private fun SettingSwitch(checked: Boolean, onChange: (Boolean) -> Unit) {
+private fun SettingSwitch(checked: Boolean, enabled: Boolean = true, onChange: (Boolean) -> Unit) {
     val accent = LocalAccent.current
-    androidx.compose.material3.Switch(checked, onChange, colors = androidx.compose.material3.SwitchDefaults.colors(
+    androidx.compose.material3.Switch(checked, onChange, enabled = enabled, colors = androidx.compose.material3.SwitchDefaults.colors(
         checkedTrackColor = accent, checkedThumbColor = Palette.onAccent, checkedBorderColor = accent,
-        uncheckedTrackColor = Color(0xFF34353A), uncheckedThumbColor = Palette.muted, uncheckedBorderColor = Color(0xFF34353A)))
+        uncheckedTrackColor = Color(0xFF34353A), uncheckedThumbColor = Palette.muted, uncheckedBorderColor = Color(0xFF34353A),
+        // Disabled: the same dim grey as Show AM/PM in 24-hour mode.
+        disabledCheckedTrackColor = Color(0xFF26272B), disabledCheckedThumbColor = Color(0xFF55565C), disabledCheckedBorderColor = Color(0xFF26272B),
+        disabledUncheckedTrackColor = Color(0xFF26272B), disabledUncheckedThumbColor = Color(0xFF45464B), disabledUncheckedBorderColor = Color(0xFF26272B)))
 }
 
 /**
@@ -185,19 +188,19 @@ private fun SettingSwitch(checked: Boolean, onChange: (Boolean) -> Unit) {
  * the two swap) and that shortcut's switch.
  */
 @Composable
-private fun ShortcutRow(m: AppModel, number: Int) {
+private fun ShortcutRow(m: AppModel, number: Int, enabled: Boolean) {
     val info = shortcutInfo(m.shortcutAt(number))
     var picking by remember { mutableStateOf(false) }
     val accent = LocalAccent.current
     Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-        Row(Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button) { picking = true }
+        Row(Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).clickable(enabled = enabled, role = Role.Button) { picking = true }
             .semantics { contentDescription = "Tap $number: ${info.name}. Change" }.padding(vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically) {
-            Text("$number", style = ItemTitle.copy(color = Palette.muted), modifier = Modifier.width(34.dp))
-            Text(info.name, style = ItemTitle)
-            Text("  ›", style = ItemTitle.copy(color = Palette.muted))
+            Text("$number", style = ItemTitle.copy(color = if (enabled) Palette.muted else Palette.faint), modifier = Modifier.width(34.dp))
+            Text(info.name, style = ItemTitle.copy(color = if (enabled) Palette.text else Palette.faint))
+            Text("  ›", style = ItemTitle.copy(color = if (enabled) Palette.muted else Palette.faint))
         }
-        SettingSwitch(m.shortcutOn(info.id)) { m.switchShortcut(info.id, it) }
+        SettingSwitch(m.shortcutOn(info.id), enabled) { m.switchShortcut(info.id, it) }
     }
     if (picking) CalenPopup("Tap $number", { picking = false }, "Pick what tapping the $number on the face does. Picking one already on another number swaps the two.") {
         Spacer(Modifier.height(16.dp))
