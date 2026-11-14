@@ -56,6 +56,32 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
         syncNow(quiet = true)
     }
 
+    /** Opens this occurrence in the phone's calendar app (RULES A18); edits made there sync on return. */
+    fun openEvent(meeting: Meeting) {
+        if (demo || meeting.eventId == 0L) return
+        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW,
+            android.content.ContentUris.withAppendedId(android.provider.CalendarContract.Events.CONTENT_URI, meeting.eventId))
+            .putExtra(android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME, meeting.begin)
+            .putExtra(android.provider.CalendarContract.EXTRA_EVENT_END_TIME, meeting.end)
+            .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        // Straight to the app the meeting's calendar belongs to, when it's on the phone; then Samsung Calendar;
+        // otherwise Android asks.
+        val type = calendars.firstOrNull { it.id == meeting.calendarId }?.accountType.orEmpty()
+        val owner = when {
+            type.contains("google", true) -> "com.google.android.calendar"
+            type.contains("outlook", true) || type.contains("exchange", true) || type.contains("microsoft", true) -> "com.microsoft.office.outlook"
+            type.contains("samsung", true) || type == "com.osp.app.signin" || type.equals("LOCAL", true) -> "com.samsung.android.calendar"
+            else -> null
+        }
+        // Samsung Calendar shows every calendar on the phone, so it stands in when the owner's app isn't installed.
+        listOfNotNull(owner, "com.samsung.android.calendar")
+            .firstOrNull { android.content.Intent(intent).setPackage(it).resolveActivity(context.packageManager) != null }
+            ?.let { intent.setPackage(it) }
+        runCatching { context.startActivity(intent) }
+            .onSuccess { syncOnReturn = true }
+            .onFailure { say("Couldn't open your calendar") }
+    }
+
     /** Set when a calendar app was opened to add an event, so coming back syncs the new event to the watch. */
     var syncOnReturn = false
 

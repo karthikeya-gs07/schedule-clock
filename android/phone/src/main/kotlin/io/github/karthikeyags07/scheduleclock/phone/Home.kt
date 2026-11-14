@@ -546,7 +546,7 @@ private fun MeetingsDrawer(m: AppModel, haze: HazeState, collapsedTop: androidx.
                 val calendar = m.calendars.firstOrNull { it.id == meeting.calendarId }
                 // A hidden meeting can't clash on the watch, and doesn't make others clash either.
                 DrawerMeeting(meeting, live = meeting.begin <= now, hidden = hidden, private = m.isPrivate(meeting),
-                    onToggleLocked = { m.toggleLocked(meeting) },
+                    onToggleLocked = { m.toggleLocked(meeting) }, onOpen = { m.openEvent(meeting) },
                     clash = !hidden && left.any { it !== meeting && !m.isHidden(it) && it.begin < meeting.end && meeting.begin < it.end },
                     color = calendar?.color?.let { Color(it) } ?: Palette.muted) { m.toggleHidden(meeting) }
             }
@@ -562,7 +562,7 @@ private val DRAWER_TIME = java.time.format.DateTimeFormatter.ofPattern("h:mm a")
  * A hidden meeting keeps its place in the list, dimmed.
  */
 @Composable
-private fun DrawerMeeting(meeting: Meeting, live: Boolean, hidden: Boolean, private: Boolean, onToggleLocked: () -> Unit, clash: Boolean, color: Color,
+private fun DrawerMeeting(meeting: Meeting, live: Boolean, hidden: Boolean, private: Boolean, onToggleLocked: () -> Unit, onOpen: () -> Unit, clash: Boolean, color: Color,
                           onToggleHidden: () -> Unit) {
     val start = java.time.Instant.ofEpochMilli(meeting.begin).atZone(ZoneId.systemDefault())
     val end = java.time.Instant.ofEpochMilli(meeting.end).atZone(ZoneId.systemDefault())
@@ -571,7 +571,10 @@ private fun DrawerMeeting(meeting: Meeting, live: Boolean, hidden: Boolean, priv
         Modifier.fillMaxWidth().padding(vertical = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top,
     ) {
-        Row(Modifier.weight(1f).graphicsLayer { alpha = dim }, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        // Tapping the meeting opens it in the phone's calendar app (RULES A18).
+        Row(Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button, onClick = onOpen)
+            .semantics { contentDescription = "Open ${meeting.title.ifEmpty { "meeting" }} in your calendar" }
+            .graphicsLayer { alpha = dim }, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(Modifier.padding(top = 5.dp).size(10.dp).clip(CircleShape).background(color))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(meeting.title.ifEmpty { "Busy" }, maxLines = 2, overflow = TextOverflow.Ellipsis,
