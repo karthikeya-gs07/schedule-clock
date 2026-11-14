@@ -528,6 +528,11 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
       <Rectangle x="0" y="0" width="48" height="50"><Fill color="#00000000"/></Rectangle>
       <Launch target="app://{PKG}/compass"/>
     </PartDraw>
+    <!-- A20: the 6 opens all events (on top of the hour hotspots there) -->
+    <PartDraw name="agenda_tap" x="201" y="378" width="48" height="50">
+      <Rectangle x="0" y="0" width="48" height="50"><Fill color="#00000000"/></Rectangle>
+      <Launch target="app://{PKG}/agenda"/>
+    </PartDraw>
     <!-- I8: the details area (inside the hour hotspots). A tap while a meeting is selected goes back to the normal view. -->
     <PartDraw name="details_tap" x="105" y="205" width="240" height="130">
       <Rectangle x="0" y="0" width="240" height="130"><Fill color="#00000000"/></Rectangle>

@@ -111,8 +111,9 @@ fun SettingsScreen(m: AppModel, onRunSetup: () -> Unit) {
     ToggleItem("24-hour time", if (m.clock24) "Shows 14:30" else "Shows 2:30", m.clock24) { m.setClock(clock24 = it) }
     ToggleItem("Show AM/PM", "Next to the time in 12-hour mode", m.showAmPm, enabled = !m.clock24) { m.setClock(showAmPm = it) }
     ItemDivider(Modifier.padding(top = 8.dp))
-    PageHeading("Compass")
+    PageHeading("Shortcuts on the face")
     ToggleItem("Tap 12 for compass", "Tapping the 12 on the face opens a compass on your watch", m.compass) { m.switchCompass(it) }
+    ToggleItem("Tap 6 for all events", "Tapping the 6 on the face lists everything from now to the end of tomorrow", m.agenda) { m.switchAgenda(it) }
     // Sync isn't a setting: a short note says how it works.
     ItemDivider(Modifier.padding(top = 8.dp))   // hairlines between the sections
     PageHeading("Sync")

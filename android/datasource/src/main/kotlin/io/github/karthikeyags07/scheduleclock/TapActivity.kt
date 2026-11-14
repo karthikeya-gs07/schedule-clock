@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
  * - `app://<package>/select?hour=N`: cycles the meetings in that dial hour (I2–I6).
  * - `app://<package>/release`: a tap on the details; back to the normal view (I8).
  * - `app://<package>/compass`: a tap on the 12; opens the compass (RULES A19).
+ * - `app://<package>/agenda`: a tap on the 6; opens all events (RULES A20).
  * - `app://<package>/buzz?kind=start|middle|end`: debug, plays a meeting buzz pattern now.
  * - `app://<package>/promote`: plays the lane → ring settle (spike 3).
  * - `app://<package>/time?offset=M`: debug time shift in minutes for testing.
@@ -33,6 +34,11 @@ class TapActivity : Activity() {
 
         if (uri?.path == "/select" && SpikeSchedule.needsCalendarSetup(this)) {
             startActivity(Intent(this, PermissionActivity::class.java))
+        } else if (uri?.path == "/agenda") {
+            // Settings → Tap 6 for all events on the phone; off, the 6 acts like the rest of the 6–7 hour.
+            if (PhoneSettings.agenda(this)) startActivity(Intent(this, AgendaActivity::class.java))
+            else if (SpikeSchedule.needsCalendarSetup(this)) startActivity(Intent(this, PermissionActivity::class.java))
+            else SpikeSchedule.tapHour(this, 6)
         } else if (uri?.path == "/compass") {
             // Settings → Compass on the phone; off, the 12 acts like the rest of the 12–1 hour.
             if (PhoneSettings.compass(this)) startActivity(Intent(this, CompassActivity::class.java))

@@ -56,6 +56,9 @@ object AppPrefs {
     /** Tapping the 12 on the face opens the compass (RULES A19); off until switched on in Settings. */
     fun compass(context: Context) = prefs(context).getBoolean("compass", false)
     fun setCompass(context: Context, on: Boolean) = prefs(context).edit().putBoolean("compass", on).apply()
+    /** Tapping the 6 on the face opens all events (RULES A20); on until switched off in Settings. */
+    fun agenda(context: Context) = prefs(context).getBoolean("agenda", true)
+    fun setAgenda(context: Context, on: Boolean) = prefs(context).edit().putBoolean("agenda", on).apply()
     fun clock24(context: Context) = prefs(context).getBoolean("clock24", false)
     fun showAmPm(context: Context) = prefs(context).getBoolean("showAmPm", true)
     fun setClock(context: Context, clock24: Boolean, showAmPm: Boolean) =
@@ -69,6 +72,7 @@ object AppPrefs {
             dataMap.putBoolean("clock24", clock24(context))
             dataMap.putBoolean("showAmPm", showAmPm(context))
             dataMap.putBoolean("compass", compass(context))
+            dataMap.putBoolean("agenda", agenda(context))
         }.asPutDataRequest().setUrgent()
         Wearable.getDataClient(context).putDataItem(request)
     }

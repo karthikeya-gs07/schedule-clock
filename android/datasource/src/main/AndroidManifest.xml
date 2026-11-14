@@ -33,6 +33,14 @@
             android:taskAffinity=".colourswap"
             android:theme="@android:style/Theme.DeviceDefault" />
 
+        <!-- All events, opened by tapping the 6 on the face (RULES A20). -->
+        <activity
+            android:name=".AgendaActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=".agenda"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+
         <!-- The compass, opened by tapping the 12 on the face (RULES A19). -->
         <activity
             android:name=".CompassActivity"
