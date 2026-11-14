@@ -119,7 +119,8 @@ private class CompassView(context: Context, private val theme: Theme) : View(con
             if (major) {
                 val rl = r - 60f * s   // well inside the longest spokes, so wide numbers (240, 210…) stay clear
                 text.textSize = 21f * s; text.color = if (d == 0) theme.accent else grey
-                canvas.drawText("$d", cx + rl * sin(a).toFloat(), cy - rl * cos(a).toFloat() + 7.5f * s, text)
+                val label = when (d) { 0 -> "N"; 90 -> "E"; 180 -> "S"; 270 -> "W"; else -> "$d" }   // the four directions by letter
+                canvas.drawText(label, cx + rl * sin(a).toFloat(), cy - rl * cos(a).toFloat() + 7.5f * s, text)
             }
         }
         // A faint inner ring, with room between it and the degree numbers.
