@@ -14,8 +14,8 @@ import java.time.LocalTime
 import kotlin.math.min
 
 /**
- * The meeting countdown (RULES A22), opened by tapping the 9 on the face (`app://<package>/countdown`) when Settings →
- * Tap 9 for meeting countdown is on. In a meeting: "Ends in" and the time left, with an accent ring round the edge
+ * The meeting countdown (RULES A22), opened by tapping the 3 on the face (`app://<package>/countdown`) when Settings →
+ * Tap 3 for meeting countdown is on. In a meeting: "Ends in" and the time left, with an accent ring round the edge
  * that empties as it runs out. Between meetings: "Starts in" and the time to the next one (today or tomorrow), the
  * ring filling over the last hour before it. The meeting's title (or "Private") and its time sit underneath.
  * Ticks every second; closes when left.

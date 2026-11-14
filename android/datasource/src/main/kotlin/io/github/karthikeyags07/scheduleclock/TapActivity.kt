@@ -12,8 +12,8 @@ import kotlinx.coroutines.launch
  * - `app://<package>/release`: a tap on the details; back to the normal view (I8).
  * - `app://<package>/compass`: a tap on the 12; opens the compass (RULES A19).
  * - `app://<package>/agenda`: a tap on the 6; opens all events (RULES A20).
- * - `app://<package>/flashlight`: a tap on the 3; turns the screen into a flashlight (RULES A21).
- * - `app://<package>/countdown`: a tap on the 9; the meeting countdown (RULES A22).
+ * - `app://<package>/flashlight`: a tap on the 9; turns the screen into a flashlight (RULES A21).
+ * - `app://<package>/countdown`: a tap on the 3; the meeting countdown (RULES A22).
  * - `app://<package>/buzz?kind=start|middle|end`: debug, plays a meeting buzz pattern now.
  * - `app://<package>/promote`: plays the lane → ring settle (spike 3).
  * - `app://<package>/time?offset=M`: debug time shift in minutes for testing.
@@ -44,15 +44,15 @@ class TapActivity : Activity() {
         if (uri?.path == "/select" && SpikeSchedule.needsCalendarSetup(this)) {
             startActivity(Intent(this, PermissionActivity::class.java))
         } else if (uri?.path == "/countdown") {
-            // Settings → Tap 9 for meeting countdown on the phone; off, the 9 acts like the rest of the 9–10 hour.
+            // Settings → Tap 3 for meeting countdown on the phone; off, the 3 acts like the rest of the 3–4 hour.
             if (PhoneSettings.countdown(this)) openFresh(CountdownActivity::class.java)
             else if (SpikeSchedule.needsCalendarSetup(this)) startActivity(Intent(this, PermissionActivity::class.java))
-            else SpikeSchedule.tapHour(this, 9)
+            else SpikeSchedule.tapHour(this, 3)
         } else if (uri?.path == "/flashlight") {
-            // Settings → Tap 3 for flashlight on the phone; off, the 3 acts like the rest of the 3–4 hour.
+            // Settings → Tap 9 for flashlight on the phone; off, the 9 acts like the rest of the 9–10 hour.
             if (PhoneSettings.flashlight(this)) openFresh(FlashlightActivity::class.java)
             else if (SpikeSchedule.needsCalendarSetup(this)) startActivity(Intent(this, PermissionActivity::class.java))
-            else SpikeSchedule.tapHour(this, 3)
+            else SpikeSchedule.tapHour(this, 9)
         } else if (uri?.path == "/agenda") {
             // Settings → Tap 6 for all events on the phone; off, the 6 acts like the rest of the 6–7 hour.
             if (PhoneSettings.agenda(this)) openFresh(AgendaActivity::class.java)

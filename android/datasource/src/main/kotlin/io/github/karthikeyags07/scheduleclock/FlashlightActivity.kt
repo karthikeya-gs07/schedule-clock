@@ -7,8 +7,8 @@ import android.view.View
 import android.view.WindowManager
 
 /**
- * The flashlight (RULES A21), opened by tapping the 3 on the face (`app://<package>/flashlight`) when Settings →
- * Tap 3 for flashlight is on: the whole screen white at full brightness, kept on while it's open. A tap anywhere,
+ * The flashlight (RULES A21), opened by tapping the 9 on the face (`app://<package>/flashlight`) when Settings →
+ * Tap 9 for flashlight is on: the whole screen white at full brightness, kept on while it's open. A tap anywhere,
  * or back, turns it off and returns to the face; the watch's own brightness comes back as it was.
  */
 class FlashlightActivity : Activity() {
