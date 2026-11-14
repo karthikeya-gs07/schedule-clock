@@ -120,7 +120,10 @@ private class CompassView(context: Context, private val theme: Theme) : View(con
                 val rl = r - 60f * s   // well inside the longest spokes, so wide numbers (240, 210…) stay clear
                 text.textSize = 21f * s; text.color = if (d == 0) theme.accent else grey
                 val label = when (d) { 0 -> "N"; 90 -> "E"; 180 -> "S"; 270 -> "W"; else -> "$d" }   // the four directions by letter
-                canvas.drawText(label, cx + rl * sin(a).toFloat(), cy - rl * cos(a).toFloat() + 7.5f * s, text)
+                val letter = d % 90 == 0
+                if (letter) { text.textSize = 30f * s; text.isFakeBoldText = true }   // Anta has one weight: bold is drawn heavier
+                canvas.drawText(label, cx + rl * sin(a).toFloat(), cy - rl * cos(a).toFloat() + (if (letter) 10.5f else 7.5f) * s, text)
+                text.isFakeBoldText = false
             }
         }
         // A faint inner ring, with room between it and the degree numbers.
