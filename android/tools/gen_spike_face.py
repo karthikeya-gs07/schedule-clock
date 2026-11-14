@@ -89,6 +89,7 @@ EMPTY = f"(floor({F} / 32) % 2)"   # C3: no meetings, the clock takes the center
 H24 = f"(floor({F} / 64) % 2)"     # T6: 24-hour clock (phone app setting)
 NOAP = f"(floor({F} / 128) % 2)"   # T6: 12-hour clock without AM/PM
 HIDEAOD = f"(floor({F} / 256) % 2)"   # A2c: hide the meeting's details in always-on (phone app setting)
+EMPTYX = f"clamp({EMPTY} + {HIDEAOD}, 0, 1)"   # A2c: always-on lays the clock out as an empty day when details are hidden
 AMB = '<Variant mode="AMBIENT" target="alpha" value="0"/>'   # hidden in always-on (A1, A2)
 EXTRA = f"(30 * {ARROW} + 25 * {LOCK})"
 ICON_X = f"(225 - ({W} + {EXTRA}) / 2)"
@@ -391,74 +392,152 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
       {provider("StatusDataSourceService", "RANGED_VALUE")}
       <BoundingOval x="0" y="0" width="450" height="450"/>
       <Complication type="RANGED_VALUE">
-        <!-- Day + date (C1, T1): 24 px, muted; shrinks to 90 % in place when selected; down 55 px when empty (C3) -->
-        <Group name="date" x="0" y="98" width="450" height="30" pivotX="0.5" pivotY="0.5">
-          <Transform target="y" value="98 + 55 * {EMPTY}">{SELECT_ANIM}</Transform>
-          <Transform target="scaleX" value="1 - 0.1 * {S}">{SELECT_ANIM}</Transform>
-          <Transform target="scaleY" value="1 - 0.1 * {S}">{SELECT_ANIM}</Transform>
-          <PartText x="0" y="0" width="450" height="30">
-            <Text align="CENTER">
-              <Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="{D.muted}" letterSpacing="0.08">
-                <Upper><Template><![CDATA[%s · %s]]><Parameter expression="icuText(&quot;EEE&quot;)"/><Parameter expression="icuText(&quot;MMM d&quot;)"/></Template></Upper>
-              </Font>
-            </Text>
-          </PartText>
-        </Group>
-        <!-- Clock (T5): Anta 88 px; selected: 55 %, up 10 px; empty (C3): 115 %, down 60 px to the center -->
-        <Group name="clock" x="0" y="119" width="450" height="110" pivotX="0.5" pivotY="0.5">
-          <Transform target="y" value="119 - 10 * {S} + 60 * {EMPTY}">{SELECT_ANIM}</Transform>
-          <Transform target="scaleX" value="1 - 0.45 * {S} + 0.15 * {EMPTY}">{SELECT_ANIM}</Transform>
-          <Transform target="scaleY" value="1 - 0.45 * {S} + 0.15 * {EMPTY}">{SELECT_ANIM}</Transform>
-          <!-- AM/PM (C11): WFF can't measure text, so time + AM/PM are centered as a unit with fixed widths. The time is
-               right-aligned to a seam; AM/PM starts 8 px after it. A two-digit hour (10-12) is ~32 px wider, so both
-               move 16 px right (half the extra width). Widths measured from the prototype's Anta render: 1-digit
-               hour ~185 px, 2-digit ~217, AM/PM ~38. Re-check on the emulator.
-               T6: the phone app picks 12-hour with AM/PM (this pair), 12-hour without it, or 24-hour (both centered). -->
-          <Group name="clock_time" x="{SEAM - 450}" y="0" width="450" height="110">
-            <Transform target="x" value="{SEAM - 450} + 16 * floor([HOUR_1_12] / 10)"/>
-            <Transform target="alpha" value="255 * (1 - {H24}) * (1 - {NOAP})"/>
-            <DigitalClock x="0" y="0" width="450" height="110">
-              <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="12" align="END">
-                <Font family="{FONT}" size="88" color="{D.text}"/>
-              </TimeText>
-            </DigitalClock>
-          </Group>
-          <Group name="clock_ampm" x="{SEAM + 8}" y="62" width="60" height="30">
-            <Transform target="x" value="{SEAM + 8} + 16 * floor([HOUR_1_12] / 10)"/>
-            <Transform target="alpha" value="255 * (1 - {H24}) * (1 - {NOAP})"/>
-            <PartText x="0" y="0" width="60" height="30">
-              <Text align="START">
-                <Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="{D.muted}">
-                  <Upper><Template><![CDATA[%s]]><Parameter expression="icuText(&quot;a&quot;)"/></Template></Upper>
+        <!-- Date, clock and divider awake; hidden in always-on, where the copy below takes over (A2c) -->
+        <Group name="head_live" x="0" y="0" width="450" height="450">
+          {AMB}
+          <!-- Day + date (C1, T1): 24 px, muted; shrinks to 90 % in place when selected; down 55 px when empty (C3) -->
+          <Group name="date" x="0" y="98" width="450" height="30" pivotX="0.5" pivotY="0.5">
+            <Transform target="y" value="98 + 55 * {EMPTY}">{SELECT_ANIM}</Transform>
+            <Transform target="scaleX" value="1 - 0.1 * {S}">{SELECT_ANIM}</Transform>
+            <Transform target="scaleY" value="1 - 0.1 * {S}">{SELECT_ANIM}</Transform>
+            <PartText x="0" y="0" width="450" height="30">
+              <Text align="CENTER">
+                <Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="{D.muted}" letterSpacing="0.08">
+                  <Upper><Template><![CDATA[%s · %s]]><Parameter expression="icuText(&quot;EEE&quot;)"/><Parameter expression="icuText(&quot;MMM d&quot;)"/></Template></Upper>
                 </Font>
               </Text>
             </PartText>
           </Group>
-          <Group name="clock_12_plain" x="0" y="0" width="450" height="110" alpha="0">
-            <Transform target="alpha" value="255 * (1 - {H24}) * {NOAP}"/>
-            <DigitalClock x="0" y="0" width="450" height="110">
-              <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="12" align="CENTER">
-                <Font family="{FONT}" size="88" color="{D.text}"/>
-              </TimeText>
-            </DigitalClock>
+          <!-- Clock (T5): Anta 88 px; selected: 55 %, up 10 px; empty (C3): 115 %, down 60 px to the center -->
+          <Group name="clock" x="0" y="119" width="450" height="110" pivotX="0.5" pivotY="0.5">
+            <Transform target="y" value="119 - 10 * {S} + 60 * {EMPTY}">{SELECT_ANIM}</Transform>
+            <Transform target="scaleX" value="1 - 0.45 * {S} + 0.15 * {EMPTY}">{SELECT_ANIM}</Transform>
+            <Transform target="scaleY" value="1 - 0.45 * {S} + 0.15 * {EMPTY}">{SELECT_ANIM}</Transform>
+            <!-- AM/PM (C11): WFF can't measure text, so time + AM/PM are centered as a unit with fixed widths. The time is
+                 right-aligned to a seam; AM/PM starts 8 px after it. A two-digit hour (10-12) is ~32 px wider, so both
+                 move 16 px right (half the extra width). Widths measured from the prototype's Anta render: 1-digit
+                 hour ~185 px, 2-digit ~217, AM/PM ~38. Re-check on the emulator.
+                 T6: the phone app picks 12-hour with AM/PM (this pair), 12-hour without it, or 24-hour (both centered). -->
+            <Group name="clock_time" x="{SEAM - 450}" y="0" width="450" height="110">
+              <Transform target="x" value="{SEAM - 450} + 16 * floor([HOUR_1_12] / 10)"/>
+              <Transform target="alpha" value="255 * (1 - {H24}) * (1 - {NOAP})"/>
+              <DigitalClock x="0" y="0" width="450" height="110">
+                <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="12" align="END">
+                  <Font family="{FONT}" size="88" color="{D.text}"/>
+                </TimeText>
+              </DigitalClock>
+            </Group>
+            <Group name="clock_ampm" x="{SEAM + 8}" y="62" width="60" height="30">
+              <Transform target="x" value="{SEAM + 8} + 16 * floor([HOUR_1_12] / 10)"/>
+              <Transform target="alpha" value="255 * (1 - {H24}) * (1 - {NOAP})"/>
+              <PartText x="0" y="0" width="60" height="30">
+                <Text align="START">
+                  <Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="{D.muted}">
+                    <Upper><Template><![CDATA[%s]]><Parameter expression="icuText(&quot;a&quot;)"/></Template></Upper>
+                  </Font>
+                </Text>
+              </PartText>
+            </Group>
+            <Group name="clock_12_plain" x="0" y="0" width="450" height="110" alpha="0">
+              <Transform target="alpha" value="255 * (1 - {H24}) * {NOAP}"/>
+              <DigitalClock x="0" y="0" width="450" height="110">
+                <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="12" align="CENTER">
+                  <Font family="{FONT}" size="88" color="{D.text}"/>
+                </TimeText>
+              </DigitalClock>
+            </Group>
+            <Group name="clock_24" x="0" y="0" width="450" height="110" alpha="0">
+              <Transform target="alpha" value="255 * {H24}"/>
+              <DigitalClock x="0" y="0" width="450" height="110">
+                <TimeText x="0" y="0" width="450" height="110" format="hh:mm" hourFormat="24" align="CENTER">
+                  <Font family="{FONT}" size="88" color="{D.text}"/>
+                </TimeText>
+              </DigitalClock>
+            </Group>
           </Group>
-          <Group name="clock_24" x="0" y="0" width="450" height="110" alpha="0">
-            <Transform target="alpha" value="255 * {H24}"/>
-            <DigitalClock x="0" y="0" width="450" height="110">
-              <TimeText x="0" y="0" width="450" height="110" format="hh:mm" hourFormat="24" align="CENTER">
-                <Font family="{FONT}" size="88" color="{D.text}"/>
-              </TimeText>
-            </DigitalClock>
+          <!-- Divider (T2): selected: up 32 px, 60 % wide; fades out when empty (C3) -->
+          <Group name="divider" x="{CX - 70}" y="236" width="140" height="4" pivotX="0.5" pivotY="0.5">
+            <Transform target="alpha" value="255 * (1 - {EMPTY})">{SELECT_ANIM}</Transform>
+            <Transform target="y" value="236 - 32 * {S}">{SELECT_ANIM}</Transform>
+            <Transform target="scaleX" value="1 - 0.4 * {S}">{SELECT_ANIM}</Transform>
+            <PartDraw x="0" y="0" width="140" height="4">
+              <Line startX="1" startY="2" endX="139" endY="2"><Stroke color="{D.divider}" thickness="2" cap="ROUND"/></Line>
+            </PartDraw>
           </Group>
         </Group>
-        <!-- Divider (T2): selected: up 32 px, 60 % wide; fades out when empty (C3) -->
-        <Group name="divider" x="{CX - 70}" y="236" width="140" height="4" pivotX="0.5" pivotY="0.5">
-          <Transform target="alpha" value="255 * (1 - {EMPTY})">{SELECT_ANIM}</Transform>
-          <Transform target="y" value="236 - 32 * {S}">{SELECT_ANIM}</Transform>
-          <Transform target="scaleX" value="1 - 0.4 * {S}">{SELECT_ANIM}</Transform>
-          <PartDraw x="0" y="0" width="140" height="4">
-            <Line startX="1" startY="2" endX="139" endY="2"><Stroke color="{D.divider}" thickness="2" cap="ROUND"/></Line>
-          </PartDraw>
+        <!-- Always-on copy: centred like an empty day (C3) when there are no meetings or the details are hidden
+             (A2c); still, no selection motion. One position change as the watch dims, nothing running after. -->
+        <Group name="head_aod" x="0" y="0" width="450" height="450" alpha="0">
+          <Variant mode="AMBIENT" target="alpha" value="255"/>
+          <!-- Day + date (C1, T1): 24 px, muted; shrinks to 90 % in place when selected; down 55 px when empty (C3) -->
+          <Group name="date_aod" x="0" y="98" width="450" height="30" pivotX="0.5" pivotY="0.5">
+            <Transform target="y" value="98 + 55 * {EMPTYX}"></Transform>
+            <Transform target="scaleX" value="1 - 0.1 * 0"></Transform>
+            <Transform target="scaleY" value="1 - 0.1 * 0"></Transform>
+            <PartText x="0" y="0" width="450" height="30">
+              <Text align="CENTER">
+                <Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="{D.muted}" letterSpacing="0.08">
+                  <Upper><Template><![CDATA[%s · %s]]><Parameter expression="icuText(&quot;EEE&quot;)"/><Parameter expression="icuText(&quot;MMM d&quot;)"/></Template></Upper>
+                </Font>
+              </Text>
+            </PartText>
+          </Group>
+          <!-- Clock (T5): Anta 88 px; selected: 55 %, up 10 px; empty (C3): 115 %, down 60 px to the center -->
+          <Group name="clock_aod" x="0" y="119" width="450" height="110" pivotX="0.5" pivotY="0.5">
+            <Transform target="y" value="119 - 10 * 0 + 60 * {EMPTYX}"></Transform>
+            <Transform target="scaleX" value="1 - 0.45 * 0 + 0.15 * {EMPTYX}"></Transform>
+            <Transform target="scaleY" value="1 - 0.45 * 0 + 0.15 * {EMPTYX}"></Transform>
+            <!-- AM/PM (C11): WFF can't measure text, so time + AM/PM are centered as a unit with fixed widths. The time is
+                 right-aligned to a seam; AM/PM starts 8 px after it. A two-digit hour (10-12) is ~32 px wider, so both
+                 move 16 px right (half the extra width). Widths measured from the prototype's Anta render: 1-digit
+                 hour ~185 px, 2-digit ~217, AM/PM ~38. Re-check on the emulator.
+                 T6: the phone app picks 12-hour with AM/PM (this pair), 12-hour without it, or 24-hour (both centered). -->
+            <Group name="clock_time_aod" x="{SEAM - 450}" y="0" width="450" height="110">
+              <Transform target="x" value="{SEAM - 450} + 16 * floor([HOUR_1_12] / 10)"/>
+              <Transform target="alpha" value="255 * (1 - {H24}) * (1 - {NOAP})"/>
+              <DigitalClock x="0" y="0" width="450" height="110">
+                <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="12" align="END">
+                  <Font family="{FONT}" size="88" color="{D.text}"/>
+                </TimeText>
+              </DigitalClock>
+            </Group>
+            <Group name="clock_ampm_aod" x="{SEAM + 8}" y="62" width="60" height="30">
+              <Transform target="x" value="{SEAM + 8} + 16 * floor([HOUR_1_12] / 10)"/>
+              <Transform target="alpha" value="255 * (1 - {H24}) * (1 - {NOAP})"/>
+              <PartText x="0" y="0" width="60" height="30">
+                <Text align="START">
+                  <Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="{D.muted}">
+                    <Upper><Template><![CDATA[%s]]><Parameter expression="icuText(&quot;a&quot;)"/></Template></Upper>
+                  </Font>
+                </Text>
+              </PartText>
+            </Group>
+            <Group name="clock_12_plain_aod" x="0" y="0" width="450" height="110" alpha="0">
+              <Transform target="alpha" value="255 * (1 - {H24}) * {NOAP}"/>
+              <DigitalClock x="0" y="0" width="450" height="110">
+                <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="12" align="CENTER">
+                  <Font family="{FONT}" size="88" color="{D.text}"/>
+                </TimeText>
+              </DigitalClock>
+            </Group>
+            <Group name="clock_24_aod" x="0" y="0" width="450" height="110" alpha="0">
+              <Transform target="alpha" value="255 * {H24}"/>
+              <DigitalClock x="0" y="0" width="450" height="110">
+                <TimeText x="0" y="0" width="450" height="110" format="hh:mm" hourFormat="24" align="CENTER">
+                  <Font family="{FONT}" size="88" color="{D.text}"/>
+                </TimeText>
+              </DigitalClock>
+            </Group>
+          </Group>
+          <!-- Divider (T2): selected: up 32 px, 60 % wide; fades out when empty (C3) -->
+          <Group name="divider_aod" x="{CX - 70}" y="236" width="140" height="4" pivotX="0.5" pivotY="0.5">
+            <Transform target="alpha" value="255 * (1 - {EMPTYX})"></Transform>
+            <Transform target="y" value="236 - 32 * 0"></Transform>
+            <Transform target="scaleX" value="1 - 0.4 * 0"></Transform>
+            <PartDraw x="0" y="0" width="140" height="4">
+              <Line startX="1" startY="2" endX="139" endY="2"><Stroke color="{D.divider}" thickness="2" cap="ROUND"/></Line>
+            </PartDraw>
+          </Group>
         </Group>
         <!-- Title with the look-ahead arrow (C12) and private lock (C13) before it, then the time range (C4, C8).
              On a double booking the range moves down a row so the clash line sits under the title (C7). -->
