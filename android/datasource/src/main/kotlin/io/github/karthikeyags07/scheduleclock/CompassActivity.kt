@@ -20,9 +20,9 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 
 /**
- * The compass (RULES A19), opened by tapping the 12 on the face (`app://<package>/compass`). It looks like the face:
- * the colourway's dial, track and ticks, with an arrow on the ring pointing north. When north lines up with 12, the
- * thick 12 o'clock line lights up in the colourway's accent. The sensor runs only while this screen is open.
+ * The compass (RULES A19), opened by tapping the 12 on the face (`app://<package>/compass`), in the colourway: a
+ * degree dial that turns with the watch, an accent arrow fixed at the top, and the heading in the middle. The dial's
+ * 0° spoke is in the accent too: when it meets the arrow, the watch's 12 faces north. The sensor runs only while open.
  */
 class CompassActivity : Activity(), SensorEventListener {
     private lateinit var dial: CompassView
@@ -86,44 +86,36 @@ private class CompassView(context: Context, private val theme: Theme) : View(con
         val s = min(width, height) / 450f            // the face's 450-unit box
         val cx = width / 2f; val cy = height / 2f; val r = 219f * s
         canvas.drawColor(theme.background)
-        // Track
         p.style = Paint.Style.STROKE; p.strokeWidth = 12f * s; p.color = track
         canvas.drawCircle(cx, cy, r, p)
-        // North, in the watch's frame: the arrow sits where north is on the dial.
-        val north = if (shown.isNaN()) 0f else (360f - shown) % 360f
-        val aligned = !shown.isNaN() && (north < 4f || north > 356f)
-        // Ticks every 15 minutes, as on the face; the 12 o'clock one thicker, lit when north lines up with it.
-        for (q in 0 until 48) {
-            val hour = q % 4 == 0
-            val len = if (hour) 10f else if (q % 2 == 0) 6f else 3f
-            val a = Math.toRadians(q * 7.5)
-            val r0 = r - 14f * s; val r1 = r - (14f + len) * s
-            p.strokeWidth = (if (q == 0) 4.5f else if (hour) 2.5f else 1.5f) * s
-            p.color = if (q == 0 && aligned) theme.accent else if (hour) grey else track
+        val heading = if (shown.isNaN()) 0f else shown
+        // The dial turns so that north (its 0° spoke) sits where north is; the arrow stays at the top.
+        // Spokes every 2°, longer every 10°, longest every 30° with the degree beside it; 0° in the accent.
+        for (d in 0 until 360 step 2) {
+            val a = Math.toRadians((d - heading).toDouble())
+            val major = d % 30 == 0; val mid = d % 10 == 0
+            val len = if (major) 16f else if (mid) 10f else 5f
+            val r0 = r - 12f * s; val r1 = r - (12f + len) * s
+            p.strokeWidth = (if (d == 0) 5f else if (major) 2.5f else if (mid) 1.8f else 1.1f) * s
+            p.color = if (d == 0) theme.accent else if (major) grey else if (mid) blend(grey, theme.background, .35f) else track
             canvas.drawLine(cx + r0 * sin(a).toFloat(), cy - r0 * cos(a).toFloat(), cx + r1 * sin(a).toFloat(), cy - r1 * cos(a).toFloat(), p)
+            if (major) {
+                val rl = r - 48f * s
+                text.textSize = 20f * s; text.color = if (d == 0) theme.accent else grey
+                canvas.drawText("$d", cx + rl * sin(a).toFloat(), cy - rl * cos(a).toFloat() + 7f * s, text)
+            }
         }
-        // The north arrow on the ring: a filled triangle pointing outwards, in the accent.
-        if (!shown.isNaN()) {
-            canvas.save(); canvas.rotate(north, cx, cy)
-            p.style = Paint.Style.FILL; p.color = theme.accent
-            val tip = cy - r - 2f * s; val base = cy - r + 26f * s
-            canvas.drawPath(Path().apply { moveTo(cx, tip); lineTo(cx - 11f * s, base); lineTo(cx + 11f * s, base); close() }, p)
-            canvas.restore()
+        // The arrow, fixed at the top on the ring, pointing in; north is where the 0° spoke meets it.
+        p.style = Paint.Style.FILL; p.color = theme.accent
+        val tip = cy - r + 30f * s; val base = cy - r - 2f * s
+        canvas.drawPath(Path().apply { moveTo(cx, tip); lineTo(cx - 12f * s, base); lineTo(cx + 12f * s, base); close() }, p)
+        // Middle: the heading, in the arrow's colour.
+        text.color = theme.accent; text.textSize = 80f * s
+        canvas.drawText(if (shown.isNaN()) "—" else "${shown.roundToInt() % 360}°", cx, cy + 28f * s, text)
+        if (noSensor || needsCalibration) {
+            text.color = grey; text.textSize = 22f * s
+            canvas.drawText(if (noSensor) "No compass on this watch" else "Move your watch in a figure 8", cx, cy + 80f * s, text)
         }
-        // Middle: the heading in degrees and its direction.
-        text.color = Color.WHITE; text.textSize = 76f * s
-        val deg = if (shown.isNaN()) "—" else "${shown.roundToInt() % 360}°"
-        canvas.drawText(deg, cx, cy + 20f * s, text)
-        text.color = if (aligned) theme.accent else grey; text.textSize = 28f * s
-        canvas.drawText(if (shown.isNaN()) "" else cardinal(shown), cx, cy + 66f * s, text)
-        text.color = grey; text.textSize = 22f * s
-        val hint = when {
-            noSensor -> "No compass on this watch"
-            needsCalibration -> "Move your watch in a figure 8"
-            aligned -> "12 is facing north"
-            else -> "Turn until the arrow meets 12"
-        }
-        canvas.drawText(hint, cx, cy - 92f * s, text)
     }
 
     private fun cardinal(h: Float) = listOf("N", "NE", "E", "SE", "S", "SW", "W", "NW")[(((h + 22.5f) % 360f) / 45f).toInt() % 8]

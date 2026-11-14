@@ -779,7 +779,7 @@ fun AboutScreen(colourway: String, onBack: () -> Unit, onRunSetup: () -> Unit) {
                 "Two linked rings, in coral, with the other meeting's name: you're double-booked. \"+1\" means more than one other meeting.")
             FaceIcon({ c -> todGlyphs(c) }, Color(0xFFA9B8E0), "Later today or tomorrow",
                 "Sunrise, sun, sunset or moon before the time: a meeting on the inner line, by when it starts (morning, afternoon, evening or night). For a meeting tomorrow, the place line also starts with \"Tomorrow\".", tall = true)
-            AboutItem("Compass", "Tap the 12 on the face to open the compass. An arrow on the ring points north; turn until it meets 12, and the thick line at 12 lights up.")
+            AboutItem("Compass", "Tap the 12 on the face to open the compass. The degree dial turns as you do; when its coloured 0° line meets the arrow at the top, you're facing north.")
             AboutItem("All your calendars, one ring", "Work, personal, family: every calendar you turn on shows together on the same ring, in the same colours. The watch doesn't tell them apart.")
             AboutItem("All-day events", "Not shown on the watch, and they never count as a double booking: your meetings that day look as usual.")
 
