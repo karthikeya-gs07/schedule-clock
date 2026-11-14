@@ -287,7 +287,15 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                 val glow by animateFloatAsState(if (on) 1f else 0f, tween(300), label = "shortcutGlow")
                 val tint by animateColorAsState(if (on) accent.copy(alpha = .62f) else Palette.muted.copy(alpha = .55f), tween(300), label = "shortcutTint")   // subtle
                 Box(Modifier.offset(x = cx + at.first - btn / 2, y = cy + at.second - btn / 2).size(btn)
-                    .graphicsLayer { alpha = pickAlpha }
+                    // Glides in from its own side (compass from the top, countdown from the right, all events from the
+                    // bottom, flashlight from the left) as it fades in with the page, and back out the same way.
+                    .graphicsLayer {
+                        val e = pickAlpha * pickAlpha * (3f - 2f * pickAlpha)   // smoothstep: soft at both ends
+                        alpha = e
+                        val dist = (1f - e) * 26.dp.toPx()
+                        translationX = kotlin.math.sign(at.first.value) * dist
+                        translationY = kotlin.math.sign(at.second.value) * dist
+                    }
                     .clickable(enabled = watchMode, interactionSource = null,
                         indication = androidx.compose.material3.ripple(bounded = false, radius = 24.dp), role = Role.Switch) { set(!on) }
                     .semantics { contentDescription = "$label: ${if (on) "on" else "off"}" }
