@@ -482,19 +482,23 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
           <!-- Ambient title (A2a): the shortened title, first characters and an ellipsis; nothing moves -->
           <Group name="title_ambient" x="0" y="0" width="450" height="60" alpha="0">
             <Variant mode="AMBIENT" target="alpha" value="255"/>
-            <Transform target="alpha" value="255 * (1 - {HIDEAOD})"/>   <!-- A2c: hidden with "Hide details in always-on" -->
-            <PartText x="0" y="5" width="450" height="36">
-              <Transform target="x" value="{EXTRA} / 2"/>
-              <Transform target="alpha" value="255 * (1 - {SMALL})"/>
-              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="30" weight="MEDIUM" color="{D.text}">
-                <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
-            </PartText>
-            <PartText x="0" y="5" width="450" height="36">
-              <Transform target="x" value="{EXTRA} / 2"/>
-              <Transform target="alpha" value="255 * {SMALL}"/>
-              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="{D.text}">
-                <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
-            </PartText>
+            <!-- A2c: hidden with "Hide details in always-on" (an inner group: the Variant above sets this group's alpha) -->
+            <Group name="title_ambient_shown" x="0" y="0" width="450" height="60">
+              <Transform target="alpha" value="255 * (1 - {HIDEAOD})"/>
+  
+              <PartText x="0" y="5" width="450" height="36">
+                <Transform target="x" value="{EXTRA} / 2"/>
+                <Transform target="alpha" value="255 * (1 - {SMALL})"/>
+                <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="30" weight="MEDIUM" color="{D.text}">
+                  <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
+              </PartText>
+              <PartText x="0" y="5" width="450" height="36">
+                <Transform target="x" value="{EXTRA} / 2"/>
+                <Transform target="alpha" value="255 * {SMALL}"/>
+                <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="{D.text}">
+                  <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
+              </PartText>
+            </Group>
           </Group>
           <Group name="icons_live" x="0" y="0" width="450" height="60">
             {AMB}
@@ -515,20 +519,23 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
           <!-- Always-on copies of the arrow and lock; hidden with "Hide details in always-on" (A2c) -->
           <Group name="icons_ambient" x="0" y="0" width="450" height="60" alpha="0">
             <Variant mode="AMBIENT" target="alpha" value="255"/>
-            <Transform target="alpha" value="255 * (1 - {HIDEAOD})"/>
-            <PartDraw name="arrow" x="0" y="13" width="20" height="20" alpha="0">
-              <Transform target="x" value="{ICON_X}"/>
-              <Transform target="alpha" value="255 * {ARROW}"/>
-              <Line startX="1.5" startY="10" endX="18.5" endY="10"><Stroke color="{EVENT}" thickness="3" cap="ROUND"/></Line>
-              <Line startX="12" startY="3.5" endX="18.5" endY="10"><Stroke color="{EVENT}" thickness="3" cap="ROUND"/></Line>
-              <Line startX="12" startY="16.5" endX="18.5" endY="10"><Stroke color="{EVENT}" thickness="3" cap="ROUND"/></Line>
-            </PartDraw>
-            <PartDraw name="lock" x="0" y="12" width="16" height="22" alpha="0">
-              <Transform target="x" value="{ICON_X} + 30 * {ARROW}"/>
-              <Transform target="alpha" value="255 * {LOCK}"/>
-              <Arc centerX="8" centerY="9" width="9" height="9" startAngle="-90" endAngle="90"><Stroke color="{D.muted}" thickness="2.5" cap="BUTT"/></Arc>
-              <RoundRectangle x="0" y="9" width="16" height="12" cornerRadiusX="2.5" cornerRadiusY="2.5"><Fill color="{D.muted}"/></RoundRectangle>
-            </PartDraw>
+            <Group name="icons_ambient_shown" x="0" y="0" width="450" height="60">
+              <Transform target="alpha" value="255 * (1 - {HIDEAOD})"/>
+  
+              <PartDraw name="arrow" x="0" y="13" width="20" height="20" alpha="0">
+                <Transform target="x" value="{ICON_X}"/>
+                <Transform target="alpha" value="255 * {ARROW}"/>
+                <Line startX="1.5" startY="10" endX="18.5" endY="10"><Stroke color="{EVENT}" thickness="3" cap="ROUND"/></Line>
+                <Line startX="12" startY="3.5" endX="18.5" endY="10"><Stroke color="{EVENT}" thickness="3" cap="ROUND"/></Line>
+                <Line startX="12" startY="16.5" endX="18.5" endY="10"><Stroke color="{EVENT}" thickness="3" cap="ROUND"/></Line>
+              </PartDraw>
+              <PartDraw name="lock" x="0" y="12" width="16" height="22" alpha="0">
+                <Transform target="x" value="{ICON_X} + 30 * {ARROW}"/>
+                <Transform target="alpha" value="255 * {LOCK}"/>
+                <Arc centerX="8" centerY="9" width="9" height="9" startAngle="-90" endAngle="90"><Stroke color="{D.muted}" thickness="2.5" cap="BUTT"/></Arc>
+                <RoundRectangle x="0" y="9" width="16" height="12" cornerRadiusX="2.5" cornerRadiusY="2.5"><Fill color="{D.muted}"/></RoundRectangle>
+              </PartDraw>
+            </Group>
           </Group>
           <PartText x="0" y="44" width="450" height="30">
             {AMB}
@@ -538,12 +545,16 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
           </PartText>
           <!-- Always-on time range (A2b): dimmed, straight under the title (the clash line it would sit under is hidden);
                hidden with "Hide details in always-on" (A2c) -->
-          <PartText x="0" y="44" width="450" height="30" alpha="0">
+          <Group name="range_ambient" x="0" y="0" width="450" height="80" alpha="0">
             <Variant mode="AMBIENT" target="alpha" value="190"/>
-            <Transform target="alpha" value="190 * (1 - {HIDEAOD})"/>
-            <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" color="{D.text}">
-              <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TITLE]"/></Template></Font></Text>
-          </PartText>""")}
+            <Group name="range_ambient_shown" x="0" y="0" width="450" height="80">
+              <Transform target="alpha" value="255 * (1 - {HIDEAOD})"/>
+              <PartText x="0" y="44" width="450" height="30">
+                <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" color="{D.text}">
+                  <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TITLE]"/></Template></Font></Text>
+              </PartText>
+            </Group>
+          </Group>""")}
       </Complication>
     </ComplicationSlot>
 
