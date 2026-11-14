@@ -392,6 +392,7 @@ This Mac: Apple silicon (arm64), macOS 26.6, 16 GB RAM, Homebrew. **Android setu
 - **v0.70:** Phone app: the Look tab is now **Watchface**; the selected colourway card has a subtle 1 px border; more space between each preview and its name.
 - **v0.71:** Phone app tidy-up and setup fallback: Calendars and Watchface lose their subtitles and the account letter circles; the confirm step shows the real face with the watch's question below it; a new **It didn't show up** path explains how to pick the face on the watch and offers **Send it again** (RULES A1).
 - **v0.72:** Setup has a round back button beside the main button on steps 2–4 (RULES A1).
+- **v1.56:** After the watch app updates, the face is always put on again. An update swaps the pushed face back to the app's default (Amber); CalenTime skipped the re-push when the version number hadn't changed (as with test installs), leaving Amber on. The update step also logs what it finds. Checked on the Watch8 (Burnt Orange back after the update, always-on dimmed with the now dot).
 - **v1.29:** New version codes for Play (2004 and 1003 were already taken in Play Console), no code change: watch app 0.10.2 (2005), phone app 0.10.1 (1004).
 - **v1.30:** About has a **Read the privacy policy** button (Play requires a link in the app). Not in the 0.10.1 (1004) bundle; the next phone upload needs code 1005.
 - **v1.31:** New release bundles with the privacy link: phone app 0.10.2 (1005), watch app 0.10.3 (2006, no code change). Next codes: phone 1006+, watch 2007+.

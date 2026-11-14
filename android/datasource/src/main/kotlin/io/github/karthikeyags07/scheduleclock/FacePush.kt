@@ -61,12 +61,12 @@ object FacePush {
     private val busy = Mutex()
 
     /** Puts the face in [colourway] on the watch: added the first time, swapped into our slot after that. */
-    suspend fun install(context: Context, colourway: String): Status = busy.withLock {
+    suspend fun install(context: Context, colourway: String, force: Boolean = false): Status = busy.withLock {
         require(colourway in COLOURWAYS) { "unknown colourway $colourway" }
         // Already showing it (often because the other path just swapped it): answer from what we know rather
         // than asking "is it active?" so soon after a swap, which can stall past the phone's timeout.
         // An app update carries a new face, so the same colourway is put on again after one (see FaceUpdateReceiver).
-        if (prefs(context).getString("colourway", null) == colourway && prefs(context).getLong("appVersion", 0) == appVersion(context) &&
+        if (!force && prefs(context).getString("colourway", null) == colourway && prefs(context).getLong("appVersion", 0) == appVersion(context) &&
             manager(context).listWatchFaces().installedWatchFaceDetails.isNotEmpty()) return@withLock cachedStatus(context, colourway)
         val manager = manager(context)
         val slot = manager.listWatchFaces().installedWatchFaceDetails.firstOrNull()

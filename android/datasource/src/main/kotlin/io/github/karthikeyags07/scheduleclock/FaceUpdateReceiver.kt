@@ -23,7 +23,10 @@ class FaceUpdateReceiver : BroadcastReceiver() {
                 withTimeoutOrNull(20_000) {
                     val s = FacePush.status(app)
                     val colourway = s.colourway ?: PhoneSettings.colourway(app)
-                    if (s.installed && colourway != null) FacePush.install(app, colourway)
+                    Log.i(TAG, "update: face ${if (s.installed) "installed" else "not installed"}, colourway $colourway")
+                    // Always put it on again: an update (even one with the same version, as in testing) swaps the
+                    // pushed face back to the app's default (Amber).
+                    if (s.installed && colourway != null) FacePush.install(app, colourway, force = true)
                 }
             } catch (e: Exception) {
                 Log.w(TAG, "update: couldn't refresh the face", e)
