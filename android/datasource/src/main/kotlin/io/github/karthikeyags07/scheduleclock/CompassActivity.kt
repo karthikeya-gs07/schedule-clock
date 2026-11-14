@@ -100,8 +100,7 @@ private class CompassView(context: Context, private val theme: Theme) : View(con
         val s = min(width, height) / 450f            // the face's 450-unit box
         val cx = width / 2f; val cy = height / 2f; val r = 219f * s
         canvas.drawColor(theme.background)
-        p.style = Paint.Style.STROKE; p.strokeWidth = 12f * s; p.color = track
-        canvas.drawCircle(cx, cy, r, p)
+        p.style = Paint.Style.STROKE   // no track round the edge
         val heading = if (shown.isNaN()) 0f else shown
         // The dial turns so that north (its 0° spoke) sits where north is; the arrow stays at the top.
         // Spokes every 2°, longer every 10°, longest every 30° with the degree beside it; 0° in the accent.
@@ -118,14 +117,14 @@ private class CompassView(context: Context, private val theme: Theme) : View(con
             p.color = if (d == 0) theme.accent else if (off < 45f) blend(theme.accent, base, off / 45f) else base
             canvas.drawLine(cx + r0 * sin(a).toFloat(), cy - r0 * cos(a).toFloat(), cx + r1 * sin(a).toFloat(), cy - r1 * cos(a).toFloat(), p)
             if (major) {
-                val rl = r - 48f * s
+                val rl = r - 60f * s   // well inside the longest spokes, so wide numbers (240, 210…) stay clear
                 text.textSize = 21f * s; text.color = if (d == 0) theme.accent else grey
                 canvas.drawText("$d", cx + rl * sin(a).toFloat(), cy - rl * cos(a).toFloat() + 7.5f * s, text)
             }
         }
-        // A faint inner ring just inside the degree numbers.
-        p.strokeWidth = 1.5f * s; p.color = blend(theme.background, Color.WHITE, .1f)
-        canvas.drawCircle(cx, cy, r - 68f * s, p)
+        // A faint inner ring, with room between it and the degree numbers.
+        p.style = Paint.Style.STROKE; p.strokeWidth = 1.5f * s; p.color = blend(theme.background, Color.WHITE, .1f)
+        canvas.drawCircle(cx, cy, r - 100f * s, p)
         // The arrow, fixed at the top on the ring, pointing in, with slightly rounded corners.
         p.style = Paint.Style.FILL; p.color = theme.accent; p.pathEffect = android.graphics.CornerPathEffect(4f * s)
         val tip = cy - r + 30f * s; val base = cy - r - 2f * s
@@ -133,10 +132,15 @@ private class CompassView(context: Context, private val theme: Theme) : View(con
         p.pathEffect = null
         // Middle: the heading, in the arrow's colour and the face's font.
         text.color = theme.accent; text.textSize = 84f * s
-        canvas.drawText(if (shown.isNaN()) "—" else "${shown.roundToInt() % 360}°", cx, cy + 28f * s, text)
+        canvas.drawText(if (shown.isNaN()) "—" else "${shown.roundToInt() % 360}°", cx, cy + 20f * s, text)
+        // Under it, the direction: N, NE, E, SE, S, SW, W or NW.
+        if (!shown.isNaN()) {
+            text.color = Color.WHITE; text.textSize = 30f * s
+            canvas.drawText(cardinal(shown), cx, cy + 64f * s, text)
+        }
         if (noSensor || needsCalibration) {
             text.typeface = plain; text.color = grey; text.textSize = 22f * s
-            canvas.drawText(if (noSensor) "No compass on this watch" else "Move your watch in a figure 8", cx, cy + 80f * s, text)
+            canvas.drawText(if (noSensor) "No compass on this watch" else "Move your watch in a figure 8", cx, cy + 96f * s, text)
             text.typeface = anta
         }
     }
