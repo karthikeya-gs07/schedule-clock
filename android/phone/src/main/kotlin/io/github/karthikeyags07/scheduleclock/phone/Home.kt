@@ -778,7 +778,7 @@ fun AboutScreen(colourway: String, onBack: () -> Unit, onRunSetup: () -> Unit) {
             FaceIcon({ c -> overlapGlyph(c) }, Color(0xFFFF7A59), "Overlapping meeting",
                 "Two linked rings, in coral, with the other meeting's name: you're double-booked. \"+1\" means more than one other meeting.")
             FaceIcon({ c -> todGlyphs(c) }, Color(0xFFA9B8E0), "Later today or tomorrow",
-                "Sunrise, sun, sunset or moon before the time: a meeting on the inner line, by when it starts (morning, afternoon, evening or night). For a meeting tomorrow, the place line also starts with \"Tomorrow\".", wide = true)
+                "Sunrise, sun, sunset or moon before the time: a meeting on the inner line, by when it starts (morning, afternoon, evening or night). For a meeting tomorrow, the place line also starts with \"Tomorrow\".", tall = true)
             AboutItem("All your calendars, one ring", "Work, personal, family: every calendar you turn on shows together on the same ring, in the same colours. The watch doesn't tell them apart.")
             AboutItem("All-day events", "Not shown on the watch, and they never count as a double booking: your meetings that day look as usual.")
 
@@ -825,9 +825,9 @@ private fun AboutItem(title: String, text: String) = Column(Modifier.fillMaxWidt
 
 /** A face icon drawn as on the watch, its name and what it means (About → Icons on the face). */
 @Composable
-private fun FaceIcon(glyph: androidx.compose.ui.graphics.drawscope.DrawScope.(Color) -> Unit, colour: Color, title: String, text: String, wide: Boolean = false) =
+private fun FaceIcon(glyph: androidx.compose.ui.graphics.drawscope.DrawScope.(Color) -> Unit, colour: Color, title: String, text: String, tall: Boolean = false) =
     Row(Modifier.fillMaxWidth().padding(bottom = 22.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        androidx.compose.foundation.Canvas(Modifier.padding(top = 2.dp).width(if (wide) 104.dp else 28.dp).height(24.dp)) { glyph(colour) }
+        androidx.compose.foundation.Canvas(Modifier.padding(top = 2.dp).width(28.dp).height(if (tall) 112.dp else 24.dp)) { glyph(colour) }
         Column(Modifier.weight(1f)) {
             Text(title, style = AboutItemTitle)
             Text(text, style = AboutText, modifier = Modifier.padding(top = 3.dp))
@@ -836,7 +836,7 @@ private fun FaceIcon(glyph: androidx.compose.ui.graphics.drawscope.DrawScope.(Co
 
 // The face's icons, from the watch face's own shapes (prototype/index.html: dArrow, dLock, dClashIcon, TOD_ICONS),
 // drawn in a 24-unit box.
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.unit() = size.height / 24f
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.unit() = minOf(size.width, size.height) / 24f
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.svg(d: String, c: Color, dx: Float, dy: Float, w: Float, fill: Boolean = false) {
     val u = unit()
     val p = androidx.compose.ui.graphics.vector.PathParser().parsePathString(d).toPath()
@@ -863,7 +863,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.todGlyphs(c: Color)
     val sun = "M4.5 0 A4.5 4.5 0 1 1 -4.5 0 A4.5 4.5 0 1 1 4.5 0 Z " + rays(0f, 0f, 7.5f, 10.5f, listOf(0, 45, 90, 135, 180, 225, 270, 315))
     val sunset = "M-5 2 A5 5 0 0 1 5 2 M-10 2 H10 M0 5.5 V10 M-2.5 8 L0 10.5 L2.5 8 " + rays(0f, 2f, 8f, 10.5f, listOf(270, 225, 315))
     val moon = "M6 4.5 A7.5 7.5 0 1 1 -3 -7 A6 6 0 0 0 6 4.5 Z"
-    listOf(sunrise, sun, sunset, moon).forEachIndexed { i, d -> svg(d, c, 11f + i * 27f, 12f, 2f) }
+    listOf(sunrise, sun, sunset, moon).forEachIndexed { i, d -> svg(d, c, 12f, 12f + i * 28f, 2f) }   // stacked
 }
 
 /** One part of the face: a close-up on top, its name and what it means below. */
