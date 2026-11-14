@@ -67,22 +67,36 @@ class CompassActivity : Activity(), SensorEventListener {
 private class CompassView(context: Context, private val theme: Theme) : View(context) {
     var noSensor = false
     var needsCalibration = false
-    private var shown = Float.NaN   // the heading on screen, eased towards the sensor's
+    private var shown = Float.NaN   // the heading on screen
+    private var target = Float.NaN  // the sensor's heading
+    private var lastFrame = 0L
 
     fun update(heading: Float) {
-        shown = if (shown.isNaN()) heading else {
-            val d = ((heading - shown + 540f) % 360f) - 180f   // shortest way round
-            (shown + d * .18f + 360f) % 360f
-        }
-        invalidate()
+        target = heading
+        if (shown.isNaN()) shown = heading
+        postInvalidateOnAnimation()
+    }
+
+    /** Eases the dial towards the sensor's heading frame by frame (about 120 ms to settle), the shortest way round. */
+    private fun step() {
+        if (target.isNaN()) return
+        val now = System.nanoTime()
+        val dt = if (lastFrame == 0L) .016f else ((now - lastFrame) / 1e9f).coerceIn(0f, .05f)
+        lastFrame = now
+        val d = ((target - shown + 540f) % 360f) - 180f
+        shown = (shown + d * (1f - kotlin.math.exp(-dt / .12f)) + 360f) % 360f
+        if (abs(d) > .05f) postInvalidateOnAnimation() else lastFrame = 0L
     }
 
     private val grey = Color.parseColor("#8e8e93")
     private val track = blend(theme.background, Color.WHITE, .12f)
     private val p = Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
-    private val text = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER; typeface = Typeface.create("sans-serif", Typeface.NORMAL) }
+    private val anta = context.resources.getFont(R.font.anta_regular)   // the face's clock and number font
+    private val text = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER; typeface = anta }
+    private val plain = Typeface.create("sans-serif", Typeface.NORMAL)
 
     override fun onDraw(canvas: Canvas) {
+        step()
         val s = min(width, height) / 450f            // the face's 450-unit box
         val cx = width / 2f; val cy = height / 2f; val r = 219f * s
         canvas.drawColor(theme.background)
@@ -91,30 +105,39 @@ private class CompassView(context: Context, private val theme: Theme) : View(con
         val heading = if (shown.isNaN()) 0f else shown
         // The dial turns so that north (its 0° spoke) sits where north is; the arrow stays at the top.
         // Spokes every 2°, longer every 10°, longest every 30° with the degree beside it; 0° in the accent.
+        // Near the arrow the spokes take its colour, fading to white over 45° either side.
         for (d in 0 until 360 step 2) {
-            val a = Math.toRadians((d - heading).toDouble())
+            val at = ((d - heading) % 360f + 360f) % 360f            // where the spoke is now, 0 = top
+            val off = min(at, 360f - at)                              // degrees from the arrow
+            val a = Math.toRadians(at.toDouble())
             val major = d % 30 == 0; val mid = d % 10 == 0
             val len = if (major) 16f else if (mid) 10f else 5f
             val r0 = r - 12f * s; val r1 = r - (12f + len) * s
-            p.strokeWidth = (if (d == 0) 5f else if (major) 2.5f else if (mid) 1.8f else 1.1f) * s
-            p.color = if (d == 0) theme.accent else if (major) grey else if (mid) blend(grey, theme.background, .35f) else track
+            p.strokeWidth = (if (d == 0) 5f else if (major) 2.5f else if (mid) 1.8f else 1.2f) * s
+            val base = if (major) Color.WHITE else if (mid) blend(Color.WHITE, theme.background, .35f) else blend(Color.WHITE, theme.background, .55f)
+            p.color = if (d == 0) theme.accent else if (off < 45f) blend(theme.accent, base, off / 45f) else base
             canvas.drawLine(cx + r0 * sin(a).toFloat(), cy - r0 * cos(a).toFloat(), cx + r1 * sin(a).toFloat(), cy - r1 * cos(a).toFloat(), p)
             if (major) {
                 val rl = r - 48f * s
-                text.textSize = 20f * s; text.color = if (d == 0) theme.accent else grey
-                canvas.drawText("$d", cx + rl * sin(a).toFloat(), cy - rl * cos(a).toFloat() + 7f * s, text)
+                text.textSize = 21f * s; text.color = if (d == 0) theme.accent else grey
+                canvas.drawText("$d", cx + rl * sin(a).toFloat(), cy - rl * cos(a).toFloat() + 7.5f * s, text)
             }
         }
-        // The arrow, fixed at the top on the ring, pointing in; north is where the 0° spoke meets it.
-        p.style = Paint.Style.FILL; p.color = theme.accent
+        // A faint inner ring just inside the degree numbers.
+        p.strokeWidth = 1.5f * s; p.color = blend(theme.background, Color.WHITE, .1f)
+        canvas.drawCircle(cx, cy, r - 68f * s, p)
+        // The arrow, fixed at the top on the ring, pointing in, with slightly rounded corners.
+        p.style = Paint.Style.FILL; p.color = theme.accent; p.pathEffect = android.graphics.CornerPathEffect(4f * s)
         val tip = cy - r + 30f * s; val base = cy - r - 2f * s
         canvas.drawPath(Path().apply { moveTo(cx, tip); lineTo(cx - 12f * s, base); lineTo(cx + 12f * s, base); close() }, p)
-        // Middle: the heading, in the arrow's colour.
-        text.color = theme.accent; text.textSize = 80f * s
+        p.pathEffect = null
+        // Middle: the heading, in the arrow's colour and the face's font.
+        text.color = theme.accent; text.textSize = 84f * s
         canvas.drawText(if (shown.isNaN()) "—" else "${shown.roundToInt() % 360}°", cx, cy + 28f * s, text)
         if (noSensor || needsCalibration) {
-            text.color = grey; text.textSize = 22f * s
+            text.typeface = plain; text.color = grey; text.textSize = 22f * s
             canvas.drawText(if (noSensor) "No compass on this watch" else "Move your watch in a figure 8", cx, cy + 80f * s, text)
+            text.typeface = anta
         }
     }
 
