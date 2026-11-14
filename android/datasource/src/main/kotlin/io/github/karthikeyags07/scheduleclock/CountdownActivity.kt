@@ -17,7 +17,7 @@ import kotlin.math.min
  * The meeting countdown (RULES A22), opened by tapping the 3 on the face (`app://<package>/countdown`) when Settings →
  * Tap 3 for meeting countdown is on. In a meeting: "Ends in" and the time left, with an accent ring round the edge
  * that empties as it runs out. Between meetings: "Starts in" and the time to the next one (today or tomorrow), the
- * ring filling over the last hour before it. The meeting's title (or "Private") and its time sit underneath.
+ * ring emptying over the last hour before it. The ring only ever shrinks. The meeting's title (or "Private") and its time sit underneath.
  * Ticks every second; closes when left.
  */
 class CountdownActivity : Activity() {
@@ -64,7 +64,8 @@ private class CountdownView(context: Context, private val theme: Theme, private 
         canvas.drawArc(box, 0f, 360f, false, ring)
         val (label, seconds, fraction) = when {
             live != null -> Triple("Ends in", live.endMin * 60 - nowSec, (live.endMin * 60 - nowSec).toFloat() / ((live.endMin - live.startMin) * 60))
-            next != null -> Triple("Starts in", next.startMin * 60 - nowSec, 1f - ((next.startMin * 60 - nowSec) / 3600f).coerceIn(0f, 1f))
+            // Before a meeting the ring also runs down: full an hour out (or more), empty as it starts.
+            next != null -> Triple("Starts in", next.startMin * 60 - nowSec, ((next.startMin * 60 - nowSec) / 3600f).coerceIn(0f, 1f))
             else -> Triple("", 0, 0f)
         }
         if (m != null && fraction > 0f) { ring.color = theme.accent; canvas.drawArc(box, -90f, 360f * fraction.coerceIn(0f, 1f), false, ring) }
