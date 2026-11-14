@@ -125,7 +125,7 @@ fun SettingsScreen(m: AppModel, onRunSetup: () -> Unit) {
         }
         SettingSwitch(m.shortcutsOn) { m.switchShortcuts(it) }
     }
-    androidx.compose.animation.AnimatedVisibility(m.shortcutsOn) { ShortcutDial(m) }
+    androidx.compose.animation.AnimatedVisibility(m.shortcutsOn) { Column { NUMBERS.forEach { n -> ShortcutRow(m, n) } } }
     // Sync isn't a setting: a short note says how it works.
     ItemDivider(Modifier.padding(top = 8.dp))   // hairlines between the sections
     PageHeading("Sync")
@@ -181,61 +181,36 @@ private fun SettingSwitch(checked: Boolean, onChange: (Boolean) -> Unit) {
 }
 
 /**
- * Which shortcut each number opens (RULES A24), as a small dial: a ring with a chip at 12, 3, 6 and 9 showing the
- * shortcut's icon and name, lit in the accent when it's on and grey when off. Tapping a chip opens its pop-up.
+ * One number's shortcut (RULES A24), as a plain row: the number, the shortcut's name (tap it to put another one there;
+ * the two swap) and that shortcut's switch.
  */
 @Composable
-private fun ShortcutDial(m: AppModel) {
-    var picking by remember { mutableStateOf<Int?>(null) }
+private fun ShortcutRow(m: AppModel, number: Int) {
+    val info = shortcutInfo(m.shortcutAt(number))
+    var picking by remember { mutableStateOf(false) }
     val accent = LocalAccent.current
-    Column(Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(Modifier.fillMaxWidth().height(260.dp), contentAlignment = Alignment.Center) {
-            // The face's outline: a faint ring with the four numbers' ticks.
-            Box(Modifier.size(150.dp).clip(CircleShape).background(Color.White.copy(alpha = .03f))
-                .border(6.dp, Color.White.copy(alpha = .07f), CircleShape))
-            listOf(12 to Alignment.TopCenter, 3 to Alignment.CenterEnd, 6 to Alignment.BottomCenter, 9 to Alignment.CenterStart).forEach { (n, align) ->
-                val info = shortcutInfo(m.shortcutAt(n)); val on = m.shortcutOn(info.id)
-                Row(Modifier.align(align).padding(vertical = 8.dp).clip(RoundedCornerShape(20.dp))
-                    .background(if (on) accent.copy(alpha = .14f) else Color.White.copy(alpha = .05f))
-                    .border(1.dp, if (on) accent.copy(alpha = .35f) else Color.White.copy(alpha = .08f), RoundedCornerShape(20.dp))
-                    .clickable(role = Role.Button) { picking = n }
-                    .semantics { contentDescription = "$n: ${info.name}, ${if (on) "on" else "off"}. Change" }
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                    Text("$n", style = BodyStyle.copy(fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Palette.muted))
-                    Icon(info.icon, null, tint = if (on) accent else Palette.muted, modifier = Modifier.size(17.dp))
-                    Text(info.short, style = BodyStyle.copy(fontSize = 14.sp, color = if (on) Palette.text else Palette.muted))
-                }
-            }
+    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button) { picking = true }
+            .semantics { contentDescription = "Tap $number: ${info.name}. Change" }.padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            Text("$number", style = ItemTitle.copy(color = Palette.muted), modifier = Modifier.width(34.dp))
+            Text(info.name, style = ItemTitle)
+            Text("  ›", style = ItemTitle.copy(color = Palette.muted))
         }
-        Text("Tap a number to change its shortcut or turn it off.", style = ItemTextStyle, modifier = Modifier.padding(top = 4.dp))
+        SettingSwitch(m.shortcutOn(info.id)) { m.switchShortcut(info.id, it) }
     }
-    picking?.let { n ->
-        val current = shortcutInfo(m.shortcutAt(n))
-        CalenPopup("Tap $n", { picking = null }) {
-            // This number's shortcut, with its switch.
-            Row(Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(current.icon, null, tint = accent, modifier = Modifier.size(22.dp))
-                Column(Modifier.weight(1f).padding(start = 14.dp)) {
-                    Text(current.name, style = ItemTitle)
-                    Text(current.text, style = ItemTextStyle)
-                }
-                SettingSwitch(m.shortcutOn(current.id)) { m.switchShortcut(current.id, it) }
+    if (picking) CalenPopup("Tap $number", { picking = false }, "Pick what tapping the $number on the face does. Picking one already on another number swaps the two.") {
+        Spacer(Modifier.height(16.dp))
+        PopupRows(SHORTCUT_INFO.size) { i ->
+            val s = SHORTCUT_INFO[i]
+            val holder = NUMBERS.first { m.shortcutAt(it) == s.id }
+            Row(Modifier.fillMaxWidth().clickable(role = Role.Button) { m.assignShortcut(number, s.id); picking = false }
+                .padding(horizontal = 18.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(s.name, style = BodyStyle.copy(color = if (holder == number) accent else Palette.text), modifier = Modifier.weight(1f))
+                Text(if (holder == number) "Now" else "On $holder", style = HintStyle)
             }
-            Text("Put another on $n", style = HintStyle, modifier = Modifier.padding(bottom = 8.dp))
-            val others = SHORTCUT_INFO.filter { it.id != current.id }
-            PopupRows(others.size) { i ->
-                val s = others[i]; val from = NUMBERS.first { m.shortcutAt(it) == s.id }
-                Row(Modifier.fillMaxWidth().clickable(role = Role.Button) { m.assignShortcut(n, s.id); picking = null }
-                    .padding(horizontal = 18.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Icon(s.icon, null, tint = Palette.muted, modifier = Modifier.size(20.dp))
-                    Text(s.name, style = BodyStyle, modifier = Modifier.weight(1f))
-                    Text("swaps with $from", style = HintStyle)
-                }
-            }
-            Spacer(Modifier.height(16.dp))
-            SecondaryButton("Done", Modifier.fillMaxWidth()) { picking = null }
         }
+        Spacer(Modifier.height(16.dp))
+        SecondaryButton("Cancel", Modifier.fillMaxWidth()) { picking = false }
     }
 }
