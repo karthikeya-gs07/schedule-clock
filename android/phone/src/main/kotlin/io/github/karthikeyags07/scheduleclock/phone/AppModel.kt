@@ -250,6 +250,13 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
 
     // ---- Face shortcuts (RULES A24): which one each of 12, 3, 6, 9 opens, and each one's switch ----
     var shortcutLayout by mutableStateOf(AppPrefs.shortcutLayout(context))
+    /** The whole "Shortcuts on the face" section on or off. */
+    var shortcutsOn by mutableStateOf(AppPrefs.shortcutsOn(context))
+    fun switchShortcuts(on: Boolean) {
+        AppPrefs.setShortcutsOn(context, on)
+        shortcutsOn = on
+        AppPrefs.sendSettings(context)
+    }
     /** Puts [shortcut] on [number]; the shortcut that was there moves to [shortcut]'s old number (a swap). */
     fun assignShortcut(number: Int, shortcut: String) {
         val at = NUMBERS.indexOf(number); val from = shortcutLayout.indexOf(shortcut)

@@ -18,7 +18,7 @@ object PhoneSettings {
             map.getString("colourway")?.let { putString("colourway", it) }
             if (map.containsKey("secondZone")) putString("secondZone", map.getString("secondZone"))
             if (map.containsKey("shortcuts")) putString("shortcuts", map.getString("shortcuts"))
-            listOf("buzzStart", "buzzMiddle", "buzzEnd", "buzzDnd", "clock24", "showAmPm", "compass", "agenda", "flashlight", "countdown", "hideAodDetails").forEach { if (map.containsKey(it)) putBoolean(it, map.getBoolean(it)) }
+            listOf("buzzStart", "buzzMiddle", "buzzEnd", "buzzDnd", "clock24", "showAmPm", "compass", "agenda", "flashlight", "countdown", "hideAodDetails", "shortcutsOn").forEach { if (map.containsKey(it)) putBoolean(it, map.getBoolean(it)) }
         }.apply()
     }
 
@@ -31,7 +31,9 @@ object PhoneSettings {
         val order = if (layout.toSet().size == 4) layout else SHORTCUTS
         return order[NUMBERS.indexOf(number).coerceAtLeast(0)]
     }
-    fun shortcutOn(context: Context, shortcut: String) = when (shortcut) {
+    /** Settings → Shortcuts on the face, the whole section (RULES A24): off, every number acts like its hour. */
+    fun shortcutsOn(context: Context) = prefs(context).getBoolean("shortcutsOn", true)
+    fun shortcutOn(context: Context, shortcut: String) = shortcutsOn(context) && when (shortcut) {
         "compass" -> compass(context); "countdown" -> countdown(context); "agenda" -> agenda(context); else -> flashlight(context)
     }
     fun hideAodDetails(context: Context) = prefs(context).getBoolean("hideAodDetails", false)

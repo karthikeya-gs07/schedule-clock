@@ -76,6 +76,8 @@ object AppPrefs {
     fun shortcutLayout(context: Context): List<String> =
         prefs(context).getString("shortcuts", "")!!.split(',').filter { it in SHORTCUTS }.takeIf { it.toSet().size == 4 } ?: SHORTCUTS
     fun setShortcutLayout(context: Context, layout: List<String>) = prefs(context).edit().putString("shortcuts", layout.joinToString(",")).apply()
+    fun shortcutsOn(context: Context) = prefs(context).getBoolean("shortcutsOn", true)
+    fun setShortcutsOn(context: Context, on: Boolean) = prefs(context).edit().putBoolean("shortcutsOn", on).apply()
     fun clock24(context: Context) = prefs(context).getBoolean("clock24", false)
     fun showAmPm(context: Context) = prefs(context).getBoolean("showAmPm", true)
     fun setClock(context: Context, clock24: Boolean, showAmPm: Boolean) =
@@ -95,6 +97,7 @@ object AppPrefs {
             dataMap.putBoolean("hideAodDetails", hideAodDetails(context))
             dataMap.putString("secondZone", secondZone(context) ?: "")
             dataMap.putString("shortcuts", shortcutLayout(context).joinToString(","))
+            dataMap.putBoolean("shortcutsOn", shortcutsOn(context))
         }.asPutDataRequest().setUrgent()
         Wearable.getDataClient(context).putDataItem(request)
     }

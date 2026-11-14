@@ -1,6 +1,10 @@
 package io.github.karthikeyags07.scheduleclock.phone
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -113,9 +117,15 @@ fun SettingsScreen(m: AppModel, onRunSetup: () -> Unit) {
     SecondZoneItem(m)
     ToggleItem("Hide details in always-on", "When the watch dims, show the ring and the time but not the meeting's name, time or place", m.hideAodDetails) { m.switchHideAodDetails(it) }
     ItemDivider(Modifier.padding(top = 8.dp))
-    PageHeading("Shortcuts on the face")
-    Text("Tap a shortcut's name to put a different one on that number; the two swap.", style = ItemTextStyle, modifier = Modifier.padding(bottom = 6.dp))
-    NUMBERS.forEach { n -> ShortcutRow(m, n) }
+    // The section's own switch (RULES A24): off, every number on the face acts like its hour.
+    Row(Modifier.fillMaxWidth().padding(top = 30.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text("Shortcuts on the face", style = TitleStyle.copy(fontSize = 19.sp, lineHeight = 25.sp))
+            Text("Tap 12, 3, 6 or 9 on the watch to open one", style = ItemTextStyle, modifier = Modifier.padding(top = 2.dp))
+        }
+        SettingSwitch(m.shortcutsOn) { m.switchShortcuts(it) }
+    }
+    androidx.compose.animation.AnimatedVisibility(m.shortcutsOn) { ShortcutDial(m) }
     // Sync isn't a setting: a short note says how it works.
     ItemDivider(Modifier.padding(top = 8.dp))   // hairlines between the sections
     PageHeading("Sync")
@@ -161,46 +171,71 @@ private fun FrostButton(text: String, busy: Boolean, modifier: Modifier = Modifi
     Text(text, style = BodyStyle.copy(fontSize = 16.sp, fontWeight = FontWeight.Medium))
 }
 
+/** A switch in the app's colours. */
+@Composable
+private fun SettingSwitch(checked: Boolean, onChange: (Boolean) -> Unit) {
+    val accent = LocalAccent.current
+    androidx.compose.material3.Switch(checked, onChange, colors = androidx.compose.material3.SwitchDefaults.colors(
+        checkedTrackColor = accent, checkedThumbColor = Palette.onAccent, checkedBorderColor = accent,
+        uncheckedTrackColor = Color(0xFF34353A), uncheckedThumbColor = Palette.muted, uncheckedBorderColor = Color(0xFF34353A)))
+}
+
 /**
- * One number's shortcut (RULES A24): "Tap 12", the shortcut's name (tap to change it; picking one already on another
- * number swaps the two) and its on/off switch.
+ * Which shortcut each number opens (RULES A24), as a small dial: a ring with a chip at 12, 3, 6 and 9 showing the
+ * shortcut's icon and name, lit in the accent when it's on and grey when off. Tapping a chip opens its pop-up.
  */
 @Composable
-private fun ShortcutRow(m: AppModel, number: Int) {
-    val info = shortcutInfo(m.shortcutAt(number))
-    var picking by remember { mutableStateOf(false) }
+private fun ShortcutDial(m: AppModel) {
+    var picking by remember { mutableStateOf<Int?>(null) }
     val accent = LocalAccent.current
-    Row(Modifier.fillMaxWidth().padding(vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button) { picking = true }) {
-            Text(buildAnnotatedString {
-                append("Tap $number  ")
-                withStyle(SpanStyle(color = accent)) { append(info.name) }
-                append(" ›")
-            }, style = ItemTitle)
-            Text(info.text, style = ItemTextStyle, modifier = Modifier.padding(top = 1.dp))
-        }
-        androidx.compose.material3.Switch(
-            checked = m.shortcutOn(info.id), onCheckedChange = { m.switchShortcut(info.id, it) },
-            colors = androidx.compose.material3.SwitchDefaults.colors(
-                checkedTrackColor = accent, checkedThumbColor = Palette.onAccent, checkedBorderColor = accent,
-                uncheckedTrackColor = Color(0xFF34353A), uncheckedThumbColor = Palette.muted, uncheckedBorderColor = Color(0xFF34353A)),
-            modifier = Modifier.padding(start = 12.dp),
-        )
-    }
-    if (picking) CalenPopup("Tap $number", { picking = false }, "Pick what tapping the $number on the face does.") {
-        Spacer(Modifier.height(16.dp))
-        PopupRows(SHORTCUT_INFO.size) { i ->
-            val s = SHORTCUT_INFO[i]
-            val holder = NUMBERS.first { m.shortcutAt(it) == s.id }
-            Row(Modifier.fillMaxWidth().clickable(role = Role.Button) { m.assignShortcut(number, s.id); picking = false }
-                .padding(horizontal = 18.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                Icon(s.icon, null, tint = if (holder == number) accent else Palette.muted, modifier = Modifier.size(20.dp))
-                Text(s.name, style = BodyStyle.copy(color = if (holder == number) accent else Palette.text), modifier = Modifier.weight(1f))
-                Text(if (holder == number) "Now" else "On $holder", style = HintStyle)
+    Column(Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(Modifier.fillMaxWidth().height(260.dp), contentAlignment = Alignment.Center) {
+            // The face's outline: a faint ring with the four numbers' ticks.
+            Box(Modifier.size(150.dp).clip(CircleShape).background(Color.White.copy(alpha = .03f))
+                .border(6.dp, Color.White.copy(alpha = .07f), CircleShape))
+            listOf(12 to Alignment.TopCenter, 3 to Alignment.CenterEnd, 6 to Alignment.BottomCenter, 9 to Alignment.CenterStart).forEach { (n, align) ->
+                val info = shortcutInfo(m.shortcutAt(n)); val on = m.shortcutOn(info.id)
+                Row(Modifier.align(align).padding(vertical = 8.dp).clip(RoundedCornerShape(20.dp))
+                    .background(if (on) accent.copy(alpha = .14f) else Color.White.copy(alpha = .05f))
+                    .border(1.dp, if (on) accent.copy(alpha = .35f) else Color.White.copy(alpha = .08f), RoundedCornerShape(20.dp))
+                    .clickable(role = Role.Button) { picking = n }
+                    .semantics { contentDescription = "$n: ${info.name}, ${if (on) "on" else "off"}. Change" }
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                    Text("$n", style = BodyStyle.copy(fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Palette.muted))
+                    Icon(info.icon, null, tint = if (on) accent else Palette.muted, modifier = Modifier.size(17.dp))
+                    Text(info.short, style = BodyStyle.copy(fontSize = 14.sp, color = if (on) Palette.text else Palette.muted))
+                }
             }
         }
-        Spacer(Modifier.height(16.dp))
-        SecondaryButton("Cancel", Modifier.fillMaxWidth()) { picking = false }
+        Text("Tap a number to change its shortcut or turn it off.", style = ItemTextStyle, modifier = Modifier.padding(top = 4.dp))
+    }
+    picking?.let { n ->
+        val current = shortcutInfo(m.shortcutAt(n))
+        CalenPopup("Tap $n", { picking = null }) {
+            // This number's shortcut, with its switch.
+            Row(Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(current.icon, null, tint = accent, modifier = Modifier.size(22.dp))
+                Column(Modifier.weight(1f).padding(start = 14.dp)) {
+                    Text(current.name, style = ItemTitle)
+                    Text(current.text, style = ItemTextStyle)
+                }
+                SettingSwitch(m.shortcutOn(current.id)) { m.switchShortcut(current.id, it) }
+            }
+            Text("Put another on $n", style = HintStyle, modifier = Modifier.padding(bottom = 8.dp))
+            val others = SHORTCUT_INFO.filter { it.id != current.id }
+            PopupRows(others.size) { i ->
+                val s = others[i]; val from = NUMBERS.first { m.shortcutAt(it) == s.id }
+                Row(Modifier.fillMaxWidth().clickable(role = Role.Button) { m.assignShortcut(n, s.id); picking = null }
+                    .padding(horizontal = 18.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Icon(s.icon, null, tint = Palette.muted, modifier = Modifier.size(20.dp))
+                    Text(s.name, style = BodyStyle, modifier = Modifier.weight(1f))
+                    Text("swaps with $from", style = HintStyle)
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+            SecondaryButton("Done", Modifier.fillMaxWidth()) { picking = null }
+        }
     }
 }

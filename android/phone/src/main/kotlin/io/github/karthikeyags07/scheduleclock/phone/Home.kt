@@ -272,7 +272,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
         // ---- Watchface: the four face shortcuts round the face (RULES A23): 12 compass, 3 countdown, 6 all events,
         // 9 flashlight. Tapping one switches it on or off, as in Settings; on, it glows in the colourway's colour. ----
         // They wait for the page's own transition to finish, then glide in; leaving, they go out first, quickly.
-        val settled = watchMode && p > .99f
+        val settled = watchMode && p > .99f && m.shortcutsOn   // hidden when shortcuts are off altogether
         val iconsIn by animateFloatAsState(if (settled) 1f else 0f,
             if (settled) tween(420, easing = FastOutSlowInEasing) else tween(200), label = "shortcutsIn")
         if (iconsIn > 0f) {
