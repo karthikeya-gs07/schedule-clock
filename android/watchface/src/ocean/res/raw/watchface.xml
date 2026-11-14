@@ -698,13 +698,13 @@
       <Launch target="app://io.github.karthikeyags07.scheduleclock/select?hour=11"/>
     </PartDraw>
     <!-- A19: the 12 opens the compass (on top of the hour hotspots there) -->
-    <PartDraw name="compass_tap" x="201" y="22" width="48" height="50">
-      <Rectangle x="0" y="0" width="48" height="50"><Fill color="#00000000"/></Rectangle>
+    <PartDraw name="compass_tap" x="181" y="0" width="88" height="86">
+      <Rectangle x="0" y="0" width="88" height="86"><Fill color="#00000000"/></Rectangle>
       <Launch target="app://io.github.karthikeyags07.scheduleclock/compass"/>
     </PartDraw>
     <!-- A20: the 6 opens all events (on top of the hour hotspots there) -->
-    <PartDraw name="agenda_tap" x="201" y="378" width="48" height="50">
-      <Rectangle x="0" y="0" width="48" height="50"><Fill color="#00000000"/></Rectangle>
+    <PartDraw name="agenda_tap" x="181" y="364" width="88" height="86">
+      <Rectangle x="0" y="0" width="88" height="86"><Fill color="#00000000"/></Rectangle>
       <Launch target="app://io.github.karthikeyags07.scheduleclock/agenda"/>
     </PartDraw>
     <!-- I8: the details area (inside the hour hotspots). A tap while a meeting is selected goes back to the normal view. -->
