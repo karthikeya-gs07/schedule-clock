@@ -787,13 +787,13 @@ fun AboutScreen(m: AppModel, onBack: () -> Unit, onRunSetup: () -> Unit) {
     val colourway = m.colourway
     val context = androidx.compose.ui.platform.LocalContext.current
     val version = context.packageManager.getPackageInfo(context.packageName, 0).versionName
-    // Four tabs (2026-11-14): Face, Buzzes, Icons (icons on the face and shortcuts), Privacy (with credits and share).
-    var tab by remember { mutableStateOf(0) }
-    val scroll = rememberScrollState()
-    LaunchedEffect(tab) { scroll.scrollTo(0) }
+    // Four tabs (2026-11-14): Face, Specs (buzzes and shortcuts), Icons (icons on the face), Share (privacy, credits, share).
+    // Swipe left and right between the tabs, or tap one; each page scrolls on its own.
+    val pages = rememberPagerState { 4 }
+    val scope = rememberCoroutineScope()
     Box(Modifier.fillMaxSize().stagePage(LocalAccent.current)) {
-        Column(Modifier.fillMaxSize().statusBarsPadding().verticalScroll(scroll)
-            .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 40.dp).navigationBarsPadding()) {
+        Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
+          Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp)) {
             // The title, and close (×) on the far right, level with Today's info button (status bar + 44 dp, 57 dp
             // round): the same folded and in the unfolded right pane.
             Row(Modifier.fillMaxWidth().padding(top = 32.dp).height(57.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -805,8 +805,10 @@ fun AboutScreen(m: AppModel, onBack: () -> Unit, onRunSetup: () -> Unit) {
                 }
             }
             Text("Version $version", style = SubStyle, modifier = Modifier.padding(top = 4.dp, bottom = 16.dp))
-            AboutTabs(tab) { tab = it }
-
+            AboutTabs(pages.currentPage + pages.currentPageOffsetFraction) { scope.launch { pages.animateScrollToPage(it) } }
+          }
+          HorizontalPager(pages, Modifier.weight(1f).fillMaxWidth(), verticalAlignment = Alignment.Top) { tab ->
+           Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, bottom = 40.dp)) {
             when (tab) {
                 0 -> {
                     Text("Your day, around the clock. CalenTime turns your watch face into a picture of the next 12 hours: every meeting is an arc on the ring, so one glance tells you how busy you are, what's next and how much time you have before it.",
@@ -844,7 +846,12 @@ fun AboutScreen(m: AppModel, onBack: () -> Unit, onRunSetup: () -> Unit) {
                     AboutItem("2 min before", "One short buzz to wrap up and join.")
                     AboutItem("Halfway", "One long buzz, for meetings of 15 minutes or more.")
                     AboutItem("5 min before the end", "Two short buzzes, for meetings of 10 minutes or more.")
-                    Text("Turn each one on or off, and choose whether they come through Do Not Disturb, in Settings.", style = AboutText)
+                    Text("Turn each one on or off, and choose whether they come through Do Not Disturb, in Settings.", style = AboutText, modifier = Modifier.padding(bottom = 22.dp))
+                    ItemDivider(Modifier.padding(top = 8.dp))
+                    AboutHeading("Shortcuts")
+                    ShortcutsPicture(m)
+                    Text("Tap a number on the face to open its shortcut. A lit icon is on; a grey one is off, and that number acts like the rest of its hour. Change them in Settings → Shortcuts on the face.",
+                        style = AboutText, modifier = Modifier.padding(top = 14.dp))
                 }
                 2 -> {
                     AboutHeading("Icons on the face")
@@ -856,11 +863,6 @@ fun AboutScreen(m: AppModel, onBack: () -> Unit, onRunSetup: () -> Unit) {
                         "Two linked rings, in coral, with the other meeting's name: you're double-booked. \"+1\" means more than one other meeting.")
                     FaceIcon({ c -> todGlyphs(c) }, Color(0xFFA9B8E0), "Later today or tomorrow",
                         "Sunrise, sun, sunset or moon before the time: a meeting on the inner line, by when it starts (morning, afternoon, evening or night). For a meeting tomorrow, the place line also starts with \"Tomorrow\".", tall = true)
-                    ItemDivider(Modifier.padding(top = 8.dp))
-                    AboutHeading("Shortcuts")
-                    ShortcutsPicture(m)
-                    Text("Tap a number on the face to open its shortcut. A lit icon is on; a grey one is off, and that number acts like the rest of its hour. Change them in Settings → Shortcuts on the face.",
-                        style = AboutText, modifier = Modifier.padding(top = 14.dp))
                 }
                 else -> {
                     AboutHeading("Privacy")
@@ -879,15 +881,17 @@ fun AboutScreen(m: AppModel, onBack: () -> Unit, onRunSetup: () -> Unit) {
                     RunSetupButton(onRunSetup, Modifier.fillMaxWidth())
                 }
             }
+           }
+          }
         }
     }
 }
 
 /** About's four tabs: a frosted pill with a lit segment that slides to the chosen one (like Solids / Gradients). */
 @Composable
-private fun AboutTabs(tab: Int, onSelect: (Int) -> Unit) {
-    val labels = listOf("Face", "Buzzes", "Icons", "Privacy")
-    val at by animateFloatAsState(tab.toFloat(), tween(300, easing = FastOutSlowInEasing), label = "aboutTab")
+private fun AboutTabs(at: Float, onSelect: (Int) -> Unit) {
+    val labels = listOf("Face", "Specs", "Icons", "Share")
+    val tab = kotlin.math.round(at).toInt()   // the lit segment follows the swipe
     BoxWithConstraints(Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(22.dp)).frostCard(RoundedCornerShape(22.dp)).padding(4.dp)) {
         val w = maxWidth / labels.size
         Box(Modifier.offset(x = w * at).width(w).fillMaxHeight().clip(RoundedCornerShape(18.dp)).background(Color.White.copy(alpha = .12f)))
