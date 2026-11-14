@@ -665,7 +665,7 @@ for (let q = 0; q < 48; q++) {
   const len = { hour: 10, half: 6, quarter: 3 }[kind];
   const [x0, y0] = polar(q * 7.5, R - 14), [x1, y1] = polar(q * 7.5, R - 14 - len);
   const stroke = { hour: '#8e8e93', half: '#4a4a50', quarter: '#33333a' }[kind];
-  ticks += `<line class="${kind}" x1="${x0.toFixed(2)}" y1="${y0.toFixed(2)}" x2="${x1.toFixed(2)}" y2="${y1.toFixed(2)}" stroke="${stroke}" stroke-width="${kind === 'hour' ? 2.5 : 1.5}" stroke-linecap="round"/>`;
+  ticks += `<line class="${kind}" x1="${x0.toFixed(2)}" y1="${y0.toFixed(2)}" x2="${x1.toFixed(2)}" y2="${y1.toFixed(2)}" stroke="${stroke}" stroke-width="${q === 0 ? 4.5 : kind === 'hour' ? 2.5 : 1.5}" stroke-linecap="round"/>`;
 }
 
 svg.innerHTML = `

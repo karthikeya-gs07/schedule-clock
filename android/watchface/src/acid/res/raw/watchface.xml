@@ -266,7 +266,7 @@
     <Group name="dial" x="0" y="0" width="450" height="450">
       <Variant mode="AMBIENT" target="alpha" value="153"/>
       <PartDraw x="0" y="0" width="450" height="450">
-      <Line startX="225.0" startY="20.0" endX="225.0" endY="30.0"><Stroke color="#ffa6b68e" thickness="2.5" cap="ROUND"/></Line>
+      <Line startX="225.0" startY="20.0" endX="225.0" endY="30.0"><Stroke color="#ffa6b68e" thickness="4.5" cap="ROUND"/></Line>
       <Line startX="251.8" startY="21.8" endX="251.4" endY="24.7"><Stroke color="#ff38462a" thickness="1.5" cap="ROUND"/></Line>
       <Line startX="278.1" startY="27.0" endX="276.5" endY="32.8"><Stroke color="#ff768562" thickness="1.5" cap="ROUND"/></Line>
       <Line startX="303.5" startY="35.6" endX="302.3" endY="38.4"><Stroke color="#ff38462a" thickness="1.5" cap="ROUND"/></Line>

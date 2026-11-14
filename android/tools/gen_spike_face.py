@@ -59,7 +59,7 @@ def ticks():
         kind = "hour" if q % 4 == 0 else "half" if q % 2 == 0 else "quarter"
         length = {"hour": 10, "half": 6, "quarter": 3}[kind]
         color = {"hour": D["tick_hour"], "half": D["tick_half"], "quarter": D["tick_quarter"]}[kind]
-        width = 2.5 if kind == "hour" else 1.5
+        width = 4.5 if q == 0 else 2.5 if kind == "hour" else 1.5   # the 12 o'clock line is thicker
         a = math.radians(q * 7.5)
         r0, r1 = R - 14, R - 14 - length
         lines.append(f'      <Line startX="{CX + r0 * math.sin(a):.1f}" startY="{CY - r0 * math.cos(a):.1f}" '
