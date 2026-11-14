@@ -48,6 +48,12 @@ class CompassActivity : Activity(), SensorEventListener {
         super.onPause()
     }
 
+    // Leaving by home (or anything else) closes it, so the next tap on the face opens what was tapped.
+    override fun onStop() {
+        super.onStop()
+        finish()
+    }
+
     private val rotation = FloatArray(9)
     private val angles = FloatArray(3)
 

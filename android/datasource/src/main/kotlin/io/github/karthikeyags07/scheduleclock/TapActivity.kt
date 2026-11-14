@@ -24,6 +24,13 @@ import kotlinx.coroutines.launch
  * (nothing from the phone, no access on the watch), any tap on the ring opens [PermissionActivity].
  */
 class TapActivity : Activity() {
+    /**
+     * The face's shortcuts (compass, all events, flashlight) each open in a task of their own, cleared first: a
+     * shortcut left in the background (home instead of back) never comes back in place of the one just tapped.
+     */
+    private fun openFresh(screen: Class<*>) = startActivity(Intent(this, screen)
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val received = System.currentTimeMillis()
@@ -37,17 +44,17 @@ class TapActivity : Activity() {
             startActivity(Intent(this, PermissionActivity::class.java))
         } else if (uri?.path == "/flashlight") {
             // Settings → Tap 3 for flashlight on the phone; off, the 3 acts like the rest of the 3–4 hour.
-            if (PhoneSettings.flashlight(this)) startActivity(Intent(this, FlashlightActivity::class.java))
+            if (PhoneSettings.flashlight(this)) openFresh(FlashlightActivity::class.java)
             else if (SpikeSchedule.needsCalendarSetup(this)) startActivity(Intent(this, PermissionActivity::class.java))
             else SpikeSchedule.tapHour(this, 3)
         } else if (uri?.path == "/agenda") {
             // Settings → Tap 6 for all events on the phone; off, the 6 acts like the rest of the 6–7 hour.
-            if (PhoneSettings.agenda(this)) startActivity(Intent(this, AgendaActivity::class.java))
+            if (PhoneSettings.agenda(this)) openFresh(AgendaActivity::class.java)
             else if (SpikeSchedule.needsCalendarSetup(this)) startActivity(Intent(this, PermissionActivity::class.java))
             else SpikeSchedule.tapHour(this, 6)
         } else if (uri?.path == "/compass") {
             // Settings → Compass on the phone; off, the 12 acts like the rest of the 12–1 hour.
-            if (PhoneSettings.compass(this)) startActivity(Intent(this, CompassActivity::class.java))
+            if (PhoneSettings.compass(this)) openFresh(CompassActivity::class.java)
             else if (SpikeSchedule.needsCalendarSetup(this)) startActivity(Intent(this, PermissionActivity::class.java))
             else SpikeSchedule.tapHour(this, 0)
         } else if (uri?.path == "/release") {

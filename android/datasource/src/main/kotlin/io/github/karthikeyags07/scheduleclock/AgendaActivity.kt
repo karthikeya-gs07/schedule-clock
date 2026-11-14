@@ -69,4 +69,10 @@ class AgendaActivity : Activity() {
         setContentView(scroll)
         scroll.requestFocus()   // so the crown scrolls it
     }
+
+    // Leaving by home (or anything else) closes it, so the next tap on the face opens what was tapped.
+    override fun onStop() {
+        super.onStop()
+        finish()
+    }
 }
