@@ -33,6 +33,14 @@
             android:taskAffinity=".colourswap"
             android:theme="@android:style/Theme.DeviceDefault" />
 
+        <!-- The meeting countdown, opened by tapping the 9 on the face (RULES A22). -->
+        <activity
+            android:name=".CountdownActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=".countdown"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+
         <!-- The flashlight, opened by tapping the 3 on the face (RULES A21). -->
         <activity
             android:name=".FlashlightActivity"

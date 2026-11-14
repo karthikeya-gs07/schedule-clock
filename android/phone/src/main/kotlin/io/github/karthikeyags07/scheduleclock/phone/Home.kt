@@ -779,6 +779,7 @@ fun AboutScreen(colourway: String, onBack: () -> Unit, onRunSetup: () -> Unit) {
                 "Two linked rings, in coral, with the other meeting's name: you're double-booked. \"+1\" means more than one other meeting.")
             FaceIcon({ c -> todGlyphs(c) }, Color(0xFFA9B8E0), "Later today or tomorrow",
                 "Sunrise, sun, sunset or moon before the time: a meeting on the inner line, by when it starts (morning, afternoon, evening or night). For a meeting tomorrow, the place line also starts with \"Tomorrow\".", tall = true)
+            AboutItem("Meeting countdown", "Tap the 9 on the face to see how long is left in your meeting, or how long until the next one, with a ring that runs down round the edge.")
             AboutItem("Flashlight", "With it on in Settings, tap the 3 on the face to turn the screen bright white. Tap anywhere to turn it off.")
             AboutItem("All events", "Tap the 6 on the face to see every meeting from now to the end of tomorrow, listed on your watch. You can turn this off in Settings.")
             AboutItem("Compass", "Tap the 12 on the face to open the compass. The degree dial turns as you do; when its coloured 0° line meets the arrow at the top, you're facing north.")

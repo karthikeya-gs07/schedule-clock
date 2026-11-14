@@ -114,6 +114,7 @@ fun SettingsScreen(m: AppModel, onRunSetup: () -> Unit) {
     PageHeading("Shortcuts on the face")
     ToggleItem("Tap 12 for compass", "Tapping the 12 on the face opens a compass on your watch", m.compass) { m.switchCompass(it) }
     ToggleItem("Tap 3 for flashlight", "Tapping the 3 on the face turns your watch screen bright white. Tap again to turn it off", m.flashlight) { m.switchFlashlight(it) }
+    ToggleItem("Tap 9 for meeting countdown", "Tapping the 9 on the face shows how long is left in your meeting, or until the next one", m.countdown) { m.switchCountdown(it) }
     ToggleItem("Tap 6 for all events", "Tapping the 6 on the face lists everything from now to the end of tomorrow", m.agenda) { m.switchAgenda(it) }
     // Sync isn't a setting: a short note says how it works.
     ItemDivider(Modifier.padding(top = 8.dp))   // hairlines between the sections

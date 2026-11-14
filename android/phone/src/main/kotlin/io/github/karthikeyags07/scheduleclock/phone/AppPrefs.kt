@@ -62,6 +62,9 @@ object AppPrefs {
     /** Tapping the 3 on the face turns the screen into a flashlight (RULES A21); off until switched on. */
     fun flashlight(context: Context) = prefs(context).getBoolean("flashlight", false)
     fun setFlashlight(context: Context, on: Boolean) = prefs(context).edit().putBoolean("flashlight", on).apply()
+    /** Tapping the 9 on the face opens the meeting countdown (RULES A22); on until switched off. */
+    fun countdown(context: Context) = prefs(context).getBoolean("countdown", true)
+    fun setCountdown(context: Context, on: Boolean) = prefs(context).edit().putBoolean("countdown", on).apply()
     fun clock24(context: Context) = prefs(context).getBoolean("clock24", false)
     fun showAmPm(context: Context) = prefs(context).getBoolean("showAmPm", true)
     fun setClock(context: Context, clock24: Boolean, showAmPm: Boolean) =
@@ -77,6 +80,7 @@ object AppPrefs {
             dataMap.putBoolean("compass", compass(context))
             dataMap.putBoolean("agenda", agenda(context))
             dataMap.putBoolean("flashlight", flashlight(context))
+            dataMap.putBoolean("countdown", countdown(context))
         }.asPutDataRequest().setUrgent()
         Wearable.getDataClient(context).putDataItem(request)
     }
