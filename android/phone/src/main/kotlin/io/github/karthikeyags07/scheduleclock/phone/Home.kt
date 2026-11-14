@@ -285,7 +285,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                 // Like the nav bar's selected icon: no button shape, just the icon, in the colourway's colour with a
                 // soft glow of it behind when on; muted grey with no glow when off.
                 val glow by animateFloatAsState(if (on) 1f else 0f, tween(300), label = "shortcutGlow")
-                val tint by animateColorAsState(if (on) accent else Palette.muted, tween(300), label = "shortcutTint")
+                val tint by animateColorAsState(if (on) accent.copy(alpha = .62f) else Palette.muted.copy(alpha = .55f), tween(300), label = "shortcutTint")   // subtle
                 Box(Modifier.offset(x = cx + at.first - btn / 2, y = cy + at.second - btn / 2).size(btn)
                     .graphicsLayer { alpha = pickAlpha }
                     .clickable(enabled = watchMode, interactionSource = null,
