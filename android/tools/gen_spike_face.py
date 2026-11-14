@@ -523,6 +523,11 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
 
     <!-- Risks 1 + 7: twelve transparent one-hour hotspots on the ring, each a Launch deep link (I1) -->
 {chr(10).join(hotspot(h) for h in range(12))}
+    <!-- A19: the 12 opens the compass (on top of the hour hotspots there) -->
+    <PartDraw name="compass_tap" x="201" y="22" width="48" height="50">
+      <Rectangle x="0" y="0" width="48" height="50"><Fill color="#00000000"/></Rectangle>
+      <Launch target="app://{PKG}/compass"/>
+    </PartDraw>
     <!-- I8: the details area (inside the hour hotspots). A tap while a meeting is selected goes back to the normal view. -->
     <PartDraw name="details_tap" x="105" y="205" width="240" height="130">
       <Rectangle x="0" y="0" width="240" height="130"><Fill color="#00000000"/></Rectangle>

@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
  * Invisible handler for the face's deep links (PRD §6.3 risk 1):
  * - `app://<package>/select?hour=N`: cycles the meetings in that dial hour (I2–I6).
  * - `app://<package>/release`: a tap on the details; back to the normal view (I8).
+ * - `app://<package>/compass`: a tap on the 12; opens the compass (RULES A19).
  * - `app://<package>/buzz?kind=start|middle|end`: debug, plays a meeting buzz pattern now.
  * - `app://<package>/promote`: plays the lane → ring settle (spike 3).
  * - `app://<package>/time?offset=M`: debug time shift in minutes for testing.
@@ -32,6 +33,8 @@ class TapActivity : Activity() {
 
         if (uri?.path == "/select" && SpikeSchedule.needsCalendarSetup(this)) {
             startActivity(Intent(this, PermissionActivity::class.java))
+        } else if (uri?.path == "/compass") {
+            startActivity(Intent(this, CompassActivity::class.java))
         } else if (uri?.path == "/release") {
             SpikeSchedule.release(this)
         } else if (test && uri?.path == "/buzz") {

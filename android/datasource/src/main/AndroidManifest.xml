@@ -33,6 +33,14 @@
             android:taskAffinity=".colourswap"
             android:theme="@android:style/Theme.DeviceDefault" />
 
+        <!-- The compass, opened by tapping the 12 on the face (RULES A19). -->
+        <activity
+            android:name=".CompassActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=".compass"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+
         <!-- Puts the face on the watch in a colourway and, once, makes it the watch face. -->
         <activity
             android:name=".FaceSetupActivity"
