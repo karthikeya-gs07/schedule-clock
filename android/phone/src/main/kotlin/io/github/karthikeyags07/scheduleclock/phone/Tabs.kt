@@ -114,10 +114,8 @@ fun SettingsScreen(m: AppModel, onRunSetup: () -> Unit) {
     ToggleItem("Hide details in always-on", "When the watch dims, show the ring and the time but not the meeting's name, time or place", m.hideAodDetails) { m.switchHideAodDetails(it) }
     ItemDivider(Modifier.padding(top = 8.dp))
     PageHeading("Shortcuts on the face")
-    ToggleItem("Tap 12 for compass", "Tapping the 12 on the face opens a compass on your watch", m.compass) { m.switchCompass(it) }
-    ToggleItem("Tap 3 for meeting countdown", "Tapping the 3 on the face shows how long is left in your meeting, or until the next one", m.countdown) { m.switchCountdown(it) }
-    ToggleItem("Tap 6 for all events", "Tapping the 6 on the face lists everything from now to the end of tomorrow", m.agenda) { m.switchAgenda(it) }
-    ToggleItem("Tap 9 for flashlight", "Tapping the 9 on the face turns your watch screen bright white. Tap again to turn it off", m.flashlight) { m.switchFlashlight(it) }
+    Text("Tap a shortcut's name to put a different one on that number; the two swap.", style = ItemTextStyle, modifier = Modifier.padding(bottom = 6.dp))
+    NUMBERS.forEach { n -> ShortcutRow(m, n) }
     // Sync isn't a setting: a short note says how it works.
     ItemDivider(Modifier.padding(top = 8.dp))   // hairlines between the sections
     PageHeading("Sync")
@@ -161,4 +159,48 @@ private fun FrostButton(text: String, busy: Boolean, modifier: Modifier = Modifi
 ) {
     if (busy) { CircularProgressIndicator(Modifier.size(16.dp), color = Palette.text, strokeWidth = 2.dp); Spacer(Modifier.width(10.dp)) }
     Text(text, style = BodyStyle.copy(fontSize = 16.sp, fontWeight = FontWeight.Medium))
+}
+
+/**
+ * One number's shortcut (RULES A24): "Tap 12", the shortcut's name (tap to change it; picking one already on another
+ * number swaps the two) and its on/off switch.
+ */
+@Composable
+private fun ShortcutRow(m: AppModel, number: Int) {
+    val info = shortcutInfo(m.shortcutAt(number))
+    var picking by remember { mutableStateOf(false) }
+    val accent = LocalAccent.current
+    Row(Modifier.fillMaxWidth().padding(vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button) { picking = true }) {
+            Text(buildAnnotatedString {
+                append("Tap $number  ")
+                withStyle(SpanStyle(color = accent)) { append(info.name) }
+                append(" ›")
+            }, style = ItemTitle)
+            Text(info.text, style = ItemTextStyle, modifier = Modifier.padding(top = 1.dp))
+        }
+        androidx.compose.material3.Switch(
+            checked = m.shortcutOn(info.id), onCheckedChange = { m.switchShortcut(info.id, it) },
+            colors = androidx.compose.material3.SwitchDefaults.colors(
+                checkedTrackColor = accent, checkedThumbColor = Palette.onAccent, checkedBorderColor = accent,
+                uncheckedTrackColor = Color(0xFF34353A), uncheckedThumbColor = Palette.muted, uncheckedBorderColor = Color(0xFF34353A)),
+            modifier = Modifier.padding(start = 12.dp),
+        )
+    }
+    if (picking) CalenPopup("Tap $number", { picking = false }, "Pick what tapping the $number on the face does.") {
+        Spacer(Modifier.height(16.dp))
+        PopupRows(SHORTCUT_INFO.size) { i ->
+            val s = SHORTCUT_INFO[i]
+            val holder = NUMBERS.first { m.shortcutAt(it) == s.id }
+            Row(Modifier.fillMaxWidth().clickable(role = Role.Button) { m.assignShortcut(number, s.id); picking = false }
+                .padding(horizontal = 18.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                Icon(s.icon, null, tint = if (holder == number) accent else Palette.muted, modifier = Modifier.size(20.dp))
+                Text(s.name, style = BodyStyle.copy(color = if (holder == number) accent else Palette.text), modifier = Modifier.weight(1f))
+                Text(if (holder == number) "Now" else "On $holder", style = HintStyle)
+            }
+        }
+        Spacer(Modifier.height(16.dp))
+        SecondaryButton("Cancel", Modifier.fillMaxWidth()) { picking = false }
+    }
 }

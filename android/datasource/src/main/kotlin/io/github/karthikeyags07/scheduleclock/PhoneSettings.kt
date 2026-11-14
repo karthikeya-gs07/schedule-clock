@@ -17,11 +17,23 @@ object PhoneSettings {
         prefs(context).edit().apply {
             map.getString("colourway")?.let { putString("colourway", it) }
             if (map.containsKey("secondZone")) putString("secondZone", map.getString("secondZone"))
+            if (map.containsKey("shortcuts")) putString("shortcuts", map.getString("shortcuts"))
             listOf("buzzStart", "buzzMiddle", "buzzEnd", "buzzDnd", "clock24", "showAmPm", "compass", "agenda", "flashlight", "countdown", "hideAodDetails").forEach { if (map.containsKey(it)) putBoolean(it, map.getBoolean(it)) }
         }.apply()
     }
 
     /** Clock format chosen on the phone (RULES T6): 12-hour with AM/PM until it says otherwise. */
+    /** Which shortcut each of 12, 3, 6 and 9 opens (RULES A24): "compass,countdown,agenda,flashlight" by default. */
+    val SHORTCUTS = listOf("compass", "countdown", "agenda", "flashlight")
+    private val NUMBERS = listOf(12, 3, 6, 9)
+    fun shortcutAt(context: Context, number: Int): String {
+        val layout = prefs(context).getString("shortcuts", "")!!.split(',').filter { it in SHORTCUTS }
+        val order = if (layout.toSet().size == 4) layout else SHORTCUTS
+        return order[NUMBERS.indexOf(number).coerceAtLeast(0)]
+    }
+    fun shortcutOn(context: Context, shortcut: String) = when (shortcut) {
+        "compass" -> compass(context); "countdown" -> countdown(context); "agenda" -> agenda(context); else -> flashlight(context)
+    }
     fun hideAodDetails(context: Context) = prefs(context).getBoolean("hideAodDetails", false)
     fun countdown(context: Context) = prefs(context).getBoolean("countdown", true)
     fun flashlight(context: Context) = prefs(context).getBoolean("flashlight", false)

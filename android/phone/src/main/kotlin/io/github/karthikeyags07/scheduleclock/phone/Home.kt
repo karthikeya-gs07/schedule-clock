@@ -280,12 +280,11 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
             val cx = left + d(79.2f) + faceSize / 2
             val cy = faceTopCentre + faceSize / 2
             val reach = faceSize / 2 + gap + btn / 2
-            listOf(
-                Triple(Icons.compass, "Compass on 12", m.compass to { v: Boolean -> m.switchCompass(v) }) to (0.dp to -reach),
-                Triple(Icons.timer, "Meeting countdown on 3", m.countdown to { v: Boolean -> m.switchCountdown(v) }) to (reach to 0.dp),
-                Triple(Icons.calendar, "All events on 6", m.agenda to { v: Boolean -> m.switchAgenda(v) }) to (0.dp to reach),
-                Triple(Icons.torch, "Flashlight on 9", m.flashlight to { v: Boolean -> m.switchFlashlight(v) }) to (-reach to 0.dp),
-            ).forEach { (item, at) ->
+            // Each number shows the shortcut Settings puts there (RULES A24).
+            listOf(12 to (0.dp to -reach), 3 to (reach to 0.dp), 6 to (0.dp to reach), 9 to (-reach to 0.dp)).map { (n, pos) ->
+                val info = shortcutInfo(m.shortcutAt(n))
+                Triple(info.icon, "${info.name} on $n", m.shortcutOn(info.id) to { v: Boolean -> m.switchShortcut(info.id, v) }) to pos
+            }.forEach { (item, at) ->
                 val (icon, label, state) = item
                 val (on, set) = state
                 // Like the nav bar's selected icon: no button shape, just the icon, in the colourway's colour with a
@@ -829,10 +828,10 @@ fun AboutScreen(colourway: String, onBack: () -> Unit, onRunSetup: () -> Unit) {
             FaceIcon({ c -> todGlyphs(c) }, Color(0xFFA9B8E0), "Later today or tomorrow",
                 "Sunrise, sun, sunset or moon before the time: a meeting on the inner line, by when it starts (morning, afternoon, evening or night). For a meeting tomorrow, the place line also starts with \"Tomorrow\".", tall = true)
             AboutItem("Second time zone", "Pick one more place in Settings and a small triangle sits on the ring at its time. It points clockwise when that place is ahead of you, and anticlockwise when it's behind.")
-            AboutItem("Meeting countdown", "Tap the 3 on the face to see how long is left in your meeting, or how long until the next one, with a ring that runs down round the edge.")
-            AboutItem("Flashlight", "With it on in Settings, tap the 9 on the face to turn the screen bright white. Tap anywhere to turn it off.")
-            AboutItem("All events", "Tap the 6 on the face to see every meeting from now to the end of tomorrow, listed on your watch. You can turn this off in Settings.")
-            AboutItem("Compass", "Tap the 12 on the face to open the compass. The degree dial turns as you do; when its coloured 0° line meets the arrow at the top, you're facing north.")
+            AboutItem("Meeting countdown", "Tap its number on the face (the 3 unless you move it in Settings) to see how long is left in your meeting, or how long until the next one, with a ring that runs down round the edge.")
+            AboutItem("Flashlight", "With it on in Settings, tap its number on the face (the 9 unless you move it) to turn the screen bright white. Tap anywhere to turn it off.")
+            AboutItem("All events", "Tap its number on the face (the 6 unless you move it in Settings) to see every meeting from now to the end of tomorrow, listed on your watch. You can turn this off in Settings.")
+            AboutItem("Compass", "With it on in Settings, tap its number on the face (the 12 unless you move it) to open the compass. The degree dial turns as you do; when its coloured 0° line meets the arrow at the top, you're facing north.")
             AboutItem("All your calendars, one ring", "Work, personal, family: every calendar you turn on shows together on the same ring, in the same colours. The watch doesn't tell them apart.")
             AboutItem("All-day events", "Not shown on the watch, and they never count as a double booking: your meetings that day look as usual.")
 

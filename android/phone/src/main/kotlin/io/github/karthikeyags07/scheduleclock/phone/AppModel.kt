@@ -248,6 +248,22 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
         AppPrefs.sendSettings(context)
     }
 
+    // ---- Face shortcuts (RULES A24): which one each of 12, 3, 6, 9 opens, and each one's switch ----
+    var shortcutLayout by mutableStateOf(AppPrefs.shortcutLayout(context))
+    /** Puts [shortcut] on [number]; the shortcut that was there moves to [shortcut]'s old number (a swap). */
+    fun assignShortcut(number: Int, shortcut: String) {
+        val at = NUMBERS.indexOf(number); val from = shortcutLayout.indexOf(shortcut)
+        if (at < 0 || from < 0 || at == from) return
+        shortcutLayout = shortcutLayout.toMutableList().also { it[from] = it[at]; it[at] = shortcut }
+        AppPrefs.setShortcutLayout(context, shortcutLayout)
+        AppPrefs.sendSettings(context)
+    }
+    fun shortcutAt(number: Int) = shortcutLayout[NUMBERS.indexOf(number)]
+    fun shortcutOn(shortcut: String) = when (shortcut) { "compass" -> compass; "countdown" -> countdown; "agenda" -> agenda; else -> flashlight }
+    fun switchShortcut(shortcut: String, on: Boolean) = when (shortcut) {
+        "compass" -> switchCompass(on); "countdown" -> switchCountdown(on); "agenda" -> switchAgenda(on); else -> switchFlashlight(on)
+    }
+
     var clock24 by mutableStateOf(AppPrefs.clock24(context))
     var showAmPm by mutableStateOf(AppPrefs.showAmPm(context))
     private fun clockParam() = if (clock24) "24" else if (showAmPm) "12" else "12plain"
@@ -330,5 +346,18 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
 }
 
 private val PICK_ON_WATCH = "Pick CalenTime on your watch" to "Touch and hold your watch face, swipe to CalenTime and tap it."
+
+/** The four numbers on the face that can hold a shortcut, in Settings order. */
+val NUMBERS = listOf(12, 3, 6, 9)
+
+/** A face shortcut's name, what it does, and its icon (RULES A24). */
+data class Shortcut(val id: String, val name: String, val text: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
+val SHORTCUT_INFO = listOf(
+    Shortcut("compass", "Compass", "Opens a compass on your watch", Icons.compass),
+    Shortcut("countdown", "Meeting countdown", "How long is left in your meeting, or until the next one", Icons.timer),
+    Shortcut("agenda", "All events", "Everything from now to the end of tomorrow", Icons.calendar),
+    Shortcut("flashlight", "Flashlight", "Turns the screen bright white; tap again to turn it off", Icons.torch),
+)
+fun shortcutInfo(id: String) = SHORTCUT_INFO.first { it.id == id }
 
 fun lookName(c: String) = Looks.of(c).name

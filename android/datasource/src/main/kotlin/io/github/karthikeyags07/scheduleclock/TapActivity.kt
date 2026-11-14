@@ -25,6 +25,10 @@ import kotlinx.coroutines.launch
  * (nothing from the phone, no access on the watch), any tap on the ring opens [PermissionActivity].
  */
 class TapActivity : Activity() {
+    private companion object {
+        val SPOTS = mapOf("/compass" to 12, "/countdown" to 3, "/agenda" to 6, "/flashlight" to 9)
+    }
+
     /**
      * The face's shortcuts (compass, all events, flashlight) each open in a task of their own, cleared first: a
      * shortcut left in the background (home instead of back) never comes back in place of the one just tapped.
@@ -43,26 +47,20 @@ class TapActivity : Activity() {
 
         if (uri?.path == "/select" && SpikeSchedule.needsCalendarSetup(this)) {
             startActivity(Intent(this, PermissionActivity::class.java))
-        } else if (uri?.path == "/countdown") {
-            // Settings → Tap 3 for meeting countdown on the phone; off, the 3 acts like the rest of the 3–4 hour.
-            if (PhoneSettings.countdown(this)) openFresh(CountdownActivity::class.java)
+        } else if (uri?.path in SPOTS) {
+            // The face's four tap spots name a number (the links keep their first names: /compass is the 12, /countdown
+            // the 3, /agenda the 6, /flashlight the 9). Settings on the phone says which shortcut each number opens and
+            // whether it's on (RULES A24); off, the number acts like the rest of its hour.
+            val number = SPOTS.getValue(uri!!.path!!)
+            val shortcut = PhoneSettings.shortcutAt(this, number)
+            if (PhoneSettings.shortcutOn(this, shortcut)) openFresh(when (shortcut) {
+                "compass" -> CompassActivity::class.java
+                "countdown" -> CountdownActivity::class.java
+                "agenda" -> AgendaActivity::class.java
+                else -> FlashlightActivity::class.java
+            })
             else if (SpikeSchedule.needsCalendarSetup(this)) startActivity(Intent(this, PermissionActivity::class.java))
-            else SpikeSchedule.tapHour(this, 3)
-        } else if (uri?.path == "/flashlight") {
-            // Settings → Tap 9 for flashlight on the phone; off, the 9 acts like the rest of the 9–10 hour.
-            if (PhoneSettings.flashlight(this)) openFresh(FlashlightActivity::class.java)
-            else if (SpikeSchedule.needsCalendarSetup(this)) startActivity(Intent(this, PermissionActivity::class.java))
-            else SpikeSchedule.tapHour(this, 9)
-        } else if (uri?.path == "/agenda") {
-            // Settings → Tap 6 for all events on the phone; off, the 6 acts like the rest of the 6–7 hour.
-            if (PhoneSettings.agenda(this)) openFresh(AgendaActivity::class.java)
-            else if (SpikeSchedule.needsCalendarSetup(this)) startActivity(Intent(this, PermissionActivity::class.java))
-            else SpikeSchedule.tapHour(this, 6)
-        } else if (uri?.path == "/compass") {
-            // Settings → Compass on the phone; off, the 12 acts like the rest of the 12–1 hour.
-            if (PhoneSettings.compass(this)) openFresh(CompassActivity::class.java)
-            else if (SpikeSchedule.needsCalendarSetup(this)) startActivity(Intent(this, PermissionActivity::class.java))
-            else SpikeSchedule.tapHour(this, 0)
+            else SpikeSchedule.tapHour(this, number % 12)
         } else if (uri?.path == "/release") {
             SpikeSchedule.release(this)
         } else if (test && uri?.path == "/buzz") {

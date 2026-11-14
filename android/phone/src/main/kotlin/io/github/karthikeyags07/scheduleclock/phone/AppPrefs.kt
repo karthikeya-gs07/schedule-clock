@@ -71,6 +71,11 @@ object AppPrefs {
     /** Always-on shows the ring and the time but not the meeting's title, time or place (RULES A2c). */
     fun hideAodDetails(context: Context) = prefs(context).getBoolean("hideAodDetails", false)
     fun setHideAodDetails(context: Context, on: Boolean) = prefs(context).edit().putBoolean("hideAodDetails", on).apply()
+    /** Which shortcut each of 12, 3, 6 and 9 opens, in that order (RULES A24). */
+    val SHORTCUTS = listOf("compass", "countdown", "agenda", "flashlight")
+    fun shortcutLayout(context: Context): List<String> =
+        prefs(context).getString("shortcuts", "")!!.split(',').filter { it in SHORTCUTS }.takeIf { it.toSet().size == 4 } ?: SHORTCUTS
+    fun setShortcutLayout(context: Context, layout: List<String>) = prefs(context).edit().putString("shortcuts", layout.joinToString(",")).apply()
     fun clock24(context: Context) = prefs(context).getBoolean("clock24", false)
     fun showAmPm(context: Context) = prefs(context).getBoolean("showAmPm", true)
     fun setClock(context: Context, clock24: Boolean, showAmPm: Boolean) =
@@ -89,6 +94,7 @@ object AppPrefs {
             dataMap.putBoolean("countdown", countdown(context))
             dataMap.putBoolean("hideAodDetails", hideAodDetails(context))
             dataMap.putString("secondZone", secondZone(context) ?: "")
+            dataMap.putString("shortcuts", shortcutLayout(context).joinToString(","))
         }.asPutDataRequest().setUrgent()
         Wearable.getDataClient(context).putDataItem(request)
     }
