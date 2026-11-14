@@ -64,7 +64,7 @@ object Palette {
 @OptIn(ExperimentalTextApi::class)   // FontVariation: picks the weight from the variable font
 private fun sans(weight: Int) = Font(R.font.google_sans_flex, FontWeight(weight), variationSettings = FontVariation.Settings(FontVariation.weight(weight)))
 val GoogleSans = FontFamily(sans(400), sans(500), sans(600), sans(700))
-val TitleStyle = TextStyle(fontFamily = GoogleSans, fontWeight = FontWeight.Medium, fontSize = 28.sp, lineHeight = 34.sp, color = Palette.text)
+val TitleStyle = TextStyle(fontFamily = GoogleSans, fontWeight = FontWeight.SemiBold, fontSize = 28.sp, lineHeight = 34.sp, color = Palette.text)
 val BodyStyle = TextStyle(fontFamily = GoogleSans, fontSize = 15.sp, lineHeight = 21.sp, color = Palette.text)
 val HintStyle = TextStyle(fontFamily = GoogleSans, fontSize = 13.sp, lineHeight = 18.sp, color = Palette.muted)
 val SubStyle = TextStyle(fontFamily = GoogleSans, fontSize = 14.sp, lineHeight = 20.sp, color = Palette.muted)

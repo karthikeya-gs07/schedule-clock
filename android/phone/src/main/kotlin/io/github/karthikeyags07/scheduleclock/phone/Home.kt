@@ -657,7 +657,7 @@ fun WatchStatusPanel(m: AppModel, haze: HazeState, onAllow: () -> Unit, onInstal
                     transformOrigin = androidx.compose.ui.graphics.TransformOrigin(.12f, 0f)
                 }
                 .clip(RoundedCornerShape(32.dp))
-                .hazeEffect(haze, HazeStyle(Home.background, HazeTint(Color(0xFF1C1C20).copy(alpha = .8f)), blurRadius = 40.dp, noiseFactor = .1f))
+                .hazeEffect(haze, HazeStyle(Home.background, HazeTint(Color(0xFF0E0E10).copy(alpha = .92f)), blurRadius = 40.dp, noiseFactor = .1f))
                 .border(1.dp, Color.White.copy(alpha = .08f), RoundedCornerShape(32.dp))
                 .clickable(interactionSource = null, indication = null) {}
                 .padding(22.dp),
@@ -677,15 +677,12 @@ fun WatchStatusPanel(m: AppModel, haze: HazeState, onAllow: () -> Unit, onInstal
             Text(line, style = SubStyle.copy(color = Palette.body), modifier = Modifier.padding(top = 14.dp, bottom = 18.dp))
 
             // The four things that have to be right
-            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(Color.White.copy(alpha = .05f))) {
+            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(Color.White.copy(alpha = .04f))) {
                 items.forEachIndexed { i, item ->
-                    if (i > 0) Box(Modifier.padding(start = 64.dp).fillMaxWidth().height(1.dp).background(Color.White.copy(alpha = .06f)))
-                    Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically,
+                    if (i > 0) Box(Modifier.padding(horizontal = 18.dp).fillMaxWidth().height(1.dp).background(Color.White.copy(alpha = .06f)))
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 17.dp), verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                        Box(Modifier.size(36.dp).clip(CircleShape).background(Color.White.copy(alpha = .06f)), contentAlignment = Alignment.Center) {
-                            Icon(item.icon, null, tint = Palette.text, modifier = Modifier.size(18.dp))
-                        }
-                        Column(Modifier.weight(1f)) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                             Text(item.label, style = BodyStyle)
                             Text(item.value, style = HintStyle)
                         }
@@ -752,12 +749,12 @@ fun AboutScreen(colourway: String, onBack: () -> Unit, onRunSetup: () -> Unit) {
             }
             Text("Version $version", style = SubStyle, modifier = Modifier.padding(top = 4.dp, bottom = 18.dp))
             Text("Your day, around the clock. CalenTime turns your watch face into a picture of the next 12 hours: every meeting is an arc on the ring, so one glance tells you how busy you are, what's next and how much time you have before it.",
-                style = PageBody)
+                style = AboutText.copy(color = Palette.body))
 
             // Each part of the face as a close-up of the face in your colourway, on the sample day (plus a late call,
             // so the inner line has something on it); the arcs at 11:10 so one meeting is under way.
             val day = remember { SampleDay.meetings() + SampleDay.lateCall() }
-            PageHeading("Reading the face")
+            AboutHeading("Reading the face")
             FacePart(colourway, "arcs", day, 670, "Arcs",
                 "Each meeting is an arc at its time on the 12-hour ring. The part already gone is dimmer.")
             FacePart(colourway, "now", day, SampleDay.SAMPLE_MINUTE, "The dot",
@@ -770,27 +767,27 @@ fun AboutScreen(colourway: String, onBack: () -> Unit, onRunSetup: () -> Unit) {
                 "A private meeting. Its title and place never leave your phone.")
             FacePart(colourway, "middle", day, SampleDay.SAMPLE_MINUTE, "Middle",
                 "The time, and what's next. Tap an hour on the ring to see what's on then; tap the details to go back.")
-            IconItem(Icons.calendar, "All your calendars, one ring", "Work, personal, family: every calendar you turn on shows together on the same ring, in the same colours. The watch doesn't tell them apart.")
-            IconItem(Icons.calendar, "All-day events", "Not shown on the watch, and they never count as a double booking: your meetings that day look as usual.")
+            AboutItem("All your calendars, one ring", "Work, personal, family: every calendar you turn on shows together on the same ring, in the same colours. The watch doesn't tell them apart.")
+            AboutItem("All-day events", "Not shown on the watch, and they never count as a double booking: your meetings that day look as usual.")
 
             ItemDivider(Modifier.padding(top = 8.dp))
-            PageHeading("Buzzes")
-            IconItem(Icons.buzz, "2 min before", "One short buzz to wrap up and join.")
-            IconItem(Icons.clock, "Halfway", "One long buzz, for meetings of 15 minutes or more.")
-            IconItem(Icons.buzz, "5 min before the end", "Two short buzzes, for meetings of 10 minutes or more.")
+            AboutHeading("Buzzes")
+            AboutItem("2 min before", "One short buzz to wrap up and join.")
+            AboutItem("Halfway", "One long buzz, for meetings of 15 minutes or more.")
+            AboutItem("5 min before the end", "Two short buzzes, for meetings of 10 minutes or more.")
             ItemDivider(Modifier.padding(top = 8.dp))
-            PageHeading("Privacy")
-            IconItem(Icons.lock, "Phone to watch only", "Your calendar goes from your phone to your own watch and nowhere else. CalenTime has no internet access, no accounts, no ads and no tracking.")
+            AboutHeading("Privacy")
+            AboutItem("Phone to watch only", "Your calendar goes from your phone to your own watch and nowhere else. CalenTime has no internet access, no accounts, no ads and no tracking.")
             val context = androidx.compose.ui.platform.LocalContext.current
-            SettingsShortcut(Icons.lock, "Read the privacy policy", Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+            SettingsShortcut(null, "Read the privacy policy", Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
                 runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(PRIVACY_LINK))) }
             }
             ItemDivider(Modifier.padding(top = 8.dp))
-            PageHeading("Credits")
-            IconItem(Icons.info, "Fonts", "Google Sans Flex and Anta, under the SIL Open Font License.")
+            AboutHeading("Credits")
+            AboutItem("Fonts", "Google Sans Flex and Anta, under the SIL Open Font License.")
             ItemDivider(Modifier.padding(top = 8.dp))
-            PageHeading("Share")
-            IconItem(Icons.share, "Tell a friend", "Send the Play Store link to anyone with a Wear OS watch.")
+            AboutHeading("Share")
+            AboutItem("Tell a friend", "Send the Play Store link to anyone with a Wear OS watch.")
             ShareButton(Modifier.fillMaxWidth().padding(bottom = 12.dp))
 
             Spacer(Modifier.height(20.dp))
@@ -800,6 +797,20 @@ fun AboutScreen(colourway: String, onBack: () -> Unit, onRunSetup: () -> Unit) {
 }
 
 
+// About's type (2026-11-14): larger than the other pages, and no icons.
+private val AboutItemTitle = BodyStyle.copy(fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.SemiBold)
+private val AboutText = BodyStyle.copy(fontSize = 16.sp, lineHeight = 23.sp, color = Palette.muted)
+
+@Composable
+private fun AboutHeading(text: String) =
+    Text(text, style = TitleStyle.copy(fontSize = 23.sp, lineHeight = 29.sp), modifier = Modifier.padding(top = 32.dp, bottom = 14.dp))
+
+@Composable
+private fun AboutItem(title: String, text: String) = Column(Modifier.fillMaxWidth().padding(bottom = 22.dp)) {
+    Text(title, style = AboutItemTitle)
+    Text(text, style = AboutText, modifier = Modifier.padding(top = 3.dp))
+}
+
 /** One part of the face: a close-up on top, its name and what it means below. */
 @Composable
 private fun FacePart(colourway: String, detail: String, day: List<Meeting>, at: Int, title: String, text: String, divider: Boolean = true) {
@@ -807,8 +818,8 @@ private fun FacePart(colourway: String, detail: String, day: List<Meeting>, at: 
         Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).border(1.dp, Color.White.copy(alpha = .07f), RoundedCornerShape(24.dp))) {
             FaceDetail(colourway, detail, day, at)
         }
-        Text(title, style = BodyStyle.copy(fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Medium), modifier = Modifier.padding(top = 14.dp))
-        Text(text, style = ItemTextStyle, modifier = Modifier.padding(top = 2.dp))
+        Text(title, style = AboutItemTitle, modifier = Modifier.padding(top = 14.dp))
+        Text(text, style = AboutText, modifier = Modifier.padding(top = 3.dp))
     }
     if (divider) ItemDivider(Modifier.padding(bottom = 22.dp))
 }
@@ -832,19 +843,17 @@ private fun ShareButton(modifier: Modifier) {
         },
         horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.share, null, tint = Palette.text, modifier = Modifier.size(18.dp))
-        Spacer(Modifier.width(10.dp))
         Text("Share CalenTime", style = BodyStyle.copy(fontSize = 16.sp, fontWeight = FontWeight.Medium))
     }
 }
 
 /** A frosted button that opens one of the phone's settings screens (watch status). */
 @Composable
-private fun SettingsShortcut(icon: ImageVector, text: String, modifier: Modifier, onClick: () -> Unit) = Row(
+private fun SettingsShortcut(icon: ImageVector?, text: String, modifier: Modifier, onClick: () -> Unit) = Row(
     modifier.height(52.dp).clip(RoundedCornerShape(26.dp)).frostCard(RoundedCornerShape(26.dp)).clickable(role = Role.Button, onClick = onClick),
     horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
 ) {
-    Icon(icon, null, tint = Palette.text, modifier = Modifier.size(18.dp))
+    if (icon != null) Icon(icon, null, tint = Palette.text, modifier = Modifier.size(18.dp))
     Spacer(Modifier.width(8.dp))
     Text(text, style = BodyStyle.copy(fontWeight = FontWeight.Medium))
 }
@@ -855,7 +864,5 @@ fun RunSetupButton(onClick: () -> Unit, modifier: Modifier = Modifier) = Row(
     modifier.height(52.dp).clip(RoundedCornerShape(26.dp)).frostCard(RoundedCornerShape(26.dp)).clickable(role = Role.Button, onClick = onClick),
     horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
 ) {
-    Icon(Icons.sync, null, tint = Palette.text, modifier = Modifier.size(18.dp))
-    Spacer(Modifier.width(10.dp))
     Text("Run setup again", style = BodyStyle.copy(fontSize = 16.sp, fontWeight = FontWeight.Medium))
 }

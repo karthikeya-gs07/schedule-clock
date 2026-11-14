@@ -120,6 +120,8 @@ fun SettingsScreen(m: AppModel, onRunSetup: () -> Unit) {
     PageHeading("Updates")
     val face = m.link.face
     VersionRow("Phone app", BuildConfig.VERSION_NAME)
+    FrostButton("Check for app update", m.checkingApp, Modifier.fillMaxWidth().padding(top = 4.dp)) { m.checkAppUpdate() }
+    Spacer(Modifier.height(18.dp))
     VersionRow("Watch app", when {
         face == null -> if (m.link.watch == null) "Not connected" else "Not installed"
         face.versionName.isNotEmpty() -> face.versionName
@@ -127,10 +129,7 @@ fun SettingsScreen(m: AppModel, onRunSetup: () -> Unit) {
         face.version > 0 -> "Build ${face.version}"
         else -> "Older than 0.11.1"
     })
-    Spacer(Modifier.height(14.dp))
-    FrostButton("Check for app update", m.checkingApp, Modifier.fillMaxWidth()) { m.checkAppUpdate() }
-    Spacer(Modifier.height(10.dp))
-    FrostButton("Check for watch update", m.checkingWatch, Modifier.fillMaxWidth()) { m.checkWatchUpdate() }
+    FrostButton("Check for watch update", m.checkingWatch, Modifier.fillMaxWidth().padding(top = 4.dp)) { m.checkWatchUpdate() }
     // Setup again (also on About): calendar access, calendars and the face on the watch, from the start.
     ItemDivider(Modifier.padding(top = 8.dp))
     PageHeading("Setup")
