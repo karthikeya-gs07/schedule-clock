@@ -94,7 +94,7 @@ object CalendarSource {
         return Meeting(
             startMin = startMin,
             endMin = maxOf(endMin, startMin + 1),
-            title = title?.takeIf { it.isNotBlank() } ?: "(No title)",
+            title = title?.takeIf { it.isNotBlank() } ?: "Busy",   // an event with no title reads "Busy" everywhere (RULES C14)
             where = where.orEmpty(),
             private = private,   // C13
             allDay = allDay,

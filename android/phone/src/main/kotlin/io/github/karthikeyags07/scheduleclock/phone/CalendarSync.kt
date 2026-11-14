@@ -89,7 +89,8 @@ object CalendarSync {
                 out += Meeting(
                     begin = begin,
                     end = long(c, Instances.END) ?: begin,
-                    title = string(c, Instances.TITLE).orEmpty(),
+                    // An event with no title reads "Busy" everywhere: drawer, previews and the watch (RULES C14).
+                    title = string(c, Instances.TITLE)?.takeIf { it.isNotBlank() } ?: "Busy",
                     where = string(c, Instances.EVENT_LOCATION).orEmpty(),
                     allDay = int(c, Instances.ALL_DAY) == 1,
                     private = access == Events.ACCESS_PRIVATE || access == Events.ACCESS_CONFIDENTIAL,

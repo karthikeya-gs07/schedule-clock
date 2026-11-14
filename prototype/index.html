@@ -1100,7 +1100,7 @@ function timeOfDay(min) {
   return h >= 5 && h < 12 ? 'morning' : h >= 12 && h < 17 ? 'afternoon' : h >= 17 && h < 21 ? 'evening' : 'night';
 }
 const ARROW_W = 20, ARROW_GAP = 10, LOCK_W = 16, LOCK_GAP = 9;
-const titleOf = e => e.private ? 'Private' : e.title;          // private details never reach the face
+const titleOf = e => e.private ? 'Private' : (e.title || 'Busy');   // private details never reach the face; no title reads "Busy" (C14)
 
 // Long titles (C9a): a title that doesn't fit at the 24 px minimum slowly scrolls through a fixed window
 // (hold, glide, hold, fade, restart) so the whole name can be read. In ambient mode, and with reduced motion,
