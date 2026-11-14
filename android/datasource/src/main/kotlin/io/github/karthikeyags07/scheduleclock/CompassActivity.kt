@@ -111,13 +111,13 @@ private class CompassView(context: Context, private val theme: Theme) : View(con
             val a = Math.toRadians(at.toDouble())
             val major = d % 30 == 0; val mid = d % 10 == 0
             val len = if (major) 16f else if (mid) 10f else 5f
-            val r0 = r - 12f * s; val r1 = r - (12f + len) * s
+            val r0 = 225f * s; val r1 = (225f - len - 8f) * s   // from the very edge of the screen
             p.strokeWidth = (if (d == 0) 5f else if (major) 2.5f else if (mid) 1.8f else 1.2f) * s
             val base = if (major) Color.WHITE else if (mid) blend(Color.WHITE, theme.background, .35f) else blend(Color.WHITE, theme.background, .55f)
             p.color = if (d == 0) theme.accent else if (off < 45f) blend(theme.accent, base, off / 45f) else base
             canvas.drawLine(cx + r0 * sin(a).toFloat(), cy - r0 * cos(a).toFloat(), cx + r1 * sin(a).toFloat(), cy - r1 * cos(a).toFloat(), p)
             if (major) {
-                val rl = r - 60f * s   // well inside the longest spokes, so wide numbers (240, 210…) stay clear
+                val rl = r - 44f * s   // well inside the longest spokes, so wide numbers (240, 210…) stay clear
                 text.textSize = 21f * s; text.color = if (d == 0) theme.accent else grey
                 val label = when (d) { 0 -> "N"; 90 -> "E"; 180 -> "S"; 270 -> "W"; else -> "$d" }   // the four directions by letter
                 val letter = d % 90 == 0
@@ -126,12 +126,9 @@ private class CompassView(context: Context, private val theme: Theme) : View(con
                 text.isFakeBoldText = false
             }
         }
-        // A faint inner ring, with room between it and the degree numbers.
-        p.style = Paint.Style.STROKE; p.strokeWidth = 1.5f * s; p.color = blend(theme.background, Color.WHITE, .1f)
-        canvas.drawCircle(cx, cy, r - 100f * s, p)
         // The arrow, fixed at the top on the ring, pointing in, with slightly rounded corners.
         p.style = Paint.Style.FILL; p.color = theme.accent; p.pathEffect = android.graphics.CornerPathEffect(4f * s)
-        val tip = cy - r + 30f * s; val base = cy - r - 2f * s
+        val tip = cy - 225f * s + 34f * s; val base = cy - 225f * s   // from the edge
         canvas.drawPath(Path().apply { moveTo(cx, tip); lineTo(cx - 12f * s, base); lineTo(cx + 12f * s, base); close() }, p)
         p.pathEffect = null
         // Middle: the heading, in the arrow's colour and the face's font.
