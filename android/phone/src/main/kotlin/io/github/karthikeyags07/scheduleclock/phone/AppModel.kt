@@ -218,6 +218,13 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
         AppPrefs.sendSettings(context)
     }
 
+    var flashlight by mutableStateOf(AppPrefs.flashlight(context))
+    fun switchFlashlight(on: Boolean) {
+        AppPrefs.setFlashlight(context, on)
+        flashlight = on
+        AppPrefs.sendSettings(context)
+    }
+
     var clock24 by mutableStateOf(AppPrefs.clock24(context))
     var showAmPm by mutableStateOf(AppPrefs.showAmPm(context))
     private fun clockParam() = if (clock24) "24" else if (showAmPm) "12" else "12plain"

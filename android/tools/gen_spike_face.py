@@ -528,6 +528,11 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
       <Rectangle x="0" y="0" width="88" height="86"><Fill color="#00000000"/></Rectangle>
       <Launch target="app://{PKG}/compass"/>
     </PartDraw>
+    <!-- A21: the 3 turns the screen into a flashlight (on top of the hour hotspots there) -->
+    <PartDraw name="flashlight_tap" x="364" y="181" width="86" height="88">
+      <Rectangle x="0" y="0" width="86" height="88"><Fill color="#00000000"/></Rectangle>
+      <Launch target="app://{PKG}/flashlight"/>
+    </PartDraw>
     <!-- A20: the 6 opens all events (on top of the hour hotspots there) -->
     <PartDraw name="agenda_tap" x="181" y="364" width="88" height="86">
       <Rectangle x="0" y="0" width="88" height="86"><Fill color="#00000000"/></Rectangle>

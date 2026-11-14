@@ -33,6 +33,15 @@
             android:taskAffinity=".colourswap"
             android:theme="@android:style/Theme.DeviceDefault" />
 
+        <!-- The flashlight, opened by tapping the 3 on the face (RULES A21). -->
+        <activity
+            android:name=".FlashlightActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=".flashlight"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+
         <!-- All events, opened by tapping the 6 on the face (RULES A20). -->
         <activity
             android:name=".AgendaActivity"
