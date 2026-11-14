@@ -268,7 +268,11 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
 
         // ---- Watchface: the four face shortcuts round the face (RULES A23): 12 compass, 3 countdown, 6 all events,
         // 9 flashlight. Tapping one switches it on or off, as in Settings; on, it glows in the colourway's colour. ----
-        if (pickAlpha > 0f) {
+        // They wait for the page's own transition to finish, then glide in; leaving, they go out first, quickly.
+        val settled = watchMode && p > .99f
+        val iconsIn by animateFloatAsState(if (settled) 1f else 0f,
+            if (settled) tween(420, easing = FastOutSlowInEasing) else tween(200), label = "shortcutsIn")
+        if (iconsIn > 0f) {
             val accent = accentFor(shown)
             val btn = 40.dp; val gap = 20.dp
             val cx = left + d(79.2f) + faceSize / 2
@@ -290,7 +294,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                     // Glides in from its own side (compass from the top, countdown from the right, all events from the
                     // bottom, flashlight from the left) as it fades in with the page, and back out the same way.
                     .graphicsLayer {
-                        val e = pickAlpha * pickAlpha * (3f - 2f * pickAlpha)   // smoothstep: soft at both ends
+                        val e = iconsIn
                         alpha = e
                         val dist = (1f - e) * 26.dp.toPx()
                         translationX = kotlin.math.sign(at.first.value) * dist
