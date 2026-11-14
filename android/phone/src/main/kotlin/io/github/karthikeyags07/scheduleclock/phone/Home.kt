@@ -787,8 +787,12 @@ fun AboutScreen(m: AppModel, onBack: () -> Unit, onRunSetup: () -> Unit) {
     val colourway = m.colourway
     val context = androidx.compose.ui.platform.LocalContext.current
     val version = context.packageManager.getPackageInfo(context.packageName, 0).versionName
+    // Four tabs (2026-11-14): Face, Buzzes, Icons (icons on the face and shortcuts), Privacy (with credits and share).
+    var tab by remember { mutableStateOf(0) }
+    val scroll = rememberScrollState()
+    LaunchedEffect(tab) { scroll.scrollTo(0) }
     Box(Modifier.fillMaxSize().stagePage(LocalAccent.current)) {
-        Column(Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState())
+        Column(Modifier.fillMaxSize().statusBarsPadding().verticalScroll(scroll)
             .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 40.dp).navigationBarsPadding()) {
             // The title, and close (×) on the far right, level with Today's info button (status bar + 44 dp, 57 dp
             // round): the same folded and in the unfolded right pane.
@@ -800,71 +804,102 @@ fun AboutScreen(m: AppModel, onBack: () -> Unit, onRunSetup: () -> Unit) {
                     Icon(Icons.close, null, tint = Palette.text, modifier = Modifier.size(22.dp))
                 }
             }
-            Text("Version $version", style = SubStyle, modifier = Modifier.padding(top = 4.dp, bottom = 18.dp))
-            Text("Your day, around the clock. CalenTime turns your watch face into a picture of the next 12 hours: every meeting is an arc on the ring, so one glance tells you how busy you are, what's next and how much time you have before it.",
-                style = AboutText.copy(color = Palette.body))
+            Text("Version $version", style = SubStyle, modifier = Modifier.padding(top = 4.dp, bottom = 16.dp))
+            AboutTabs(tab) { tab = it }
 
-            // Each part of the face as a close-up of the face in your colourway, on the sample day (plus a late call,
-            // so the inner line has something on it); the arcs at 11:10 so one meeting is under way.
-            val day = remember { SampleDay.meetings() + SampleDay.lateCall() }
-            AboutHeading("Reading the face")
-            FacePart(colourway, "arcs", day, 670, "Arcs",
-                "Each meeting is an arc at its time on the 12-hour ring. The part already gone is dimmer.")
-            FacePart(colourway, "now", day, SampleDay.SAMPLE_MINUTE, "The dot",
-                "Now. The faint trail behind it fades over the last two hours.")
-            FacePart(colourway, "lane", day, SampleDay.SAMPLE_MINUTE, "Inner line",
-                "Meetings later today that don't fit the next 12 hours yet. They move onto the ring 30 minutes after their slot frees up.")
-            FacePart(colourway, "clash", day, SampleDay.SAMPLE_MINUTE, "Two thin stripes",
-                "A double booking: two meetings at the same time. When a third joins, one stripe splits into two thin lines; at four or more, both do.")
-            FacePart(colourway, "private", day, SampleDay.SAMPLE_MINUTE, "Striped arc",
-                "A private meeting. Its title and place never leave your phone.")
-            FacePart(colourway, "middle", day, SampleDay.SAMPLE_MINUTE, "Middle",
-                "The time, and what's next. Tap an hour on the ring to see what's on then; tap the details to go back.")
-            AboutHeading("Icons on the face")
-            FaceIcon({ c -> arrowGlyph(c) }, LocalAccent.current, "Next meeting",
-                "The arrow before a title means the meeting shown is coming up next, while another one is still going on.")
-            FaceIcon({ c -> lockGlyph(c) }, Palette.muted, "Private meeting",
-                "The lock: the meeting is private, so the face shows \"Private\" and \"Details hidden\" instead of its title and place.")
-            FaceIcon({ c -> overlapGlyph(c) }, Color(0xFFFF7A59), "Overlapping meeting",
-                "Two linked rings, in coral, with the other meeting's name: you're double-booked. \"+1\" means more than one other meeting.")
-            FaceIcon({ c -> todGlyphs(c) }, Color(0xFFA9B8E0), "Later today or tomorrow",
-                "Sunrise, sun, sunset or moon before the time: a meeting on the inner line, by when it starts (morning, afternoon, evening or night). For a meeting tomorrow, the place line also starts with \"Tomorrow\".", tall = true)
-            // Second time zone (RULES R13): a picture of the ring with both triangles, then what they mean.
-            ZonePicture(colourway)
-            Text("Second time zone", style = AboutItemTitle, modifier = Modifier.padding(top = 14.dp))
-            Text("Pick one more place in Settings and a small triangle sits on the ring at that place's time. Pointing " +
-                "forward (clockwise), that place is ahead of you; pointing back (anticlockwise), it's behind.",
-                style = AboutText, modifier = Modifier.padding(top = 3.dp, bottom = 22.dp))
-            AboutItem("All your calendars, one ring", "Work, personal, family: every calendar you turn on shows together on the same ring, in the same colours. The watch doesn't tell them apart.")
-            AboutItem("All-day events", "Not shown on the watch, and they never count as a double booking: your meetings that day look as usual.")
-
-            ItemDivider(Modifier.padding(top = 8.dp))
-            AboutHeading("Shortcuts")
-            ShortcutsPicture(m)
-            Text("Tap a number on the face to open its shortcut. A lit icon is on; a grey one is off, and that number acts like the rest of its hour. Change them in Settings → Shortcuts on the face.",
-                style = AboutText, modifier = Modifier.padding(top = 14.dp, bottom = 22.dp))
-            ItemDivider(Modifier.padding(top = 8.dp))
-            AboutHeading("Buzzes")
-            AboutItem("2 min before", "One short buzz to wrap up and join.")
-            AboutItem("Halfway", "One long buzz, for meetings of 15 minutes or more.")
-            AboutItem("5 min before the end", "Two short buzzes, for meetings of 10 minutes or more.")
-            ItemDivider(Modifier.padding(top = 8.dp))
-            AboutHeading("Privacy")
-            AboutItem("Phone to watch only", "Your calendar goes from your phone to your own watch and nowhere else. CalenTime has no internet access, no accounts, no ads and no tracking.")
-            val context = androidx.compose.ui.platform.LocalContext.current
-            SettingsShortcut(null, "Read the privacy policy", Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-                runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(PRIVACY_LINK))) }
+            when (tab) {
+                0 -> {
+                    Text("Your day, around the clock. CalenTime turns your watch face into a picture of the next 12 hours: every meeting is an arc on the ring, so one glance tells you how busy you are, what's next and how much time you have before it.",
+                        style = AboutText.copy(color = Palette.body), modifier = Modifier.padding(top = 22.dp))
+                    // Each part of the face as a close-up of the face in your colourway, on the sample day (plus a late
+                    // call, so the inner line has something on it); the arcs at 11:10 so one meeting is under way.
+                    val day = remember { SampleDay.meetings() + SampleDay.lateCall() }
+                    AboutHeading("Reading the face")
+                    FacePart(colourway, "arcs", day, 670, "Arcs",
+                        "Each meeting is an arc at its time on the 12-hour ring. The part already gone is dimmer.")
+                    FacePart(colourway, "now", day, SampleDay.SAMPLE_MINUTE, "The dot",
+                        "Now. The faint trail behind it fades over the last two hours.")
+                    FacePart(colourway, "lane", day, SampleDay.SAMPLE_MINUTE, "Inner line",
+                        "Meetings later today that don't fit the next 12 hours yet. They move onto the ring 30 minutes after their slot frees up.")
+                    FacePart(colourway, "clash", day, SampleDay.SAMPLE_MINUTE, "Two thin stripes",
+                        "A double booking: two meetings at the same time. When a third joins, one stripe splits into two thin lines; at four or more, both do.")
+                    FacePart(colourway, "private", day, SampleDay.SAMPLE_MINUTE, "Striped arc",
+                        "A private meeting. Its title and place never leave your phone.")
+                    FacePart(colourway, "middle", day, SampleDay.SAMPLE_MINUTE, "Middle",
+                        "The time, and what's next. Tap an hour on the ring to see what's on then; tap the details to go back.", divider = false)
+                    // Second time zone (RULES R13): a picture of the ring with both triangles, then what they mean.
+                    ItemDivider(Modifier.padding(top = 8.dp))
+                    AboutHeading("Second time zone")
+                    ZonePicture(colourway)
+                    Text("Pick one more place in Settings and a small triangle sits on the ring at that place's time. Pointing " +
+                        "forward (clockwise), that place is ahead of you; pointing back (anticlockwise), it's behind.",
+                        style = AboutText, modifier = Modifier.padding(top = 14.dp, bottom = 22.dp))
+                    ItemDivider(Modifier.padding(top = 8.dp))
+                    AboutHeading("Your calendars")
+                    AboutItem("All your calendars, one ring", "Work, personal, family: every calendar you turn on shows together on the same ring, in the same colours. The watch doesn't tell them apart.")
+                    AboutItem("All-day events", "Not shown on the watch, and they never count as a double booking: your meetings that day look as usual.")
+                }
+                1 -> {
+                    AboutHeading("Buzzes")
+                    AboutItem("2 min before", "One short buzz to wrap up and join.")
+                    AboutItem("Halfway", "One long buzz, for meetings of 15 minutes or more.")
+                    AboutItem("5 min before the end", "Two short buzzes, for meetings of 10 minutes or more.")
+                    Text("Turn each one on or off, and choose whether they come through Do Not Disturb, in Settings.", style = AboutText)
+                }
+                2 -> {
+                    AboutHeading("Icons on the face")
+                    FaceIcon({ c -> arrowGlyph(c) }, LocalAccent.current, "Next meeting",
+                        "The arrow before a title means the meeting shown is coming up next, while another one is still going on.")
+                    FaceIcon({ c -> lockGlyph(c) }, Palette.muted, "Private meeting",
+                        "The lock: the meeting is private, so the face shows \"Private\" and \"Details hidden\" instead of its title and place.")
+                    FaceIcon({ c -> overlapGlyph(c) }, Color(0xFFFF7A59), "Overlapping meeting",
+                        "Two linked rings, in coral, with the other meeting's name: you're double-booked. \"+1\" means more than one other meeting.")
+                    FaceIcon({ c -> todGlyphs(c) }, Color(0xFFA9B8E0), "Later today or tomorrow",
+                        "Sunrise, sun, sunset or moon before the time: a meeting on the inner line, by when it starts (morning, afternoon, evening or night). For a meeting tomorrow, the place line also starts with \"Tomorrow\".", tall = true)
+                    ItemDivider(Modifier.padding(top = 8.dp))
+                    AboutHeading("Shortcuts")
+                    ShortcutsPicture(m)
+                    Text("Tap a number on the face to open its shortcut. A lit icon is on; a grey one is off, and that number acts like the rest of its hour. Change them in Settings → Shortcuts on the face.",
+                        style = AboutText, modifier = Modifier.padding(top = 14.dp))
+                }
+                else -> {
+                    AboutHeading("Privacy")
+                    AboutItem("Phone to watch only", "Your calendar goes from your phone to your own watch and nowhere else. CalenTime has no internet access, no accounts, no ads and no tracking.")
+                    SettingsShortcut(null, "Read the privacy policy", Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+                        runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(PRIVACY_LINK))) }
+                    }
+                    ItemDivider(Modifier.padding(top = 8.dp))
+                    AboutHeading("Credits")
+                    AboutItem("Fonts", "Google Sans Flex and Anta, under the SIL Open Font License.")
+                    ItemDivider(Modifier.padding(top = 8.dp))
+                    AboutHeading("Share")
+                    AboutItem("Tell a friend", "Send the Play Store link to anyone with a Wear OS watch.")
+                    ShareButton(Modifier.fillMaxWidth().padding(bottom = 12.dp))
+                    Spacer(Modifier.height(20.dp))
+                    RunSetupButton(onRunSetup, Modifier.fillMaxWidth())
+                }
             }
-            ItemDivider(Modifier.padding(top = 8.dp))
-            AboutHeading("Credits")
-            AboutItem("Fonts", "Google Sans Flex and Anta, under the SIL Open Font License.")
-            ItemDivider(Modifier.padding(top = 8.dp))
-            AboutHeading("Share")
-            AboutItem("Tell a friend", "Send the Play Store link to anyone with a Wear OS watch.")
-            ShareButton(Modifier.fillMaxWidth().padding(bottom = 12.dp))
+        }
+    }
+}
 
-            Spacer(Modifier.height(20.dp))
-            RunSetupButton(onRunSetup, Modifier.fillMaxWidth())
+/** About's four tabs: a frosted pill with a lit segment that slides to the chosen one (like Solids / Gradients). */
+@Composable
+private fun AboutTabs(tab: Int, onSelect: (Int) -> Unit) {
+    val labels = listOf("Face", "Buzzes", "Icons", "Privacy")
+    val at by animateFloatAsState(tab.toFloat(), tween(300, easing = FastOutSlowInEasing), label = "aboutTab")
+    BoxWithConstraints(Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(22.dp)).frostCard(RoundedCornerShape(22.dp)).padding(4.dp)) {
+        val w = maxWidth / labels.size
+        Box(Modifier.offset(x = w * at).width(w).fillMaxHeight().clip(RoundedCornerShape(18.dp)).background(Color.White.copy(alpha = .12f)))
+        Row {
+            labels.forEachIndexed { i, label ->
+                val on = i == tab
+                Box(Modifier.width(w).fillMaxHeight().clip(RoundedCornerShape(18.dp))
+                    .clickable(role = Role.Tab) { onSelect(i) }.semantics { selected = on },
+                    contentAlignment = Alignment.Center) {
+                    Text(label, style = BodyStyle.copy(fontSize = 15.sp, fontWeight = FontWeight.Medium, color = if (on) Palette.text else Palette.muted))
+                }
+            }
         }
     }
 }
