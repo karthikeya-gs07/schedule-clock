@@ -122,6 +122,10 @@ object Icons {
     val lockOpen = strokeIcon("M7.5 10.5h9a2.5 2.5 0 0 1 2.5 2.5v5a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 18v-5a2.5 2.5 0 0 1 2.5-2.5z", "M8 10.5V8a4 4 0 0 1 7.7-1.5")
     val eye = strokeIcon("M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z", "M12 9a3 3 0 1 1 0 6a3 3 0 1 1 0-6z")
     val eyeOff = strokeIcon("M2.5 12S6 5.5 12 5.5c2.3 0 4.2.9 5.7 2.1M21.5 12S18 18.5 12 18.5c-2.3 0-4.2-.9-5.7-2.1", "M4 4l16 16")
+    // Face shortcuts (RULES A23): compass (12), countdown (3), all events (6: calendar), flashlight (9).
+    val compass = strokeIcon("M12 3.5a8.5 8.5 0 1 1 0 17a8.5 8.5 0 1 1 0-17z", "M14.8 9.2 13 13l-3.8 1.8L11 11z")
+    val timer = strokeIcon("M12 5.5a7.5 7.5 0 1 1 0 15a7.5 7.5 0 1 1 0-15z", "M12 9.5V13l2 1.5M10 2.5h4M18.2 6.3l1.3-1.3")
+    val torch = strokeIcon("M8 3.5h8v4l-2 3V20a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-9.5l-2-3z", "M8 7.5h8M12 13.5v2")
     val clock = strokeIcon("M12 3.5a8.5 8.5 0 1 1 0 17a8.5 8.5 0 1 1 0-17z", "M12 7.5V12l3 2")
     val share = strokeIcon("M12 14.5V4M8 7.5 12 3.5l4 4", "M7 10.5H6.5A1.5 1.5 0 0 0 5 12v7a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 19v-7a1.5 1.5 0 0 0-1.5-1.5H17")
     val bluetooth = strokeIcon("m7 7.5 10 9-5 4.5V3l5 4.5-10 9")

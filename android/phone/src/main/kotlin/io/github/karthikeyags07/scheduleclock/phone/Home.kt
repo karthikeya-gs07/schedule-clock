@@ -266,6 +266,36 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
             }
         }
 
+        // ---- Watchface: the four face shortcuts round the face (RULES A23): 12 compass, 3 countdown, 6 all events,
+        // 9 flashlight. Tapping one switches it on or off, as in Settings; on, it takes the colourway's colour. ----
+        if (pickAlpha > 0f) {
+            val accent = accentFor(shown)
+            val btn = 40.dp; val gap = 20.dp
+            val cx = left + d(79.2f) + faceSize / 2
+            val cy = faceTopCentre + faceSize / 2
+            val reach = faceSize / 2 + gap + btn / 2
+            listOf(
+                Triple(Icons.compass, "Compass on 12", m.compass to { v: Boolean -> m.switchCompass(v) }) to (0.dp to -reach),
+                Triple(Icons.timer, "Meeting countdown on 3", m.countdown to { v: Boolean -> m.switchCountdown(v) }) to (reach to 0.dp),
+                Triple(Icons.calendar, "All events on 6", m.agenda to { v: Boolean -> m.switchAgenda(v) }) to (0.dp to reach),
+                Triple(Icons.torch, "Flashlight on 9", m.flashlight to { v: Boolean -> m.switchFlashlight(v) }) to (-reach to 0.dp),
+            ).forEach { (item, at) ->
+                val (icon, label, state) = item
+                val (on, set) = state
+                val fill by animateColorAsState(if (on) accent else Color.White.copy(alpha = .08f), tween(250), label = "shortcutFill")
+                val tint by animateColorAsState(if (on) Palette.onAccent else Palette.muted, tween(250), label = "shortcutTint")
+                Box(Modifier.offset(x = cx + at.first - btn / 2, y = cy + at.second - btn / 2).size(btn)
+                    .graphicsLayer { alpha = pickAlpha }
+                    .clip(CircleShape).background(fill)
+                    .border(1.dp, Color.White.copy(alpha = if (on) 0f else .08f), CircleShape)
+                    .clickable(enabled = watchMode, role = Role.Switch) { set(!on) }
+                    .semantics { contentDescription = "$label: ${if (on) "on" else "off"}" },
+                    contentAlignment = Alignment.Center) {
+                    Icon(icon, null, tint = tint, modifier = Modifier.size(20.dp))
+                }
+            }
+        }
+
         // ---- Watchface: the page dots, the colourway's name and Use watch face ----
         if (pickAlpha > 0f) Column(
             Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(start = 24.dp, end = 24.dp, bottom = 28.dp + 80.dp + 24.dp)
