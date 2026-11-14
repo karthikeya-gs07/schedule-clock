@@ -233,9 +233,11 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
     }
 
     var secondZone by mutableStateOf(AppPrefs.secondZone(context))
+    init { FaceClock.zone = Cities.minutes(secondZone) }
     fun chooseSecondZone(id: String?) {
         AppPrefs.setSecondZone(context, id)
         secondZone = id
+        FaceClock.zone = Cities.minutes(id)   // the previews show it too
         AppPrefs.sendSettings(context)
     }
 

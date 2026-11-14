@@ -47,6 +47,12 @@ object Cities {
 
     fun name(id: String?) = ALL.firstOrNull { it.second == id }?.first
 
+    /** Minutes that place is ahead of the phone's own time now (negative when behind), or null for none. */
+    fun minutes(id: String?): Int? = id?.let {
+        val now = ZonedDateTime.now()
+        runCatching { (ZoneId.of(it).rules.getOffset(now.toInstant()).totalSeconds - now.offset.totalSeconds) / 60 }.getOrNull()
+    }?.takeIf { it != 0 }
+
     /** "+5:30" / "−8" against the phone's own time now. */
     fun difference(id: String): String {
         val now = ZonedDateTime.now()

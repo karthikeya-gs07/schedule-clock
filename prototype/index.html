@@ -284,6 +284,8 @@
   #face #trail { stroke: var(--c-ink); }
   #face #nowDot .ink { fill: var(--c-ink); }
   #face #nowDot .bg { fill: var(--c-bg); }
+  #face #zoneMark .ink { fill: var(--c-ink); stroke: var(--c-ink); }
+  #face #zoneMark .bg { fill: var(--c-bg); stroke: var(--c-bg); }
   #face #dDivider { stroke: var(--c-divider); }
   #face #dArrow { stroke: var(--c-event); }
   #face #dLock rect { fill: var(--c-muted); }
@@ -308,7 +310,7 @@
   #face.ambient #dStatus { fill: #8e8e93; }
   #face.ambient #dPlace, #face.ambient #dClashIcon { opacity: 0; }
   /* A2b: the meeting's time and the now dot stay in always-on, dimmed (static, redrawn with the clock once a minute) */
-  #face.ambient #dRange, #face.ambient #dTodIcon, #face.ambient #nowDot { opacity: .75; }
+  #face.ambient #dRange, #face.ambient #dTodIcon, #face.ambient #nowDot, #face.ambient #zoneMark { opacity: .75; }
   #face.ambient #dArrow { stroke: #8e8e93; }
 </style>
 </head>
@@ -579,6 +581,8 @@ function flatArc(fromMin, toMin, r, inStart, inEnd) {
 // ---------- Formatting ----------
 // T6: the phone app's clock choice (?clock=24 or ?clock=12plain); 12-hour with AM/PM otherwise.
 const CLOCK = new URLSearchParams(location.search).get('clock') || '12';
+// The second time zone (RULES R13): its difference from local time in minutes (`zone=`), or none.
+const ZONE = (() => { const z = new URLSearchParams(location.search).get('zone'); return z === null || z === '' ? null : +z; })();
 function fmtClock(min, withSuffix = true) {
   min = ((Math.round(min) % 1440) + 1440) % 1440;   // the sweep can start before midnight (negative minutes)
   const h24 = Math.floor(min / 60) % 24, m = min % 60;
@@ -699,6 +703,11 @@ svg.innerHTML = `
   <path id="selArc" class="m selArc"/>
   <g id="tsSelWheel" mask="url(#tsSelMask)" fill="none" stroke-width="26"></g>
   <g id="nowDot"><circle class="ink" r="14" fill="#fff" opacity=".18"/><circle class="bg" r="9.5" fill="#000"/><circle class="ink" r="6.5" fill="#fff"/></g>
+  <g id="zoneMark" style="display:none"><g id="zoneTri">
+    <polygon class="ink" points="-9,-5.5 -9,5.5 9,0" fill="#fff" stroke="#fff" stroke-opacity=".18" stroke-width="9" stroke-linejoin="round" opacity=".18"/>
+    <polygon class="bg" points="-9,-5.5 -9,5.5 9,0" fill="#000" stroke="#000" stroke-width="5.2" stroke-linejoin="round"/>
+    <polygon class="ink" points="-9,-5.5 -9,5.5 9,0" fill="#fff"/>
+  </g></g>
 
   <g id="defaultUI" transform="translate(0 ${CY - 225})">
     <g id="dDateG" class="m">${T('dDate', CX, 122, 24, { fill: C.muted, spacing: 2, weight: 500 })}</g>
@@ -837,6 +846,13 @@ function renderBase(list) {
   syncRing(items);
   const [nx, ny] = polar(angleOf(nowMin), R);
   $('nowDot').setAttribute('transform', `translate(${nx} ${ny})`);
+  // Second time zone: a triangle at that place's time, pointing clockwise when ahead, anticlockwise when behind.
+  if (ZONE) {
+    const a = angleOf(((nowMin + ZONE) % 720 + 720) % 720), [zx, zy] = polar(a, R);
+    $('zoneMark').style.display = '';
+    $('zoneMark').setAttribute('transform', `translate(${zx} ${zy}) rotate(${a})`);
+    $('zoneTri').setAttribute('transform', ZONE > 0 ? '' : 'scale(-1 1)');
+  }
   renderTrail();
 
   const timeStr = fmtClock(nowMin, false);
