@@ -207,7 +207,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
                             // About opens over the right pane, with a close button; Today stays on the left.
                             androidx.compose.animation.AnimatedVisibility(about, enter = ABOUT_IN, exit = ABOUT_OUT) {
                                 BackHandler { about = false }
-                                AboutScreen(m.colourway, onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() }
+                                AboutScreen(m, onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() }
                             }
                             if (!about) NavBar(right, rightHaze, null, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp),
                                 tabs = listOf(Tab.WATCHFACE, Tab.CALENDARS, Tab.SETTINGS)) { tab = it }
@@ -238,7 +238,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
                     // About slides up over the page from the bottom, and back down when closed.
                     androidx.compose.animation.AnimatedVisibility(about, enter = ABOUT_IN, exit = ABOUT_OUT) {
                         BackHandler { about = false }
-                        AboutScreen(m.colourway, onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() }
+                        AboutScreen(m, onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() }
                     }
                 }
             }

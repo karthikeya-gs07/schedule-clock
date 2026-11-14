@@ -351,11 +351,11 @@ private val PICK_ON_WATCH = "Pick CalenTime on your watch" to "Touch and hold yo
 val NUMBERS = listOf(12, 3, 6, 9)
 
 /** A face shortcut's name, what it does, and its icon (RULES A24). */
-data class Shortcut(val id: String, val name: String, val text: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
+data class Shortcut(val id: String, val name: String, val text: String, val icon: androidx.compose.ui.graphics.vector.ImageVector, val short: String = name)
 val SHORTCUT_INFO = listOf(
     Shortcut("compass", "Compass", "Opens a compass on your watch", Icons.compass),
-    Shortcut("countdown", "Meeting countdown", "How long is left in your meeting, or until the next one", Icons.timer),
-    Shortcut("agenda", "All events", "Everything from now to the end of tomorrow", Icons.calendar),
+    Shortcut("countdown", "Meeting countdown", "How long is left in your meeting, or until the next one", Icons.timer, "Countdown"),
+    Shortcut("agenda", "All events", "Everything from now to the end of tomorrow", Icons.calendar, "Events"),
     Shortcut("flashlight", "Flashlight", "Turns the screen bright white; tap again to turn it off", Icons.torch),
 )
 fun shortcutInfo(id: String) = SHORTCUT_INFO.first { it.id == id }

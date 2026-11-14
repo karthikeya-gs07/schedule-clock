@@ -17,6 +17,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.drawscope.rotate as rotateAround
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.background
@@ -782,7 +783,8 @@ fun WatchStatusPanel(m: AppModel, haze: HazeState, onAllow: () -> Unit, onInstal
  * with the part's name and meaning under each, round icons beside the buzzes, and a frosted button at the end.
  */
 @Composable
-fun AboutScreen(colourway: String, onBack: () -> Unit, onRunSetup: () -> Unit) {
+fun AboutScreen(m: AppModel, onBack: () -> Unit, onRunSetup: () -> Unit) {
+    val colourway = m.colourway
     val context = androidx.compose.ui.platform.LocalContext.current
     val version = context.packageManager.getPackageInfo(context.packageName, 0).versionName
     Box(Modifier.fillMaxSize().stagePage(LocalAccent.current)) {
@@ -827,14 +829,20 @@ fun AboutScreen(colourway: String, onBack: () -> Unit, onRunSetup: () -> Unit) {
                 "Two linked rings, in coral, with the other meeting's name: you're double-booked. \"+1\" means more than one other meeting.")
             FaceIcon({ c -> todGlyphs(c) }, Color(0xFFA9B8E0), "Later today or tomorrow",
                 "Sunrise, sun, sunset or moon before the time: a meeting on the inner line, by when it starts (morning, afternoon, evening or night). For a meeting tomorrow, the place line also starts with \"Tomorrow\".", tall = true)
-            AboutItem("Second time zone", "Pick one more place in Settings and a small triangle sits on the ring at its time. It points clockwise when that place is ahead of you, and anticlockwise when it's behind.")
-            AboutItem("Meeting countdown", "Tap its number on the face (the 3 unless you move it in Settings) to see how long is left in your meeting, or how long until the next one, with a ring that runs down round the edge.")
-            AboutItem("Flashlight", "With it on in Settings, tap its number on the face (the 9 unless you move it) to turn the screen bright white. Tap anywhere to turn it off.")
-            AboutItem("All events", "Tap its number on the face (the 6 unless you move it in Settings) to see every meeting from now to the end of tomorrow, listed on your watch. You can turn this off in Settings.")
-            AboutItem("Compass", "With it on in Settings, tap its number on the face (the 12 unless you move it) to open the compass. The degree dial turns as you do; when its coloured 0° line meets the arrow at the top, you're facing north.")
+            // Second time zone (RULES R13): a picture of the ring with both triangles, then what they mean.
+            ZonePicture(colourway)
+            Text("Second time zone", style = AboutItemTitle, modifier = Modifier.padding(top = 14.dp))
+            Text("Pick one more place in Settings and a small triangle sits on the ring at that place's time. Pointing " +
+                "forward (clockwise), that place is ahead of you; pointing back (anticlockwise), it's behind.",
+                style = AboutText, modifier = Modifier.padding(top = 3.dp, bottom = 22.dp))
             AboutItem("All your calendars, one ring", "Work, personal, family: every calendar you turn on shows together on the same ring, in the same colours. The watch doesn't tell them apart.")
             AboutItem("All-day events", "Not shown on the watch, and they never count as a double booking: your meetings that day look as usual.")
 
+            ItemDivider(Modifier.padding(top = 8.dp))
+            AboutHeading("Shortcuts")
+            ShortcutsPicture(m)
+            Text("Tap a number on the face to open its shortcut. A lit icon is on; a grey one is off, and that number acts like the rest of its hour. Change them in Settings → Shortcuts on the face.",
+                style = AboutText, modifier = Modifier.padding(top = 14.dp, bottom = 22.dp))
             ItemDivider(Modifier.padding(top = 8.dp))
             AboutHeading("Buzzes")
             AboutItem("2 min before", "One short buzz to wrap up and join.")
@@ -874,6 +882,77 @@ private fun AboutHeading(text: String) =
 private fun AboutItem(title: String, text: String) = Column(Modifier.fillMaxWidth().padding(bottom = 22.dp)) {
     Text(title, style = AboutItemTitle)
     Text(text, style = AboutText, modifier = Modifier.padding(top = 3.dp))
+}
+
+/**
+ * About → second time zone (RULES R13): a stretch of the ring with the now dot in the middle, a triangle ahead of it
+ * pointing forward (clockwise) and one behind it pointing back, each labelled.
+ */
+@Composable
+private fun ZonePicture(colourway: String) {
+    val bg = Color(0xFF0B0B0D); val track = Color(0xFF2A2B30); val ink = Color(0xFFF2F2F2)
+    Box(Modifier.fillMaxWidth().height(150.dp).clip(RoundedCornerShape(24.dp)).background(bg)
+        .border(1.dp, Color.White.copy(alpha = .07f), RoundedCornerShape(24.dp))) {
+        androidx.compose.foundation.Canvas(Modifier.matchParentSize()) {
+            val r = size.width * 1.1f; val cx = size.width / 2; val cy = 46.dp.toPx() + r
+            fun at(deg: Float, rr: Float = r) = Math.toRadians(deg.toDouble()).let { Offset(cx + rr * kotlin.math.sin(it).toFloat(), cy - rr * kotlin.math.cos(it).toFloat()) }
+            drawCircle(track, r, Offset(cx, cy), style = androidx.compose.ui.graphics.drawscope.Stroke(12.dp.toPx()))
+            // Now dot, as on the face: halo, background ring, ink.
+            val now = at(0f)
+            drawCircle(ink.copy(alpha = .18f), 14.dp.toPx() * .6f, now); drawCircle(bg, 9.5.dp.toPx() * .6f, now); drawCircle(ink, 6.5.dp.toPx() * .6f, now)
+            // Triangles: long and narrow, along the ring, ±24° from now.
+            fun tri(deg: Float, ahead: Boolean) {
+                val c = at(deg); val u = 1.dp.toPx() * 1.05f
+                rotateAround(deg, c) {
+                    val d = if (ahead) 1f else -1f
+                    val p = androidx.compose.ui.graphics.Path().apply {
+                        moveTo(c.x - 9 * u * d, c.y - 5.5f * u); lineTo(c.x - 9 * u * d, c.y + 5.5f * u); lineTo(c.x + 9 * u * d, c.y); close()
+                    }
+                    drawPath(p, ink.copy(alpha = .18f), style = androidx.compose.ui.graphics.drawscope.Stroke(9 * u, join = androidx.compose.ui.graphics.StrokeJoin.Round))
+                    drawPath(p, bg, style = androidx.compose.ui.graphics.drawscope.Stroke(5.2f * u, join = androidx.compose.ui.graphics.StrokeJoin.Round))
+                    drawPath(p, ink)
+                }
+            }
+            tri(16f, true); tri(-16f, false)
+        }
+        // Labels under each triangle and the dot.
+        Row(Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(horizontal = 18.dp, vertical = 18.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+            Column(horizontalAlignment = Alignment.Start) { Text("Behind", style = AboutItemTitle.copy(fontSize = 15.sp)); Text("points back", style = AboutText.copy(fontSize = 13.sp)) }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) { Text("Now", style = AboutItemTitle.copy(fontSize = 15.sp)); Text("your time", style = AboutText.copy(fontSize = 13.sp)) }
+            Column(horizontalAlignment = Alignment.End) { Text("Ahead", style = AboutItemTitle.copy(fontSize = 15.sp)); Text("points forward", style = AboutText.copy(fontSize = 13.sp)) }
+        }
+    }
+}
+
+/**
+ * About → Shortcuts (RULES A24): the face in its colourway with the four shortcut icons round it, as on the
+ * Watchface page but read-only: lit (colourway colour, soft glow) when on, grey when off, each named with its number.
+ */
+@Composable
+private fun ShortcutsPicture(m: AppModel) {
+    val accent = accentFor(m.colourway)
+    val day = remember { SampleDay.meetings() }
+    BoxWithConstraints(Modifier.fillMaxWidth().height(340.dp).clip(RoundedCornerShape(24.dp)).background(Color(0xFF0B0B0D))
+        .border(1.dp, Color.White.copy(alpha = .07f), RoundedCornerShape(24.dp))) {
+        val face = 150.dp
+        val cx = maxWidth / 2; val cy = maxHeight / 2
+        Box(Modifier.offset(x = cx - face / 2, y = cy - face / 2)) { WatchFacePreview(m.colourway, day, face, atMinute = SampleDay.SAMPLE_MINUTE) }
+        val reach = face / 2 + 34.dp; val side = face / 2 + 50.dp
+        listOf(12 to (0.dp to -reach), 3 to (side to 0.dp), 6 to (0.dp to reach), 9 to (-side to 0.dp)).forEach { (n, pos) ->
+            val info = shortcutInfo(m.shortcutAt(n)); val on = m.shortcutOn(info.id)
+            Column(Modifier.offset(x = cx + pos.first - 40.dp, y = cy + pos.second - 22.dp).width(80.dp)
+                .semantics(mergeDescendants = true) { contentDescription = "$n: ${info.name}, ${if (on) "on" else "off"}" },
+                horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(Modifier.size(30.dp).drawBehind {
+                    if (on) drawCircle(Brush.radialGradient(*glowStops(accent, .16f), center = center, radius = 20.dp.toPx()), radius = 20.dp.toPx())
+                }, contentAlignment = Alignment.Center) {
+                    Icon(info.icon, null, tint = if (on) accent.copy(alpha = .75f) else Palette.muted.copy(alpha = .55f), modifier = Modifier.size(22.dp))
+                }
+                Text("$n · ${info.short}", style = AboutText.copy(fontSize = 11.sp, lineHeight = 14.sp, color = if (on) Palette.text else Palette.muted),
+                    maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
 }
 
 /** A face icon drawn as on the watch, its name and what it means (About → Icons on the face). */
