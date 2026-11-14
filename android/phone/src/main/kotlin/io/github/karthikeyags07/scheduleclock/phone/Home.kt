@@ -267,7 +267,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
         }
 
         // ---- Watchface: the four face shortcuts round the face (RULES A23): 12 compass, 3 countdown, 6 all events,
-        // 9 flashlight. Tapping one switches it on or off, as in Settings; on, it takes the colourway's colour. ----
+        // 9 flashlight. Tapping one switches it on or off, as in Settings; on, it glows in the colourway's colour. ----
         if (pickAlpha > 0f) {
             val accent = accentFor(shown)
             val btn = 40.dp; val gap = 20.dp
@@ -282,16 +282,21 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
             ).forEach { (item, at) ->
                 val (icon, label, state) = item
                 val (on, set) = state
-                val fill by animateColorAsState(if (on) accent else Color.White.copy(alpha = .08f), tween(250), label = "shortcutFill")
-                val tint by animateColorAsState(if (on) Palette.onAccent else Palette.muted, tween(250), label = "shortcutTint")
+                // Like the nav bar's selected icon: no button shape, just the icon, in the colourway's colour with a
+                // soft glow of it behind when on; muted grey with no glow when off.
+                val glow by animateFloatAsState(if (on) 1f else 0f, tween(300), label = "shortcutGlow")
+                val tint by animateColorAsState(if (on) accent else Palette.muted, tween(300), label = "shortcutTint")
                 Box(Modifier.offset(x = cx + at.first - btn / 2, y = cy + at.second - btn / 2).size(btn)
                     .graphicsLayer { alpha = pickAlpha }
-                    .clip(CircleShape).background(fill)
-                    .border(1.dp, Color.White.copy(alpha = if (on) 0f else .08f), CircleShape)
-                    .clickable(enabled = watchMode, role = Role.Switch) { set(!on) }
-                    .semantics { contentDescription = "$label: ${if (on) "on" else "off"}" },
+                    .clickable(enabled = watchMode, interactionSource = null,
+                        indication = androidx.compose.material3.ripple(bounded = false, radius = 24.dp), role = Role.Switch) { set(!on) }
+                    .semantics { contentDescription = "$label: ${if (on) "on" else "off"}" }
+                    .drawBehind {
+                        if (glow > 0f) drawCircle(Brush.radialGradient(*glowStops(accent, .16f * glow), center = center,
+                            radius = 22.dp.toPx()), radius = 22.dp.toPx())
+                    },
                     contentAlignment = Alignment.Center) {
-                    Icon(icon, null, tint = tint, modifier = Modifier.size(20.dp))
+                    Icon(icon, null, tint = tint, modifier = Modifier.size(24.dp))
                 }
             }
         }
