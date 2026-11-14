@@ -6,6 +6,7 @@
     <string name="details_label">Meeting place</string>
     <string name="promote_label">Settling meeting</string>
     <string name="title_scroll_label">Scrolling title</string>
+    <string name="zone_label">Second time zone</string>
     <string name="permission_label">CalenTime</string>
     <string name="permission_why">CalenTime shows today\'s meetings on your watch face. It reads your calendar on the watch only; nothing leaves the watch.</string>
     <string name="permission_denied">Calendar access is off, so the face can\'t show your meetings. Tap here to turn it on.</string>

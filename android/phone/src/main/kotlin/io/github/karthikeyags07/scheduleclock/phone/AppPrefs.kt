@@ -65,6 +65,9 @@ object AppPrefs {
     /** Tapping the 3 on the face opens the meeting countdown (RULES A22); on until switched off. */
     fun countdown(context: Context) = prefs(context).getBoolean("countdown", true)
     fun setCountdown(context: Context, on: Boolean) = prefs(context).edit().putBoolean("countdown", on).apply()
+    /** The second time zone's id, or null (RULES R13). */
+    fun secondZone(context: Context) = prefs(context).getString("secondZone", "")!!.ifEmpty { null }
+    fun setSecondZone(context: Context, id: String?) = prefs(context).edit().putString("secondZone", id ?: "").apply()
     fun clock24(context: Context) = prefs(context).getBoolean("clock24", false)
     fun showAmPm(context: Context) = prefs(context).getBoolean("showAmPm", true)
     fun setClock(context: Context, clock24: Boolean, showAmPm: Boolean) =
@@ -81,6 +84,7 @@ object AppPrefs {
             dataMap.putBoolean("agenda", agenda(context))
             dataMap.putBoolean("flashlight", flashlight(context))
             dataMap.putBoolean("countdown", countdown(context))
+            dataMap.putString("secondZone", secondZone(context) ?: "")
         }.asPutDataRequest().setUrgent()
         Wearable.getDataClient(context).putDataItem(request)
     }

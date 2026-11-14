@@ -16,6 +16,7 @@ object PhoneSettings {
     fun save(context: Context, map: DataMap) {
         prefs(context).edit().apply {
             map.getString("colourway")?.let { putString("colourway", it) }
+            if (map.containsKey("secondZone")) putString("secondZone", map.getString("secondZone"))
             listOf("buzzStart", "buzzMiddle", "buzzEnd", "buzzDnd", "clock24", "showAmPm", "compass", "agenda", "flashlight", "countdown").forEach { if (map.containsKey(it)) putBoolean(it, map.getBoolean(it)) }
         }.apply()
     }
@@ -24,6 +25,8 @@ object PhoneSettings {
     fun countdown(context: Context) = prefs(context).getBoolean("countdown", true)
     fun flashlight(context: Context) = prefs(context).getBoolean("flashlight", false)
     fun agenda(context: Context) = prefs(context).getBoolean("agenda", true)
+    /** The second time zone's id (e.g. "Europe/London"), or null for none (RULES R13). */
+    fun secondZone(context: Context) = prefs(context).getString("secondZone", "")!!.ifEmpty { null }
     fun compass(context: Context) = prefs(context).getBoolean("compass", false)
     fun clock24(context: Context) = prefs(context).getBoolean("clock24", false)
     fun showAmPm(context: Context) = prefs(context).getBoolean("showAmPm", true)

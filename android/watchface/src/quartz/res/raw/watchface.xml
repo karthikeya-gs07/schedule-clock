@@ -420,6 +420,30 @@
       </PartDraw>
     </Group>
 
+    <!-- Slot 7 `zone` (R13): the second time zone, as a triangle on the ring at that place's time, styled like the
+         now dot (halo, background edge, ink). It points clockwise when that place is ahead, anticlockwise when behind.
+         VALUE = the difference in minutes + 2000; no data, nothing drawn. -->
+    <ComplicationSlot slotId="7" name="zone" displayName="@string/slot_zone" x="0" y="0" width="450" height="450"
+        supportedTypes="RANGED_VALUE EMPTY" isCustomizable="FALSE">
+      <DefaultProviderPolicy defaultSystemProvider="EMPTY" defaultSystemProviderType="EMPTY"
+          primaryProvider="io.github.karthikeyags07.scheduleclock/io.github.karthikeyags07.scheduleclock.ZoneDataSourceService" primaryProviderType="RANGED_VALUE"/>
+      <BoundingOval x="0" y="0" width="450" height="450"/>
+      <Complication type="RANGED_VALUE">
+        <Group name="zone_marker" x="0" y="0" width="450" height="450" pivotX="0.5" pivotY="0.5">
+          <Variant mode="AMBIENT" target="alpha" value="190"/>
+          <Transform target="angle" value="(([HOUR_0_11] * 60 + [MINUTE]) * 0.5) + ([COMPLICATION.RANGED_VALUE_VALUE] - 2000) * 0.5"/>
+          <PartImage x="209" y="-10" width="32" height="32" alpha="0">
+            <Transform target="alpha" value="([COMPLICATION.RANGED_VALUE_VALUE] &gt; 2000) * 255"/>
+            <Image resource="zone_ahead"/>
+          </PartImage>
+          <PartImage x="209" y="-10" width="32" height="32" alpha="0">
+            <Transform target="alpha" value="([COMPLICATION.RANGED_VALUE_VALUE] &lt; 2000) * 255"/>
+            <Image resource="zone_behind"/>
+          </PartImage>
+        </Group>
+      </Complication>
+    </ComplicationSlot>
+
     <!-- Slot 4 `status` (risks 2 + 3): VALUE = selected (0/1). Date, clock, divider, title and time range live
          inside this slot so their Transforms can read it (M1). MAX carries the title width and icon flags. -->
     <ComplicationSlot slotId="1" name="status" displayName="@string/slot_status" x="0" y="0" width="450" height="450"

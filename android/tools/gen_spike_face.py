@@ -360,6 +360,29 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
       </PartDraw>
     </Group>
 
+    <!-- Slot 7 `zone` (R13): the second time zone, as a triangle on the ring at that place's time, styled like the
+         now dot (halo, background edge, ink). It points clockwise when that place is ahead, anticlockwise when behind.
+         VALUE = the difference in minutes + 2000; no data, nothing drawn. -->
+    <ComplicationSlot slotId="7" name="zone" displayName="@string/slot_zone" x="0" y="0" width="450" height="450"
+        supportedTypes="RANGED_VALUE EMPTY" isCustomizable="FALSE">
+      {provider("ZoneDataSourceService", "RANGED_VALUE")}
+      <BoundingOval x="0" y="0" width="450" height="450"/>
+      <Complication type="RANGED_VALUE">
+        <Group name="zone_marker" x="0" y="0" width="450" height="450" pivotX="0.5" pivotY="0.5">
+          <Variant mode="AMBIENT" target="alpha" value="190"/>
+          <Transform target="angle" value="{NOW_DEG} + ([COMPLICATION.RANGED_VALUE_VALUE] - 2000) * 0.5"/>
+          <PartImage x="{CX - 16}" y="{CY - R - 16}" width="32" height="32" alpha="0">
+            <Transform target="alpha" value="([COMPLICATION.RANGED_VALUE_VALUE] &gt; 2000) * 255"/>
+            <Image resource="zone_ahead"/>
+          </PartImage>
+          <PartImage x="{CX - 16}" y="{CY - R - 16}" width="32" height="32" alpha="0">
+            <Transform target="alpha" value="([COMPLICATION.RANGED_VALUE_VALUE] &lt; 2000) * 255"/>
+            <Image resource="zone_behind"/>
+          </PartImage>
+        </Group>
+      </Complication>
+    </ComplicationSlot>
+
     <!-- Slot 4 `status` (risks 2 + 3): VALUE = selected (0/1). Date, clock, divider, title and time range live
          inside this slot so their Transforms can read it (M1). MAX carries the title width and icon flags. -->
     <ComplicationSlot slotId="1" name="status" displayName="@string/slot_status" x="0" y="0" width="450" height="450"
@@ -579,4 +602,39 @@ def chunk(t, d): return struct.pack(">I", len(d)) + t + d + struct.pack(">I", zl
 png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", W, W, 8, 2, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(raw, 9)) + chunk(b"IEND", b"")
 (res / "drawable").mkdir(parents=True, exist_ok=True)
 (res / "drawable" / "preview.png").write_bytes(png)
+
+# The second time zone's triangles (R13), 32 × 32 like the now dot: a faint ink halo, a background-coloured edge
+# and an ink triangle, pointing right (clockwise at 12 o'clock: ahead) or left (behind). 4 × 4 supersampled.
+def triangle_png(ahead):
+    # Long and narrow (base 11, length 18) so the tip reads clearly as a direction.
+    pts = [(7.0, 10.5), (7.0, 21.5), (25.0, 16.0)] if ahead else [(25.0, 10.5), (25.0, 21.5), (7.0, 16.0)]
+    edges = []
+    for k in range(3):
+        (x1, y1), (x2, y2) = pts[k], pts[(k + 1) % 3]
+        nx, ny = y2 - y1, x1 - x2; n = math.hypot(nx, ny); nx, ny = nx / n, ny / n
+        cx_, cy_ = sum(p[0] for p in pts) / 3, sum(p[1] for p in pts) / 3
+        if nx * (cx_ - x1) + ny * (cy_ - y1) > 0: nx, ny = -nx, -ny   # outward normal
+        edges.append((nx, ny, nx * x1 + ny * y1))
+    ink, bg = rgb(D["ink"]), rgb(D["bg"])
+    out = bytearray()
+    for y in range(32):
+        out.append(0)
+        for x in range(32):
+            acc = [0.0, 0.0, 0.0, 0.0]
+            for sy in range(4):
+                for sx in range(4):
+                    px_, py_ = x + (sx + .5) / 4, y + (sy + .5) / 4
+                    d = max(nx * px_ + ny * py_ - c for nx, ny, c in edges)
+                    if d <= 0: col, a = ink, 1.0
+                    elif d <= 2.6: col, a = bg, 1.0
+                    elif d <= 4.6: col, a = ink, .18
+                    else: continue
+                    for k in range(3): acc[k] += col[k] * a
+                    acc[3] += a
+            a = acc[3] / 16
+            out += bytes([round(acc[k] / acc[3]) if acc[3] else 0 for k in range(3)] + [round(a * 255)])
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 32, 32, 8, 6, 0, 0, 0))
+            + chunk(b"IDAT", zlib.compress(bytes(out), 9)) + chunk(b"IEND", b""))
+(res / "drawable" / "zone_ahead.png").write_bytes(triangle_png(True))
+(res / "drawable" / "zone_behind.png").write_bytes(triangle_png(False))
 print("wrote", res / "raw" / "watchface.xml", "and preview.png")

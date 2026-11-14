@@ -110,6 +110,7 @@ fun SettingsScreen(m: AppModel, onRunSetup: () -> Unit) {
     PageHeading("Clock")
     ToggleItem("24-hour time", if (m.clock24) "Shows 14:30" else "Shows 2:30", m.clock24) { m.setClock(clock24 = it) }
     ToggleItem("Show AM/PM", "Next to the time in 12-hour mode", m.showAmPm, enabled = !m.clock24) { m.setClock(showAmPm = it) }
+    SecondZoneItem(m)
     ItemDivider(Modifier.padding(top = 8.dp))
     PageHeading("Shortcuts on the face")
     ToggleItem("Tap 12 for compass", "Tapping the 12 on the face opens a compass on your watch", m.compass) { m.switchCompass(it) }

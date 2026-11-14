@@ -325,6 +325,7 @@ object SpikeSchedule {
         TitleScrollDataSourceService::class.java,
         TitleScrollArrowDataSourceService::class.java,
         PromoteDataSourceService::class.java,
+        ZoneDataSourceService::class.java,
         RingImageDataSourceService::class.java,
     )
 

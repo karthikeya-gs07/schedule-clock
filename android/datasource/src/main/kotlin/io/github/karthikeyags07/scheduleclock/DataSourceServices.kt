@@ -41,6 +41,11 @@ class DetailsDataSourceService : SlotDataSourceService("details", ComplicationTy
     override fun data() = SpikeSchedule.detailsLine(this)
 }
 
+/** Slot 7 `zone` (R13): the second time zone's difference, for the triangle on the ring. */
+class ZoneDataSourceService : SlotDataSourceService("zone", ComplicationType.RANGED_VALUE) {
+    override fun data() = ZoneMarker.data(this)
+}
+
 /** Slot 5 `ring_promote` (M3): the arc settling from the later lane onto the ring. */
 class PromoteDataSourceService : SlotDataSourceService("promote", ComplicationType.RANGED_VALUE) {
     override fun data() = SpikeSchedule.promoteArc(this)
