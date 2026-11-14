@@ -212,6 +212,12 @@ FIGMA = {   # id: (name, bg, track, text, major, minor, half tick, accent, clash
     # Figma node 81:1738: deep blue arcs, orange double bookings, a muted blue later lane; Prime on black.
     "jaeger": ("Jaeger Blue", "1a1f21", "323c3d", "f7ffe9", "bdcec6", "859c94", "869b91", "00769d", "ff9f5f", "4e889b", None),
     "prime": ("Jaeger Prime", "000000", "323c3d", "f7ffe9", "bdcec6", "859c94", "869b91", "00769d", "ff9f5f", "4e889b", None),
+    # Figma node 95:3496: four on black (Platinum, Electric Lime, Glacier, Cobalt Ember) and Cobalt Mono.
+    "platinum": ("Platinum", "000000", "35404b", "f7f9fc", "c1cad3", "9aa9b8", "9aa9b8", "bac8d8", "d6b888", "8b9caf", None),
+    "electric": ("Electric Lime", "000000", "35404b", "f8ffe9", "c1cad3", "9aa9b8", "9aa9b8", "b9db56", "7da8ff", "95a764", None),
+    "glacier": ("Glacier", "000000", "35404b", "f0f8ff", "c1cad3", "9aa9b8", "9aa9b8", "47bceb", "ffb98a", "75a9bc", None),
+    "ember": ("Cobalt Ember", "000000", "35404b", "f2f6ff", "c1cad3", "9aa9b8", "9aa9b8", "648fff", "ff986e", "7a92be", None),
+    "cobalt": ("Cobalt Mono", "070d1d", "12214d", "f7f8fd", "a3b4e9", "5475d7", "4468d3", "99ace7", "f6f8fd", "5475d7", None),
     "orange": ("Burnt Orange", "1a1f21", "323c3d", "f7ffe9", "bdcec6", "859c94", "869b91", "ed9c5f", "95c3c0", "ed9c5f", None),
 }
 def argb(h): return "#ff" + h
@@ -224,7 +230,7 @@ if COLOURWAY in FIGMA:
     D = Colours(bg=argb(bg), track=argb(track), text=argb(text_), muted=argb(major), num_major=argb(major),
              num_minor=argb(minor), tick_hour=argb(major), tick_half=argb(half), tick_quarter=argb(track),
              divider=argb(track), ink=argb(text_), clash=argb(clash))
-    if COLOURWAY == "prime": D["track"] = "#ff1b1b1b"   # Jaeger Prime: a darker ring than its ticks and divider
+    if bg == "000000": D["track"] = "#ff1b1b1b"   # faces on black: a darker ring than their ticks and divider
 if COLOURWAY:   # one fixed colourway: its colours are written straight in, and there's nothing to customize
     ARC_TINT, LANE_COLOR, LATER_TEXT, SHIFT_TINT, EVENT = next(c for i, n, c in THEMES if i == {"solaris": "timeshift"}.get(COLOURWAY, COLOURWAY))
     USER_CONFIG = ""

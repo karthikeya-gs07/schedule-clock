@@ -145,9 +145,9 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
             if (!watchMode && pager.currentPage != inUse) pager.animateScrollToPage(inUse)
         }
         val shown = if (watchMode) COLOURWAYS[pager.currentPage] else m.colourway
-        // The tab the face on show belongs to, and the pages under it (Solids come first, then Gradients).
-        val gradients = Looks.of(COLOURWAYS[pager.currentPage]).gradient
-        val group = COLOURWAYS.indices.filter { Looks.of(COLOURWAYS[it]).gradient == gradients }
+        // The tab the face on show belongs to, and the pages under it (Solids, then Mono, then Gradients).
+        val lookGroup = Looks.of(COLOURWAYS[pager.currentPage]).group
+        val group = COLOURWAYS.indices.filter { Looks.of(COLOURWAYS[it]).group == lookGroup }
         LaunchedEffect(watchMode, shown) { m.previewColourway = if (watchMode) shown else null }
         // The underglow's colours, left to right: one colour, or a gradient face's colours (Solaris: its day). Five
         // stops either way, each easing on its own, so changing face blends the glow smoothly.
@@ -253,17 +253,17 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
             ))
         }
 
-        // ---- Watchface: Solids / Gradients tabs above the watch ----
+        // ---- Watchface: Solids / Mono / Gradients tabs above the watch ----
         val pickAlpha = soft((p - .5f) / .5f)
         if (pickAlpha > 0f) {
             val scope = rememberCoroutineScope()
-            LookTabs(gradients, haze,
+            LookTabs(lookGroup, haze,
                 Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 28.dp)
                     .graphicsLayer { alpha = pickAlpha; translationY = (1f - pickAlpha) * -16.dp.toPx() },
-            ) { toGradients ->
-                if (toGradients != gradients && watchMode) scope.launch {
+            ) { toGroup ->
+                if (toGroup != lookGroup && watchMode) scope.launch {
                     // Open the tab on the colourway in use if it's there, otherwise on its first.
-                    val pages = COLOURWAYS.indices.filter { Looks.of(COLOURWAYS[it]).gradient == toGradients }
+                    val pages = COLOURWAYS.indices.filter { Looks.of(COLOURWAYS[it]).group == toGroup }
                     pager.animateScrollToPage(pages.firstOrNull { COLOURWAYS[it] == m.colourway } ?: pages.first())
                 }
             }
@@ -372,17 +372,17 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
     }
 }
 
-/** Two frosted tabs, Solids and Gradients; the lit pill slides to the chosen one. */
+/** Three frosted tabs, Solids, Mono and Gradients; the lit pill slides to the chosen one. */
 @Composable
-internal fun LookTabs(gradients: Boolean, haze: HazeState, modifier: Modifier, onSelect: (Boolean) -> Unit) {
-    val at by animateFloatAsState(if (gradients) 1f else 0f, tween(300, easing = FastOutSlowInEasing), label = "lookTab")
-    val tabWidth = 112.dp
+internal fun LookTabs(chosen: LookGroup, haze: HazeState, modifier: Modifier, onSelect: (LookGroup) -> Unit) {
+    val at by animateFloatAsState(chosen.ordinal.toFloat(), tween(300, easing = FastOutSlowInEasing), label = "lookTab")
+    val tabWidth = 104.dp
     // A fixed frosted tint (not a live blur), so the tabs look the same folded and unfolded, whatever is behind them.
-    Box(modifier.height(44.dp).width(tabWidth * 2 + 8.dp).clip(RoundedCornerShape(22.dp)).frostCard(RoundedCornerShape(22.dp)).padding(4.dp)) {
+    Box(modifier.height(44.dp).width(tabWidth * LookGroup.entries.size + 8.dp).clip(RoundedCornerShape(22.dp)).frostCard(RoundedCornerShape(22.dp)).padding(4.dp)) {
         Box(Modifier.offset(x = tabWidth * at).width(tabWidth).fillMaxHeight().clip(RoundedCornerShape(18.dp)).background(Color.White.copy(alpha = .12f)))
         Row {
-            listOf("Solids" to false, "Gradients" to true).forEach { (label, g) ->
-                val on = g == gradients
+            LookGroup.entries.forEach { g ->
+                val on = g == chosen; val label = g.label
                 Box(Modifier.width(tabWidth).fillMaxHeight().clip(RoundedCornerShape(18.dp))
                     .clickable(role = Role.Tab) { onSelect(g) }.semantics { selected = on },
                     contentAlignment = Alignment.Center) {

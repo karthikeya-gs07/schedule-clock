@@ -43,28 +43,28 @@ import dev.chrisbanes.haze.hazeSource
 
 /**
  * Watchface in the wide (unfolded) view (RULES A11): the colourways as a 2-column grid of cards under the Solids /
- * Gradients tabs, each the real face on the sample day with its name, one line and its own Use watch face button.
+ * Mono / Gradients tabs, each the real face on the sample day with its name, one line and its own Use watch face button.
  * The card of the colourway in use has an edge in the accent and reads On your watch.
  */
 @Composable
 fun WatchfaceGrid(m: AppModel, haze: HazeState) {
-    var gradients by rememberSaveable { mutableStateOf(Looks.of(m.colourway).gradient) }
+    var lookGroup by rememberSaveable { mutableStateOf(Looks.of(m.colourway).group) }
     val sample = remember { SampleDay.meetings() }
     Column(Modifier.fillMaxSize().hazeSource(haze, zIndex = 0f).stagePage(LocalAccent.current, dark = true).statusBarsPadding()) {
         Column(Modifier.padding(horizontal = 20.dp)) {
             PageTitle("Watchface")
             // Centred, as above the watch on the folded screen.
             Box(Modifier.fillMaxWidth().padding(top = 20.dp, bottom = 18.dp), contentAlignment = Alignment.Center) {
-                LookTabs(gradients, haze, Modifier) { gradients = it }
+                LookTabs(lookGroup, haze, Modifier) { lookGroup = it }
             }
         }
         // A new list per tab, so each opens at its top.
-        key(gradients) { LazyVerticalGrid(
+        key(lookGroup) { LazyVerticalGrid(
             GridCells.Fixed(2), Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 140.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            items(Looks.ALL.filter { it.gradient == gradients }, key = { it.id }) { look -> FaceCard(m, look, sample) }
+            items(Looks.ALL.filter { it.group == lookGroup }, key = { it.id }) { look -> FaceCard(m, look, sample) }
         } }
     }
 }

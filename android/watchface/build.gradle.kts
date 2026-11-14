@@ -52,6 +52,11 @@ android {
         create("orange") { dimension = "colourway" }
         create("jaeger") { dimension = "colourway" }
         create("prime") { dimension = "colourway" }
+        create("platinum") { dimension = "colourway" }
+        create("electric") { dimension = "colourway" }
+        create("glacier") { dimension = "colourway" }
+        create("ember") { dimension = "colourway" }
+        create("cobalt") { dimension = "colourway" }
     }
 
     signingConfigs {

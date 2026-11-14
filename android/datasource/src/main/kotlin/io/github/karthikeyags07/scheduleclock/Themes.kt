@@ -47,6 +47,11 @@ object Themes {
         solid("orange", "Burnt Orange", "1a1f21", "ed9c5f", "95c3c0", "859c94"),   // Figma node 76:1394
         solid("jaeger", "Jaeger Blue", "1a1f21", "00769d", "ff9f5f", "859c94"),   // Figma node 81:1738
         solid("prime", "Jaeger Prime", "000000", "00769d", "ff9f5f", "859c94"),   // Figma node 81:1738
+        solid("platinum", "Platinum", "000000", "bac8d8", "d6b888", "9aa9b8"),   // Figma node 95:3496
+        solid("electric", "Electric Lime", "000000", "b9db56", "7da8ff", "9aa9b8"),   // Figma node 95:3496
+        solid("glacier", "Glacier", "000000", "47bceb", "ffb98a", "9aa9b8"),   // Figma node 95:3496
+        solid("ember", "Cobalt Ember", "000000", "648fff", "ff986e", "9aa9b8"),   // Figma node 95:3496
+        solid("cobalt", "Cobalt Mono", "070d1d", "99ace7", "f6f8fd", "5475d7"),   // Figma node 95:3496
     )
     val IDS = ALL.map { it.id }
 

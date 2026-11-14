@@ -310,6 +310,7 @@ The phone app is where people set CalenTime up and change it: a first-run setup 
 | 2026-10-31 | Today ↔ Watchface: the face runs its clock forward round the dial to the new time and the new meetings fade in, instead of jumping. | §12 A5 |
 | 2026-10-31 | Watchface: the watch is centred between the tabs and the page dots. | §12 A5 |
 | 2026-10-31 | Underglow takes a gradient face's colours left to right; softer nav icon glow; drawer frost a little lighter. | §12 A2, A5 |
+| 2026-11-14 | Watchface: three tabs, **Solids, Mono, Gradients**. Solids lists the faces on a black dial first (Amber, Mint, Violet, Rose, Jaeger Prime, Platinum, Electric Lime, Glacier, Cobalt Ember), then those on a coloured dial; Mono holds Lunar Mono and Cobalt Mono. New colourways from Figma node 95:3496: Platinum, Electric Lime, Glacier, Cobalt Ember (on black, darker ring) and Cobalt Mono (deep navy). 24 colourways in all. | §9, §12 A5 |
 | 2026-10-31 | Watchface: Solids and Gradients tabs above the watch; Solaris is under Gradients. | §12 A5 |
 | 2026-10-31 | Eleven Figma themes added (16 colourways): six tinted-dial themes with one arc colour, five Palette themes whose arcs run through five colours over the 12 hours ahead. Double bookings and private stripes take each theme's colours. | §9 |
 | 2026-10-31 | Colourway change plays as a transition on the watch, hiding Wear OS's stand-in clock. | §9 |
