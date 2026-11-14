@@ -234,7 +234,8 @@ object SpikeSchedule {
 
     /** T6: 64 = 24-hour clock, 128 = 12-hour without AM/PM. */
     private fun clockFlags(context: Context) =
-        if (PhoneSettings.clock24(context)) 64 else if (PhoneSettings.showAmPm(context)) 0 else 128
+        (if (PhoneSettings.clock24(context)) 64 else if (PhoneSettings.showAmPm(context)) 0 else 128) +
+            (if (PhoneSettings.hideAodDetails(context)) 256 else 0)   // A2c
 
     /** The meeting the face shows: the tapped one, else the default (R6); -1 when there is none. */
     private fun shownIndex(selected: Int, list: List<Placed>, now: Int) =

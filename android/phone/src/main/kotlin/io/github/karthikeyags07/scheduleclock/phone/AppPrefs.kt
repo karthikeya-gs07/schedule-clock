@@ -68,6 +68,9 @@ object AppPrefs {
     /** The second time zone's id, or null (RULES R13). */
     fun secondZone(context: Context) = prefs(context).getString("secondZone", "")!!.ifEmpty { null }
     fun setSecondZone(context: Context, id: String?) = prefs(context).edit().putString("secondZone", id ?: "").apply()
+    /** Always-on shows the ring and the time but not the meeting's title, time or place (RULES A2c). */
+    fun hideAodDetails(context: Context) = prefs(context).getBoolean("hideAodDetails", false)
+    fun setHideAodDetails(context: Context, on: Boolean) = prefs(context).edit().putBoolean("hideAodDetails", on).apply()
     fun clock24(context: Context) = prefs(context).getBoolean("clock24", false)
     fun showAmPm(context: Context) = prefs(context).getBoolean("showAmPm", true)
     fun setClock(context: Context, clock24: Boolean, showAmPm: Boolean) =
@@ -84,6 +87,7 @@ object AppPrefs {
             dataMap.putBoolean("agenda", agenda(context))
             dataMap.putBoolean("flashlight", flashlight(context))
             dataMap.putBoolean("countdown", countdown(context))
+            dataMap.putBoolean("hideAodDetails", hideAodDetails(context))
             dataMap.putString("secondZone", secondZone(context) ?: "")
         }.asPutDataRequest().setUrgent()
         Wearable.getDataClient(context).putDataItem(request)

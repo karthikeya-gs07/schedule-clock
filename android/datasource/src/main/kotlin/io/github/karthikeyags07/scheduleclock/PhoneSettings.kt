@@ -17,11 +17,12 @@ object PhoneSettings {
         prefs(context).edit().apply {
             map.getString("colourway")?.let { putString("colourway", it) }
             if (map.containsKey("secondZone")) putString("secondZone", map.getString("secondZone"))
-            listOf("buzzStart", "buzzMiddle", "buzzEnd", "buzzDnd", "clock24", "showAmPm", "compass", "agenda", "flashlight", "countdown").forEach { if (map.containsKey(it)) putBoolean(it, map.getBoolean(it)) }
+            listOf("buzzStart", "buzzMiddle", "buzzEnd", "buzzDnd", "clock24", "showAmPm", "compass", "agenda", "flashlight", "countdown", "hideAodDetails").forEach { if (map.containsKey(it)) putBoolean(it, map.getBoolean(it)) }
         }.apply()
     }
 
     /** Clock format chosen on the phone (RULES T6): 12-hour with AM/PM until it says otherwise. */
+    fun hideAodDetails(context: Context) = prefs(context).getBoolean("hideAodDetails", false)
     fun countdown(context: Context) = prefs(context).getBoolean("countdown", true)
     fun flashlight(context: Context) = prefs(context).getBoolean("flashlight", false)
     fun agenda(context: Context) = prefs(context).getBoolean("agenda", true)

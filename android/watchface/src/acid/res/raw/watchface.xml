@@ -547,6 +547,7 @@
           <!-- Ambient title (A2a): the shortened title, first characters and an ellipsis; nothing moves -->
           <Group name="title_ambient" x="0" y="0" width="450" height="60" alpha="0">
             <Variant mode="AMBIENT" target="alpha" value="255"/>
+            <Transform target="alpha" value="255 * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 256) % 2))"/>   <!-- A2c: hidden with "Hide details in always-on" -->
             <PartText x="0" y="5" width="450" height="36">
               <Transform target="x" value="(30 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2) + 25 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 2) % 2)) / 2"/>
               <Transform target="alpha" value="255 * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 16) % 2))"/>
@@ -560,28 +561,51 @@
                 <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
             </PartText>
           </Group>
-          <PartDraw name="arrow" x="0" y="13" width="20" height="20" alpha="0">
-            <Transform target="x" value="(225 - ((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000) + (30 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2) + 25 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 2) % 2))) / 2)"/>
-            <Transform target="alpha" value="255 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2)"/>
-            <Line startX="1.5" startY="10" endX="18.5" endY="10"><Stroke color="#ffe7ff8a" thickness="3" cap="ROUND"/></Line>
-            <Line startX="12" startY="3.5" endX="18.5" endY="10"><Stroke color="#ffe7ff8a" thickness="3" cap="ROUND"/></Line>
-            <Line startX="12" startY="16.5" endX="18.5" endY="10"><Stroke color="#ffe7ff8a" thickness="3" cap="ROUND"/></Line>
-          </PartDraw>
-          <PartDraw name="lock" x="0" y="12" width="16" height="22" alpha="0">
-            <Transform target="x" value="(225 - ((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000) + (30 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2) + 25 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 2) % 2))) / 2) + 30 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2)"/>
-            <Transform target="alpha" value="255 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 2) % 2)"/>
-            <Arc centerX="8" centerY="9" width="9" height="9" startAngle="-90" endAngle="90"><Stroke color="#ffa6b68e" thickness="2.5" cap="BUTT"/></Arc>
-            <RoundRectangle x="0" y="9" width="16" height="12" cornerRadiusX="2.5" cornerRadiusY="2.5"><Fill color="#ffa6b68e"/></RoundRectangle>
-          </PartDraw>
+          <Group name="icons_live" x="0" y="0" width="450" height="60">
+            <Variant mode="AMBIENT" target="alpha" value="0"/>
+            <PartDraw name="arrow" x="0" y="13" width="20" height="20" alpha="0">
+              <Transform target="x" value="(225 - ((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000) + (30 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2) + 25 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 2) % 2))) / 2)"/>
+              <Transform target="alpha" value="255 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2)"/>
+              <Line startX="1.5" startY="10" endX="18.5" endY="10"><Stroke color="#ffe7ff8a" thickness="3" cap="ROUND"/></Line>
+              <Line startX="12" startY="3.5" endX="18.5" endY="10"><Stroke color="#ffe7ff8a" thickness="3" cap="ROUND"/></Line>
+              <Line startX="12" startY="16.5" endX="18.5" endY="10"><Stroke color="#ffe7ff8a" thickness="3" cap="ROUND"/></Line>
+            </PartDraw>
+            <PartDraw name="lock" x="0" y="12" width="16" height="22" alpha="0">
+              <Transform target="x" value="(225 - ((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000) + (30 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2) + 25 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 2) % 2))) / 2) + 30 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2)"/>
+              <Transform target="alpha" value="255 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 2) % 2)"/>
+              <Arc centerX="8" centerY="9" width="9" height="9" startAngle="-90" endAngle="90"><Stroke color="#ffa6b68e" thickness="2.5" cap="BUTT"/></Arc>
+              <RoundRectangle x="0" y="9" width="16" height="12" cornerRadiusX="2.5" cornerRadiusY="2.5"><Fill color="#ffa6b68e"/></RoundRectangle>
+            </PartDraw>
+          </Group>
+          <!-- Always-on copies of the arrow and lock; hidden with "Hide details in always-on" (A2c) -->
+          <Group name="icons_ambient" x="0" y="0" width="450" height="60" alpha="0">
+            <Variant mode="AMBIENT" target="alpha" value="255"/>
+            <Transform target="alpha" value="255 * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 256) % 2))"/>
+            <PartDraw name="arrow" x="0" y="13" width="20" height="20" alpha="0">
+              <Transform target="x" value="(225 - ((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000) + (30 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2) + 25 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 2) % 2))) / 2)"/>
+              <Transform target="alpha" value="255 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2)"/>
+              <Line startX="1.5" startY="10" endX="18.5" endY="10"><Stroke color="#ffe7ff8a" thickness="3" cap="ROUND"/></Line>
+              <Line startX="12" startY="3.5" endX="18.5" endY="10"><Stroke color="#ffe7ff8a" thickness="3" cap="ROUND"/></Line>
+              <Line startX="12" startY="16.5" endX="18.5" endY="10"><Stroke color="#ffe7ff8a" thickness="3" cap="ROUND"/></Line>
+            </PartDraw>
+            <PartDraw name="lock" x="0" y="12" width="16" height="22" alpha="0">
+              <Transform target="x" value="(225 - ((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000) + (30 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2) + 25 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 2) % 2))) / 2) + 30 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2)"/>
+              <Transform target="alpha" value="255 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 2) % 2)"/>
+              <Arc centerX="8" centerY="9" width="9" height="9" startAngle="-90" endAngle="90"><Stroke color="#ffa6b68e" thickness="2.5" cap="BUTT"/></Arc>
+              <RoundRectangle x="0" y="9" width="16" height="12" cornerRadiusX="2.5" cornerRadiusY="2.5"><Fill color="#ffa6b68e"/></RoundRectangle>
+            </PartDraw>
+          </Group>
           <PartText x="0" y="44" width="450" height="30">
             <Variant mode="AMBIENT" target="alpha" value="0"/>
             <Transform target="y" value="44 + 30 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 4) % 2)"/>
             <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" color="#fff6fbea">
               <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TITLE]"/></Template></Font></Text>
           </PartText>
-          <!-- Always-on time range (A2b): dimmed, straight under the title (the clash line it would sit under is hidden) -->
+          <!-- Always-on time range (A2b): dimmed, straight under the title (the clash line it would sit under is hidden);
+               hidden with "Hide details in always-on" (A2c) -->
           <PartText x="0" y="44" width="450" height="30" alpha="0">
             <Variant mode="AMBIENT" target="alpha" value="190"/>
+            <Transform target="alpha" value="190 * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 256) % 2))"/>
             <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" color="#fff6fbea">
               <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TITLE]"/></Template></Font></Text>
           </PartText>
