@@ -264,6 +264,9 @@ fun ToggleItem(title: String, text: String? = null, checked: Boolean, icon: Imag
             colors = SwitchDefaults.colors(
                 checkedTrackColor = accent, checkedThumbColor = Palette.onAccent, checkedBorderColor = accent,
                 uncheckedTrackColor = Color(0xFF34353A), uncheckedThumbColor = Palette.muted, uncheckedBorderColor = Color(0xFF34353A),
+                // Disabled (e.g. Show AM/PM in 24-hour mode): a dim grey switch either way, clearly not active.
+                disabledCheckedTrackColor = Color(0xFF26272B), disabledCheckedThumbColor = Color(0xFF55565C), disabledCheckedBorderColor = Color(0xFF26272B),
+                disabledUncheckedTrackColor = Color(0xFF26272B), disabledUncheckedThumbColor = Color(0xFF45464B), disabledUncheckedBorderColor = Color(0xFF26272B),
             ),
         )
     }

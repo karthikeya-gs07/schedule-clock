@@ -407,7 +407,10 @@ private fun RoundButton(label: String, haze: HazeState, onClick: () -> Unit, con
 private fun SyncPill(m: AppModel, haze: HazeState, modifier: Modifier) {
     val dim by animateFloatAsState(if (m.syncing) .4f else 1f, tween(250), label = "dim")
     Column(
-        modifier.height(57.dp).clip(RoundedCornerShape(40.dp)).frosted(haze, RoundedCornerShape(40.dp)).padding(horizontal = 20.dp)
+        // The drawer's frosted look: strong blur under a near-black tint, with a faint grain (RULES A2).
+        modifier.height(57.dp).clip(RoundedCornerShape(40.dp))
+            .hazeEffect(haze, HazeStyle(Home.background, HazeTint(Color(0xFF080808).copy(alpha = .68f)), blurRadius = 48.dp, noiseFactor = .08f))
+            .border(1.dp, Color.White.copy(alpha = .06f), RoundedCornerShape(40.dp)).padding(horizontal = 20.dp)
             .graphicsLayer { alpha = dim },
         verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -657,7 +660,7 @@ fun WatchStatusPanel(m: AppModel, haze: HazeState, onAllow: () -> Unit, onInstal
                     transformOrigin = androidx.compose.ui.graphics.TransformOrigin(.12f, 0f)
                 }
                 .clip(RoundedCornerShape(32.dp))
-                .hazeEffect(haze, HazeStyle(Home.background, HazeTint(Color(0xFF0E0E10).copy(alpha = .92f)), blurRadius = 40.dp, noiseFactor = .1f))
+                .hazeEffect(haze, HazeStyle(Home.background, HazeTint(Color(0xFF151518).copy(alpha = .86f)), blurRadius = 40.dp, noiseFactor = .1f))
                 .border(1.dp, Color.White.copy(alpha = .08f), RoundedCornerShape(32.dp))
                 .clickable(interactionSource = null, indication = null) {}
                 .padding(22.dp),
@@ -767,6 +770,15 @@ fun AboutScreen(colourway: String, onBack: () -> Unit, onRunSetup: () -> Unit) {
                 "A private meeting. Its title and place never leave your phone.")
             FacePart(colourway, "middle", day, SampleDay.SAMPLE_MINUTE, "Middle",
                 "The time, and what's next. Tap an hour on the ring to see what's on then; tap the details to go back.")
+            AboutHeading("Icons on the face")
+            FaceIcon({ c -> arrowGlyph(c) }, LocalAccent.current, "Next meeting",
+                "The arrow before a title means the meeting shown is coming up next, while another one is still going on.")
+            FaceIcon({ c -> lockGlyph(c) }, Palette.muted, "Private meeting",
+                "The lock: the meeting is private, so the face shows \"Private\" and \"Details hidden\" instead of its title and place.")
+            FaceIcon({ c -> overlapGlyph(c) }, Color(0xFFFF7A59), "Overlapping meeting",
+                "Two linked rings, in coral, with the other meeting's name: you're double-booked. \"+1\" means more than one other meeting.")
+            FaceIcon({ c -> todGlyphs(c) }, Color(0xFFA9B8E0), "Later today or tomorrow",
+                "Sunrise, sun, sunset or moon before the time: a meeting on the inner line, by when it starts (morning, afternoon, evening or night). For a meeting tomorrow, the place line also starts with \"Tomorrow\".", wide = true)
             AboutItem("All your calendars, one ring", "Work, personal, family: every calendar you turn on shows together on the same ring, in the same colours. The watch doesn't tell them apart.")
             AboutItem("All-day events", "Not shown on the watch, and they never count as a double booking: your meetings that day look as usual.")
 
@@ -809,6 +821,49 @@ private fun AboutHeading(text: String) =
 private fun AboutItem(title: String, text: String) = Column(Modifier.fillMaxWidth().padding(bottom = 22.dp)) {
     Text(title, style = AboutItemTitle)
     Text(text, style = AboutText, modifier = Modifier.padding(top = 3.dp))
+}
+
+/** A face icon drawn as on the watch, its name and what it means (About → Icons on the face). */
+@Composable
+private fun FaceIcon(glyph: androidx.compose.ui.graphics.drawscope.DrawScope.(Color) -> Unit, colour: Color, title: String, text: String, wide: Boolean = false) =
+    Row(Modifier.fillMaxWidth().padding(bottom = 22.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        androidx.compose.foundation.Canvas(Modifier.padding(top = 2.dp).width(if (wide) 104.dp else 28.dp).height(24.dp)) { glyph(colour) }
+        Column(Modifier.weight(1f)) {
+            Text(title, style = AboutItemTitle)
+            Text(text, style = AboutText, modifier = Modifier.padding(top = 3.dp))
+        }
+    }
+
+// The face's icons, from the watch face's own shapes (prototype/index.html: dArrow, dLock, dClashIcon, TOD_ICONS),
+// drawn in a 24-unit box.
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.unit() = size.height / 24f
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.svg(d: String, c: Color, dx: Float, dy: Float, w: Float, fill: Boolean = false) {
+    val u = unit()
+    val p = androidx.compose.ui.graphics.vector.PathParser().parsePathString(d).toPath()
+    p.transform(androidx.compose.ui.graphics.Matrix().apply { translate(dx * u, dy * u); scale(u, u) })
+    if (fill) drawPath(p, c) else drawPath(p, c, style = androidx.compose.ui.graphics.drawscope.Stroke(w * u,
+        cap = androidx.compose.ui.graphics.StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round))
+}
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.arrowGlyph(c: Color) = svg("M2 12 H22 M15 5 L22 12 L15 19", c, 0f, 0f, 2.6f)
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.lockGlyph(c: Color) {
+    svg("M6 11 H18 A2 2 0 0 1 20 13 V20 A2 2 0 0 1 18 22 H6 A2 2 0 0 1 4 20 V13 A2 2 0 0 1 6 11 Z", c, 2f, 0f, 0f, fill = true)
+    svg("M8 11 V7.5 a4 4 0 0 1 8 0 V11", c, 2f, 0f, 2.4f)
+}
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.overlapGlyph(c: Color) {
+    val u = unit(); val st = androidx.compose.ui.graphics.drawscope.Stroke(2.2f * u)
+    drawCircle(c, 6.5f * u, Offset(9.5f * u, 12f * u), style = st); drawCircle(c, 6.5f * u, Offset(18.5f * u, 12f * u), style = st)
+}
+/** Rays like the prototype's rays(): short lines between radius r1 and r2 at the given angles (0° = up). */
+private fun rays(cx: Float, cy: Float, r1: Float, r2: Float, angles: List<Int>) = angles.joinToString(" ") { a ->
+    val t = Math.toRadians(a.toDouble() - 90); val (s, co) = kotlin.math.sin(t).toFloat() to kotlin.math.cos(t).toFloat()
+    "M${cx + co * r1} ${cy + s * r1} L${cx + co * r2} ${cy + s * r2}"
+}
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.todGlyphs(c: Color) {
+    val sunrise = "M-5 2 A5 5 0 0 1 5 2 M-10 2 H10 M0 10.5 V6 M-2.5 8 L0 5.5 L2.5 8 " + rays(0f, 2f, 8f, 10.5f, listOf(270, 225, 315))
+    val sun = "M4.5 0 A4.5 4.5 0 1 1 -4.5 0 A4.5 4.5 0 1 1 4.5 0 Z " + rays(0f, 0f, 7.5f, 10.5f, listOf(0, 45, 90, 135, 180, 225, 270, 315))
+    val sunset = "M-5 2 A5 5 0 0 1 5 2 M-10 2 H10 M0 5.5 V10 M-2.5 8 L0 10.5 L2.5 8 " + rays(0f, 2f, 8f, 10.5f, listOf(270, 225, 315))
+    val moon = "M6 4.5 A7.5 7.5 0 1 1 -3 -7 A6 6 0 0 0 6 4.5 Z"
+    listOf(sunrise, sun, sunset, moon).forEachIndexed { i, d -> svg(d, c, 11f + i * 27f, 12f, 2f) }
 }
 
 /** One part of the face: a close-up on top, its name and what it means below. */
