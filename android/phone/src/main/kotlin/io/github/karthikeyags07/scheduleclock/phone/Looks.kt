@@ -24,9 +24,9 @@ object Looks {
         Look("plum", "Plum Rose", 0xFFEEA0BD, "Pink arcs on a deep plum dial."),
         Look("forest", "Forest Signal", 0xFF79E4B7, "Mint green arcs on a forest dial."),
         Look("arctic", "Arctic Lagoon", 0xFF66D6E8, "Cyan arcs on a midnight blue dial."),
-        Look("denim", "Faded Denim", 0xFF8BB8C5, ""),   // Figma node 76:1394
-        Look("pacific", "Pacific Radio", 0xFF69B4AB, ""),   // Figma node 76:1394
         Look("orange", "Burnt Orange", 0xFFED9C5F, ""),   // Figma node 76:1394
+        Look("jaeger", "Jaeger Blue", 0xFF00769D, ""),   // Figma node 81:1738
+        Look("prime", "Jaeger Prime", 0xFF00769D, ""),   // Figma node 81:1738
         Look("solaris", "Solaris", 0xFFFF9447, "Colours that follow the sun through your day."),
         Look("quartz", "Rose Quartz", 0xFFFFD5AE, "Peach to lilac arcs on a deep rose dial.",
             listOf(0xFFFFD5AE, 0xFFFFACAA, 0xFFF58FB8, 0xFFCC93DD, 0xFFA6B4F7)),

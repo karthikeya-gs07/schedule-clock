@@ -49,9 +49,9 @@ android {
         create("plum") { dimension = "colourway" }
         create("forest") { dimension = "colourway" }
         create("arctic") { dimension = "colourway" }
-        create("denim") { dimension = "colourway" }
-        create("pacific") { dimension = "colourway" }
         create("orange") { dimension = "colourway" }
+        create("jaeger") { dimension = "colourway" }
+        create("prime") { dimension = "colourway" }
     }
 
     signingConfigs {

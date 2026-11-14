@@ -208,8 +208,9 @@ FIGMA = {   # id: (name, bg, track, text, major, minor, half tick, accent, clash
     "forest": ("Forest Signal", "0c1e1a", "203c32", "f1fff6", "b2cdbe", "759d8b", "749687", "79e4b7", "ffbe55", "d5fca9", None),
     "arctic": ("Arctic Lagoon", "0b1622", "182c40", "f0faff", "a9c4d6", "7094ae", "6c879c", "66d6e8", "a3a5ff", "d2f7ff", None),
     # Figma node 76:1394: Racing Lime's dial on #1a1f21; the later lane is the arc colour.
-    "denim": ("Faded Denim", "1a1f21", "323c3d", "f7ffe9", "bdcec6", "859c94", "869b91", "8bb8c5", "e3a682", "8bb8c5", None),
-    "pacific": ("Pacific Radio", "1a1f21", "323c3d", "f7ffe9", "bdcec6", "859c94", "869b91", "69b4ab", "e6a66a", "69b4ab", None),
+    # Figma node 81:1738: deep blue arcs, orange double bookings, a muted blue later lane; Prime on black.
+    "jaeger": ("Jaeger Blue", "1a1f21", "323c3d", "f7ffe9", "bdcec6", "859c94", "869b91", "00769d", "ff9f5f", "4e889b", None),
+    "prime": ("Jaeger Prime", "000000", "323c3d", "f7ffe9", "bdcec6", "859c94", "869b91", "00769d", "ff9f5f", "4e889b", None),
     "orange": ("Burnt Orange", "1a1f21", "323c3d", "f7ffe9", "bdcec6", "859c94", "869b91", "ed9c5f", "95c3c0", "ed9c5f", None),
 }
 def argb(h): return "#ff" + h
@@ -222,6 +223,7 @@ if COLOURWAY in FIGMA:
     D = Colours(bg=argb(bg), track=argb(track), text=argb(text_), muted=argb(major), num_major=argb(major),
              num_minor=argb(minor), tick_hour=argb(major), tick_half=argb(half), tick_quarter=argb(track),
              divider=argb(track), ink=argb(text_), clash=argb(clash))
+    if COLOURWAY == "prime": D["track"] = "#ff1b1b1b"   # Jaeger Prime: a darker ring than its ticks and divider
 if COLOURWAY:   # one fixed colourway: its colours are written straight in, and there's nothing to customize
     ARC_TINT, LANE_COLOR, LATER_TEXT, SHIFT_TINT, EVENT = next(c for i, n, c in THEMES if i == {"solaris": "timeshift"}.get(COLOURWAY, COLOURWAY))
     USER_CONFIG = ""

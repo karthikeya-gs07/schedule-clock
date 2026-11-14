@@ -56,7 +56,7 @@ android {
 // "default watch face" the push library expects at assets/default_watchface.apk.
 val colourways = listOf("amber", "mint", "violet", "rose", "solaris",
     "quartz", "copper", "ocean", "aurora", "acid", "lunar", "desert", "lime", "plum", "forest", "arctic",
-    "denim", "pacific", "orange")
+    "orange", "jaeger", "prime")
 val faceValidator: Configuration by configurations.creating { isTransitive = false }
 
 abstract class BundleFacesTask : DefaultTask() {

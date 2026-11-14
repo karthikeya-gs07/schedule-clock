@@ -342,13 +342,13 @@
              the colourway hides the other with a transparent tint. -->
         <Group name="ring_colour" x="0" y="0" width="450" height="450">
           <Variant mode="AMBIENT" target="alpha" value="0"/>
-          <PartImage x="0" y="0" width="1800" height="450" tintColor="#ff69b4ab">
+          <PartImage x="0" y="0" width="1800" height="450" tintColor="#ff00769d">
             <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
           </PartImage>
           <PartImage x="-1350" y="0" width="1800" height="450" tintColor="#00000000">
             <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
           </PartImage>
-          <PartImage x="-450" y="0" width="1800" height="450" tintColor="#ff69b4ab">
+          <PartImage x="-450" y="0" width="1800" height="450" tintColor="#ff4e889b">
             <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
           </PartImage>
         </Group>
@@ -390,7 +390,7 @@
             <Arc centerX="225" centerY="225" width="418" height="418" startAngle="0" endAngle="1">
               <Transform target="startAngle" value="[COMPLICATION.RANGED_VALUE_MIN] + 1.55 + 1.02 * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1)"/>
               <Transform target="endAngle" value="[COMPLICATION.RANGED_VALUE_MAX] - 1.55 - 1.02 * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1)"/>
-              <Stroke color="#ff69b4ab" thickness="4" cap="ROUND">
+              <Stroke color="#ff4e889b" thickness="4" cap="ROUND">
                 <Transform target="thickness" value="4 + 8 * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1)"><Animation duration="0.9" interpolation="CUBIC_BEZIER" controls="0.22 1 0.36 1"/></Transform>
               </Stroke>
             </Arc>
@@ -400,7 +400,7 @@
             <Arc centerX="225" centerY="225" width="418" height="418" startAngle="0" endAngle="1">
               <Transform target="startAngle" value="[COMPLICATION.RANGED_VALUE_MIN] + 1.55 + 1.02 * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1)"/>
               <Transform target="endAngle" value="[COMPLICATION.RANGED_VALUE_MAX] - 1.55 - 1.02 * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1)"/>
-              <Stroke color="#ff69b4ab" thickness="4" cap="ROUND">
+              <Stroke color="#ff00769d" thickness="4" cap="ROUND">
                 <Transform target="thickness" value="4 + 8 * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1)"><Animation duration="0.9" interpolation="CUBIC_BEZIER" controls="0.22 1 0.36 1"/></Transform>
               </Stroke>
             </Arc>
@@ -539,9 +539,9 @@
           <PartDraw name="arrow" x="0" y="13" width="20" height="20" alpha="0">
             <Transform target="x" value="(225 - ((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000) + (30 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2) + 25 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 2) % 2))) / 2)"/>
             <Transform target="alpha" value="255 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2)"/>
-            <Line startX="1.5" startY="10" endX="18.5" endY="10"><Stroke color="#ff69b4ab" thickness="3" cap="ROUND"/></Line>
-            <Line startX="12" startY="3.5" endX="18.5" endY="10"><Stroke color="#ff69b4ab" thickness="3" cap="ROUND"/></Line>
-            <Line startX="12" startY="16.5" endX="18.5" endY="10"><Stroke color="#ff69b4ab" thickness="3" cap="ROUND"/></Line>
+            <Line startX="1.5" startY="10" endX="18.5" endY="10"><Stroke color="#ff00769d" thickness="3" cap="ROUND"/></Line>
+            <Line startX="12" startY="3.5" endX="18.5" endY="10"><Stroke color="#ff00769d" thickness="3" cap="ROUND"/></Line>
+            <Line startX="12" startY="16.5" endX="18.5" endY="10"><Stroke color="#ff00769d" thickness="3" cap="ROUND"/></Line>
           </PartDraw>
           <PartDraw name="lock" x="0" y="12" width="16" height="22" alpha="0">
             <Transform target="x" value="(225 - ((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000) + (30 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2) + 25 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 2) % 2))) / 2) + 30 * (round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) % 2)"/>
@@ -582,8 +582,8 @@
           <PartDraw name="overlap" x="0" y="52" width="22" height="14" alpha="0">
             <Transform target="x" value="225 - ((([COMPLICATION.RANGED_VALUE_MAX] - 1) % 10000) + 30) / 2"/>
             <Transform target="alpha" value="round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) == 1 ? 255 : 0"/>
-            <Ellipse x="1" y="1" width="12" height="12"><Stroke color="#ffe6a66a" thickness="2"/></Ellipse>
-            <Ellipse x="9" y="1" width="12" height="12"><Stroke color="#ffe6a66a" thickness="2"/></Ellipse>
+            <Ellipse x="1" y="1" width="12" height="12"><Stroke color="#ffff9f5f" thickness="2"/></Ellipse>
+            <Ellipse x="9" y="1" width="12" height="12"><Stroke color="#ffff9f5f" thickness="2"/></Ellipse>
           </PartDraw>
           <Group name="line_muted" x="0" y="74" width="450" height="30" alpha="0">
             <Transform target="x" value="round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) == 1 ? 15 : 0"/>
@@ -595,13 +595,13 @@
             <Transform target="x" value="round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) == 1 ? 15 : 0"/>
             <Transform target="y" value="round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) == 1 ? 44 : 74"/>
             <Transform target="alpha" value="round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) == 1 ? 255 : 0"/>
-            <PartText x="0" y="0" width="450" height="30"><Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" weight="NORMAL" color="#ffe6a66a"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text></PartText>
+            <PartText x="0" y="0" width="450" height="30"><Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" weight="NORMAL" color="#ffff9f5f"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text></PartText>
           </Group>
           <Group name="line_tomorrow" x="0" y="74" width="450" height="30" alpha="0">
             <Transform target="x" value="round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) == 1 ? 15 : 0"/>
             <Transform target="y" value="round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) == 1 ? 44 : 74"/>
             <Transform target="alpha" value="round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) == 2 ? 255 : 0"/>
-            <PartText x="0" y="0" width="450" height="30"><Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" weight="NORMAL" color="#ff69b4ab"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text></PartText>
+            <PartText x="0" y="0" width="450" height="30"><Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" weight="NORMAL" color="#ff4e889b"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text></PartText>
           </Group>
         </Group>
       </Complication>
