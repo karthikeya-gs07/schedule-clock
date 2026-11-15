@@ -161,10 +161,39 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
     }
 
     fun pickColourway(c: String) {
-        if (demo) { colourway = c; link = link.copy(face = link.face?.copy(colourway = c)); return }
+        if (watchBusy) { wantColourway = c; notice = WATCH_UPDATING; return }
         colourway = c
-        AppPrefs.setColourway(context, c)
-        sendFace(AppPrefs.watchColourway(context))
+        if (!demo) AppPrefs.setColourway(context, c)
+        faceChanged()
+    }
+
+    /**
+     * A face change is on its way to the watch (RULES A25). Red, green or colourway changes made meanwhile don't
+     * happen yet: a popup says the watch is updating, and once it's done the last one asked for goes on.
+     */
+    private var watchBusy = false
+    private var wantMode: String? = null
+    private var wantColourway: String? = null
+
+    /** The colourway or mode just changed on the phone: the watch follows. */
+    private fun faceChanged() {
+        if (demo) {   // no watch: it takes the same time a real one would
+            link = link.copy(face = link.face?.copy(colourway = colourway))
+            watchBusy = true
+            scope.launch { delay(4500); watchDone() }
+        } else { watchBusy = true; sendFace(AppPrefs.watchColourway(context)) }
+    }
+
+    /** The watch has finished changing: the last change asked for meanwhile goes on now. */
+    private fun watchDone() {
+        watchBusy = false
+        val m = wantMode; val c = wantColourway
+        wantMode = null; wantColourway = null
+        if (notice == WATCH_UPDATING) notice = null
+        var changed = false
+        if (c != null && c != colourway) { colourway = c; if (!demo) AppPrefs.setColourway(context, c); changed = true }
+        if (m != null && m != RedTheme.mode) { RedTheme.mode = m; AppPrefs.setNightMode(context, m); changed = true }
+        if (changed) faceChanged()
     }
 
     /** Puts the face in [c] on the watch (a colourway, or "red" / "green" in those modes). */
@@ -175,6 +204,7 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
             // Not the watch face yet (never put on, or another face picked since): the watch's face setup puts it on
             // and makes it the watch face. Android lets an app do that once; after that the watch says how to pick it.
             if (link.face?.installed != true || link.face?.active != true) {
+                watchDone()   // a setup, not a quick swap: nothing waits on it
                 AppPrefs.sendSettings(context)
                 if (!WatchLink.install(context, c)) { say("Couldn't reach your watch"); return@launch }
                 val usedBefore = link.face?.activateUsed == true
@@ -189,6 +219,12 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
                 if (!usedBefore && link.face?.activateUsed == true) notice = PICK_ON_WATCH
                 return@launch
             }
+            try { swapOnWatch(c) } finally { watchDone() }
+        }
+    }
+
+    private suspend fun swapOnWatch(c: String) {
+        run {   // the quick swap on a watch already wearing the face
             val shown = WatchLink.openColourChange(context, c)
             if (shown) {
                 delay(4500)   // the swap and the new face loading, under the transition
@@ -263,9 +299,15 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
     init { RedTheme.mode = AppPrefs.nightMode(context) }
     /** Switches to [mode] ("red" or "green"), or off if it's already on, and the face on the watch with it. */
     fun toggleNight(mode: String) {
+        if (watchBusy) {   // the watch is still changing: this waits, and the last one asked for goes on after
+            val now = wantMode ?: RedTheme.mode
+            wantMode = if (now == mode) "" else mode
+            notice = WATCH_UPDATING
+            return
+        }
         RedTheme.mode = if (RedTheme.mode == mode) "" else mode
         AppPrefs.setNightMode(context, RedTheme.mode)
-        if (!demo) sendFace(AppPrefs.watchColourway(context))
+        faceChanged()
     }
 
     var shortcutsOn by mutableStateOf(AppPrefs.shortcutsOn(context))
@@ -369,6 +411,7 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
     }
 }
 
+private val WATCH_UPDATING = "Your watch is updating" to "It takes a moment. Your last change goes on as soon as it's done."
 private val PICK_ON_WATCH = "Pick CalenTime on your watch" to "Touch and hold your watch face, swipe to CalenTime and tap it."
 
 /** The four numbers on the face that can hold a shortcut, in Settings order. */
