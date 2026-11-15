@@ -102,6 +102,7 @@ private class CompassView(context: Context, private val theme: Theme) : View(con
     private var drawerTarget = 0f
     private var dragFrom = Float.NaN // the drawer's position when a drag started
     private var downY = 0f; private var downX = 0f; private var dragging = false
+    private var lastTouch = System.nanoTime()   // the handle dims a few seconds after this
     private var calibrating = false
     private var calStart = 0L        // when the guide opened
     private var doneAt = 0L          // when it reached high (it closes a moment later)
@@ -117,7 +118,7 @@ private class CompassView(context: Context, private val theme: Theme) : View(con
     override fun onTouchEvent(e: android.view.MotionEvent): Boolean {
         val s = S; val panel = PANEL_H * s
         when (e.actionMasked) {
-            android.view.MotionEvent.ACTION_DOWN -> { downY = e.y; downX = e.x; dragging = false; dragFrom = drawer; return true }
+            android.view.MotionEvent.ACTION_DOWN -> { lastTouch = System.nanoTime(); invalidate(); downY = e.y; downX = e.x; dragging = false; dragFrom = drawer; return true }
             android.view.MotionEvent.ACTION_MOVE -> {
                 val dy = e.y - downY
                 if (!dragging && abs(dy) > 12f * s && !calibrating) dragging = true
@@ -252,9 +253,9 @@ private class CompassView(context: Context, private val theme: Theme) : View(con
         val closed = 1f - drawer
         // Low accuracy: a Calibrate button above the handle (fades as the drawer opens).
         if (needsCalibration && closed > 0f && !calibrating) {
-            pill(canvas, cx, y0 + 345f * s, 170f * s, 50f * s, outline = true, alpha = closed)
-            text.typeface = plain; text.isFakeBoldText = true; text.textSize = 22f * s; text.color = withAlpha(theme.accent, closed)
-            canvas.drawText("Calibrate", cx, y0 + 353f * s, text); text.isFakeBoldText = false; text.typeface = anta
+            pill(canvas, cx, y0 + 345f * s, 210f * s, 62f * s, outline = true, alpha = closed)
+            text.typeface = plain; text.isFakeBoldText = true; text.textSize = 27f * s; text.color = withAlpha(theme.accent, closed)
+            canvas.drawText("Calibrate", cx, y0 + 354.5f * s, text); text.isFakeBoldText = false; text.typeface = anta
         }
         // The drawer: a panel rising from the bottom, a little lighter than the dial.
         val panelTop = y0 + 450f * s - PANEL_H * s * drawer
@@ -273,10 +274,20 @@ private class CompassView(context: Context, private val theme: Theme) : View(con
             canvas.drawText("Calibrate", cx, panelTop + 163f * s, text); text.isFakeBoldText = false
             text.typeface = anta
         }
-        // The handle, on the drawer's top edge (at the bottom of the screen when closed).
-        p.style = Paint.Style.FILL; p.color = if (needsCalibration && drawer < .5f) theme.accent else blend(theme.ink, theme.background, .5f)
-        val hy = if (drawer > 0f) panelTop + 18f * s else y0 + 417f * s   // just above the spokes
-        canvas.drawRoundRect(cx - 22f * s, hy - 3f * s, cx + 22f * s, hy + 3f * s, 3f * s, 3f * s, p)
+        // The handle. Closed: a short arc just above the spokes, following the round edge of the screen; it dims a
+        // few seconds after the compass opens (not while it's asking for calibration) and brightens again on a touch.
+        // Open: it straightens out on the drawer's flat top edge.
+        val handleColour = if (needsCalibration && drawer < .5f) theme.accent else blend(theme.ink, theme.background, .5f)
+        val idle = (System.nanoTime() - lastTouch) / 1e9f
+        val dim = if (needsCalibration || drawer > 0f) 1f else (1f - ((idle - 3f) / .8f).coerceIn(0f, 1f) * .65f)
+        if (idle < 3.9f) postInvalidateDelayed(50)   // keep drawing through the dimming
+        p.style = Paint.Style.STROKE; p.strokeWidth = 6f * s; p.strokeCap = Paint.Cap.ROUND
+        p.color = withAlpha(handleColour, dim)
+        val hy = if (drawer > 0f) panelTop + 18f * s else y0 + 418f * s   // just above the spokes
+        val r = 225f * s - (y0 + 450f * s - hy)    // the screen's radius less the gap: concentric with its edge
+        val half = 32f * s                         // half the handle's length
+        val sag = (1f - drawer) * (r - kotlin.math.sqrt((r * r - half * half).coerceAtLeast(0f)))   // curved closed, straight open
+        canvas.drawPath(Path().apply { moveTo(cx - half, hy - sag); quadTo(cx, hy + sag, cx + half, hy - sag) }, p)
     }
 
     /** The guide: a figure 8 with a dot to follow, the accuracy filling up, and a word on how it's going. */
