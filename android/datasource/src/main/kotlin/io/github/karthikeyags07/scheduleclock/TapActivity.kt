@@ -60,9 +60,9 @@ class TapActivity : Activity() {
                 else -> FlashlightActivity::class.java
             })
             else if (SpikeSchedule.needsCalendarSetup(this)) startActivity(Intent(this, PermissionActivity::class.java))
-            else SpikeSchedule.tapHour(this, number % 12)
+            else if (!Focus.active(this)) SpikeSchedule.tapHour(this, number % 12)   // focus mode: the hours are hidden
         } else if (uri?.path == "/release") {
-            SpikeSchedule.release(this)
+            if (!Focus.active(this)) SpikeSchedule.release(this)
         } else if (test && uri?.path == "/buzz") {
             MeetingBuzz.Kind.entries.firstOrNull { it.name.equals(uri.getQueryParameter("kind"), true) }
                 ?.let { MeetingBuzz.play(this, it) }
@@ -84,15 +84,17 @@ class TapActivity : Activity() {
         } else if (test && uri?.path == "/compassguide") {   // debug: the compass with its calibration guide showing
             startActivity(Intent(this, CompassActivity::class.java).putExtra("guide", true)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
-        } else if (test && uri?.path == "/focusend") {   // debug: end focus mode in `in` seconds (RULES A26)
-            val at = System.currentTimeMillis() + 1000L * (uri.getQueryParameter("in")?.toLongOrNull() ?: 30)
-            getSharedPreferences("phone_settings", MODE_PRIVATE).edit().putLong("focusUntil", at)
-                .putString("colourway", FacePush.colourway(this)).commit()   // as if the phone had put this Focus face on
+        } else if (test && uri?.path == "/focus") {   // debug: focus mode on, as if from the phone (RULES A26)
+            // `?in=30` ends it in 30 s; `?off` turns it off.
+            val off = uri.getQueryParameter("off") != null
+            val at = uri.getQueryParameter("in")?.toLongOrNull()?.let { System.currentTimeMillis() + 1000L * it } ?: 0L
+            getSharedPreferences("phone_settings", MODE_PRIVATE).edit().putBoolean("focus", !off).putLong("focusUntil", at).commit()
             FocusEnd.schedule(this)
+            SpikeSchedule.requestUpdate(applicationContext, FocusDataSourceService::class.java)
         } else if (test && uri?.path == "/day") {
             SpikeSchedule.setDay(this, uri.getQueryParameter("name") ?: "busy")
         } else if (uri?.path == "/select") {
-            uri.getQueryParameter("hour")?.toIntOrNull()?.let { SpikeSchedule.tapHour(this, it) }
+            if (!Focus.active(this)) uri.getQueryParameter("hour")?.toIntOrNull()?.let { SpikeSchedule.tapHour(this, it) }
             Log.i(TAG, "update requested after ${System.currentTimeMillis() - received} ms")
         }
 

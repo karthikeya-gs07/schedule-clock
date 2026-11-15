@@ -51,7 +51,7 @@ object FacePush {
             supported = true,
             installed = slot != null,
             active = active,
-            colourway = if (slot != null) prefs.getString("colourway", null) else null,
+            colourway = if (slot != null) known(prefs.getString("colourway", null)) else null,
             activateUsed = prefs.getBoolean("activateUsed", false),
         )
     }
@@ -93,7 +93,14 @@ object FacePush {
         active = prefs(context).getBoolean("active", false), colourway = colourway, activateUsed = prefs(context).getBoolean("activateUsed", false))
 
     /** The colourway of the face on the watch (the last one put there), for drawing the ring in its colours. */
-    fun colourway(context: Context): String? = prefs(context).getString("colourway", null)
+    fun colourway(context: Context): String? = known(prefs(context).getString("colourway", null))
+
+    /**
+     * [name] as a face this app carries, or null. Focus mode used to be faces of their own ("focusEmber"); those
+     * names, saved before the update that made it a layer, mean their colourway now (RULES A26).
+     */
+    fun known(name: String?): String? =
+        (if (name != null && name.startsWith("focus")) FocusEnd.base(name) else name)?.takeIf { it in COLOURWAYS }
 
     fun canActivate(context: Context) =
         context.checkSelfPermission(ACTIVATE_PERMISSION) == PackageManager.PERMISSION_GRANTED

@@ -5,21 +5,31 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import androidx.wear.watchface.complications.data.ComplicationData
+import androidx.wear.watchface.complications.data.NoDataComplicationData
 import androidx.wear.watchface.complications.data.PlainComplicationText
 import androidx.wear.watchface.complications.data.RangedValueComplicationData
-import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 
 /**
- * The Focus face's data (RULES A26; the layout is in tools/gen_focus_face.py). While a meeting is on: its end, and
+ * The Focus layer's data (RULES A26; the layout, a slot in every main face, is in tools/gen_focus_face.py). Nothing
+ * while the phone's focus mode is off (the layer isn't drawn) or once its countdown has run out. While a meeting is on: its end, and
  * the ring from its start; otherwise the next meeting's start (today or tomorrow), the ring from an hour before.
  * The face counts down by itself from the watch's clock; an exact alarm refreshes this slot when the meeting ends
  * or the next one starts, and at midnight (the face counts seconds from midnight).
  */
 object Focus {
-    fun data(context: Context): RangedValueComplicationData {
+    /** The phone's focus mode is on and its countdown hasn't run out: the Focus layer shows over the face. */
+    fun active(context: Context): Boolean {
+        if (!PhoneSettings.focusOn(context)) return false
+        val until = PhoneSettings.focusUntil(context)
+        return until <= 0 || System.currentTimeMillis() < until
+    }
+
+    fun data(context: Context): ComplicationData {
+        if (!active(context)) return NoDataComplicationData()
         val nowSec = LocalTime.now().toSecondOfDay()
         val meetings = SpikeSchedule.meetingsNow(context).filter { !it.allDay }
         val live = meetings.filter { it.startMin * 60 <= nowSec && it.endMin * 60 > nowSec }.minByOrNull { it.endMin }
@@ -56,10 +66,11 @@ object Focus {
 
 /**
  * Focus mode ends by itself (RULES A26): when its countdown reaches zero (the moment the phone sent with the
- * settings), the watch swaps the Focus face back to its colourway's main face. The phone leaves focus mode then too.
+ * settings), the Focus layer is asked again and, its time up, draws nothing: the main face shows. The phone leaves
+ * focus mode then too.
  */
 object FocusEnd {
-    /** The colourway a Focus face is in: "ember" for "focusEmber". */
+    /** The colourway an old Focus face (one of its own, before it was a layer) was in: "ember" for "focusEmber". */
     fun base(face: String) = face.removePrefix("focus").replaceFirstChar(Char::lowercase)
 
     fun schedule(context: Context) {
@@ -67,7 +78,7 @@ object FocusEnd {
         val intent = PendingIntent.getBroadcast(context, 2, Intent(context, FocusEndReceiver::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val until = PhoneSettings.focusUntil(context)
-        if (until <= System.currentTimeMillis() || PhoneSettings.colourway(context)?.startsWith("focus") != true) {
+        if (until <= System.currentTimeMillis() || !PhoneSettings.focusOn(context)) {
             alarms.cancel(intent); return
         }
         if (alarms.canScheduleExactAlarms()) alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, until, intent)
@@ -78,19 +89,12 @@ object FocusEnd {
 
 class FocusEndReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        val face = FacePush.colourway(context) ?: return
-        if (!face.startsWith("focus")) return
-        val pending = goAsync()
-        val app = context.applicationContext
-        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
-            try { FacePush.install(app, FocusEnd.base(face)); android.util.Log.i(TAG, "focus ended: back to ${FocusEnd.base(face)}") }
-            catch (e: Exception) { android.util.Log.w(TAG, "focus end: couldn't swap back", e) }
-            finally { pending.finish() }
-        }
+        android.util.Log.i(TAG, "focus ended")
+        SpikeSchedule.requestUpdate(context.applicationContext, FocusDataSourceService::class.java)
     }
 }
 
-/** A meeting started or ended (or it's midnight): the Focus face asks again. */
+/** A meeting started or ended (or it's midnight): the Focus layer asks again. */
 class FocusTickReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) =
         SpikeSchedule.requestUpdate(context.applicationContext, FocusDataSourceService::class.java)

@@ -22,7 +22,8 @@ class FaceUpdateReceiver : BroadcastReceiver() {
             try {
                 withTimeoutOrNull(20_000) {
                     val s = FacePush.status(app)
-                    val colourway = s.colourway ?: PhoneSettings.colourway(app)
+                    // An old or unknown saved name falls back to what the phone wants, then to Amber: never a failed swap.
+                    val colourway = FacePush.known(s.colourway) ?: PhoneSettings.faceNow(app) ?: "amber"
                     Log.i(TAG, "update: face ${if (s.installed) "installed" else "not installed"}, colourway $colourway")
                     // Always put it on again: an update (even one with the same version, as in testing) swaps the
                     // pushed face back to the app's default (Amber).

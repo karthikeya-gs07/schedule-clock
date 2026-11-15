@@ -1,4 +1,4 @@
-// Written by android/tools/gen_focus_face.py: each colourway's Focus face colours (RULES A26).
+// Written by android/tools/gen_spike_face.py: each colourway's Focus colours (RULES A26).
 const FOCUS_THEMES = {
  "acid": {
   "bg": "#12180b",

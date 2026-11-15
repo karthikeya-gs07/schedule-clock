@@ -53,10 +53,8 @@ object Themes {
         solid("ember", "Cobalt Ember", "000000", "648fff", "ff986e", "9aa9b8"),   // Figma node 95:3496
         solid("cobalt", "Cobalt Mono", "070d1d", "99ace7", "f6f8fd", "5475d7"),   // Figma node 95:3496
         solid("red", "Red mode", "000000", "d60000", "bd0000", "6b0000"),   // the phone's red mode (RULES A25)
-    ).let { looks -> looks + looks.filter { it.id != "red" }.map { it.copy(id = focusId(it.id), name = "Focus mode") } }   // focus mode (RULES A26)
+    )
     val IDS = ALL.map { it.id }
-    /** The Focus face in [colourway]'s colours (the phone's focus mode, RULES A26): "focusEmber" for "ember". */
-    fun focusId(colourway: String) = "focus" + colourway.replaceFirstChar(Char::uppercase)
 
     fun of(id: String?) = ALL.firstOrNull { it.id == id } ?: ALL[0]
 }

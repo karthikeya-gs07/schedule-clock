@@ -790,6 +790,177 @@
       </Complication>
     </ComplicationSlot>
 
+    <!-- Focus mode (A26): with data, covers the face and shows the countdown; no data while focus mode is off. -->
+    <ComplicationSlot slotId="8" name="focus" displayName="@string/slot_focus" x="0" y="0" width="450" height="450"
+        supportedTypes="RANGED_VALUE EMPTY" isCustomizable="FALSE">
+      <DefaultProviderPolicy defaultSystemProvider="EMPTY" defaultSystemProviderType="EMPTY"
+          primaryProvider="io.github.karthikeyags07.scheduleclock/io.github.karthikeyags07.scheduleclock.FocusDataSourceService" primaryProviderType="RANGED_VALUE"/>
+      <BoundingOval x="0" y="0" width="450" height="450"/>
+      <Complication type="RANGED_VALUE">
+        <!-- The cover: the colourway's dial over the main face, black in always-on -->
+        <PartDraw x="0" y="0" width="450" height="450">
+          <Rectangle x="0" y="0" width="450" height="450"><Fill color="#ff000000"/></Rectangle>
+        </PartDraw>
+        <PartDraw x="0" y="0" width="450" height="450" alpha="0">
+          <Variant mode="AMBIENT" target="alpha" value="255" duration="0.5"/>
+          <Rectangle x="0" y="0" width="450" height="450"><Fill color="#ff000000"/></Rectangle>
+        </PartDraw>
+
+        <!-- Interactive -->
+        <Group name="active" x="0" y="0" width="450" height="450">
+          <Variant mode="AMBIENT" target="alpha" value="0" duration="0.5"/>
+          <!-- The ring: the time left, emptying clockwise from 12 -->
+          <PartDraw x="0" y="0" width="450" height="450">
+            <Arc centerX="225" centerY="225" width="438" height="438" startAngle="0" endAngle="360">
+              <Stroke color="#ff1c1c1f" thickness="12"/>
+            </Arc>
+          </PartDraw>
+          <PartDraw x="0" y="0" width="450" height="450">
+            <Transform target="alpha" value="255 * (1 - (1 - (([COMPLICATION.RANGED_VALUE_MAX] - 300000) % 2) - (floor(([COMPLICATION.RANGED_VALUE_MAX] - 300000) / 2) % 2))) * (clamp(clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) / ([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN] + 0.001), 0, 1) &gt; 0)"/>
+            <Arc centerX="225" centerY="225" width="438" height="438" startAngle="0" endAngle="1">
+              <Transform target="endAngle" value="clamp(360 * clamp(clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) / ([COMPLICATION.RANGED_VALUE_VALUE] - [COMPLICATION.RANGED_VALUE_MIN] + 0.001), 0, 1), 1, 360)"/>
+              <Stroke color="#ffff9447" thickness="12" cap="ROUND"/>
+            </Arc>
+          </PartDraw>
+
+          <!-- A meeting on or next -->
+          <Group name="meeting" x="0" y="0" width="450" height="450">
+            <Transform target="alpha" value="255 * (1 - (1 - (([COMPLICATION.RANGED_VALUE_MAX] - 300000) % 2) - (floor(([COMPLICATION.RANGED_VALUE_MAX] - 300000) / 2) % 2)))"/>
+        <Group name="clock_12" x="0" y="78" width="450" height="50">
+          <Transform target="alpha" value="255 * (1 - (floor(([COMPLICATION.RANGED_VALUE_MAX] - 300000) / 4) % 2))"/>
+          <DigitalClock x="0" y="0" width="450" height="50">
+            <TimeText x="0" y="0" width="450" height="50" format="h:mm" hourFormat="12" align="CENTER">
+              <Font family="anta_regular" size="40" color="#ff8e8e93"/>
+            </TimeText>
+          </DigitalClock>
+        </Group>
+        <Group name="clock_24" x="0" y="78" width="450" height="50">
+          <Transform target="alpha" value="255 * (floor(([COMPLICATION.RANGED_VALUE_MAX] - 300000) / 4) % 2)"/>
+          <DigitalClock x="0" y="0" width="450" height="50">
+            <TimeText x="0" y="0" width="450" height="50" format="hh:mm" hourFormat="24" align="CENTER">
+              <Font family="anta_regular" size="40" color="#ff8e8e93"/>
+            </TimeText>
+          </DigitalClock>
+        </Group>
+            <Group name="label_live" x="0" y="138" width="450" height="32">
+              <Transform target="alpha" value="255 * (([COMPLICATION.RANGED_VALUE_MAX] - 300000) % 2)"/>
+              <PartText x="0" y="0" width="450" height="32"><Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="#ffff9447" letterSpacing="0.08"><Upper>Ends in</Upper></Font></Text></PartText>
+            </Group>
+            <Group name="label_next" x="0" y="138" width="450" height="32">
+              <Transform target="alpha" value="255 * (floor(([COMPLICATION.RANGED_VALUE_MAX] - 300000) / 2) % 2)"/>
+              <PartText x="0" y="0" width="450" height="32"><Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" weight="MEDIUM" color="#ffff9447" letterSpacing="0.08"><Upper>Starts in</Upper></Font></Text></PartText>
+            </Group>
+        <Group name="left_0" x="0" y="168" width="450" height="120">
+          <Transform target="alpha" value="255 * (floor(clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) / 3600) == 0)"/>
+          <PartText x="66" y="0" width="94" height="120"><Text align="CENTER" ellipsis="FALSE"><Font family="anta_regular" size="104" weight="NORMAL" color="#fff2f2f2"><Template><![CDATA[%d]]><Parameter expression="floor(floor((clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) % 3600) / 60) / 10)"/></Template></Font></Text></PartText>
+          <PartText x="132" y="0" width="94" height="120"><Text align="CENTER" ellipsis="FALSE"><Font family="anta_regular" size="104" weight="NORMAL" color="#fff2f2f2"><Template><![CDATA[%d]]><Parameter expression="floor(floor((clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) % 3600) / 60) % 10)"/></Template></Font></Text></PartText>
+          <PartText x="178" y="0" width="94" height="120"><Text align="CENTER" ellipsis="FALSE"><Font family="anta_regular" size="104" weight="NORMAL" color="#fff2f2f2">:</Font></Text></PartText>
+          <PartText x="224" y="0" width="94" height="120"><Text align="CENTER" ellipsis="FALSE"><Font family="anta_regular" size="104" weight="NORMAL" color="#fff2f2f2"><Template><![CDATA[%d]]><Parameter expression="floor(floor(clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) % 60) / 10)"/></Template></Font></Text></PartText>
+          <PartText x="290" y="0" width="94" height="120"><Text align="CENTER" ellipsis="FALSE"><Font family="anta_regular" size="104" weight="NORMAL" color="#fff2f2f2"><Template><![CDATA[%d]]><Parameter expression="floor(floor(clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) % 60) % 10)"/></Template></Font></Text></PartText>
+        </Group>
+        <Group name="left_1" x="0" y="168" width="450" height="120">
+          <Transform target="alpha" value="255 * (floor(clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) / 3600) &gt; 0) * (floor(clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) / 3600) &lt; 10)"/>
+          <PartText x="67" y="0" width="72" height="120"><Text align="CENTER" ellipsis="FALSE"><Font family="anta_regular" size="80" weight="NORMAL" color="#fff2f2f2"><Template><![CDATA[%d]]><Parameter expression="floor(clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) / 3600)"/></Template></Font></Text></PartText>
+          <PartText x="102" y="0" width="72" height="120"><Text align="CENTER" ellipsis="FALSE"><Font family="anta_regular" size="80" weight="NORMAL" color="#fff2f2f2">:</Font></Text></PartText>
+          <PartText x="138" y="0" width="72" height="120"><Text align="CENTER" ellipsis="FALSE"><Font family="anta_regular" size="80" weight="NORMAL" color="#fff2f2f2"><Template><![CDATA[%d]]><Parameter expression="floor(floor((clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) % 3600) / 60) / 10)"/></Template></Font></Text></PartText>
+          <PartText x="189" y="0" width="72" height="120"><Text align="CENTER" ellipsis="FALSE"><Font family="anta_regular" size="80" weight="NORMAL" color="#fff2f2f2"><Template><![CDATA[%d]]><Parameter expression="floor(floor((clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) % 3600) / 60) % 10)"/></Template></Font></Text></PartText>
+          <PartText x="224" y="0" width="72" height="120"><Text align="CENTER" ellipsis="FALSE"><Font family="anta_regular" size="80" weight="NORMAL" color="#fff2f2f2">:</Font></Text></PartText>
+          <PartText x="260" y="0" width="72" height="120"><Text align="CENTER" ellipsis="FALSE"><Font family="anta_regular" size="80" weight="NORMAL" color="#fff2f2f2"><Template><![CDATA[%d]]><Parameter expression="floor(floor(clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) % 60) / 10)"/></Template></Font></Text></PartText>
+          <PartText x="311" y="0" width="72" height="120"><Text align="CENTER" ellipsis="FALSE"><Font family="anta_regular" size="80" weight="NORMAL" color="#fff2f2f2"><Template><![CDATA[%d]]><Parameter expression="floor(floor(clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) % 60) % 10)"/></Template></Font></Text></PartText>
+        </Group>
+        <Group name="left_2" x="0" y="168" width="450" height="120">
+          <Transform target="alpha" value="255 * (floor(clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) / 3600) &gt;= 10)"/>
+          <PartText x="60" y="0" width="65" height="120"><Text align="CENTER" ellipsis="FALSE"><Font family="anta_regular" size="72" weight="NORMAL" color="#fff2f2f2"><Template><![CDATA[%d]]><Parameter expression="floor(floor(clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) / 3600) / 10)"/></Template></Font></Text></PartText>
+          <PartText x="106" y="0" width="65" height="120"><Text align="CENTER" ellipsis="FALSE"><Font family="anta_regular" size="72" weight="NORMAL" color="#fff2f2f2"><Template><![CDATA[%d]]><Parameter expression="floor(floor(clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) / 3600) % 10)"/></Template></Font></Text></PartText>
+          <PartText x="138" y="0" width="65" height="120"><Text align="CENTER" ellipsis="FALSE"><Font family="anta_regular" size="72" weight="NORMAL" color="#fff2f2f2">:</Font></Text></PartText>
+          <PartText x="170" y="0" width="65" height="120"><Text align="CENTER" ellipsis="FALSE"><Font family="anta_regular" size="72" weight="NORMAL" color="#fff2f2f2"><Template><![CDATA[%d]]><Parameter expression="floor(floor((clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) % 3600) / 60) / 10)"/></Template></Font></Text></PartText>
+          <PartText x="216" y="0" width="65" height="120"><Text align="CENTER" ellipsis="FALSE"><Font family="anta_regular" size="72" weight="NORMAL" color="#fff2f2f2"><Template><![CDATA[%d]]><Parameter expression="floor(floor((clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) % 3600) / 60) % 10)"/></Template></Font></Text></PartText>
+          <PartText x="248" y="0" width="65" height="120"><Text align="CENTER" ellipsis="FALSE"><Font family="anta_regular" size="72" weight="NORMAL" color="#fff2f2f2">:</Font></Text></PartText>
+          <PartText x="280" y="0" width="65" height="120"><Text align="CENTER" ellipsis="FALSE"><Font family="anta_regular" size="72" weight="NORMAL" color="#fff2f2f2"><Template><![CDATA[%d]]><Parameter expression="floor(floor(clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) % 60) / 10)"/></Template></Font></Text></PartText>
+          <PartText x="326" y="0" width="65" height="120"><Text align="CENTER" ellipsis="FALSE"><Font family="anta_regular" size="72" weight="NORMAL" color="#fff2f2f2"><Template><![CDATA[%d]]><Parameter expression="floor(floor(clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) % 60) % 10)"/></Template></Font></Text></PartText>
+        </Group>
+            <Group name="title" x="0" y="296" width="450" height="40">
+              <PartText x="70" y="0" width="310" height="40"><Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="30" weight="MEDIUM" color="#fff2f2f2"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text></PartText>
+            </Group>
+            <Group name="range" x="0" y="338" width="450" height="30">
+              <PartText x="90" y="0" width="270" height="30"><Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="22" weight="NORMAL" color="#ff8e8e93"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TITLE]"/></Template></Font></Text></PartText>
+            </Group>
+          </Group>
+
+          <!-- Nothing left today or tomorrow -->
+          <Group name="idle" x="0" y="0" width="450" height="450">
+            <Transform target="alpha" value="255 * (1 - (([COMPLICATION.RANGED_VALUE_MAX] - 300000) % 2) - (floor(([COMPLICATION.RANGED_VALUE_MAX] - 300000) / 2) % 2))"/>
+        <Group name="clock_12" x="0" y="155" width="450" height="110">
+          <Transform target="alpha" value="255 * (1 - (floor(([COMPLICATION.RANGED_VALUE_MAX] - 300000) / 4) % 2))"/>
+          <DigitalClock x="0" y="0" width="450" height="110">
+            <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="12" align="CENTER">
+              <Font family="anta_regular" size="96" color="#fff2f2f2"/>
+            </TimeText>
+          </DigitalClock>
+        </Group>
+        <Group name="clock_24" x="0" y="155" width="450" height="110">
+          <Transform target="alpha" value="255 * (floor(([COMPLICATION.RANGED_VALUE_MAX] - 300000) / 4) % 2)"/>
+          <DigitalClock x="0" y="0" width="450" height="110">
+            <TimeText x="0" y="0" width="450" height="110" format="hh:mm" hourFormat="24" align="CENTER">
+              <Font family="anta_regular" size="96" color="#fff2f2f2"/>
+            </TimeText>
+          </DigitalClock>
+        </Group>
+            <PartText x="0" y="280" width="450" height="32"><Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" weight="NORMAL" color="#ff8e8e93">No more meetings</Font></Text></PartText>
+          </Group>
+        </Group>
+
+        <!-- Always-on: once a minute, so no seconds and no ring -->
+        <Group name="ambient" x="0" y="0" width="450" height="450" alpha="0">
+          <Variant mode="AMBIENT" target="alpha" value="255" duration="0.5"/>
+        <Group name="clock_12" x="0" y="118" width="450" height="110">
+          <Transform target="alpha" value="255 * (1 - (floor(([COMPLICATION.RANGED_VALUE_MAX] - 300000) / 4) % 2))"/>
+          <DigitalClock x="0" y="0" width="450" height="110">
+            <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="12" align="CENTER">
+              <Font family="anta_regular" size="96" color="#ffc8c8cc"/>
+            </TimeText>
+          </DigitalClock>
+        </Group>
+        <Group name="clock_24" x="0" y="118" width="450" height="110">
+          <Transform target="alpha" value="255 * (floor(([COMPLICATION.RANGED_VALUE_MAX] - 300000) / 4) % 2)"/>
+          <DigitalClock x="0" y="0" width="450" height="110">
+            <TimeText x="0" y="0" width="450" height="110" format="hh:mm" hourFormat="24" align="CENTER">
+              <Font family="anta_regular" size="96" color="#ffc8c8cc"/>
+            </TimeText>
+          </DigitalClock>
+        </Group>
+          <Group name="aod_meeting" x="0" y="0" width="450" height="450">
+            <Transform target="alpha" value="255 * (1 - (1 - (([COMPLICATION.RANGED_VALUE_MAX] - 300000) % 2) - (floor(([COMPLICATION.RANGED_VALUE_MAX] - 300000) / 2) % 2)))"/>
+            <Group name="aod_live_m" x="0" y="246" width="450" height="32">
+              <Transform target="alpha" value="255 * (([COMPLICATION.RANGED_VALUE_MAX] - 300000) % 2) * (floor((clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) + 59) / 60) &lt; 60)"/>
+              <PartText x="0" y="0" width="450" height="32"><Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" weight="NORMAL" color="#ff7a7a80"><Template><![CDATA[Ends in %d min]]><Parameter expression="floor((clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) + 59) / 60)"/></Template></Font></Text></PartText>
+            </Group>
+            <Group name="aod_live_h" x="0" y="246" width="450" height="32">
+              <Transform target="alpha" value="255 * (([COMPLICATION.RANGED_VALUE_MAX] - 300000) % 2) * (floor((clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) + 59) / 60) &gt;= 60)"/>
+              <PartText x="0" y="0" width="450" height="32"><Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" weight="NORMAL" color="#ff7a7a80"><Template><![CDATA[Ends in %d h %d min]]><Parameter expression="floor(floor((clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) + 59) / 60) / 60)"/><Parameter expression="floor(floor((clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) + 59) / 60) % 60)"/></Template></Font></Text></PartText>
+            </Group>
+            <Group name="aod_next_m" x="0" y="246" width="450" height="32">
+              <Transform target="alpha" value="255 * (floor(([COMPLICATION.RANGED_VALUE_MAX] - 300000) / 2) % 2) * (floor((clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) + 59) / 60) &lt; 60)"/>
+              <PartText x="0" y="0" width="450" height="32"><Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" weight="NORMAL" color="#ff7a7a80"><Template><![CDATA[Starts in %d min]]><Parameter expression="floor((clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) + 59) / 60)"/></Template></Font></Text></PartText>
+            </Group>
+            <Group name="aod_next_h" x="0" y="246" width="450" height="32">
+              <Transform target="alpha" value="255 * (floor(([COMPLICATION.RANGED_VALUE_MAX] - 300000) / 2) % 2) * (floor((clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) + 59) / 60) &gt;= 60)"/>
+              <PartText x="0" y="0" width="450" height="32"><Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" weight="NORMAL" color="#ff7a7a80"><Template><![CDATA[Starts in %d h %d min]]><Parameter expression="floor(floor((clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) + 59) / 60) / 60)"/><Parameter expression="floor(floor((clamp([COMPLICATION.RANGED_VALUE_VALUE] - ([HOUR_0_23] * 3600 + [MINUTE] * 60 + [SECOND]), 0, 200000) + 59) / 60) % 60)"/></Template></Font></Text></PartText>
+            </Group>
+            <Group name="aod_title" x="0" y="286" width="450" height="40">
+              <Transform target="alpha" value="255 * (1 - (floor(([COMPLICATION.RANGED_VALUE_MAX] - 300000) / 8) % 2))"/>
+              <PartText x="70" y="0" width="310" height="40"><Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="28" weight="NORMAL" color="#ffc8c8cc"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text></PartText>
+            </Group>
+          </Group>
+          <Group name="aod_idle" x="0" y="246" width="450" height="32">
+            <Transform target="alpha" value="255 * (1 - (([COMPLICATION.RANGED_VALUE_MAX] - 300000) % 2) - (floor(([COMPLICATION.RANGED_VALUE_MAX] - 300000) / 2) % 2))"/>
+            <PartText x="0" y="0" width="450" height="32"><Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" weight="NORMAL" color="#ff7a7a80">No more meetings</Font></Text></PartText>
+          </Group>
+        </Group>
+      </Complication>
+    </ComplicationSlot>
+
+
     <!-- Risks 1 + 7: twelve transparent one-hour hotspots on the ring, each a Launch deep link (I1) -->
     <PartDraw name="hour_0" x="243" y="-11" width="72" height="72">
       <Rectangle x="0" y="0" width="72" height="72"><Fill color="#00000000"/></Rectangle>

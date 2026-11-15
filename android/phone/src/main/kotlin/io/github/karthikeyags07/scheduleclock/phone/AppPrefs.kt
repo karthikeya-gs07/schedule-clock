@@ -82,8 +82,12 @@ object AppPrefs {
             .let { if (it == "green") "" else it }   // green mode was replaced by focus mode
     fun setNightMode(context: Context, mode: String) = prefs(context).edit().putString("nightMode", mode).apply()
     /** The face the watch should wear: the red or Focus face in those modes, otherwise the colourway. */
-    fun watchColourway(context: Context) = faceFor(nightMode(context), colourway(context))
-    /** The face for [mode] ("", "red" or "focus") with [colourway]: the Focus face comes in each colourway's colours. */
+    /**
+     * The face the watch wears: red mode's, else the colourway's. Focus mode (RULES A26) is a layer inside every face,
+     * switched by the "focus" setting, so it needs no face of its own.
+     */
+    fun watchColourway(context: Context) = if (nightMode(context) == "red") "red" else colourway(context)
+    /** The phone preview's face for [mode] ("", "red" or "focus") with [colourway]: "focusEmber" is Focus in Ember's colours. */
     fun faceFor(mode: String, colourway: String) = when (mode) {
         "focus" -> "focus" + colourway.replaceFirstChar(Char::uppercase)
         "" -> colourway
@@ -103,7 +107,8 @@ object AppPrefs {
     fun sendSettings(context: Context) {
         val request = PutDataMapRequest.create(SETTINGS_PATH).apply {
             dataMap.putString("colourway", watchColourway(context))
-            dataMap.putLong("focusUntil", if (nightMode(context) == "focus") focusUntil(context) else 0L)   // A26
+            dataMap.putBoolean("focus", nightMode(context) == "focus")   // the Focus layer on (A26)
+            dataMap.putLong("focusUntil", if (nightMode(context) == "focus") focusUntil(context) else 0L)
             Buzz.entries.forEach { dataMap.putBoolean(it.key, buzz(context, it)) }
             dataMap.putBoolean("clock24", clock24(context))
             dataMap.putBoolean("showAmPm", showAmPm(context))

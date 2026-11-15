@@ -162,9 +162,10 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
 
     fun pickColourway(c: String) {
         if (watchBusy) { wantColourway = c; notice = WATCH_UPDATING; return }
+        val before = AppPrefs.watchColourway(context)
         colourway = c
         if (!demo) AppPrefs.setColourway(context, c)
-        faceChanged()
+        faceChanged(before)
     }
 
     /**
@@ -176,12 +177,19 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
     private var wantColourway: String? = null
 
     /** The colourway or mode just changed on the phone: the watch follows. */
-    private fun faceChanged() {
+    /**
+     * The colourway or mode just changed on the phone: the watch follows. [before] is the face the watch wore. A new
+     * face (another colourway, or red mode on or off) is swapped in (~4.5 s); focus mode alone (RULES A26) is a layer
+     * in the face, switched by the settings in about a second.
+     */
+    private fun faceChanged(before: String) {
+        watchBusy = true
+        val swap = AppPrefs.watchColourway(context) != before
         if (demo) {   // no watch: it takes the same time a real one would
             link = link.copy(face = link.face?.copy(colourway = colourway))
-            watchBusy = true
-            scope.launch { delay(4500); watchDone() }
-        } else { watchBusy = true; sendFace(AppPrefs.watchColourway(context)) }
+            scope.launch { delay(if (swap) 4500 else 1200); watchDone() }
+        } else if (swap) sendFace(AppPrefs.watchColourway(context))
+        else { AppPrefs.sendSettings(context); scope.launch { delay(1200); watchDone() } }
     }
 
     /** The watch has finished changing: the last change asked for meanwhile goes on now. */
@@ -190,10 +198,11 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
         val m = wantMode; val c = wantColourway
         wantMode = null; wantColourway = null
         if (notice == WATCH_UPDATING) notice = null
+        val before = AppPrefs.watchColourway(context)
         var changed = false
         if (c != null && c != colourway) { colourway = c; if (!demo) AppPrefs.setColourway(context, c); changed = true }
         if (m != null && m != RedTheme.mode) { setMode(m); changed = true }
-        if (changed) faceChanged()
+        if (changed) faceChanged(before)
     }
 
     /** Puts the face in [c] on the watch (a colourway, or "red" / "focus" in those modes). */
@@ -343,8 +352,9 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
             notice = WATCH_UPDATING
             return
         }
+        val before = AppPrefs.watchColourway(context)
         setMode(if (RedTheme.mode == mode) "" else mode)
-        faceChanged()
+        faceChanged(before)
     }
 
     var shortcutsOn by mutableStateOf(AppPrefs.shortcutsOn(context))

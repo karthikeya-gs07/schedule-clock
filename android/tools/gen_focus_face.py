@@ -1,11 +1,11 @@
-"""Writes the Focus face (RULES A26): the face the watch wears in the phone's focus mode.
+"""The Focus layer (RULES A26): part of every colourway's main face, shown over it while the phone's focus mode is on.
 
-Usage: python3 tools/gen_focus_face.py <res dir> <colourway> [<focus-themes.js>]
-  One Focus face per colourway, in that colourway's colours (its dial, ring track, text and accent, the same as its
-  main face); the watch wears the one for the colourway in use. tools/build_faces.sh writes them all into
-  watchface/src/focus<Colourway>/res, and the colours into prototype/focus-themes.js for the phone's preview.
+Used by tools/gen_spike_face.py: focus_slot(...) returns the `focus` complication slot, in the colourway's colours
+(its dial, ring track, text and accent), and write_theme(...) adds those colours to prototype/focus-themes.js for the
+phone's preview. Focus mode used to be a face of its own per colourway (24 extra faces, swapped in and out); as a slot
+in the main face it switches in about a second, with no face swap.
 
-One slot, `focus` (FocusDataSourceService), RANGED_VALUE:
+The slot, `focus` (FocusDataSourceService), RANGED_VALUE; no data (nothing drawn) while focus mode is off:
   VALUE = the moment counted down to, in seconds from today's midnight (the meeting's end while one is on, else
           the next one's start; tomorrow's go past 86400).
   MIN   = where the ring starts: the meeting's start while one is on (the ring empties as it runs), else an hour
@@ -13,36 +13,27 @@ One slot, `focus` (FocusDataSourceService), RANGED_VALUE:
   MAX   = 300000 + flags: 1 a meeting is on, 2 one is next (neither: nothing left today or tomorrow),
           4 24-hour clock, 8 hide the meeting in always-on (A2c).
   TEXT  = the meeting's title ("Private" for a private one); TITLE = its time range.
-The face counts down by itself, every second, from the watch's clock; the watch app refreshes the slot when a
-meeting starts or ends and at midnight.
-
-Interactive: the time small at the top, "Ends in" / "Starts in", the countdown (mm:ss, or h:mm:ss), the
-meeting's title and time, and a ring round the edge that empties as it runs down.
+While it has data it covers the whole face (the colourway's dial; black in always-on) and draws the Focus layout:
+the time small at the top, "Ends in" / "Starts in", the countdown counted by the face every second from the watch's
+clock (mm:ss, or h:mm:ss), the meeting's title and time, and a ring round the edge that empties as it runs down.
 Always-on: no seconds and no ring: the time large, "Ends in 24 min", and the title (unless hidden in always-on).
 """
-import json, runpy, struct, sys, tempfile, zlib
+import json
 from pathlib import Path
 
-res = Path(sys.argv[1])
-COLOURWAY = sys.argv[2] if len(sys.argv) > 2 else "amber"
 PKG = "io.github.karthikeyags07.scheduleclock"
 FONT = "anta_regular"
 CX = CY = 225
 R = 219
-
-# The colourway's colours, worked out by the main face's generator (run into a scratch folder).
-with tempfile.TemporaryDirectory() as scratch:
-    argv, sys.argv = sys.argv, ["gen_spike_face.py", scratch, COLOURWAY]
-    try: main = runpy.run_path(str(Path(__file__).with_name("gen_spike_face.py")), run_name="focus")
-    finally: sys.argv = argv
-D = main["D"]
-BG, TRACK, TEXT, MUTED, ACCENT = D["bg"], D["track"], D["text"], D["muted"], main["EVENT"]
 AOD_TEXT, AOD_MUTED = "#ffc8c8cc", "#ff7a7a80"   # always-on: greys on black, whatever the colourway
-if len(sys.argv) > 3:   # the phone's preview: every colourway's colours, gathered into one file
-    js = Path(sys.argv[3])
+BG = TRACK = TEXT = MUTED = ACCENT = None         # set by focus_slot()
+
+
+def write_theme(js: Path, colourway, bg, track, text_, muted, accent):
+    """Adds [colourway]'s Focus colours to the phone preview's table (prototype/focus-themes.js)."""
     table = json.loads(js.read_text().split("=", 1)[1].rstrip().rstrip(";")) if js.exists() else {}
-    table[COLOURWAY] = {k: "#" + v[3:] for k, v in dict(bg=BG, track=TRACK, text=TEXT, muted=MUTED, accent=ACCENT).items()}
-    js.write_text("// Written by android/tools/gen_focus_face.py: each colourway's Focus face colours (RULES A26).\n"
+    table[colourway] = {k: "#" + v[3:] for k, v in dict(bg=bg, track=track, text=text_, muted=muted, accent=accent).items()}
+    js.write_text("// Written by android/tools/gen_spike_face.py: each colourway's Focus colours (RULES A26).\n"
                   "const FOCUS_THEMES = " + json.dumps(dict(sorted(table.items())), indent=1) + ";\n")
 
 V, LO = "[COMPLICATION.RANGED_VALUE_VALUE]", "[COMPLICATION.RANGED_VALUE_MIN]"
@@ -116,27 +107,26 @@ def countdown(y):
     return "\n".join(out)
 
 
-SPOTS = "\n".join(f'''    <PartDraw name="{n}_tap" x="{x}" y="{y}" width="{w}" height="{h}">
-      <Rectangle x="0" y="0" width="{w}" height="{h}"><Fill color="#00000000"/></Rectangle>
-      <Launch target="app://{PKG}/{n}"/>
-    </PartDraw>''' for n, x, y, w, h in (("compass", 181, 0, 88, 86), ("countdown", 364, 181, 86, 88),
-                                          ("flashlight", 0, 181, 86, 88), ("agenda", 181, 364, 88, 86)))
-
-xml = f'''<?xml version="1.0" encoding="utf-8"?>
-<!-- The Focus face (RULES A26), generated by tools/gen_focus_face.py; edit the script, not this file. -->
-<WatchFace width="450" height="450">
-  <Scene backgroundColor="{BG}">
-    <!-- Always-on: black, whatever the colourway -->
-    <PartDraw x="0" y="0" width="450" height="450" alpha="0">
-      <Variant mode="AMBIENT" target="alpha" value="255" duration="0.5"/>
-      <Rectangle x="0" y="0" width="450" height="450"><Fill color="#ff000000"/></Rectangle>
-    </PartDraw>
-    <ComplicationSlot slotId="0" name="focus" displayName="@string/slot_focus" x="0" y="0" width="450" height="450"
+def focus_slot(bg, track, text_, muted, accent, slot_id=8):
+    """The `focus` slot in these colours, to go over everything else in the main face (under its tap spots)."""
+    global BG, TRACK, TEXT, MUTED, ACCENT
+    BG, TRACK, TEXT, MUTED, ACCENT = bg, track, text_, muted, accent
+    return f'''
+    <!-- Focus mode (A26): with data, covers the face and shows the countdown; no data while focus mode is off. -->
+    <ComplicationSlot slotId="{slot_id}" name="focus" displayName="@string/slot_focus" x="0" y="0" width="450" height="450"
         supportedTypes="RANGED_VALUE EMPTY" isCustomizable="FALSE">
       <DefaultProviderPolicy defaultSystemProvider="EMPTY" defaultSystemProviderType="EMPTY"
           primaryProvider="{PKG}/{PKG}.FocusDataSourceService" primaryProviderType="RANGED_VALUE"/>
       <BoundingOval x="0" y="0" width="450" height="450"/>
       <Complication type="RANGED_VALUE">
+        <!-- The cover: the colourway's dial over the main face, black in always-on -->
+        <PartDraw x="0" y="0" width="450" height="450">
+          <Rectangle x="0" y="0" width="450" height="450"><Fill color="{BG}"/></Rectangle>
+        </PartDraw>
+        <PartDraw x="0" y="0" width="450" height="450" alpha="0">
+          <Variant mode="AMBIENT" target="alpha" value="255" duration="0.5"/>
+          <Rectangle x="0" y="0" width="450" height="450"><Fill color="#ff000000"/></Rectangle>
+        </PartDraw>
 
         <!-- Interactive -->
         <Group name="active" x="0" y="0" width="450" height="450">
@@ -218,30 +208,4 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
         </Group>
       </Complication>
     </ComplicationSlot>
-
-    <!-- The 12, 3, 6 and 9 open the shortcuts Settings gives them (A24), as on the main face -->
-{SPOTS}
-  </Scene>
-</WatchFace>
 '''
-(res / "raw").mkdir(parents=True, exist_ok=True)
-(res / "raw" / "watchface.xml").write_text(xml)
-
-# Preview: black, the track, and the countdown ring two-thirds full in amber.
-import math
-def rgb(h): return tuple(int(h[i:i + 2], 16) for i in (3, 5, 7))
-W = 450
-px = bytearray(bytes(rgb(BG)) * W * W)
-for y in range(W):
-    for x in range(W):
-        d = math.hypot(x - CX, y - CY)
-        if 213 <= d <= 225:
-            ang = (math.degrees(math.atan2(x - CX, CY - y)) + 360) % 360
-            i = (y * W + x) * 3
-            px[i:i + 3] = bytes(rgb(ACCENT) if ang <= 240 else rgb(TRACK))
-raw = b"".join(b"\x00" + bytes(px[y * W * 3:(y + 1) * W * 3]) for y in range(W))
-def chunk(t, d): return struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d) & 0xffffffff)
-png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", W, W, 8, 2, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(raw, 9)) + chunk(b"IEND", b"")
-(res / "drawable").mkdir(parents=True, exist_ok=True)
-(res / "drawable" / "preview.png").write_bytes(png)
-print("wrote", res / "raw" / "watchface.xml", "and preview.png")

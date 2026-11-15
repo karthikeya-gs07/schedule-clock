@@ -57,8 +57,8 @@ android {
 val looks = listOf("amber", "mint", "violet", "rose", "solaris",
     "quartz", "copper", "ocean", "aurora", "acid", "lunar", "desert", "lime", "plum", "forest", "arctic",
     "orange", "jaeger", "prime", "platinum", "electric", "glacier", "ember", "cobalt")
-// Plus red mode's face (RULES A25) and a Focus face in each colourway's colours (A26).
-val colourways = looks + "red" + looks.map { "focus" + it.replaceFirstChar(Char::uppercase) }
+// Plus red mode's face (RULES A25). Focus mode (A26) is a layer inside every face, not faces of its own.
+val colourways = looks + "red"
 val faceValidator: Configuration by configurations.creating { isTransitive = false }
 
 abstract class BundleFacesTask : DefaultTask() {
