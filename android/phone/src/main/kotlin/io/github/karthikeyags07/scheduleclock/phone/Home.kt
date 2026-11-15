@@ -154,8 +154,8 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
         LaunchedEffect(watchMode, shown) { m.previewColourway = if (watchMode) shown else null }
         // The underglow's colours, left to right: one colour, or a gradient face's colours (Solaris: its day). Five
         // stops either way, each easing on its own, so changing face blends the glow smoothly.
-        val glowStops = if (m.redMode) List(5) { RedTheme.accent } else (Looks.of(shown).palette?.map { Color(it) } ?: if (shown == "solaris") SOLARIS_COLOURS else null)
-            ?.let { pal -> List(5) { pal[it * (pal.size - 1) / 4] } } ?: List(5) { accentFor(shown, red = false) }
+        val glowStops = (Looks.of(shown).palette?.map { Color(it) } ?: if (shown == "solaris") SOLARIS_COLOURS else null)
+            ?.let { pal -> List(5) { pal[it * (pal.size - 1) / 4] } } ?: List(5) { accentFor(shown) }
         val glows = glowStops.mapIndexed { i, c -> animateColorAsState(c, tween(400), label = "glow$i").value }
 
         // Where the face sits: under the top buttons on Today, in the middle (above the name and button) on Watchface.
@@ -167,8 +167,8 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
 
         // Everything but the drawer is the "page" the drawer and the floating nav blur.
         Box(Modifier.fillMaxSize().hazeSource(haze, zIndex = 0f).dither()) {
-          // Red mode (A25): the face has its own red layer, which flickers on the way in.
-          Box(Modifier.fillMaxSize().background(Home.background)) {
+          // Red mode (A25): the page goes red with the app; the face has its own red, which flickers on the way in.
+          Box(Modifier.fillMaxSize().appRed().background(Home.background)) {
             // A soft glow of the colourway rising from the bottom of the page (the background colour stays). On
             // Watchface it's fainter and sits lower, so the face is the brightest thing on screen.
             // For a gradient face the glow carries its colours across, faded by the same round falloff.
@@ -216,7 +216,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
 
         }
 
-        Box(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize().appRed()) {
         // ---- Today's controls: they dissolve away on Watchface ----
         // Soft fades (smoothstep), not straight lines: Today's buttons go over the first 40 %, the tabs come in over the last half.
         fun soft(t: Float) = t.coerceIn(0f, 1f).let { it * it * (3f - 2f * it) }
@@ -440,7 +440,7 @@ private val SOLARIS_DOT = Brush.horizontalGradient(SOLARIS_COLOURS)
 /** Frosted glass over the page: the watch and glow show through, blurred and lightly tinted, with a hairline edge. */
 @Composable
 private fun Modifier.frosted(haze: HazeState, shape: androidx.compose.ui.graphics.Shape) = this
-    .hazeEffect(haze, HazeStyle(Home.background, HazeTint(RedTheme.blur(Color(0xFF3A3A3E)).copy(alpha = .45f)), blurRadius = 22.dp, noiseFactor = .12f))
+    .hazeEffect(haze, HazeStyle(Home.background, HazeTint((Color(0xFF3A3A3E)).copy(alpha = .45f)), blurRadius = 22.dp, noiseFactor = .12f))
     .border(1.dp, Color.White.copy(alpha = .07f), shape)
 
 /** The status dot: the watch face's own colour when all is well (RULES A3), amber when something needs fixing. */
@@ -474,7 +474,7 @@ private fun SyncPill(m: AppModel, haze: HazeState, modifier: Modifier) {
     Column(
         // The drawer's frosted look: strong blur under a near-black tint, with a faint grain (RULES A2).
         modifier.height(57.dp).clip(RoundedCornerShape(40.dp))
-            .hazeEffect(haze, HazeStyle(Home.background, HazeTint(RedTheme.blur(Color(0xFF080808)).copy(alpha = .68f)), blurRadius = 48.dp, noiseFactor = .08f))
+            .hazeEffect(haze, HazeStyle(Home.background, HazeTint((Color(0xFF080808)).copy(alpha = .68f)), blurRadius = 48.dp, noiseFactor = .08f))
             .border(1.dp, Color.White.copy(alpha = .06f), RoundedCornerShape(40.dp)).padding(horizontal = 20.dp)
             .graphicsLayer { alpha = dim },
         verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally,
@@ -569,7 +569,7 @@ private fun MeetingsDrawer(m: AppModel, haze: HazeState, collapsedTop: androidx.
             .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
             // Strong blur of the watch and glow behind it; also a layer the floating nav blurs in turn.
             .hazeSource(haze, zIndex = 1f)
-            .hazeEffect(haze, HazeStyle(Home.background, HazeTint(RedTheme.blur(Color(0xFF080808)).copy(alpha = .68f)), blurRadius = 48.dp, noiseFactor = .08f)),
+            .hazeEffect(haze, HazeStyle(Home.background, HazeTint((Color(0xFF080808)).copy(alpha = .68f)), blurRadius = 48.dp, noiseFactor = .08f)),
     ) {
         // Handle and heading: drag here (or tap) to pull the drawer up and down.
         var dragVelocity = 0f
@@ -725,7 +725,7 @@ fun WatchStatusPanel(m: AppModel, haze: HazeState, onAllow: () -> Unit, onInstal
                     transformOrigin = androidx.compose.ui.graphics.TransformOrigin(.12f, 0f)
                 }
                 .clip(RoundedCornerShape(32.dp))
-                .hazeEffect(haze, HazeStyle(Home.background, HazeTint(RedTheme.blur(Color(0xFF151518)).copy(alpha = .86f)), blurRadius = 40.dp, noiseFactor = .1f))
+                .hazeEffect(haze, HazeStyle(Home.background, HazeTint((Color(0xFF151518)).copy(alpha = .86f)), blurRadius = 40.dp, noiseFactor = .1f))
                 .border(1.dp, Color.White.copy(alpha = .08f), RoundedCornerShape(32.dp))
                 .clickable(interactionSource = null, indication = null) {}
                 .padding(22.dp),

@@ -50,14 +50,13 @@ import java.time.LocalTime
 object Palette {
     val screen = Color(0xFF0B0B0D)
     val surface = Color(0xFF17181B)
-    // Text and icons go soft red in red mode (RULES A25); the backgrounds above never change.
-    val text: Color @Composable get() = if (RedTheme.on) RedTheme.text else Color(0xFFF2F2F2)
-    val body: Color @Composable get() = if (RedTheme.on) RedTheme.body else Color(0xFFC9C9CE)
-    val muted: Color @Composable get() = if (RedTheme.on) RedTheme.muted else Color(0xFF8E8E93)
-    val faint: Color @Composable get() = if (RedTheme.on) RedTheme.faint else Color(0xFF5C5E64)
+    val text: Color @Composable get() = Color(0xFFF2F2F2)
+    val body: Color @Composable get() = Color(0xFFC9C9CE)
+    val muted: Color @Composable get() = Color(0xFF8E8E93)
+    val faint: Color @Composable get() = Color(0xFF5C5E64)
     val onAccent = Color(0xFF1A1206)
-    val danger: Color @Composable get() = if (RedTheme.on) RedTheme.text else Color(0xFFFF7A59)
-    val ok: Color @Composable get() = if (RedTheme.on) RedTheme.accent else Color(0xFF5FD4A0)
+    val danger: Color @Composable get() = Color(0xFFFF7A59)
+    val ok: Color @Composable get() = Color(0xFF5FD4A0)
 }
 
 // Google Sans Flex (SIL Open Font License, licence in assets/licenses): one variable font file, used at
@@ -73,11 +72,11 @@ val SubStyle: TextStyle @Composable get() = TextStyle(fontFamily = GoogleSans, f
 /** The app's accent follows the colourway (RULES A7); Solaris takes the colour of the light now. */
 val LocalAccent = compositionLocalOf { Color(0xFFFFB547) }
 
-/** The page glow: the colourway's colour, red in red mode (RULES A25). */
+/** The page glow: the colourway's colour (red mode turns it red with everything else, RULES A25). */
 val LocalGlow = compositionLocalOf { Color(0xFFFFB547) }
 
-fun accentFor(colourway: String, red: Boolean = RedTheme.on): Color =
-    if (red) RedTheme.accent else if (colourway == "solaris") sunColour(LocalTime.now().toSecondOfDay() / 60) else Color(Looks.of(colourway).accent)
+fun accentFor(colourway: String): Color =
+    if (colourway == "solaris") sunColour(LocalTime.now().toSecondOfDay() / 60) else Color(Looks.of(colourway).accent)
 
 // Solaris accent: the day's colours (RULES S3) at typical sun times (sunrise ~6:15, noon ~12:00, sunset ~17:45),
 // blended in sRGB. The face itself computes the real sun times; this only tints the app.
@@ -186,7 +185,7 @@ fun lerpColor(a: Color, b: Color, f: Float) = Color(
     a.red + (b.red - a.red) * f, a.green + (b.green - a.green) * f, a.blue + (b.blue - a.blue) * f)
 
 @Composable
-fun animatedAccent(colourway: String, red: Boolean = RedTheme.on): Color = animateColorAsState(accentFor(colourway, red), label = "accent").value
+fun animatedAccent(colourway: String): Color = animateColorAsState(accentFor(colourway), label = "accent").value
 
 // ---------- Page look (About, Calendars, Settings; RULES A9) ----------
 // Today's grey stage with the colourway's glow at the top, a large title, 22 sp section headings, and items as a
