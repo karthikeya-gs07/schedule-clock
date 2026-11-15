@@ -93,53 +93,74 @@ function digits(left) {
   return out;
 }
 const liveNow = () => { const d = new Date(); return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds(); };
-let shownNow = null;   // the time last drawn, so a sweep starts from where the face is
-function render(at) {
-  const now = (((at ?? fixed ?? liveNow()) % 86400) + 86400) % 86400;
-  shownNow = now;
+// What the face shows at [now] (seconds from midnight): the meeting on or next, the time left and the ring.
+function state(now) {
+  now = ((now % 86400) + 86400) % 86400;
   const list = meetings();
   const live = list.filter(m => m.start * 60 <= now && m.end * 60 > now).sort((a, b) => a.end - b.end)[0];
   const next = list.filter(m => m.start * 60 > now).sort((a, b) => a.start - b.start)[0];
-  const m = live || next;
-  $('meeting').style.display = m ? '' : 'none';
-  $('idle').style.display = m ? 'none' : '';
-  const nowMin = Math.floor(now / 60);
-  if (!m) { $('bigClock').textContent = fmt(nowMin); $('ring').setAttribute('d', ''); return; }
+  const m = live || next, nowMin = Math.floor(now / 60);
+  if (!m) return { now, nowMin, idle: true, frac: 0 };
   const target = (live ? m.end : m.start) * 60, from = live ? m.start * 60 : target - 3600;
   const left = Math.max(0, target - now);
-  $('ring').setAttribute('d', arc(Math.min(1, left / (target - from))));
-  $('clock').textContent = fmt(nowMin);
-  $('label').textContent = live ? 'ENDS IN' : 'STARTS IN';
-  $('left').innerHTML = digits(left);
-  $('title').textContent = m.title;
-  $('range').textContent = range(m);
-  fitTitle();
+  return { now, nowMin, idle: false, left, frac: Math.min(1, left / (target - from)),
+           label: live ? 'ENDS IN' : 'STARTS IN', title: m.title, range: range(m) };
 }
+let shown = null;   // the state last drawn, so a sweep starts from what's on the face
+// Draws [st]; [parts] limits it to some parts (a sweep draws the clock and ring itself, and swaps the rest midway).
+function draw(st, parts = { clock: true, ring: true, rest: true }) {
+  if (parts.rest) {
+    $('meeting').style.display = st.idle ? 'none' : '';
+    $('idle').style.display = st.idle ? '' : 'none';
+    if (!st.idle) {
+      $('label').textContent = st.label;
+      $('left').innerHTML = digits(st.left);
+      $('title').textContent = st.title;
+      $('range').textContent = st.range;
+      fitTitle();
+    }
+  }
+  if (parts.clock) { $('clock').textContent = fmt(st.nowMin); $('bigClock').textContent = fmt(st.nowMin); }
+  if (parts.ring) $('ring').setAttribute('d', st.idle ? '' : arc(st.frac));
+}
+function render() { shown = state(fixed ?? liveNow()); draw(shown); }
 function fitTitle() {   // one line, cut with an ellipsis to 310 px like the watch
   const t = $('title'), full = t.textContent;
   if (t.getComputedTextLength() <= 310) return;
   let s = full;
   while (s.length > 1 && (t.textContent = s + '…', t.getComputedTextLength() > 310)) s = s.slice(0, -1);
 }
-// The phone app moving between Today (live) and Watchface (the sample day at 10:13), as on the main face
-// (index.html's sweepTo): the clock runs forward to the new time over 850 ms and the countdown runs with it; if the
-// meetings change, the meeting's details fade in as it goes. postMessage({ calentime: { sweep: true, events, time | live } }).
+// The phone app moving between Today (live) and Watchface (the sample day at 10:13). As on the main face
+// (index.html's sweepTo), the clock runs forward to the new time over 850 ms. The countdown and the meeting don't
+// count through every moment in between (that made the numbers jump): they fade out, change once out of sight and
+// fade back in, and the ring eases from its old length to its new one.
+// postMessage({ calentime: { sweep: true, events, time | live } }).
 let sweepFrame = 0, sweeping = false;
+const EASE = f => f < .5 ? 4 * f * f * f : 1 - Math.pow(-2 * f + 2, 3) / 2;
 function sweepTo(o) {
   cancelAnimationFrame(sweepFrame);
-  const changed = o.events && JSON.stringify(o.events) !== JSON.stringify(events);
   if (o.events) events = o.events;
-  const from = shownNow ?? liveNow(), target = o.live ? liveNow() : +o.time * 60;
-  const delta = ((target - from) % 43200 + 43200) % 43200;   // forward only, never more than 12 hours, like the hands
-  const start = target - delta, ms = 850, t0 = performance.now();
-  if (changed) for (const id of ['title', 'range', 'ring', 'label'])
-    $(id).animate([{ opacity: 0 }, { opacity: 1 }], { duration: ms, easing: 'cubic-bezier(.4, 0, .2, 1)' });
+  const a = shown ?? state(liveNow());
+  const targetNow = () => o.live ? liveNow() : +o.time * 60;
+  const b = state(targetNow());
+  const delta = ((b.nowMin - a.nowMin) % 720 + 720) % 720;   // forward only, never more than 12 hours, like the hands
+  const fracA = a.idle ? 0 : a.frac, fracB = b.idle ? 0 : b.frac;
+  const same = a.idle === b.idle && (a.idle || (a.label === b.label && a.title === b.title && a.range === b.range));
+  const ms = 850, t0 = performance.now();
+  // Same meeting: only the countdown fades; otherwise the whole middle does.
+  // Nothing to change (the same time and meeting): nothing fades.
+  const fading = a.idle !== b.idle ? [$('meeting'), $('idle')] : !same ? [$('left'), $('label'), $('title'), $('range')]
+    : !a.idle && Math.abs(a.left - b.left) > 1 ? [$('left')] : [];
+  for (const el of fading) el.animate([{ opacity: 1 }, { opacity: 0, offset: .42 }, { opacity: 0, offset: .5 }, { opacity: 1 }],
+    { duration: ms, easing: 'ease-in-out' });
+  let swapped = false;
   sweeping = true;
   const step = t => {
-    const f = Math.min(1, (t - t0) / ms), e = f < .5 ? 4 * f * f * f : 1 - Math.pow(-2 * f + 2, 3) / 2;
-    render(Math.round(start + delta * e));
+    const f = Math.min(1, (t - t0) / ms), e = EASE(f);
+    if (!swapped && f >= .46) { swapped = true; draw(state(targetNow()), { rest: true }); }   // out of sight
+    draw({ nowMin: (a.nowMin + Math.round(delta * e)) % 1440, idle: false, frac: fracA + (fracB - fracA) * e }, { clock: true, ring: true });
     if (f < 1) { sweepFrame = requestAnimationFrame(step); return; }
-    fixed = o.live ? null : target; sweeping = false; render();
+    fixed = o.live ? null : +o.time * 60; sweeping = false; render();
   };
   sweepFrame = requestAnimationFrame(step);
 }
@@ -152,7 +173,7 @@ addEventListener('message', ev => {
   render();
 });
 render();
-document.fonts.load('40px "Anta"').then(() => render());
+document.fonts.load('40px "Anta"').then(render);
 (function tick() { setTimeout(() => { if (!sweeping) render(); tick(); }, 1000 - Date.now() % 1000); })();
 </script>
 </body>
