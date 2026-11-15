@@ -50,13 +50,14 @@ import java.time.LocalTime
 object Palette {
     val screen = Color(0xFF0B0B0D)
     val surface = Color(0xFF17181B)
-    val text = Color(0xFFF2F2F2)
-    val body = Color(0xFFC9C9CE)
-    val muted = Color(0xFF8E8E93)
-    val faint = Color(0xFF5C5E64)
+    // Text and icons go soft red in red mode (RULES A25); the backgrounds above never change.
+    val text: Color @Composable get() = if (RedTheme.on) RedTheme.text else Color(0xFFF2F2F2)
+    val body: Color @Composable get() = if (RedTheme.on) RedTheme.body else Color(0xFFC9C9CE)
+    val muted: Color @Composable get() = if (RedTheme.on) RedTheme.muted else Color(0xFF8E8E93)
+    val faint: Color @Composable get() = if (RedTheme.on) RedTheme.faint else Color(0xFF5C5E64)
     val onAccent = Color(0xFF1A1206)
-    val danger = Color(0xFFFF7A59)
-    val ok = Color(0xFF5FD4A0)
+    val danger: Color @Composable get() = if (RedTheme.on) RedTheme.text else Color(0xFFFF7A59)
+    val ok: Color @Composable get() = if (RedTheme.on) RedTheme.accent else Color(0xFF5FD4A0)
 }
 
 // Google Sans Flex (SIL Open Font License, licence in assets/licenses): one variable font file, used at
@@ -64,16 +65,19 @@ object Palette {
 @OptIn(ExperimentalTextApi::class)   // FontVariation: picks the weight from the variable font
 private fun sans(weight: Int) = Font(R.font.google_sans_flex, FontWeight(weight), variationSettings = FontVariation.Settings(FontVariation.weight(weight)))
 val GoogleSans = FontFamily(sans(400), sans(500), sans(600), sans(700))
-val TitleStyle = TextStyle(fontFamily = GoogleSans, fontWeight = FontWeight.SemiBold, fontSize = 28.sp, lineHeight = 34.sp, color = Palette.text)
-val BodyStyle = TextStyle(fontFamily = GoogleSans, fontSize = 15.sp, lineHeight = 21.sp, color = Palette.text)
-val HintStyle = TextStyle(fontFamily = GoogleSans, fontSize = 13.sp, lineHeight = 18.sp, color = Palette.muted)
-val SubStyle = TextStyle(fontFamily = GoogleSans, fontSize = 14.sp, lineHeight = 20.sp, color = Palette.muted)
+val TitleStyle: TextStyle @Composable get() = TextStyle(fontFamily = GoogleSans, fontWeight = FontWeight.SemiBold, fontSize = 28.sp, lineHeight = 34.sp, color = Palette.text)
+val BodyStyle: TextStyle @Composable get() = TextStyle(fontFamily = GoogleSans, fontSize = 15.sp, lineHeight = 21.sp, color = Palette.text)
+val HintStyle: TextStyle @Composable get() = TextStyle(fontFamily = GoogleSans, fontSize = 13.sp, lineHeight = 18.sp, color = Palette.muted)
+val SubStyle: TextStyle @Composable get() = TextStyle(fontFamily = GoogleSans, fontSize = 14.sp, lineHeight = 20.sp, color = Palette.muted)
 
 /** The app's accent follows the colourway (RULES A7); Solaris takes the colour of the light now. */
 val LocalAccent = compositionLocalOf { Color(0xFFFFB547) }
 
-fun accentFor(colourway: String): Color =
-    if (colourway == "solaris") sunColour(LocalTime.now().toSecondOfDay() / 60) else Color(Looks.of(colourway).accent)
+/** The page glow keeps the colourway's colour in red mode: backgrounds never change (RULES A25). */
+val LocalGlow = compositionLocalOf { Color(0xFFFFB547) }
+
+fun accentFor(colourway: String, red: Boolean = RedTheme.on): Color =
+    if (red) RedTheme.accent else if (colourway == "solaris") sunColour(LocalTime.now().toSecondOfDay() / 60) else Color(Looks.of(colourway).accent)
 
 // Solaris accent: the day's colours (RULES S3) at typical sun times (sunrise ~6:15, noon ~12:00, sunset ~17:45),
 // blended in sRGB. The face itself computes the real sun times; this only tints the app.
@@ -182,7 +186,7 @@ fun lerpColor(a: Color, b: Color, f: Float) = Color(
     a.red + (b.red - a.red) * f, a.green + (b.green - a.green) * f, a.blue + (b.blue - a.blue) * f)
 
 @Composable
-fun animatedAccent(colourway: String): Color = animateColorAsState(accentFor(colourway), label = "accent").value
+fun animatedAccent(colourway: String, red: Boolean = RedTheme.on): Color = animateColorAsState(accentFor(colourway, red), label = "accent").value
 
 // ---------- Page look (About, Calendars, Settings; RULES A9) ----------
 // Today's grey stage with the colourway's glow at the top, a large title, 22 sp section headings, and items as a
@@ -200,10 +204,10 @@ fun Modifier.stagePage(glow: Color, dark: Boolean = false) = background(if (dark
 
 val DarkPage = Color(0xFF111113)
 
-val PageBody = BodyStyle.copy(color = Palette.body, fontSize = 16.sp, lineHeight = 23.sp)
-val ItemTitle = BodyStyle.copy(fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Medium)
+val PageBody: TextStyle @Composable get() = BodyStyle.copy(color = Palette.body, fontSize = 16.sp, lineHeight = 23.sp)
+val ItemTitle: TextStyle @Composable get() = BodyStyle.copy(fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.Medium)
 // Under an item's name: smaller and quieter than it, so the name leads.
-val ItemTextStyle = BodyStyle.copy(fontSize = 14.sp, lineHeight = 20.sp, color = Palette.muted)
+val ItemTextStyle: TextStyle @Composable get() = BodyStyle.copy(fontSize = 14.sp, lineHeight = 20.sp, color = Palette.muted)
 
 @Composable
 fun PageTitle(title: String, subtitle: String? = null) {

@@ -50,7 +50,7 @@ import dev.chrisbanes.haze.hazeSource
 fun WatchfaceGrid(m: AppModel, haze: HazeState) {
     var lookGroup by rememberSaveable { mutableStateOf(Looks.of(m.colourway).group) }
     val sample = remember { SampleDay.meetings() }
-    Column(Modifier.fillMaxSize().hazeSource(haze, zIndex = 0f).stagePage(LocalAccent.current, dark = true).statusBarsPadding()) {
+    Column(Modifier.fillMaxSize().hazeSource(haze, zIndex = 0f).stagePage(LocalGlow.current, dark = true).statusBarsPadding()) {
         Column(Modifier.padding(horizontal = 20.dp)) {
             PageTitle("Watchface")
             // Centred, as above the watch on the folded screen.

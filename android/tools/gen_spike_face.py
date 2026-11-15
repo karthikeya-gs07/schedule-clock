@@ -218,6 +218,8 @@ FIGMA = {   # id: (name, bg, track, text, major, minor, half tick, accent, clash
     "glacier": ("Glacier", "000000", "35404b", "f0f8ff", "c1cad3", "9aa9b8", "9aa9b8", "47bceb", "ffb98a", "75a9bc", None),
     "ember": ("Cobalt Ember", "000000", "35404b", "f2f6ff", "c1cad3", "9aa9b8", "9aa9b8", "648fff", "ff986e", "7a92be", None),
     "cobalt": ("Cobalt Mono", "070d1d", "12214d", "f7f8fd", "a3b4e9", "5475d7", "4468d3", "99ace7", "f6f8fd", "5475d7", None),
+    # Red mode (RULES A25): soft reds on black, like a tactical night mode; only worn while the phone's red mode is on.
+    "red": ("Red mode", "000000", "2a0d0b", "ff8a80", "d0453b", "8a2a23", "8a2a23", "ff4438", "ff9a4d", "b3362d", None),
     "orange": ("Burnt Orange", "1a1f21", "323c3d", "f7ffe9", "bdcec6", "859c94", "869b91", "ed9c5f", "95c3c0", "ed9c5f", None),
 }
 def argb(h): return "#ff" + h

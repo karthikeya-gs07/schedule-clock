@@ -57,6 +57,7 @@ android {
         create("glacier") { dimension = "colourway" }
         create("ember") { dimension = "colourway" }
         create("cobalt") { dimension = "colourway" }
+        create("red") { dimension = "colourway" }   // red mode (RULES A25)
     }
 
     signingConfigs {

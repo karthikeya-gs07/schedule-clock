@@ -164,6 +164,11 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
         if (demo) { colourway = c; link = link.copy(face = link.face?.copy(colourway = c)); return }
         colourway = c
         AppPrefs.setColourway(context, c)
+        sendFace(AppPrefs.watchColourway(context))
+    }
+
+    /** Puts the face in [c] on the watch (a colourway, or "red" in red mode). */
+    private fun sendFace(c: String) {
         scope.launch {
             // With the face on the watch, the change plays as a transition there (the ring in the new colour covers
             // the swap); otherwise, or if the watch can't open it, the swap goes by request or waits for the watch.
@@ -252,8 +257,16 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
     var shortcutLayout by mutableStateOf(AppPrefs.shortcutLayout(context))
     /** The whole "Shortcuts on the face" section on or off. */
     /** Red mode (RULES A25): the whole app in red; switched by pushing the nav bar's Home up. Phone only. */
-    var redMode by mutableStateOf(AppPrefs.redMode(context))
-    fun toggleRed() { redMode = !redMode; AppPrefs.setRedMode(context, redMode) }
+    var redMode: Boolean
+        get() = RedTheme.on
+        set(v) { RedTheme.on = v }
+    init { RedTheme.on = AppPrefs.redMode(context) }
+    /** Switches red mode, and the face on the watch with it: the red face on, or the colourway back. */
+    fun toggleRed() {
+        redMode = !redMode
+        AppPrefs.setRedMode(context, redMode)
+        if (!demo) sendFace(AppPrefs.watchColourway(context))
+    }
 
     var shortcutsOn by mutableStateOf(AppPrefs.shortcutsOn(context))
     fun switchShortcuts(on: Boolean) {

@@ -96,6 +96,7 @@ private fun OutlookHelp(divider: Boolean) {
 }
 
 /** **text** → bold, for short help lists. */
+@androidx.compose.runtime.Composable
 fun bold(s: String) = buildAnnotatedString {
     s.split("**").forEachIndexed { i, part -> if (i % 2 == 1) withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = Palette.text)) { append(part) } else append(part) }
 }

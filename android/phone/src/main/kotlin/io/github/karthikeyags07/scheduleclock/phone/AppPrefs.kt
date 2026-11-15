@@ -79,6 +79,8 @@ object AppPrefs {
     /** Red mode (RULES A25): the app shown all in red. */
     fun redMode(context: Context) = prefs(context).getBoolean("redMode", false)
     fun setRedMode(context: Context, on: Boolean) = prefs(context).edit().putBoolean("redMode", on).apply()
+    /** The face the watch should wear: the red one in red mode, otherwise the colourway. */
+    fun watchColourway(context: Context) = if (redMode(context)) "red" else colourway(context)
     fun shortcutsOn(context: Context) = prefs(context).getBoolean("shortcutsOn", true)
     fun setShortcutsOn(context: Context, on: Boolean) = prefs(context).edit().putBoolean("shortcutsOn", on).apply()
     fun clock24(context: Context) = prefs(context).getBoolean("clock24", false)
@@ -89,7 +91,7 @@ object AppPrefs {
     /** Sends the colourway and buzz choices to the watch (it keeps the latest; nothing private in it). */
     fun sendSettings(context: Context) {
         val request = PutDataMapRequest.create(SETTINGS_PATH).apply {
-            dataMap.putString("colourway", colourway(context))
+            dataMap.putString("colourway", watchColourway(context))
             Buzz.entries.forEach { dataMap.putBoolean(it.key, buzz(context, it)) }
             dataMap.putBoolean("clock24", clock24(context))
             dataMap.putBoolean("showAmPm", showAmPm(context))
