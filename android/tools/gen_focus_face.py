@@ -35,10 +35,6 @@ def write_theme(js: Path, colourway, bg, track, text_, muted, accent):
     table[colourway] = {k: "#" + v[3:] for k, v in dict(bg=bg, track=track, text=text_, muted=muted, accent=accent).items()}
     js.write_text("// Written by android/tools/gen_spike_face.py: each colourway's Focus colours (RULES A26).\n"
                   "const FOCUS_THEMES = " + json.dumps(dict(sorted(table.items())), indent=1) + ";\n")
-    # The same colours for the watch app's slide into focus mode (FocusSlideActivity).
-    assets = Path(__file__).resolve().parent.parent / "datasource" / "src" / "main" / "assets"
-    assets.mkdir(parents=True, exist_ok=True)
-    (assets / "focus_colours.json").write_text(json.dumps(dict(sorted(table.items())), indent=1) + "\n")
 
 V, LO = "[COMPLICATION.RANGED_VALUE_VALUE]", "[COMPLICATION.RANGED_VALUE_MIN]"
 F = "([COMPLICATION.RANGED_VALUE_MAX] - 300000)"

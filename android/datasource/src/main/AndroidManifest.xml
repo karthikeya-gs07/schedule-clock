@@ -33,15 +33,6 @@
             android:taskAffinity=".colourswap"
             android:theme="@android:style/Theme.DeviceDefault" />
 
-        <!-- The slide into and out of focus mode, drawn over the face (RULES A26); opened by the phone. -->
-        <activity
-            android:name=".FocusSlideActivity"
-            android:exported="false"
-            android:excludeFromRecents="true"
-            android:launchMode="singleTask"
-            android:taskAffinity=".focusslide"
-            android:theme="@style/FocusSlide" />
-
         <!-- The meeting countdown, opened by tapping the 3 on the face (RULES A22). -->
         <activity
             android:name=".CountdownActivity"

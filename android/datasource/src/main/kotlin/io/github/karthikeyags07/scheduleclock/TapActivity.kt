@@ -70,11 +70,6 @@ class TapActivity : Activity() {
             SpikeSchedule.runPromotion(this)
         } else if (test && uri?.path == "/time") {
             SpikeSchedule.setOffset(this, uri.getQueryParameter("offset")?.toIntOrNull() ?: 0)
-        } else if (uri?.path == "/focusslide") {   // the phone is switching focus mode: slide it (A26)
-            startActivity(Intent(this, FocusSlideActivity::class.java)
-                .putExtra(FocusSlideActivity.EXTRA_ON, uri.getQueryParameter("on") != "0")
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION),
-                android.app.ActivityOptions.makeCustomAnimation(this, 0, 0).toBundle())   // no system slide: it draws its own
         } else if (uri?.path == "/colour") {   // the phone app picked a colourway: swap it in behind a transition
             startActivity(Intent(this, ColourSwapActivity::class.java)
                 .putExtra(ColourSwapActivity.EXTRA_COLOUR, uri.getQueryParameter("name")))

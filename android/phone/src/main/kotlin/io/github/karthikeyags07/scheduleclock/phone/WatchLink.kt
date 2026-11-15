@@ -79,23 +79,6 @@ object WatchLink {
         }
     }
 
-    /**
-     * Opens the slide into or out of focus mode on the watch (RULES A26): a screen drawn over the face, since the face
-     * can't animate its Focus layer. The setting follows a moment later, so the layer changes underneath the slide.
-     */
-    suspend fun openFocusSlide(context: Context, on: Boolean): Boolean {
-        val watch = watch(context) ?: return false
-        val intent = Intent(Intent.ACTION_VIEW)
-            .addCategory(Intent.CATEGORY_BROWSABLE)
-            .setData(Uri.parse("app://io.github.karthikeyags07.scheduleclock/focusslide?on=${if (on) 1 else 0}"))
-        return try {
-            RemoteActivityHelper(context).startRemoteActivity(intent, watch.id).await()
-            true
-        } catch (e: Exception) {
-            Log.w(TAG, "couldn't open the focus slide on the watch: ${e.message}"); false
-        }
-    }
-
     /** Opens CalenTime's Play Store page on the watch, for when the watch app isn't installed there. */
     suspend fun openPlayOnWatch(context: Context): Boolean {
         val watch = watch(context) ?: return false

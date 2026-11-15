@@ -189,13 +189,7 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
             link = link.copy(face = link.face?.copy(colourway = colourway))
             scope.launch { delay(if (swap) 4500 else 1200); watchDone() }
         } else if (swap) sendFace(AppPrefs.watchColourway(context))
-        else scope.launch {
-            // Focus mode alone (A26): the slide opens on the watch first, then the setting switches the layer under it.
-            val slid = WatchLink.openFocusSlide(context, on = RedTheme.mode == "focus")
-            if (slid) delay(700)
-            AppPrefs.sendSettings(context)
-            delay(1200); watchDone()
-        }
+        else { AppPrefs.sendSettings(context); scope.launch { delay(1200); watchDone() } }
     }
 
     /** The watch has finished changing: the last change asked for meanwhile goes on now. */
