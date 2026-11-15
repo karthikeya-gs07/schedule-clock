@@ -178,7 +178,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
     val install: () -> Unit = { setupStep = 3; m.restartSetup() }
 
     // Red mode (RULES A25): the face flickers quickly between the face in use and the red face, then stays on it.
-    // Focus mode (A26): the Focus face slides down into the watch from the top, and back up when it's turned off.
+    // Focus mode (A26): the Focus face slides into the watch from the right, and back out when it's turned off.
     val faceRed = remember { Animatable(if (m.modeFace) 1f else 0f) }
     LaunchedEffect(m.nightMode) {
         if (m.modeFace) {

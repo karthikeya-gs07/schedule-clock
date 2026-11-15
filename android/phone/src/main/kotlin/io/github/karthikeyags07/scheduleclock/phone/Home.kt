@@ -216,8 +216,8 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                 }
             }
             // Red mode (A25): the red face itself (the same as the watch's), over whichever face is in use; it
-            // flickers in on the way in. Focus mode (A26): the Focus face slides down into the watch from the top,
-            // and back up on the way out. Composed while the mode is on, so it's loaded before it shows.
+            // flickers in on the way in. Focus mode (A26): the Focus face slides into the watch from the right, as
+            // faces do when swiped on the watch, and back out to the right on the way out. Composed while the mode is on, so it's loaded before it shows.
             val redLevel = LocalRed.current?.face
             // The last face shown, so it can fade out after the mode is turned off.
             var nightFace by remember { mutableStateOf(m.modeFaceId.ifEmpty { "red" }) }
@@ -226,7 +226,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                 val slides = nightFace.startsWith("focus")
                 Box(Modifier.offset(x = left + d(79.2f), y = d(158.8f) + dy).size(faceSize).clip(CircleShape)
                     .graphicsLayer { alpha = if (slides) 1f else redLevel?.value ?: 1f }) {
-                    Box(Modifier.matchParentSize().graphicsLayer { if (slides) translationY = -(1f - (redLevel?.value ?: 1f)) * size.height }) {
+                    Box(Modifier.matchParentSize().graphicsLayer { if (slides) translationX = (1f - (redLevel?.value ?: 1f)) * size.width }) {
                         WatchFacePreview(nightFace, meetings, faceSize, interactive = live, atMinute = at)
                         if (!live) Box(Modifier.matchParentSize().pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } })
                     }

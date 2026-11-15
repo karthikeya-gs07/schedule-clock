@@ -92,9 +92,11 @@ function digits(left) {
   }
   return out;
 }
-function render() {
-  const d = new Date();
-  const now = fixed ?? (d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds());
+const liveNow = () => { const d = new Date(); return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds(); };
+let shownNow = null;   // the time last drawn, so a sweep starts from where the face is
+function render(at) {
+  const now = (((at ?? fixed ?? liveNow()) % 86400) + 86400) % 86400;
+  shownNow = now;
   const list = meetings();
   const live = list.filter(m => m.start * 60 <= now && m.end * 60 > now).sort((a, b) => a.end - b.end)[0];
   const next = list.filter(m => m.start * 60 > now).sort((a, b) => a.start - b.start)[0];
@@ -119,16 +121,39 @@ function fitTitle() {   // one line, cut with an ellipsis to 310 px like the wat
   let s = full;
   while (s.length > 1 && (t.textContent = s + '…', t.getComputedTextLength() > 310)) s = s.slice(0, -1);
 }
+// The phone app moving between Today (live) and Watchface (the sample day at 10:13), as on the main face
+// (index.html's sweepTo): the clock runs forward to the new time over 850 ms and the countdown runs with it; if the
+// meetings change, the meeting's details fade in as it goes. postMessage({ calentime: { sweep: true, events, time | live } }).
+let sweepFrame = 0, sweeping = false;
+function sweepTo(o) {
+  cancelAnimationFrame(sweepFrame);
+  const changed = o.events && JSON.stringify(o.events) !== JSON.stringify(events);
+  if (o.events) events = o.events;
+  const from = shownNow ?? liveNow(), target = o.live ? liveNow() : +o.time * 60;
+  const delta = ((target - from) % 43200 + 43200) % 43200;   // forward only, never more than 12 hours, like the hands
+  const start = target - delta, ms = 850, t0 = performance.now();
+  if (changed) for (const id of ['title', 'range', 'ring', 'label'])
+    $(id).animate([{ opacity: 0 }, { opacity: 1 }], { duration: ms, easing: 'cubic-bezier(.4, 0, .2, 1)' });
+  sweeping = true;
+  const step = t => {
+    const f = Math.min(1, (t - t0) / ms), e = f < .5 ? 4 * f * f * f : 1 - Math.pow(-2 * f + 2, 3) / 2;
+    render(Math.round(start + delta * e));
+    if (f < 1) { sweepFrame = requestAnimationFrame(step); return; }
+    fixed = o.live ? null : target; sweeping = false; render();
+  };
+  sweepFrame = requestAnimationFrame(step);
+}
 addEventListener('message', ev => {
   const o = ev.data && ev.data.calentime;
   if (!o) return;
+  if (o.sweep) return sweepTo(o);
   if (o.events) events = o.events;
   if (o.live) fixed = null; else if (o.time != null) fixed = +o.time * 60;
   render();
 });
 render();
-document.fonts.load('40px "Anta"').then(render);
-(function tick() { setTimeout(() => { render(); tick(); }, 1000 - Date.now() % 1000); })();
+document.fonts.load('40px "Anta"').then(() => render());
+(function tick() { setTimeout(() => { if (!sweeping) render(); tick(); }, 1000 - Date.now() % 1000); })();
 </script>
 </body>
 </html>
