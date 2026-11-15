@@ -125,7 +125,8 @@ private val COLOURWAYS = Looks.IDS
  */
 @Composable
 fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: () -> Unit, onAbout: () -> Unit) {
-    BoxWithConstraints(Modifier.fillMaxSize().background(Home.background)) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val pageHeight = maxHeight
         // Design px → dp: by width, or by height on a short screen (small phones, a tablet's left pane), so the
         // watch, buttons and drawer always fit; the block is then centred across the width.
         val s = minOf(maxWidth.value / Home.DESIGN_WIDTH, maxHeight.value / Home.DESIGN_HEIGHT)
@@ -164,6 +165,8 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
 
         // Everything but the drawer is the "page" the drawer and the floating nav blur.
         Box(Modifier.fillMaxSize().hazeSource(haze, zIndex = 0f).dither()) {
+          // Red mode (A25): the page goes red with the app; the face has its own red, which flickers on the way in.
+          Box(Modifier.fillMaxSize().appRed().background(Home.background)) {
             // A soft glow of the colourway rising from the bottom of the page (the background colour stays). On
             // Watchface it's fainter and sits lower, so the face is the brightest thing on screen.
             // For a gradient face the glow carries its colours across, faded by the same round falloff.
@@ -177,6 +180,8 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
             })
             // The watch stays still (it only moves between Today and Watchface); only the face inside it swipes.
             WatchPhoto(Modifier.offset(x = left + d(29f), y = d(27f) + dy).size(d(334.5f), d(498.8f)))
+          }
+          Box(Modifier.fillMaxSize().faceRed()) {
             val sample = remember { SampleDay.meetings() }
             val live = !watchMode
             val meetings = if (live) m.shownMeetings else sample
@@ -207,6 +212,9 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
             }
         }
 
+        }
+
+        Box(Modifier.fillMaxSize().appRed()) {
         // ---- Today's controls: they dissolve away on Watchface ----
         // Soft fades (smoothstep), not straight lines: Today's buttons go over the first 40 %, the tabs come in over the last half.
         fun soft(t: Float) = t.coerceIn(0f, 1f).let { it * it * (3f - 2f * it) }
@@ -232,8 +240,8 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
 
         // ---- (5) the meetings drawer: slides off the bottom on Watchface, back up on Today ----
         // Pulled up, the drawer stops just under the top buttons (status bar + 44 + 57 + 16 dp).
-        MeetingsDrawer(m, haze, collapsedTop = drawerTop, expandedTop = statusBar + 117.dp, height = maxHeight,
-            away = lerp(0.dp, maxHeight, p))
+        MeetingsDrawer(m, haze, collapsedTop = drawerTop, expandedTop = statusBar + 117.dp, height = pageHeight,
+            away = lerp(0.dp, pageHeight, p))
 
         // ---- Watchface: swipe anywhere on the page to change the face (the pager band is the same width) ----
         if (watchMode && p > .98f) {
@@ -368,6 +376,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                 Text(if (inUse) "On your watch" else "Use watch face", style = BodyStyle.copy(fontWeight = FontWeight.Medium))
             }
             if (!canUse) Text("Connect your watch with CalenTime on it to change faces.", style = HintStyle, modifier = Modifier.padding(top = 10.dp))
+        }
         }
     }
 }

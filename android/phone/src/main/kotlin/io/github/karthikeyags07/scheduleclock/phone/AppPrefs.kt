@@ -76,6 +76,9 @@ object AppPrefs {
     fun shortcutLayout(context: Context): List<String> =
         prefs(context).getString("shortcuts", "")!!.split(',').filter { it in SHORTCUTS }.takeIf { it.toSet().size == 4 } ?: SHORTCUTS
     fun setShortcutLayout(context: Context, layout: List<String>) = prefs(context).edit().putString("shortcuts", layout.joinToString(",")).apply()
+    /** Red mode (RULES A25): the app shown all in red. */
+    fun redMode(context: Context) = prefs(context).getBoolean("redMode", false)
+    fun setRedMode(context: Context, on: Boolean) = prefs(context).edit().putBoolean("redMode", on).apply()
     fun shortcutsOn(context: Context) = prefs(context).getBoolean("shortcutsOn", true)
     fun setShortcutsOn(context: Context, on: Boolean) = prefs(context).edit().putBoolean("shortcutsOn", on).apply()
     fun clock24(context: Context) = prefs(context).getBoolean("clock24", false)

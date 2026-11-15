@@ -1,6 +1,19 @@
 package io.github.karthikeyags07.scheduleclock.phone
 
 import android.Manifest
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -164,13 +177,25 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
     var watchStatus by rememberSaveable { mutableStateOf(false) }
     val install: () -> Unit = { setupStep = 3; m.restartSetup() }
 
-    CompositionLocalProvider(LocalAccent provides animatedAccent(m.colourway), LocalTextStyle provides BodyStyle) {   // Google Sans Flex everywhere
+    // Red mode (RULES A25): the app eases into red; the face on Today flickers between its colours and red first.
+    val appRed = animateFloatAsState(if (m.redMode) 1f else 0f, tween(350), label = "appRed")
+    val faceRed = remember { Animatable(if (m.redMode) 1f else 0f) }
+    LaunchedEffect(m.redMode) {
+        if (m.redMode && faceRed.value < 1f) {
+            // A tube light catching: quick, uneven blinks, then on.
+            for ((v, ms) in listOf(1f to 70L, 0f to 90L, 1f to 50L, 0f to 160L, 1f to 60L, 0f to 70L, 1f to 110L, 0f to 50L)) { faceRed.snapTo(v); delay(ms) }
+            faceRed.snapTo(1f)
+        } else faceRed.animateTo(if (m.redMode) 1f else 0f, tween(350))
+    }
+    val red = remember { RedLevels(appRed, faceRed.asState()) }
+
+    CompositionLocalProvider(LocalAccent provides animatedAccent(m.colourway), LocalTextStyle provides BodyStyle, LocalRed provides red) {   // Google Sans Flex everywhere
         BoxWithConstraints(Modifier.fillMaxSize().background(Palette.screen)) {
             // Unfolded (Fold 7/8 inner screen, tablets): two panes, Today on the left and the other pages on the right.
             // Only when the screen is tall enough too: a landscape phone (or a short window) stays one pane.
             val wide = maxWidth >= 600.dp && maxHeight >= 600.dp
             val workPage: @Composable (Tab, HazeState) -> Unit = { shown, h ->
-                Column(Modifier.fillMaxSize().hazeSource(h, zIndex = 0f).stagePage(LocalAccent.current, dark = true).statusBarsPadding()
+                Column(Modifier.fillMaxSize().appRed().hazeSource(h, zIndex = 0f).stagePage(LocalAccent.current, dark = true).statusBarsPadding()
                     // Clear of the floating nav (28 + 80 dp above the system bar) with room to spare.
                     .verticalScroll(rememberScrollState()).navigationBarsPadding().padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 150.dp)) {
                     when (shown) {
@@ -190,7 +215,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
                         Box(Modifier.weight(1f).fillMaxHeight()) {
                             HomeScreen(m, haze, watchMode = false, onWatchStatus = { watchStatus = true }, onAbout = { about = true })
                             // The watch status card opens over Today's pane only, under its clock button.
-                            if (watchStatus) WatchStatusPanel(m, haze, allow, install) { watchStatus = false }
+                            if (watchStatus) Box(Modifier.appRed()) { WatchStatusPanel(m, haze, allow, install) { watchStatus = false } }
                         }
                         Box(Modifier.width(1.dp).fillMaxHeight().background(Color.White.copy(alpha = .06f)))
                         Box(Modifier.weight(1f).fillMaxHeight()) {
@@ -203,11 +228,11 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
                                         slideOutHorizontally(ease) { w -> if (forward) -w else w })   // a plain slide: both pages move together
                                 },
                                 label = "rightPane",
-                            ) { shown -> if (shown == Tab.WATCHFACE) WatchfaceGrid(m, rightHaze) else workPage(shown, rightHaze) }
+                            ) { shown -> if (shown == Tab.WATCHFACE) Box(Modifier.appRed()) { WatchfaceGrid(m, rightHaze) } else workPage(shown, rightHaze) }
                             // About opens over the right pane, with a close button; Today stays on the left.
                             androidx.compose.animation.AnimatedVisibility(about, enter = ABOUT_IN, exit = ABOUT_OUT) {
                                 BackHandler { about = false }
-                                AboutScreen(m, onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() }
+                                Box(Modifier.appRed()) { AboutScreen(m, onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() } }
                             }
                             if (!about) NavBar(right, rightHaze, null, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp),
                                 tabs = listOf(Tab.WATCHFACE, Tab.CALENDARS, Tab.SETTINGS)) { tab = it }
@@ -233,16 +258,17 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
                             HomeScreen(m, haze, watchMode = shown == Tab.WATCHFACE, onWatchStatus = { watchStatus = true }, onAbout = { about = true })
                         else workPage(shown, haze)
                     }
-                    NavBar(tab, haze, m.previewColourway.takeIf { tab == Tab.WATCHFACE }, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp)) { tab = it }
-                    if (watchStatus) WatchStatusPanel(m, haze, allow, install) { watchStatus = false }
+                    NavBar(tab, haze, m.previewColourway.takeIf { tab == Tab.WATCHFACE }, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp),
+                        onHomePush = m::toggleRed) { tab = it }
+                    if (watchStatus) Box(Modifier.appRed()) { WatchStatusPanel(m, haze, allow, install) { watchStatus = false } }
                     // About slides up over the page from the bottom, and back down when closed.
                     androidx.compose.animation.AnimatedVisibility(about, enter = ABOUT_IN, exit = ABOUT_OUT) {
                         BackHandler { about = false }
-                        AboutScreen(m, onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() }
+                        Box(Modifier.appRed()) { AboutScreen(m, onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() } }
                     }
                 }
             }
-            m.toast?.let { Toast(it, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 124.dp)) }
+            m.toast?.let { Toast(it, Modifier.appRed().align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 124.dp)) }
             if (m.setupDone) UpdatePrompts(m, updateApp)
         }
     }
@@ -253,35 +279,73 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
  * the accent colour, each a large tap area.
  */
 @Composable
-private fun NavBar(current: Tab, haze: HazeState, preview: String?, modifier: Modifier, tabs: List<Tab> = Tab.entries, onSelect: (Tab) -> Unit) {
+private fun NavBar(current: Tab, haze: HazeState, preview: String?, modifier: Modifier, tabs: List<Tab> = Tab.entries,
+                   onHomePush: (() -> Unit)? = null, onSelect: (Tab) -> Unit) {
     // While browsing Watchface, the selected icon takes the colour of the colourway on show.
     val selectedTint by animateColorAsState(preview?.let(::accentFor) ?: LocalAccent.current, tween(300), label = "navTint")
-    Row(
-        modifier.width((tabs.size * 77 + 24).dp).height(80.dp).clip(RoundedCornerShape(40.dp))
+    Box(modifier.appRed().width((tabs.size * 77 + 24).dp).height(80.dp)) {
+    // The frosted pill sits behind the icons on its own, so an icon pushed up can rise out of it (A25).
+    Box(Modifier.matchParentSize().clip(RoundedCornerShape(40.dp))
             // Frosted glass: whatever scrolls or sits behind shows through, blurred and lightly tinted.
             .hazeEffect(haze, HazeStyle(Color(0xFF191919), HazeTint(Color(0xFF2C2C30).copy(alpha = .55f)), blurRadius = 26.dp, noiseFactor = .12f))
-            .border(1.dp, Color.White.copy(alpha = .06f), RoundedCornerShape(40.dp))
-            .clickable(enabled = false) {}.padding(horizontal = 12.dp, vertical = 6.dp),
+            .border(1.dp, Color.White.copy(alpha = .06f), RoundedCornerShape(40.dp)))
+    Row(
+        Modifier.matchParentSize().clickable(enabled = false) {}.padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         tabs.forEach { t ->
             val selected = t == current
             // The selected icon has a soft glow of its colour behind it (fades in and out as tabs change).
             val glow by animateFloatAsState(if (selected) 1f else 0f, tween(300), label = "navGlow")
+            // Home hides a gesture (A25), with nothing to show it's there: push the icon up and it follows the finger,
+            // stiffer the further it goes; let go and it springs back with a little bounce, like swiping a WhatsApp
+            // message to reply. Pushed far enough (a tick of haptics says so), letting go switches red mode.
+            val lift = remember { Animatable(0f) }
+            val pushable = t == Tab.TODAY && onHomePush != null
+            val haptics = LocalHapticFeedback.current
+            val scope = rememberCoroutineScope()
             Box(
                 Modifier.weight(1f).height(68.dp)
+                    .then(if (!pushable) Modifier else Modifier.pointerInput(Unit) {
+                        val most = 46.dp.toPx(); val give = 52.dp.toPx(); val enough = 30.dp.toPx()
+                        var pulled = 0f; var armed = false
+                        fun settle(fire: Boolean) {
+                            if (fire && armed) onHomePush?.invoke()
+                            armed = false; pulled = 0f
+                            scope.launch { lift.animateTo(0f, spring(dampingRatio = .4f, stiffness = Spring.StiffnessMediumLow)) }
+                        }
+                        detectVerticalDragGestures(
+                            onDragStart = { pulled = 0f; armed = false },
+                            onDragEnd = { settle(true) },
+                            onDragCancel = { settle(false) },
+                        ) { change, dy ->
+                            change.consume()
+                            pulled = (pulled + dy).coerceAtMost(0f)
+                            val up = most * (1f - kotlin.math.exp(pulled / give))   // rubber band: never past `most`
+                            scope.launch { lift.snapTo(-up) }
+                            if ((up >= enough) != armed) {
+                                armed = up >= enough
+                                if (armed) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            }
+                        }
+                    })
                     // The whole cell is the tap area; the touch ripple is a circle round the icon.
                     .clickable(interactionSource = null, indication = ripple(bounded = false, radius = 28.dp), role = Role.Tab) { onSelect(t) }
-                    .semantics { contentDescription = t.label; this.selected = selected }
+                    .semantics { contentDescription = t.label; this.selected = selected },
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(Modifier.size(44.dp).graphicsLayer { translationY = lift.value }
                     .drawBehind {
                         if (glow > 0f) drawCircle(Brush.radialGradient(
                             *glowStops(selectedTint, .16f * glow),
                             center = center, radius = 22.dp.toPx(),
                         ), radius = 22.dp.toPx())
-                    },
-                contentAlignment = Alignment.Center,
-            ) { Icon(t.icon, null, tint = if (selected) selectedTint else Palette.muted, modifier = Modifier.size(24.dp)) }
+                    }, contentAlignment = Alignment.Center) {
+                    Icon(t.icon, null, tint = if (selected) selectedTint else Palette.muted, modifier = Modifier.size(24.dp))
+                }
+            }
         }
+    }
     }
 }
 
