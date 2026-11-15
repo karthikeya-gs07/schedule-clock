@@ -192,7 +192,7 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
         if (notice == WATCH_UPDATING) notice = null
         var changed = false
         if (c != null && c != colourway) { colourway = c; if (!demo) AppPrefs.setColourway(context, c); changed = true }
-        if (m != null && m != RedTheme.mode) { RedTheme.mode = m; AppPrefs.setNightMode(context, m); changed = true }
+        if (m != null && m != RedTheme.mode) { setMode(m); changed = true }
         if (changed) faceChanged()
     }
 
@@ -301,6 +301,40 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
     /** "", "red" or "focus". */
     val nightMode: String get() = RedTheme.mode
     init { RedTheme.mode = AppPrefs.nightMode(context) }
+
+    /**
+     * When focus mode ends by itself (RULES A26): the moment its countdown reaches zero (the end of the meeting going
+     * on when it was turned on, or the next one's start), in epoch ms; 0 when there was nothing to count down to. The
+     * watch gets it with the settings and swaps its own face back then; the phone leaves focus mode at the same moment.
+     */
+    var focusUntil by mutableStateOf(AppPrefs.focusUntil(context))
+        private set
+    init {   // it ran out while the app was closed
+        if (RedTheme.mode == "focus" && focusUntil in 1..System.currentTimeMillis()) setMode("")
+    }
+
+    private fun setMode(mode: String) {
+        RedTheme.mode = mode
+        AppPrefs.setNightMode(context, mode)
+        focusUntil = if (mode == "focus") focusDeadline() else 0L
+        AppPrefs.setFocusUntil(context, focusUntil)
+    }
+
+    /** What the Focus face counts down to now: the meeting going on's end, else the next one's start (today or tomorrow). */
+    private fun focusDeadline(): Long {
+        val now = System.currentTimeMillis() + FaceClock.watchOffset   // by the watch's clock, as the faces count
+        val list = shownMeetings.filter { !it.allDay }
+        list.filter { it.begin <= now && it.end > now }.minOfOrNull { it.end }?.let { return it }
+        val dayAfter = java.time.LocalDate.now().plusDays(2).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+        return list.filter { it.begin > now && it.begin < dayAfter }.minOfOrNull { it.begin } ?: 0L
+    }
+
+    /** Focus mode's countdown reached zero: back to the face in use. The watch swaps its own face at the same moment. */
+    fun endFocus() {
+        if (RedTheme.mode != "focus") return
+        setMode("")
+        if (!demo) AppPrefs.sendSettings(context)
+    }
     /** Switches to [mode] ("red" or "focus"), or off if it's already on, and the face on the watch with it. */
     fun toggleNight(mode: String) {
         if (watchBusy) {   // the watch is still changing: this waits, and the last one asked for goes on after
@@ -309,8 +343,7 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
             notice = WATCH_UPDATING
             return
         }
-        RedTheme.mode = if (RedTheme.mode == mode) "" else mode
-        AppPrefs.setNightMode(context, RedTheme.mode)
+        setMode(if (RedTheme.mode == mode) "" else mode)
         faceChanged()
     }
 

@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.wear.watchface.complications.data.PlainComplicationText
 import androidx.wear.watchface.complications.data.RangedValueComplicationData
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
@@ -50,6 +51,42 @@ object Focus {
         val at = midnight + 1000L * minOf(atSec ?: 86400, 86400)
         if (alarms.canScheduleExactAlarms()) alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, intent)
         else alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, intent)
+    }
+}
+
+/**
+ * Focus mode ends by itself (RULES A26): when its countdown reaches zero (the moment the phone sent with the
+ * settings), the watch swaps the Focus face back to its colourway's main face. The phone leaves focus mode then too.
+ */
+object FocusEnd {
+    /** The colourway a Focus face is in: "ember" for "focusEmber". */
+    fun base(face: String) = face.removePrefix("focus").replaceFirstChar(Char::lowercase)
+
+    fun schedule(context: Context) {
+        val alarms = context.getSystemService(AlarmManager::class.java)
+        val intent = PendingIntent.getBroadcast(context, 2, Intent(context, FocusEndReceiver::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val until = PhoneSettings.focusUntil(context)
+        if (until <= System.currentTimeMillis() || PhoneSettings.colourway(context)?.startsWith("focus") != true) {
+            alarms.cancel(intent); return
+        }
+        if (alarms.canScheduleExactAlarms()) alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, until, intent)
+        else alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, until, intent)
+        android.util.Log.i(TAG, "focus ends at ${java.time.Instant.ofEpochMilli(until)}")
+    }
+}
+
+class FocusEndReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        val face = FacePush.colourway(context) ?: return
+        if (!face.startsWith("focus")) return
+        val pending = goAsync()
+        val app = context.applicationContext
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+            try { FacePush.install(app, FocusEnd.base(face)); android.util.Log.i(TAG, "focus ended: back to ${FocusEnd.base(face)}") }
+            catch (e: Exception) { android.util.Log.w(TAG, "focus end: couldn't swap back", e) }
+            finally { pending.finish() }
+        }
     }
 }
 

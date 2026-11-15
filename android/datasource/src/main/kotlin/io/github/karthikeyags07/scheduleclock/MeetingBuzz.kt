@@ -98,5 +98,5 @@ class BuzzReceiver : BroadcastReceiver() {
 
 /** Alarms don't survive a restart, and a clock or time-zone change moves every buzz: set them again. */
 class BuzzRearmReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) = MeetingBuzz.schedule(context)
+    override fun onReceive(context: Context, intent: Intent) { MeetingBuzz.schedule(context); FocusEnd.schedule(context) }
 }

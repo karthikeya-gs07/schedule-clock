@@ -81,6 +81,11 @@ class TapActivity : Activity() {
             startActivity(Intent(this, FaceSetupActivity::class.java)
                 .putExtra(FaceSetupActivity.EXTRA_COLOUR, uri.getQueryParameter("colour"))
                 .putExtra(FaceSetupActivity.EXTRA_ACTIVATE, uri.getQueryParameter("activate") == "1"))
+        } else if (test && uri?.path == "/focusend") {   // debug: end focus mode in `in` seconds (RULES A26)
+            val at = System.currentTimeMillis() + 1000L * (uri.getQueryParameter("in")?.toLongOrNull() ?: 30)
+            getSharedPreferences("phone_settings", MODE_PRIVATE).edit().putLong("focusUntil", at)
+                .putString("colourway", FacePush.colourway(this)).commit()   // as if the phone had put this Focus face on
+            FocusEnd.schedule(this)
         } else if (test && uri?.path == "/day") {
             SpikeSchedule.setDay(this, uri.getQueryParameter("name") ?: "busy")
         } else if (uri?.path == "/select") {

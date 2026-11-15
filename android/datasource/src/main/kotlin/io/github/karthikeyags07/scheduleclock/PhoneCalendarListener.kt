@@ -29,6 +29,7 @@ class PhoneCalendarListener : WearableListenerService() {
                     PhoneSettings.save(this, map)
                     SpikeSchedule.requestUpdate(applicationContext)   // clock format (T6)
                     MeetingBuzz.schedule(this)
+                    FocusEnd.schedule(this)   // A26
                     catchUpColourway()
                 }
             }
@@ -38,7 +39,7 @@ class PhoneCalendarListener : WearableListenerService() {
     // onDataChanged runs on a background thread, so waiting for the swap is fine, but never for long: every
     // later calendar update waits behind this call.
     private fun catchUpColourway() = runBlocking {
-        val wanted = PhoneSettings.colourway(applicationContext) ?: return@runBlocking
+        val wanted = PhoneSettings.faceNow(applicationContext) ?: return@runBlocking
         if (!FacePush.supported()) return@runBlocking
         try {
             val done = withTimeoutOrNull(20_000) {

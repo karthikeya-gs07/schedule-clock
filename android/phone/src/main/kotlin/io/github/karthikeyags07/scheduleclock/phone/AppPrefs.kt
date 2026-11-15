@@ -89,6 +89,9 @@ object AppPrefs {
         "" -> colourway
         else -> mode
     }
+    /** When focus mode ends by itself (RULES A26): the moment its countdown reaches zero, in epoch ms; 0 for never. */
+    fun focusUntil(context: Context) = prefs(context).getLong("focusUntil", 0L)
+    fun setFocusUntil(context: Context, at: Long) = prefs(context).edit().putLong("focusUntil", at).apply()
     fun shortcutsOn(context: Context) = prefs(context).getBoolean("shortcutsOn", true)
     fun setShortcutsOn(context: Context, on: Boolean) = prefs(context).edit().putBoolean("shortcutsOn", on).apply()
     fun clock24(context: Context) = prefs(context).getBoolean("clock24", false)
@@ -100,6 +103,7 @@ object AppPrefs {
     fun sendSettings(context: Context) {
         val request = PutDataMapRequest.create(SETTINGS_PATH).apply {
             dataMap.putString("colourway", watchColourway(context))
+            dataMap.putLong("focusUntil", if (nightMode(context) == "focus") focusUntil(context) else 0L)   // A26
             Buzz.entries.forEach { dataMap.putBoolean(it.key, buzz(context, it)) }
             dataMap.putBoolean("clock24", clock24(context))
             dataMap.putBoolean("showAmPm", showAmPm(context))

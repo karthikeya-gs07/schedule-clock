@@ -16,6 +16,7 @@ object PhoneSettings {
     fun save(context: Context, map: DataMap) {
         prefs(context).edit().apply {
             map.getString("colourway")?.let { putString("colourway", it) }
+            if (map.containsKey("focusUntil")) putLong("focusUntil", map.getLong("focusUntil"))
             if (map.containsKey("secondZone")) putString("secondZone", map.getString("secondZone"))
             if (map.containsKey("shortcuts")) putString("shortcuts", map.getString("shortcuts"))
             listOf("buzzStart", "buzzMiddle", "buzzEnd", "buzzDnd", "clock24", "showAmPm", "compass", "agenda", "flashlight", "countdown", "hideAodDetails", "shortcutsOn").forEach { if (map.containsKey(it)) putBoolean(it, map.getBoolean(it)) }
@@ -47,6 +48,13 @@ object PhoneSettings {
     fun showAmPm(context: Context) = prefs(context).getBoolean("showAmPm", true)
 
     fun colourway(context: Context): String? = prefs(context).getString("colourway", null)
+    /** When the phone's focus mode ends by itself (RULES A26), in epoch ms; 0 for never. */
+    fun focusUntil(context: Context) = prefs(context).getLong("focusUntil", 0L)
+    /** The face the phone wants now: its colourway, but not a Focus face whose countdown has already run out. */
+    fun faceNow(context: Context): String? = colourway(context)?.let { c ->
+        val until = focusUntil(context)
+        if (c.startsWith("focus") && until > 0 && System.currentTimeMillis() >= until) FocusEnd.base(c) else c
+    }
 
     fun buzzOn(context: Context, kind: MeetingBuzz.Kind) = prefs(context).getBoolean(
         when (kind) { MeetingBuzz.Kind.START -> "buzzStart"; MeetingBuzz.Kind.MIDDLE -> "buzzMiddle"; MeetingBuzz.Kind.END -> "buzzEnd" }, true)

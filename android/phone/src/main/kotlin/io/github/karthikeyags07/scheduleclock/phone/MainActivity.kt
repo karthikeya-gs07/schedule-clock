@@ -191,6 +191,13 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
         } else faceRed.animateTo(0f, tween(450, easing = FastOutSlowInEasing))
     }
     val red = remember { RedLevels(faceRed.asState()) }
+    // Focus mode ends by itself when its countdown reaches zero (RULES A26), by the watch's clock like the countdown.
+    LaunchedEffect(m.nightMode, m.focusUntil, FaceClock.watchOffset) {
+        if (m.nightMode == "focus" && m.focusUntil > 0) {
+            delay((m.focusUntil - (System.currentTimeMillis() + FaceClock.watchOffset)).coerceAtLeast(0))
+            m.endFocus()
+        }
+    }
 
     CompositionLocalProvider(LocalAccent provides animatedAccent(m.colourway, if (m.redMode) RedTheme.red else null), LocalGlow provides animatedAccent(m.colourway, if (m.redMode) RedTheme.red else null), LocalTextStyle provides BodyStyle, LocalRed provides red) {   // Google Sans Flex everywhere
         BoxWithConstraints(Modifier.fillMaxSize().background(Palette.screen)) {
