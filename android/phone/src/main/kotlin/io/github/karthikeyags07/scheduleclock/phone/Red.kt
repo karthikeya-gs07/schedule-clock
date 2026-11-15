@@ -33,8 +33,10 @@ object RedTheme {
     val faint = Color(0xFF5E0E0E)
 
     /** A grey a little darker in red mode (backgrounds, glass, buttons): never black. */
-    @Composable fun darker(c: Color): Color = if (!on) c else Color(c.red * .62f, c.green * .62f, c.blue * .62f, c.alpha)
-    @Composable fun glass(c: Color): Color = darker(c)
+    @Composable fun darker(c: Color): Color = shade(c, .45f)
+    /** Frosted glass (nav bar, round buttons, pill) in red mode: darker too, but still lifted off the page. */
+    @Composable fun glass(c: Color): Color = shade(c, .55f)
+    private fun shade(c: Color, k: Float) = if (!on) c else Color(c.red * k, c.green * k, c.blue * k, c.alpha)
 }
 
 /** True on Today and Watchface: in red mode their text and icons are red (Palette reads it). */

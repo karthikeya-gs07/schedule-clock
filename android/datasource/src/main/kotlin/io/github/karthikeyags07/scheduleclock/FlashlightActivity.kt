@@ -17,7 +17,9 @@ class FlashlightActivity : Activity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         window.attributes = window.attributes.apply { screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL }
         setContentView(View(this).apply {
-            setBackgroundColor(Color.WHITE)
+            // In red mode (the red face on, RULES A25) the light is red, to keep night vision.
+            val red = Themes.of(FacePush.colourway(this@FlashlightActivity) ?: PhoneSettings.colourway(this@FlashlightActivity)).isRed
+            setBackgroundColor(if (red) Color.rgb(255, 0, 0) else Color.WHITE)
             contentDescription = "Flashlight on. Tap to turn off"
             setOnClickListener { finish() }
         })

@@ -94,7 +94,7 @@ private class CompassView(context: Context, private val theme: Theme) : View(con
         if (abs(d) > .05f) postInvalidateOnAnimation() else lastFrame = 0L
     }
 
-    private val grey = Color.parseColor("#8e8e93")
+    private val grey = theme.inkSoft
     private val track = blend(theme.background, Color.WHITE, .12f)
     private val p = Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeCap = Paint.Cap.ROUND }
     private val anta = context.resources.getFont(R.font.anta_regular)   // the face's clock and number font
@@ -119,7 +119,7 @@ private class CompassView(context: Context, private val theme: Theme) : View(con
             val len = if (major) 16f else if (mid) 10f else 5f
             val r0 = 225f * s; val r1 = (225f - len - 8f) * s   // from the very edge of the screen
             p.strokeWidth = (if (d == 0) 5f else if (major) 2.5f else if (mid) 1.8f else 1.2f) * s
-            val base = if (major) Color.WHITE else if (mid) blend(Color.WHITE, theme.background, .35f) else blend(Color.WHITE, theme.background, .55f)
+            val base = if (major) theme.ink else if (mid) blend(theme.ink, theme.background, .35f) else blend(theme.ink, theme.background, .55f)
             p.color = if (d == 0) theme.accent else if (off < 45f) blend(theme.accent, base, off / 45f) else base
             canvas.drawLine(cx + r0 * sin(a).toFloat(), cy - r0 * cos(a).toFloat(), cx + r1 * sin(a).toFloat(), cy - r1 * cos(a).toFloat(), p)
             if (major) {
@@ -142,7 +142,7 @@ private class CompassView(context: Context, private val theme: Theme) : View(con
         canvas.drawText(if (shown.isNaN()) "—" else "${shown.roundToInt() % 360}°", cx, cy + 20f * s, text)
         // Under it, the direction: N, NE, E, SE, S, SW, W or NW.
         if (!shown.isNaN()) {
-            text.color = Color.WHITE; text.textSize = 30f * s
+            text.color = theme.ink; text.textSize = 30f * s
             canvas.drawText(cardinal(shown), cx, cy + 64f * s, text)
         }
         if (noSensor || needsCalibration) {

@@ -58,3 +58,10 @@ object Themes {
 
     fun of(id: String?) = ALL.firstOrNull { it.id == id } ?: ALL[0]
 }
+
+/** The red face (the phone's red mode, RULES A25): the watch's own screens draw their text in dim reds then. */
+val Theme.isRed get() = id == "red"
+/** Text on the watch's own screens: white, or a dim red on the red face, so the accent stays the brightest thing. */
+val Theme.ink: Int get() = if (isRed) Color.rgb(165, 0, 0) else Color.WHITE
+/** Quieter text: grey, or a darker red on the red face. */
+val Theme.inkSoft: Int get() = if (isRed) Color.rgb(105, 0, 0) else Color.parseColor("#8e8e93")

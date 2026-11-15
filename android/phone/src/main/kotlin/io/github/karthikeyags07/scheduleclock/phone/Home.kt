@@ -421,9 +421,10 @@ internal fun WatchPhoto(modifier: Modifier) = Image(
     painterResource(R.drawable.watch_body), null, contentScale = ContentScale.FillBounds,
     // Modulate, not Multiply: Compose's Multiply also fills the image's transparent pixels with the tint, which
     // drew a faint rectangle round the watch on the darker unfolded page.
-    colorFilter = ColorFilter.tint(StageBackground, BlendMode.Modulate),
+    // In red mode (A25) the page is darker, so the watch is drawn brighter to stay clearly visible.
+    colorFilter = ColorFilter.tint(if (RedTheme.on) Color(0xFF2E2E2E) else StageBackground, BlendMode.Modulate),
     modifier = modifier
-        .graphicsLayer { alpha = .4f; compositingStrategy = CompositingStrategy.Offscreen }
+        .graphicsLayer { alpha = if (RedTheme.on) .7f else .4f; compositingStrategy = CompositingStrategy.Offscreen }
         .drawWithContent {
             drawContent()
             drawRect(Brush.verticalGradient(*(easeStops(0f, .24f, fadeIn = true) + easeStops(.74f, 1f, fadeIn = false)).toTypedArray()),
@@ -443,7 +444,7 @@ private val SOLARIS_DOT = Brush.horizontalGradient(SOLARIS_COLOURS)
 /** Frosted glass over the page: the watch and glow show through, blurred and lightly tinted, with a hairline edge. */
 @Composable
 private fun Modifier.frosted(haze: HazeState, shape: androidx.compose.ui.graphics.Shape) = this
-    .hazeEffect(haze, HazeStyle(Home.background, HazeTint(RedTheme.glass(Color(0xFF3A3A3E)).copy(alpha = .45f)), blurRadius = 22.dp, noiseFactor = .12f))
+    .hazeEffect(haze, HazeStyle(RedTheme.darker(Home.background), HazeTint(RedTheme.glass(Color(0xFF3A3A3E)).copy(alpha = .45f)), blurRadius = 22.dp, noiseFactor = .12f))
     .border(1.dp, Color.White.copy(alpha = .07f), shape)
 
 /** The status dot: the watch face's own colour when all is well (RULES A3), amber when something needs fixing. */

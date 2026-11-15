@@ -38,7 +38,7 @@ class CountdownActivity : Activity() {
 
 private class CountdownView(context: Context, private val theme: Theme, private val meetings: List<Meeting>, private val h24: Boolean) : View(context) {
     private val anta = context.resources.getFont(R.font.anta_regular)
-    private val grey = Color.parseColor("#8e8e93")
+    private val grey = theme.inkSoft
     private val track = Color.rgb(
         (Color.red(theme.background) * .88f + 255 * .12f).toInt(), (Color.green(theme.background) * .88f + 255 * .12f).toInt(),
         (Color.blue(theme.background) * .88f + 255 * .12f).toInt())
@@ -83,7 +83,7 @@ private class CountdownView(context: Context, private val theme: Theme, private 
         text.typeface = anta; text.color = theme.accent; text.textSize = (if (h > 0) 76f else 96f) * s
         canvas.drawText(big, cx, cy + 22f * s, text)
         // The meeting underneath: its title (one line) and time.
-        text.typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL); text.color = Color.WHITE; text.textSize = 28f * s
+        text.typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL); text.color = theme.ink; text.textSize = 28f * s
         val title = TextUtils.ellipsize(if (m.private) "Private" else m.title.ifEmpty { "Busy" },
             android.text.TextPaint(text), 300f * s, TextUtils.TruncateAt.END).toString()
         canvas.drawText(title, cx, cy + 78f * s, text)

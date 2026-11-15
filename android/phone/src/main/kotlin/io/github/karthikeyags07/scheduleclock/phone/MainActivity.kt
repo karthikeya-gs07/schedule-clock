@@ -286,7 +286,7 @@ private fun NavBar(current: Tab, haze: HazeState, preview: String?, modifier: Mo
     // The frosted pill sits behind the icons on its own, so an icon pushed up can rise out of it (A25).
     Box(Modifier.matchParentSize().clip(RoundedCornerShape(40.dp))
             // Frosted glass: whatever scrolls or sits behind shows through, blurred and lightly tinted.
-            .hazeEffect(haze, HazeStyle(Color(0xFF191919), HazeTint(RedTheme.glass(Color(0xFF2C2C30)).copy(alpha = .55f)), blurRadius = 26.dp, noiseFactor = .12f))
+            .hazeEffect(haze, HazeStyle(RedTheme.darker(Color(0xFF191919)), HazeTint(RedTheme.glass(Color(0xFF2C2C30)).copy(alpha = .55f)), blurRadius = 26.dp, noiseFactor = .12f))
             .border(1.dp, Color.White.copy(alpha = .06f), RoundedCornerShape(40.dp)))
     Row(
         Modifier.matchParentSize().clickable(enabled = false) {}.padding(horizontal = 12.dp, vertical = 6.dp),
