@@ -60,3 +60,8 @@ class TitleScrollDataSourceService : SlotDataSourceService("title scroll", Compl
 class TitleScrollArrowDataSourceService : SlotDataSourceService("title scroll arrow", ComplicationType.RANGED_VALUE) {
     override fun data() = SpikeSchedule.titleScroll(this, withArrow = true)
 }
+
+/** The Focus face's only slot (RULES A26): what it counts down to, and the meeting. */
+class FocusDataSourceService : SlotDataSourceService("focus", ComplicationType.RANGED_VALUE) {
+    override fun data() = Focus.data(this)
+}

@@ -177,17 +177,17 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
     var watchStatus by rememberSaveable { mutableStateOf(false) }
     val install: () -> Unit = { setupStep = 3; m.restartSetup() }
 
-    // Red or green mode (RULES A25): the face flickers quickly between its colours and the red (or green) face,
+    // Red or focus mode (RULES A25, A26): the face flickers quickly between the face in use and the mode's face,
     // then stays on it. Switching straight from one to the other flickers in again.
-    val faceRed = remember { Animatable(if (m.redMode) 1f else 0f) }
+    val faceRed = remember { Animatable(if (m.modeFace) 1f else 0f) }
     LaunchedEffect(m.nightMode) {
-        if (m.redMode) {
+        if (m.modeFace) {
             faceRed.snapTo(0f)
             delay(450)   // the red face loading underneath, out of sight
             // A tube light catching: quick, uneven blinks, then on.
             for ((v, ms) in listOf(1f to 35L, 0f to 45L, 1f to 30L, 0f to 70L, 1f to 40L, 0f to 35L)) { faceRed.snapTo(v); delay(ms) }
             faceRed.snapTo(1f)
-        } else faceRed.animateTo(if (m.redMode) 1f else 0f, tween(250))
+        } else faceRed.animateTo(0f, tween(250))
     }
     val red = remember { RedLevels(faceRed.asState()) }
 
@@ -260,8 +260,8 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
                             HomeScreen(m, haze, watchMode = shown == Tab.WATCHFACE, onWatchStatus = { watchStatus = true }, onAbout = { about = true })
                         else workPage(shown, haze)
                     }
-                    NavBar(tab, haze, m.previewColourway.takeIf { tab == Tab.WATCHFACE && !m.redMode }, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp),
-                        onHomePush = { m.toggleNight("red") }, onHomePull = { m.toggleNight("green") }) { tab = it }
+                    NavBar(tab, haze, m.previewColourway.takeIf { tab == Tab.WATCHFACE && !m.modeFace }, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp),
+                        onHomePush = { m.toggleNight("red") }, onHomePull = { m.toggleNight("focus") }) { tab = it }
                     if (watchStatus) WatchStatusPanel(m, haze, allow, install) { watchStatus = false }
                     // About slides up over the page from the bottom, and back down when closed.
                     androidx.compose.animation.AnimatedVisibility(about, enter = ABOUT_IN, exit = ABOUT_OUT) {

@@ -89,6 +89,9 @@ object SpikeSchedule {
         return busyDay(minutesFromMidnight(hour.timeInMillis))
     }
 
+    /** The day's meetings as the face sees them (the calendar, or a sample day), for the Focus face (RULES A26). */
+    fun meetingsNow(context: Context): List<Meeting> = meetings(context, now(context))
+
     /** Minutes from today's midnight to a real time (negative if it was yesterday). */
     private fun minutesFromMidnight(millis: Long): Int {
         val midnight = Calendar.getInstance().apply {
@@ -328,6 +331,7 @@ object SpikeSchedule {
         PromoteDataSourceService::class.java,
         ZoneDataSourceService::class.java,
         RingImageDataSourceService::class.java,
+        FocusDataSourceService::class.java,   // the Focus face (RULES A26)
     )
 
     fun requestUpdate(context: Context, vararg services: Class<out ComplicationDataSourceService>) {

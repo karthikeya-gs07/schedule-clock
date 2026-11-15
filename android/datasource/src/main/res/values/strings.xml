@@ -3,6 +3,7 @@
     <string name="app_name">CalenTime</string>
     <string name="ring_label">Schedule ring</string>
     <string name="status_label">Schedule details</string>
+    <string name="focus_label">Focus countdown</string>
     <string name="details_label">Meeting place</string>
     <string name="promote_label">Settling meeting</string>
     <string name="title_scroll_label">Scrolling title</string>

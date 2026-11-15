@@ -18,24 +18,26 @@ import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 
 /**
- * Red mode and green mode (RULES A25): hidden switches. Pushing the nav bar's Home icon up and letting go turns on
- * red mode; pulling it down, green mode. On Today and Watchface the text and icons take the colour; everywhere the
- * accent (switches, selected tab, glows) does; the greys get a little darker (never black); the face shows the
- * red or green face itself and the watch wears it too. Settings, Calendars and About keep white text. The same
- * gesture again turns it off; the other one switches colour. On the way in, the face flickers quickly into it.
+ * Red mode and focus mode, hidden switches. Pushing the nav bar's Home icon up and letting go turns on red mode
+ * (RULES A25): on Today and Watchface the text and icons turn red; everywhere the accent (switches, selected tab,
+ * glows) does; the greys get a little darker (never black); the face shows the red face itself and the watch wears
+ * it too. Settings, Calendars and About keep white text. Pulling it down turns on focus mode (RULES A26): the
+ * face, on the phone and the watch, becomes the Focus face (the countdown to the meeting's end or the next one's
+ * start); the app keeps its colours. The same gesture again turns it off; the other one switches. On the way in,
+ * the face flickers quickly into it.
  */
 object RedTheme {
-    /** "", "red" or "green". */
+    /** "", "red" or "focus". */
     var mode by mutableStateOf("")
-    val on get() = mode != ""
-    private val green get() = mode == "green"
-    val red: Color @Composable get() = if (green) Color(0xFF2BFF4A) else Color(0xFFFF2020)
+    /** Red mode: the app's colours turn red. */
+    val on get() = mode == "red"
+    val red: Color @Composable get() = Color(0xFFFF2020)
     val text: Color @Composable get() = red
-    val body: Color @Composable get() = if (green) Color(0xFF22D83C) else Color(0xFFE01B1B)
-    val muted: Color @Composable get() = if (green) Color(0xFF16A82A) else Color(0xFFA81515)
-    val faint: Color @Composable get() = if (green) Color(0xFF0D5E17) else Color(0xFF5E0E0E)
-    /** The face's name on the Watchface page. */
-    val name get() = if (green) "Green mode" else "Red mode"
+    val body: Color @Composable get() = Color(0xFFE01B1B)
+    val muted: Color @Composable get() = Color(0xFFA81515)
+    val faint: Color @Composable get() = Color(0xFF5E0E0E)
+    /** The mode's face name on the Watchface page. */
+    val name get() = if (mode == "focus") "Focus mode" else "Red mode"
 
     /** A grey a little darker in red or green mode (backgrounds, glass, buttons): never black. */
     @Composable fun darker(c: Color): Color = shade(c, .45f)

@@ -144,10 +144,10 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
         val p by animateFloatAsState(if (watchMode) 1f else 0f, tween(800, easing = androidx.compose.animation.core.CubicBezierEasing(.3f, 0f, .1f, 1f)), label = "stage")   // a gentle start and a long, soft finish
         val pager = rememberPagerState(initialPage = COLOURWAYS.indexOf(m.colourway).coerceAtLeast(0)) { COLOURWAYS.size }
         // Back on Today (or when the colourway changes there), the watch shows the colourway in use.
-        LaunchedEffect(watchMode, m.colourway, m.redMode) {
+        LaunchedEffect(watchMode, m.colourway, m.modeFace) {
             val inUse = COLOURWAYS.indexOf(m.colourway).coerceAtLeast(0)
             // In red mode the Watchface page holds still on the face in use (A25).
-            if ((!watchMode || m.redMode) && pager.currentPage != inUse) pager.animateScrollToPage(inUse)
+            if ((!watchMode || m.modeFace) && pager.currentPage != inUse) pager.animateScrollToPage(inUse)
         }
         val shown = if (watchMode) COLOURWAYS[pager.currentPage] else m.colourway
         // The tab the face on show belongs to, and the pages under it (Solids, then Mono, then Gradients).
@@ -196,7 +196,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                 val glowPad = 48.dp
                 Box(Modifier.offset(x = left + d(79.2f) - glowPad, y = d(158.8f) + dy - glowPad).size(faceSize + glowPad * 2)
                     .graphicsLayer { renderEffect = BlurEffect(18.dp.toPx(), 18.dp.toPx(), TileMode.Decal); alpha = .7f; scaleX = 1.04f; scaleY = 1.04f },
-                    contentAlignment = Alignment.Center) { WatchFacePreview(if (m.redMode) m.nightMode else COLOURWAYS[pager.settledPage], meetings, faceSize, atMinute = at) }
+                    contentAlignment = Alignment.Center) { WatchFacePreview(if (m.modeFace) m.nightMode else COLOURWAYS[pager.settledPage], meetings, faceSize, atMinute = at) }
             }
             // The faces, one per colourway, sliding through the watch's round screen. The band is full width, so a
             // swipe anywhere across the watch works; drawing is clipped to the screen.
@@ -220,8 +220,8 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
             val redLevel = LocalRed.current?.face
             // The last face shown, so it can fade out after the mode is turned off.
             var nightFace by remember { mutableStateOf(m.nightMode.ifEmpty { "red" }) }
-            if (m.redMode) nightFace = m.nightMode
-            if (m.redMode || (redLevel?.value ?: 0f) > 0f) {
+            if (m.modeFace) nightFace = m.nightMode
+            if (m.modeFace || (redLevel?.value ?: 0f) > 0f) {
                 Box(Modifier.offset(x = left + d(79.2f), y = d(158.8f) + dy).size(faceSize).graphicsLayer { alpha = redLevel?.value ?: 1f }) {
                     WatchFacePreview(nightFace, meetings, faceSize, interactive = live, atMinute = at)
                     if (!live) Box(Modifier.matchParentSize().pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } })
@@ -260,7 +260,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
             away = lerp(0.dp, pageHeight, p))
 
         // ---- Watchface: swipe anywhere on the page to change the face (the pager band is the same width) ----
-        if (watchMode && p > .98f && !m.redMode) {   // red mode: no swiping between faces
+        if (watchMode && p > .98f && !m.modeFace) {   // red or focus mode: no swiping between faces
             val scope = rememberCoroutineScope()
             Box(Modifier.fillMaxSize().draggable(
                 rememberDraggableState { delta -> pager.dispatchRawDelta(-delta) },
@@ -280,7 +280,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
         // ---- Watchface: Solids / Mono / Gradients tabs above the watch ----
         val pickAlpha = soft((p - .5f) / .5f)
         // Red mode (A25): the Solids / Mono / Gradients tabs and the dots fade away; the name reads "Red mode".
-        val redAway by animateFloatAsState(if (m.redMode) 0f else 1f, tween(300), label = "redAway")
+        val redAway by animateFloatAsState(if (m.modeFace) 0f else 1f, tween(300), label = "redAway")
         if (pickAlpha * redAway > 0f) {
             val scope = rememberCoroutineScope()
             LookTabs(lookGroup, haze,
@@ -379,14 +379,14 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                     else Box(dot.background(if (on) accentFor(id) else Color.White.copy(alpha = .25f)))
                 }
             }
-            Text(if (m.redMode) RedTheme.name else lookName(shown), style = TitleStyle, modifier = Modifier.padding(bottom = 44.dp))   // where it sat with the old description line
+            Text(if (m.modeFace) RedTheme.name else lookName(shown), style = TitleStyle, modifier = Modifier.padding(bottom = 44.dp))   // where it sat with the old description line
             val face = m.link.face
             val canUse = m.link.watch != null && face?.supported == true
             // A plain frosted button, like Today's; it reads "On your watch" only for the colourway showing on the watch.
-            val inUse = (m.redMode || shown == m.colourway) && face?.installed == true && face.active
+            val inUse = (m.modeFace || shown == m.colourway) && face?.installed == true && face.active
             Row(
                 Modifier.height(52.dp).clip(RoundedCornerShape(26.dp)).frosted(haze, RoundedCornerShape(26.dp))
-                    .clickable(enabled = !inUse && canUse && watchMode && !m.redMode, role = Role.Button) { m.pickColourway(shown) }
+                    .clickable(enabled = !inUse && canUse && watchMode && !m.modeFace, role = Role.Button) { m.pickColourway(shown) }
                     .padding(horizontal = 28.dp).graphicsLayer { alpha = if (inUse || canUse) 1f else .45f },
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {

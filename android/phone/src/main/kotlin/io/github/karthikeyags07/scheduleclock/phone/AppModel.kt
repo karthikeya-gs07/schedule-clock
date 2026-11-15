@@ -168,7 +168,7 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
     }
 
     /**
-     * A face change is on its way to the watch (RULES A25). Red, green or colourway changes made meanwhile don't
+     * A face change is on its way to the watch (RULES A25). Red, focus or colourway changes made meanwhile don't
      * happen yet: a popup says the watch is updating, and once it's done the last one asked for goes on.
      */
     private var watchBusy = false
@@ -196,7 +196,7 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
         if (changed) faceChanged()
     }
 
-    /** Puts the face in [c] on the watch (a colourway, or "red" / "green" in those modes). */
+    /** Puts the face in [c] on the watch (a colourway, or "red" / "focus" in those modes). */
     private fun sendFace(c: String) {
         scope.launch {
             // With the face on the watch, the change plays as a transition there (the ring in the new colour covers
@@ -292,12 +292,14 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
     // ---- Face shortcuts (RULES A24): which one each of 12, 3, 6, 9 opens, and each one's switch ----
     var shortcutLayout by mutableStateOf(AppPrefs.shortcutLayout(context))
     /** The whole "Shortcuts on the face" section on or off. */
-    /** Red or green mode is on (RULES A25): switched by pushing the nav bar's Home up (red) or down (green). */
+    /** Red mode is on (RULES A25): switched by pushing the nav bar's Home up. */
     val redMode: Boolean get() = RedTheme.on
-    /** "", "red" or "green". */
+    /** Red or focus mode is on (RULES A25, A26): the face is that mode's, on the phone and the watch. */
+    val modeFace: Boolean get() = RedTheme.mode != ""
+    /** "", "red" or "focus". */
     val nightMode: String get() = RedTheme.mode
     init { RedTheme.mode = AppPrefs.nightMode(context) }
-    /** Switches to [mode] ("red" or "green"), or off if it's already on, and the face on the watch with it. */
+    /** Switches to [mode] ("red" or "focus"), or off if it's already on, and the face on the watch with it. */
     fun toggleNight(mode: String) {
         if (watchBusy) {   // the watch is still changing: this waits, and the last one asked for goes on after
             val now = wantMode ?: RedTheme.mode

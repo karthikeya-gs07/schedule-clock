@@ -94,6 +94,7 @@
 
         <!-- Meeting buzzes: the next buzz's alarm, and re-arming after a restart or a clock change. -->
         <receiver android:name=".BuzzReceiver" android:exported="false" />
+        <receiver android:name=".FocusTickReceiver" android:exported="false" />
         <receiver android:name=".BuzzRearmReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -143,6 +144,23 @@
             <meta-data
                 android:name="android.support.wearable.complications.SUPPORTED_TYPES"
                 android:value="SMALL_IMAGE" />
+            <meta-data
+                android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
+                android:value="300" />
+        </service>
+
+        <!-- The Focus face's slot (RULES A26): refreshed by an exact alarm when a meeting starts or ends. -->
+        <service
+            android:name=".FocusDataSourceService"
+            android:exported="true"
+            android:label="@string/focus_label"
+            android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
+            <intent-filter>
+                <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+            </intent-filter>
+            <meta-data
+                android:name="android.support.wearable.complications.SUPPORTED_TYPES"
+                android:value="RANGED_VALUE" />
             <meta-data
                 android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
                 android:value="300" />

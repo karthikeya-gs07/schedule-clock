@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Focus face</title>
+<!--
+  The Focus face (RULES A26) as the phone app shows it: the same layout as the watch's
+  (android/tools/gen_focus_face.py). focus.html?embed&clock=12|24|12n&time=<minutes>#<meetings JSON>, the same
+  parameters as index.html; without `time` it runs live, ticking every second. The phone app can also send
+  postMessage({ calentime: { events, time | live } }).
+-->
+<style>
+  @font-face { font-family: "Anta"; src: url("anta.ttf") format("truetype"); font-display: block; }
+  html, body { margin: 0; background: transparent; }
+  html { overflow: hidden; }
+  svg { display: block; width: 100%; height: auto; aspect-ratio: 1; }   /* sized by width: the WebView can report no height */
+  .anta { font-family: "Anta", system-ui, sans-serif; }
+  .sans { font-family: "Google Sans", "Google Sans Text", Roboto, system-ui, sans-serif; }
+</style>
+</head>
+<body>
+<svg viewBox="0 0 450 450" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="225" cy="225" r="225" fill="#000"/>
+  <circle cx="225" cy="225" r="219" fill="none" stroke="#1c1c1f" stroke-width="12"/>
+  <path id="ring" fill="none" stroke="#ffb547" stroke-width="12" stroke-linecap="round"/>
+  <g id="meeting">
+    <text id="clock" class="anta" x="225" y="117" text-anchor="middle" font-size="40" fill="#8e8e93"></text>
+    <text id="label" class="sans" x="225" y="163" text-anchor="middle" font-size="24" font-weight="500" letter-spacing="1.9" fill="#ffb547"></text>
+    <g id="left" class="anta" fill="#f2f2f2"></g>
+    <text id="title" class="sans" x="225" y="327" text-anchor="middle" font-size="30" font-weight="500" fill="#f2f2f2"></text>
+    <text id="range" class="sans" x="225" y="362" text-anchor="middle" font-size="22" fill="#8e8e93"></text>
+  </g>
+  <g id="idle">
+    <text id="bigClock" class="anta" x="225" y="245" text-anchor="middle" font-size="96" fill="#f2f2f2"></text>
+    <text class="sans" x="225" y="304" text-anchor="middle" font-size="24" fill="#8e8e93">No more meetings</text>
+  </g>
+</svg>
+<script>
+const $ = id => document.getElementById(id);
+const Q = new URLSearchParams(location.search);
+const CLOCK = Q.get('clock') || '12';
+let events = [];
+try { events = JSON.parse(decodeURIComponent(location.hash.slice(1))) || []; } catch { events = []; }
+let fixed = Q.get('time') !== null && Q.get('time') !== '' ? +Q.get('time') * 60 : null;   // seconds from midnight, or live
+
+const mins = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
+const pad = n => String(n).padStart(2, '0');
+function fmt(min) {   // a time of day, as the phone's clock setting says
+  const h = Math.floor(min / 60) % 24, m = min % 60;
+  if (CLOCK === '24') return `${pad(h)}:${pad(m)}`;
+  return `${h % 12 || 12}:${pad(m)}`;
+}
+function fmtAp(min) { const h = Math.floor(min / 60) % 24; return CLOCK === '24' ? fmt(min) : `${fmt(min)} ${h < 12 ? 'AM' : 'PM'}`; }
+function range(m) {
+  const a = m.start, b = m.end, same = CLOCK === '24' || (Math.floor(a / 60) % 24 < 12) === (Math.floor(b / 60) % 24 < 12);
+  return (m.start >= 1440 ? 'Tomorrow · ' : '') + (same && CLOCK !== '24' ? `${fmt(a)} – ${fmtAp(b)}` : `${fmtAp(a)} – ${fmtAp(b)}`);
+}
+function meetings() {
+  return events.filter(e => !e.allDay && e.start).map(e => ({
+    start: mins(e.start) + 1440 * (e.day || 0), end: mins(e.end) + 1440 * (e.day || 0),
+    title: e.private ? 'Private' : (e.title || 'Busy'),
+  }));
+}
+function arc(frac) {
+  if (frac <= 0) return '';
+  if (frac >= 1) frac = .99999;
+  const a = frac * 2 * Math.PI, r = 219, x = 225 + r * Math.sin(a), y = 225 - r * Math.cos(a);
+  return `M 225 6 A ${r} ${r} 0 ${frac > .5 ? 1 : 0} 1 ${x.toFixed(2)} ${y.toFixed(2)}`;
+}
+// The time left, each digit in its own box like the watch, so the digits don't shuffle as they tick.
+function digits(left) {
+  const h = Math.floor(left / 3600), m = Math.floor(left % 3600 / 60), s = Math.floor(left % 60);
+  const [size, dw, cw, cells] = h === 0 ? [104, 66, 26, [...pad(m), ':', ...pad(s)]]
+    : h < 10 ? [80, 51, 20, [String(h), ':', ...pad(m), ':', ...pad(s)]]
+    : [72, 46, 18, [...pad(h), ':', ...pad(m), ':', ...pad(s)]];
+  const total = cells.reduce((t, c) => t + (c === ':' ? cw : dw), 0);
+  let x = (450 - total) / 2, out = '';
+  for (const c of cells) {
+    const w = c === ':' ? cw : dw;
+    out += `<text x="${(x + w / 2).toFixed(1)}" y="${(168 + 60 + size * .36).toFixed(1)}" text-anchor="middle" font-size="${size}">${c}</text>`;
+    x += w;
+  }
+  return out;
+}
+function render() {
+  const d = new Date();
+  const now = fixed ?? (d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds());
+  const list = meetings();
+  const live = list.filter(m => m.start * 60 <= now && m.end * 60 > now).sort((a, b) => a.end - b.end)[0];
+  const next = list.filter(m => m.start * 60 > now).sort((a, b) => a.start - b.start)[0];
+  const m = live || next;
+  $('meeting').style.display = m ? '' : 'none';
+  $('idle').style.display = m ? 'none' : '';
+  const nowMin = Math.floor(now / 60);
+  if (!m) { $('bigClock').textContent = fmt(nowMin); $('ring').setAttribute('d', ''); return; }
+  const target = (live ? m.end : m.start) * 60, from = live ? m.start * 60 : target - 3600;
+  const left = Math.max(0, target - now);
+  $('ring').setAttribute('d', arc(Math.min(1, left / (target - from))));
+  $('clock').textContent = fmt(nowMin);
+  $('label').textContent = live ? 'ENDS IN' : 'STARTS IN';
+  $('left').innerHTML = digits(left);
+  $('title').textContent = m.title;
+  $('range').textContent = range(m);
+  fitTitle();
+}
+function fitTitle() {   // one line, cut with an ellipsis to 310 px like the watch
+  const t = $('title'), full = t.textContent;
+  if (t.getComputedTextLength() <= 310) return;
+  let s = full;
+  while (s.length > 1 && (t.textContent = s + '…', t.getComputedTextLength() > 310)) s = s.slice(0, -1);
+}
+addEventListener('message', ev => {
+  const o = ev.data && ev.data.calentime;
+  if (!o) return;
+  if (o.events) events = o.events;
+  if (o.live) fixed = null; else if (o.time != null) fixed = +o.time * 60;
+  render();
+});
+render();
+document.fonts.load('40px "Anta"').then(render);
+(function tick() { setTimeout(() => { render(); tick(); }, 1000 - Date.now() % 1000); })();
+</script>
+</body>
+</html>
