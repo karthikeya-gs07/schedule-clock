@@ -53,6 +53,7 @@ class FaceRequestService : WearableListenerService() {
         .put("colourway", s.colourway ?: "").put("activateUsed", s.activateUsed)
         .put("version", BuildConfig.VERSION_CODE)   // the phone offers an update when this is older (RULES A14)
         .put("versionName", BuildConfig.VERSION_NAME)   // shown in the phone's Settings
+        .put("now", System.currentTimeMillis())   // the watch's clock, so the phone's Focus face counts the same seconds (A26)
         .toString()
 
     companion object {

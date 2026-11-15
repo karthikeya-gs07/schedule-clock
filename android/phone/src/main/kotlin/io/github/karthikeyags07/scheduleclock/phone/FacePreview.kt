@@ -19,6 +19,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -99,7 +102,7 @@ private fun FaceWebView(
                     view.tag = url
                     if (old != null && sameFace(old, url) && view.getTag(R.id.face_loaded) == true) {
                         val to = atMinute?.let { "time: $it" } ?: "live: true"
-                        view.evaluateJavascript("postMessage({ calentime: { sweep: true, events: $events, $to } }, '*')", null)
+                        view.evaluateJavascript("postMessage({ calentime: { sweep: true, events: $events, $to, off: ${FaceClock.watchOffset} } }, '*')", null)
                     } else {
                         view.setTag(R.id.face_loaded, false)
                         view.loadUrl(url)
@@ -142,7 +145,7 @@ private fun previewUrl(colourway: String, meetings: List<Meeting>, atMinute: Int
         return "https://appassets.androidplatform.net/assets/face/focus.html?embed&clock=${FaceClock.param}" +
             "&theme=${colourway.removePrefix("focus").replaceFirstChar(Char::lowercase)}" +
             (atMinute?.let { "&time=$it" } ?: "") +
-            "&v=${json.hashCode()}#${URLEncoder.encode(json, "UTF-8").replace("+", "%20")}" to json
+            "&v=${json.hashCode()}&off=${FaceClock.watchOffset}#${URLEncoder.encode(json, "UTF-8").replace("+", "%20")}" to json
     // "red" is red mode's face (RULES A25), not a colourway on the list.
     val night = colourway == "red"
     val name = when (colourway) { "solaris" -> "Amber"; "red" -> "Red mode"; else -> look.name }
@@ -157,6 +160,17 @@ private fun previewUrl(colourway: String, meetings: List<Meeting>, atMinute: Int
 /** The clock format the previews show (RULES T6), kept in step with the Settings switches by [AppModel]. */
 object FaceClock {
     var param = "12"
+    /**
+     * How far the watch's clock is ahead of the phone's, in ms (negative: behind), measured whenever the phone asks
+     * the watch about its face. The Focus face preview counts its seconds by the watch's clock (RULES A26), so the
+     * phone and the watch show the same countdown even when their clocks are a few seconds apart.
+     */
+    var watchOffset by mutableStateOf(0L)
+        private set
+    fun watchAhead(ms: Long) {
+        val rounded = Math.round(ms / 100.0) * 100
+        if (kotlin.math.abs(rounded - watchOffset) > 250) watchOffset = rounded   // ignore the round trip's own wobble
+    }
     /** The second time zone's difference from local time in minutes (RULES R13), or null; kept by [AppModel]. */
     var zone: Int? = null
 }

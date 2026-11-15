@@ -92,7 +92,11 @@ function digits(left) {
   }
   return out;
 }
-const liveNow = () => { const d = new Date(); return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds(); };
+// The watch's clock (RULES A26): the phone app passes how far the watch's clock is ahead of the phone's (ms), so this
+// counts the same seconds as the watch's Focus face.
+let OFF = +(Q.get('off') || 0);
+const clockNow = () => Date.now() + OFF;
+const liveNow = () => { const d = new Date(clockNow()); return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds(); };
 // What the face shows at [now] (seconds from midnight): the meeting on or next, the time left and the ring.
 function state(now) {
   now = ((now % 86400) + 86400) % 86400;
@@ -131,15 +135,17 @@ function fitTitle() {   // one line, cut with an ellipsis to 310 px like the wat
   while (s.length > 1 && (t.textContent = s + '…', t.getComputedTextLength() > 310)) s = s.slice(0, -1);
 }
 // The phone app moving between Today (live) and Watchface (the sample day at 10:13). As on the main face
-// (index.html's sweepTo), the clock runs forward to the new time over 850 ms. The countdown and the meeting don't
-// count through every moment in between (that made the numbers jump): they fade out, change once out of sight and
-// fade back in, and the ring eases from its old length to its new one.
+// (index.html's sweepTo), the clock runs forward to the new time over 850 ms, and the countdown dials from its old
+// value straight to its new one alongside it (never through the meetings in between, which made the numbers jump).
+// If the meeting changes, its label, title and time fade out, change out of sight and fade back in; the ring eases
+// from its old length to its new one.
 // postMessage({ calentime: { sweep: true, events, time | live } }).
 let sweepFrame = 0, sweeping = false;
 const EASE = f => f < .5 ? 4 * f * f * f : 1 - Math.pow(-2 * f + 2, 3) / 2;
 function sweepTo(o) {
   cancelAnimationFrame(sweepFrame);
   if (o.events) events = o.events;
+  if (o.off != null) OFF = +o.off;
   const a = shown ?? state(liveNow());
   const targetNow = () => o.live ? liveNow() : +o.time * 60;
   const b = state(targetNow());
@@ -148,9 +154,8 @@ function sweepTo(o) {
   const same = a.idle === b.idle && (a.idle || (a.label === b.label && a.title === b.title && a.range === b.range));
   const ms = 850, t0 = performance.now();
   // Same meeting: only the countdown fades; otherwise the whole middle does.
-  // Nothing to change (the same time and meeting): nothing fades.
-  const fading = a.idle !== b.idle ? [$('meeting'), $('idle')] : !same ? [$('left'), $('label'), $('title'), $('range')]
-    : !a.idle && Math.abs(a.left - b.left) > 1 ? [$('left')] : [];
+  const fading = a.idle !== b.idle ? [$('meeting'), $('idle')] : !same ? [$('label'), $('title'), $('range')] : [];
+  const dials = !a.idle && !b.idle;   // a countdown on both sides: it dials from one to the other
   for (const el of fading) el.animate([{ opacity: 1 }, { opacity: 0, offset: .42 }, { opacity: 0, offset: .5 }, { opacity: 1 }],
     { duration: ms, easing: 'ease-in-out' });
   let swapped = false;
@@ -159,6 +164,7 @@ function sweepTo(o) {
     const f = Math.min(1, (t - t0) / ms), e = EASE(f);
     if (!swapped && f >= .46) { swapped = true; draw(state(targetNow()), { rest: true }); }   // out of sight
     draw({ nowMin: (a.nowMin + Math.round(delta * e)) % 1440, idle: false, frac: fracA + (fracB - fracA) * e }, { clock: true, ring: true });
+    if (dials) $('left').innerHTML = digits(Math.round(a.left + (b.left - a.left) * e));
     if (f < 1) { sweepFrame = requestAnimationFrame(step); return; }
     fixed = o.live ? null : +o.time * 60; sweeping = false; render();
   };
@@ -174,7 +180,7 @@ addEventListener('message', ev => {
 });
 render();
 document.fonts.load('40px "Anta"').then(render);
-(function tick() { setTimeout(() => { if (!sweeping) render(); tick(); }, 1000 - Date.now() % 1000); })();
+(function tick() { setTimeout(() => { if (!sweeping) render(); tick(); }, 1000 - clockNow() % 1000 + 5); })();   // just after each of the watch's seconds
 </script>
 </body>
 </html>

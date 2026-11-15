@@ -94,8 +94,12 @@ object WatchLink {
     }
 
     private suspend fun request(context: Context, watch: Watch, path: String, body: ByteArray): FaceStatus? = try {
+        val sent = System.currentTimeMillis()
         val bytes = withTimeout(8_000) { Wearable.getMessageClient(context).sendRequest(watch.id, path, body).await() }
+        val back = System.currentTimeMillis()
         val j = JSONObject(bytes.decodeToString())
+        // The watch's clock against the phone's, taking the reply as made halfway through the round trip.
+        if (j.has("now") && back - sent < 2_000) FaceClock.watchAhead(j.getLong("now") - (sent + back) / 2)
         FaceStatus(j.getBoolean("supported"), j.getBoolean("installed"), j.getBoolean("active"),
             j.optString("colourway").ifEmpty { null }, j.getBoolean("activateUsed"), j.optInt("version", 0), j.optString("versionName"))
     } catch (e: Exception) {
