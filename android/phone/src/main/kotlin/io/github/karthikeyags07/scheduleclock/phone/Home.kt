@@ -156,7 +156,8 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
         LaunchedEffect(watchMode, shown) { m.previewColourway = if (watchMode) shown else null }
         // The underglow's colours, left to right: one colour, or a gradient face's colours (Solaris: its day). Five
         // stops either way, each easing on its own, so changing face blends the glow smoothly.
-        val glowStops = if (m.redMode) List(5) { RedTheme.red } else (Looks.of(shown).palette?.map { Color(it) } ?: if (shown == "solaris") SOLARIS_COLOURS else null)
+        val nightColour = RedTheme.red
+        val glowStops = if (m.redMode) List(5) { nightColour } else (Looks.of(shown).palette?.map { Color(it) } ?: if (shown == "solaris") SOLARIS_COLOURS else null)
             ?.let { pal -> List(5) { pal[it * (pal.size - 1) / 4] } } ?: List(5) { accentFor(shown) }
         val glows = glowStops.mapIndexed { i, c -> animateColorAsState(c, tween(400), label = "glow$i").value }
 
@@ -195,7 +196,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                 val glowPad = 48.dp
                 Box(Modifier.offset(x = left + d(79.2f) - glowPad, y = d(158.8f) + dy - glowPad).size(faceSize + glowPad * 2)
                     .graphicsLayer { renderEffect = BlurEffect(18.dp.toPx(), 18.dp.toPx(), TileMode.Decal); alpha = .7f; scaleX = 1.04f; scaleY = 1.04f },
-                    contentAlignment = Alignment.Center) { WatchFacePreview(if (m.redMode) "red" else COLOURWAYS[pager.settledPage], meetings, faceSize, atMinute = at) }
+                    contentAlignment = Alignment.Center) { WatchFacePreview(if (m.redMode) m.nightMode else COLOURWAYS[pager.settledPage], meetings, faceSize, atMinute = at) }
             }
             // The faces, one per colourway, sliding through the watch's round screen. The band is full width, so a
             // swipe anywhere across the watch works; drawing is clipped to the screen.
@@ -217,9 +218,12 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
             // Red mode (A25): the red face itself (the same as the watch's), over whichever face is in use; it
             // flickers in on the way in. Composed while red mode is on, so it's loaded before the flicker starts.
             val redLevel = LocalRed.current?.face
+            // The last face shown, so it can fade out after the mode is turned off.
+            var nightFace by remember { mutableStateOf(m.nightMode.ifEmpty { "red" }) }
+            if (m.redMode) nightFace = m.nightMode
             if (m.redMode || (redLevel?.value ?: 0f) > 0f) {
                 Box(Modifier.offset(x = left + d(79.2f), y = d(158.8f) + dy).size(faceSize).graphicsLayer { alpha = redLevel?.value ?: 1f }) {
-                    WatchFacePreview("red", meetings, faceSize, interactive = live, atMinute = at)
+                    WatchFacePreview(nightFace, meetings, faceSize, interactive = live, atMinute = at)
                     if (!live) Box(Modifier.matchParentSize().pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } })
                 }
             }
@@ -298,7 +302,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
         val iconsIn by animateFloatAsState(if (settled) 1f else 0f,
             if (settled) tween(420, easing = FastOutSlowInEasing) else tween(200), label = "shortcutsIn")
         if (iconsIn > 0f) {
-            val accent = accentFor(shown, m.redMode)
+            val accent = accentFor(shown, if (m.redMode) nightColour else null)
             val btn = 40.dp; val gap = 20.dp
             val cx = left + d(79.2f) + faceSize / 2
             val cy = faceTopCentre + faceSize / 2
@@ -375,7 +379,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                     else Box(dot.background(if (on) accentFor(id) else Color.White.copy(alpha = .25f)))
                 }
             }
-            Text(if (m.redMode) "Red mode" else lookName(shown), style = TitleStyle, modifier = Modifier.padding(bottom = 44.dp))   // where it sat with the old description line
+            Text(if (m.redMode) RedTheme.name else lookName(shown), style = TitleStyle, modifier = Modifier.padding(bottom = 44.dp))   // where it sat with the old description line
             val face = m.link.face
             val canUse = m.link.watch != null && face?.supported == true
             // A plain frosted button, like Today's; it reads "On your watch" only for the colourway showing on the watch.
@@ -429,10 +433,9 @@ internal fun WatchPhoto(modifier: Modifier) = Image(
     painterResource(R.drawable.watch_body), null, contentScale = ContentScale.FillBounds,
     // Modulate, not Multiply: Compose's Multiply also fills the image's transparent pixels with the tint, which
     // drew a faint rectangle round the watch on the darker unfolded page.
-    // In red mode (A25) the page is darker, so the watch is drawn brighter to stay clearly visible.
-    colorFilter = ColorFilter.tint(if (RedTheme.on) Color(0xFF2E2E2E) else StageBackground, BlendMode.Modulate),
+    colorFilter = ColorFilter.tint(StageBackground, BlendMode.Modulate),
     modifier = modifier
-        .graphicsLayer { alpha = if (RedTheme.on) .7f else .4f; compositingStrategy = CompositingStrategy.Offscreen }
+        .graphicsLayer { alpha = .4f; compositingStrategy = CompositingStrategy.Offscreen }
         .drawWithContent {
             drawContent()
             drawRect(Brush.verticalGradient(*(easeStops(0f, .24f, fadeIn = true) + easeStops(.74f, 1f, fadeIn = false)).toTypedArray()),

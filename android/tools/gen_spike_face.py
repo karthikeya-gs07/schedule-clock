@@ -226,14 +226,18 @@ for i, (name, bg, track, text_, major, minor, half, accent, clash, later, palett
                                       "#ffffffff" if palette else HIDE, argb(accent or palette[0]))))
 # Red mode (RULES A25): Amber run through the phone app's red filter (each colour to a red of its brightness:
 # R = .42 r + .50 g + .23 b, no green or blue), so the watch looks just like the phone's red preview.
-def redden(c):
+# Green mode is the same in green.
+def night(c, green=False):
     if c == HIDE: return c
     r, g, b = int(c[3:5], 16), int(c[5:7], 16), int(c[7:9], 16)
-    return "#%s%02x0000" % (c[1:3], min(255, round(.42 * r + .50 * g + .23 * b)))
-THEMES.append(("red", "theme_red", tuple(redden(c) for c in next(c for i, n, c in THEMES if i == "amber"))))
-PRIVATE_TINT = redden("#ff8e8e93") if COLOURWAY == "red" else "#ff8e8e93"   # private meetings' grey
+    v = min(255, round(.42 * r + .50 * g + .23 * b))
+    return ("#%s00%02x00" if green else "#%s%02x0000") % (c[1:3], v)
+def redden(c): return night(c, COLOURWAY == "green")
+for _id in ("red", "green"):
+    THEMES.append((_id, f"theme_{_id}", tuple(night(c, _id == "green") for c in next(c for i, n, c in THEMES if i == "amber"))))
+PRIVATE_TINT = redden("#ff8e8e93") if COLOURWAY in ("red", "green") else "#ff8e8e93"   # private meetings' grey
 D = BLACK
-if COLOURWAY == "red":
+if COLOURWAY in ("red", "green"):
     D = Colours({k: redden(v) for k, v in BLACK.items()})
 elif COLOURWAY in FIGMA:
     name, bg, track, text_, major, minor, half, *_ , clash, later, palette = FIGMA[COLOURWAY]

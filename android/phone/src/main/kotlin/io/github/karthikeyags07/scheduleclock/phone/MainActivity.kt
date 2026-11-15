@@ -177,10 +177,12 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
     var watchStatus by rememberSaveable { mutableStateOf(false) }
     val install: () -> Unit = { setupStep = 3; m.restartSetup() }
 
-    // Red mode (RULES A25): the face on Today flickers quickly between its colours and red, then stays red.
+    // Red or green mode (RULES A25): the face flickers quickly between its colours and the red (or green) face,
+    // then stays on it. Switching straight from one to the other flickers in again.
     val faceRed = remember { Animatable(if (m.redMode) 1f else 0f) }
-    LaunchedEffect(m.redMode) {
-        if (m.redMode && faceRed.value < 1f) {
+    LaunchedEffect(m.nightMode) {
+        if (m.redMode) {
+            faceRed.snapTo(0f)
             delay(450)   // the red face loading underneath, out of sight
             // A tube light catching: quick, uneven blinks, then on.
             for ((v, ms) in listOf(1f to 35L, 0f to 45L, 1f to 30L, 0f to 70L, 1f to 40L, 0f to 35L)) { faceRed.snapTo(v); delay(ms) }
@@ -189,7 +191,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
     }
     val red = remember { RedLevels(faceRed.asState()) }
 
-    CompositionLocalProvider(LocalAccent provides animatedAccent(m.colourway, m.redMode), LocalGlow provides animatedAccent(m.colourway, m.redMode), LocalTextStyle provides BodyStyle, LocalRed provides red) {   // Google Sans Flex everywhere
+    CompositionLocalProvider(LocalAccent provides animatedAccent(m.colourway, if (m.redMode) RedTheme.red else null), LocalGlow provides animatedAccent(m.colourway, if (m.redMode) RedTheme.red else null), LocalTextStyle provides BodyStyle, LocalRed provides red) {   // Google Sans Flex everywhere
         BoxWithConstraints(Modifier.fillMaxSize().background(Palette.screen)) {
             // Unfolded (Fold 7/8 inner screen, tablets): two panes, Today on the left and the other pages on the right.
             // Only when the screen is tall enough too: a landscape phone (or a short window) stays one pane.
@@ -259,7 +261,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
                         else workPage(shown, haze)
                     }
                     NavBar(tab, haze, m.previewColourway.takeIf { tab == Tab.WATCHFACE && !m.redMode }, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp),
-                        onHomePush = m::toggleRed) { tab = it }
+                        onHomePush = { m.toggleNight("red") }, onHomePull = { m.toggleNight("green") }) { tab = it }
                     if (watchStatus) WatchStatusPanel(m, haze, allow, install) { watchStatus = false }
                     // About slides up over the page from the bottom, and back down when closed.
                     androidx.compose.animation.AnimatedVisibility(about, enter = ABOUT_IN, exit = ABOUT_OUT) {
@@ -280,7 +282,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
  */
 @Composable
 private fun NavBar(current: Tab, haze: HazeState, preview: String?, modifier: Modifier, tabs: List<Tab> = Tab.entries,
-                   onHomePush: (() -> Unit)? = null, onSelect: (Tab) -> Unit) {
+                   onHomePush: (() -> Unit)? = null, onHomePull: (() -> Unit)? = null, onSelect: (Tab) -> Unit) {
     // While browsing Watchface, the selected icon takes the colour of the colourway on show.
     val selectedTint by animateColorAsState(preview?.let(::accentFor) ?: LocalAccent.current, tween(300), label = "navTint")
     Box(modifier.width((tabs.size * 77 + 24).dp).height(80.dp)) {
@@ -297,9 +299,10 @@ private fun NavBar(current: Tab, haze: HazeState, preview: String?, modifier: Mo
             val selected = t == current
             // The selected icon has a soft glow of its colour behind it (fades in and out as tabs change).
             val glow by animateFloatAsState(if (selected) 1f else 0f, tween(300), label = "navGlow")
-            // Home hides a gesture (A25), with nothing to show it's there: push the icon up and it follows the finger,
-            // stiffer the further it goes; let go and it springs back with a little bounce, like swiping a WhatsApp
-            // message to reply. Pushed far enough (a tick of haptics says so), letting go switches red mode.
+            // Home hides two gestures (A25), with nothing to show they're there: push the icon up (red mode) or pull
+            // it down (green mode) and it follows the finger, stiffer the further it goes; let go and it springs back
+            // with a little bounce, like swiping a WhatsApp message to reply. Moved far enough (a tick of haptics
+            // says so), letting go switches the mode.
             val lift = remember { Animatable(0f) }
             val pushable = t == Tab.TODAY && onHomePush != null
             val haptics = LocalHapticFeedback.current
@@ -310,7 +313,7 @@ private fun NavBar(current: Tab, haze: HazeState, preview: String?, modifier: Mo
                         val most = 46.dp.toPx(); val give = 52.dp.toPx(); val enough = 30.dp.toPx()
                         var pulled = 0f; var armed = false
                         fun settle(fire: Boolean) {
-                            if (fire && armed) onHomePush?.invoke()
+                            if (fire && armed) (if (pulled < 0f) onHomePush else onHomePull)?.invoke()
                             armed = false; pulled = 0f
                             scope.launch { lift.animateTo(0f, spring(dampingRatio = .4f, stiffness = Spring.StiffnessMediumLow)) }
                         }
@@ -320,11 +323,11 @@ private fun NavBar(current: Tab, haze: HazeState, preview: String?, modifier: Mo
                             onDragCancel = { settle(false) },
                         ) { change, dy ->
                             change.consume()
-                            pulled = (pulled + dy).coerceAtMost(0f)
-                            val up = most * (1f - kotlin.math.exp(pulled / give))   // rubber band: never past `most`
-                            scope.launch { lift.snapTo(-up) }
-                            if ((up >= enough) != armed) {
-                                armed = up >= enough
+                            pulled += dy
+                            val moved = most * (1f - kotlin.math.exp(-kotlin.math.abs(pulled) / give))   // rubber band: never past `most`
+                            scope.launch { lift.snapTo(if (pulled < 0f) -moved else moved) }
+                            if ((moved >= enough) != armed) {
+                                armed = moved >= enough
                                 if (armed) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                             }
                         }

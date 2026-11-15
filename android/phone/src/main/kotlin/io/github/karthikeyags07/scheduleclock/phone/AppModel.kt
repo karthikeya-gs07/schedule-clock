@@ -167,7 +167,7 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
         sendFace(AppPrefs.watchColourway(context))
     }
 
-    /** Puts the face in [c] on the watch (a colourway, or "red" in red mode). */
+    /** Puts the face in [c] on the watch (a colourway, or "red" / "green" in those modes). */
     private fun sendFace(c: String) {
         scope.launch {
             // With the face on the watch, the change plays as a transition there (the ring in the new colour covers
@@ -256,15 +256,15 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
     // ---- Face shortcuts (RULES A24): which one each of 12, 3, 6, 9 opens, and each one's switch ----
     var shortcutLayout by mutableStateOf(AppPrefs.shortcutLayout(context))
     /** The whole "Shortcuts on the face" section on or off. */
-    /** Red mode (RULES A25): the whole app in red; switched by pushing the nav bar's Home up. Phone only. */
-    var redMode: Boolean
-        get() = RedTheme.on
-        set(v) { RedTheme.on = v }
-    init { RedTheme.on = AppPrefs.redMode(context) }
-    /** Switches red mode, and the face on the watch with it: the red face on, or the colourway back. */
-    fun toggleRed() {
-        redMode = !redMode
-        AppPrefs.setRedMode(context, redMode)
+    /** Red or green mode is on (RULES A25): switched by pushing the nav bar's Home up (red) or down (green). */
+    val redMode: Boolean get() = RedTheme.on
+    /** "", "red" or "green". */
+    val nightMode: String get() = RedTheme.mode
+    init { RedTheme.mode = AppPrefs.nightMode(context) }
+    /** Switches to [mode] ("red" or "green"), or off if it's already on, and the face on the watch with it. */
+    fun toggleNight(mode: String) {
+        RedTheme.mode = if (RedTheme.mode == mode) "" else mode
+        AppPrefs.setNightMode(context, RedTheme.mode)
         if (!demo) sendFace(AppPrefs.watchColourway(context))
     }
 

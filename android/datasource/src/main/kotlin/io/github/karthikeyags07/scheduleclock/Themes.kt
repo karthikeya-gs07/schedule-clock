@@ -53,15 +53,19 @@ object Themes {
         solid("ember", "Cobalt Ember", "000000", "648fff", "ff986e", "9aa9b8"),   // Figma node 95:3496
         solid("cobalt", "Cobalt Mono", "070d1d", "99ace7", "f6f8fd", "5475d7"),   // Figma node 95:3496
         solid("red", "Red mode", "000000", "d60000", "bd0000", "6b0000"),   // the phone's red mode (RULES A25)
+        solid("green", "Green mode", "000000", "00d600", "00bd00", "006b00"),   // the phone's green mode (RULES A25)
     )
     val IDS = ALL.map { it.id }
 
     fun of(id: String?) = ALL.firstOrNull { it.id == id } ?: ALL[0]
 }
 
-/** The red face (the phone's red mode, RULES A25): the watch's own screens draw their text in dim reds then. */
-val Theme.isRed get() = id == "red"
-/** Text on the watch's own screens: white, or a dim red on the red face, so the accent stays the brightest thing. */
-val Theme.ink: Int get() = if (isRed) Color.rgb(165, 0, 0) else Color.WHITE
-/** Quieter text: grey, or a darker red on the red face. */
-val Theme.inkSoft: Int get() = if (isRed) Color.rgb(105, 0, 0) else Color.parseColor("#8e8e93")
+/** The red or green face (the phone's red / green mode, RULES A25): the watch's own screens draw in its colour. */
+val Theme.isNight get() = id == "red" || id == "green"
+private fun Theme.night(v: Int) = if (id == "green") Color.rgb(0, v, 0) else Color.rgb(v, 0, 0)
+/** Text on the watch's own screens: white, or a dim red / green on those faces, so the accent stays the brightest. */
+val Theme.ink: Int get() = if (isNight) night(165) else Color.WHITE
+/** Quieter text: grey, or a darker red / green. */
+val Theme.inkSoft: Int get() = if (isNight) night(105) else Color.parseColor("#8e8e93")
+/** The flashlight's colour: white, or full red / green, to keep night vision. */
+val Theme.light: Int get() = if (isNight) night(255) else Color.WHITE

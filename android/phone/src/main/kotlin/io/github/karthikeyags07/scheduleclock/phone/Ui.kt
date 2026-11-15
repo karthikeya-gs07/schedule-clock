@@ -75,8 +75,8 @@ val LocalAccent = compositionLocalOf { Color(0xFFFFB547) }
 /** The page glow: the colourway's colour, red in red mode (RULES A25). */
 val LocalGlow = compositionLocalOf { Color(0xFFFFB547) }
 
-fun accentFor(colourway: String, red: Boolean = false): Color =
-    if (red) RedTheme.red else if (colourway == "solaris") sunColour(LocalTime.now().toSecondOfDay() / 60) else Color(Looks.of(colourway).accent)
+fun accentFor(colourway: String, night: Color? = null): Color =
+    if (night != null) night else if (colourway == "solaris") sunColour(LocalTime.now().toSecondOfDay() / 60) else Color(Looks.of(colourway).accent)
 
 // Solaris accent: the day's colours (RULES S3) at typical sun times (sunrise ~6:15, noon ~12:00, sunset ~17:45),
 // blended in sRGB. The face itself computes the real sun times; this only tints the app.
@@ -185,7 +185,7 @@ fun lerpColor(a: Color, b: Color, f: Float) = Color(
     a.red + (b.red - a.red) * f, a.green + (b.green - a.green) * f, a.blue + (b.blue - a.blue) * f)
 
 @Composable
-fun animatedAccent(colourway: String, red: Boolean = false): Color = animateColorAsState(accentFor(colourway, red), label = "accent").value
+fun animatedAccent(colourway: String, night: Color? = null): Color = animateColorAsState(accentFor(colourway, night), label = "accent").value
 
 // ---------- Page look (About, Calendars, Settings; RULES A9) ----------
 // Today's grey stage with the colourway's glow at the top, a large title, 22 sp section headings, and items as a

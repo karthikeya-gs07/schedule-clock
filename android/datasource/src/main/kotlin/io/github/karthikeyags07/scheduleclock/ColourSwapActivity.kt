@@ -86,14 +86,14 @@ class ColourSwapActivity : Activity(), CoroutineScope by MainScope() {
         private val theme = Themes.of(colourway)
         private var progress = 0f
         private fun dp(v: Float) = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v, resources.displayMetrics)
-        private val track = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = dp(6f); color = if (theme.isRed) Color.argb(60, 255, 0, 0) else Color.argb(40, 255, 255, 255) }
+        private val track = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = dp(6f); color = if (theme.isNight) Color.argb(60, Color.red(theme.accent), Color.green(theme.accent), 0) else Color.argb(40, 255, 255, 255) }
         private val arc = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = dp(6f); strokeCap = Paint.Cap.ROUND }
         private val name = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = if (theme.isRed) theme.accent else Color.parseColor("#f2f2f2"); textAlign = Paint.Align.CENTER; textSize = dp(22f)
+            color = if (theme.isNight) theme.accent else Color.parseColor("#f2f2f2"); textAlign = Paint.Align.CENTER; textSize = dp(22f)
             typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
         }
         private val caption = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = if (theme.isRed) theme.inkSoft else Color.argb(150, 255, 255, 255); textAlign = Paint.Align.CENTER; textSize = dp(13f)
+            color = if (theme.isNight) theme.inkSoft else Color.argb(150, 255, 255, 255); textAlign = Paint.Align.CENTER; textSize = dp(13f)
         }
         private val box = RectF()
 

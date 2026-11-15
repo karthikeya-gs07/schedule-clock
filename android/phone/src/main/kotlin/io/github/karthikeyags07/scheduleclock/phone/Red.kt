@@ -18,23 +18,28 @@ import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 
 /**
- * Red mode (RULES A25): a hidden switch. Pushing the nav bar's Home icon up and letting go turns on red mode:
- * on Today and Watchface the text and icons turn red; everywhere the accent (switches, selected tab, glows) turns
- * red; the greys get a little darker (never black); the face previews turn red on their black dials and the watch
- * gets the red face. Settings, Calendars and About keep white text. Doing it again turns it all back. On the way
- * in, the face on Today flickers quickly into red.
+ * Red mode and green mode (RULES A25): hidden switches. Pushing the nav bar's Home icon up and letting go turns on
+ * red mode; pulling it down, green mode. On Today and Watchface the text and icons take the colour; everywhere the
+ * accent (switches, selected tab, glows) does; the greys get a little darker (never black); the face shows the
+ * red or green face itself and the watch wears it too. Settings, Calendars and About keep white text. The same
+ * gesture again turns it off; the other one switches colour. On the way in, the face flickers quickly into it.
  */
 object RedTheme {
-    var on by mutableStateOf(false)
-    val red = Color(0xFFFF2020)
-    val text = red
-    val body = Color(0xFFE01B1B)
-    val muted = Color(0xFFA81515)
-    val faint = Color(0xFF5E0E0E)
+    /** "", "red" or "green". */
+    var mode by mutableStateOf("")
+    val on get() = mode != ""
+    private val green get() = mode == "green"
+    val red: Color @Composable get() = if (green) Color(0xFF2BFF4A) else Color(0xFFFF2020)
+    val text: Color @Composable get() = red
+    val body: Color @Composable get() = if (green) Color(0xFF22D83C) else Color(0xFFE01B1B)
+    val muted: Color @Composable get() = if (green) Color(0xFF16A82A) else Color(0xFFA81515)
+    val faint: Color @Composable get() = if (green) Color(0xFF0D5E17) else Color(0xFF5E0E0E)
+    /** The face's name on the Watchface page. */
+    val name get() = if (green) "Green mode" else "Red mode"
 
-    /** A grey a little darker in red mode (backgrounds, glass, buttons): never black. */
+    /** A grey a little darker in red or green mode (backgrounds, glass, buttons): never black. */
     @Composable fun darker(c: Color): Color = shade(c, .45f)
-    /** Frosted glass (nav bar, round buttons, pill) in red mode: darker too, but still lifted off the page. */
+    /** Frosted glass (nav bar, round buttons, pill) in red or green mode: darker too, but still lifted off the page. */
     @Composable fun glass(c: Color): Color = shade(c, .55f)
     private fun shade(c: Color, k: Float) = if (!on) c else Color(c.red * k, c.green * k, c.blue * k, c.alpha)
 }

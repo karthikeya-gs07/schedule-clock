@@ -77,10 +77,12 @@ object AppPrefs {
         prefs(context).getString("shortcuts", "")!!.split(',').filter { it in SHORTCUTS }.takeIf { it.toSet().size == 4 } ?: SHORTCUTS
     fun setShortcutLayout(context: Context, layout: List<String>) = prefs(context).edit().putString("shortcuts", layout.joinToString(",")).apply()
     /** Red mode (RULES A25): the app shown all in red. */
-    fun redMode(context: Context) = prefs(context).getBoolean("redMode", false)
-    fun setRedMode(context: Context, on: Boolean) = prefs(context).edit().putBoolean("redMode", on).apply()
-    /** The face the watch should wear: the red one in red mode, otherwise the colourway. */
-    fun watchColourway(context: Context) = if (redMode(context)) "red" else colourway(context)
+    /** Red or green mode (RULES A25): "", "red" or "green" (earlier versions kept only red mode, as a switch). */
+    fun nightMode(context: Context): String =
+        prefs(context).getString("nightMode", null) ?: if (prefs(context).getBoolean("redMode", false)) "red" else ""
+    fun setNightMode(context: Context, mode: String) = prefs(context).edit().putString("nightMode", mode).apply()
+    /** The face the watch should wear: the red or green one in those modes, otherwise the colourway. */
+    fun watchColourway(context: Context) = nightMode(context).ifEmpty { colourway(context) }
     fun shortcutsOn(context: Context) = prefs(context).getBoolean("shortcutsOn", true)
     fun setShortcutsOn(context: Context, on: Boolean) = prefs(context).edit().putBoolean("shortcutsOn", on).apply()
     fun clock24(context: Context) = prefs(context).getBoolean("clock24", false)
