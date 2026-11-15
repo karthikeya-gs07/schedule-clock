@@ -185,7 +185,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
             // The watch stays still (it only moves between Today and Watchface); only the face inside it swipes.
             WatchPhoto(Modifier.offset(x = left + d(29f), y = d(27f) + dy).size(d(334.5f), d(498.8f)))
           }
-          Box(Modifier.fillMaxSize().faceRed()) {
+          Box(Modifier.fillMaxSize()) {
             val sample = remember { SampleDay.meetings() }
             val live = !watchMode
             val meetings = if (live) m.shownMeetings else sample
@@ -195,7 +195,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                 val glowPad = 48.dp
                 Box(Modifier.offset(x = left + d(79.2f) - glowPad, y = d(158.8f) + dy - glowPad).size(faceSize + glowPad * 2)
                     .graphicsLayer { renderEffect = BlurEffect(18.dp.toPx(), 18.dp.toPx(), TileMode.Decal); alpha = .7f; scaleX = 1.04f; scaleY = 1.04f },
-                    contentAlignment = Alignment.Center) { WatchFacePreview(COLOURWAYS[pager.settledPage], meetings, faceSize, atMinute = at) }
+                    contentAlignment = Alignment.Center) { WatchFacePreview(if (m.redMode) "red" else COLOURWAYS[pager.settledPage], meetings, faceSize, atMinute = at) }
             }
             // The faces, one per colourway, sliding through the watch's round screen. The band is full width, so a
             // swipe anywhere across the watch works; drawing is clipped to the screen.
@@ -214,8 +214,16 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                     }
                 }
             }
-        }
-
+            // Red mode (A25): the red face itself (the same as the watch's), over whichever face is in use; it
+            // flickers in on the way in. Composed while red mode is on, so it's loaded before the flicker starts.
+            val redLevel = LocalRed.current?.face
+            if (m.redMode || (redLevel?.value ?: 0f) > 0f) {
+                Box(Modifier.offset(x = left + d(79.2f), y = d(158.8f) + dy).size(faceSize).graphicsLayer { alpha = redLevel?.value ?: 1f }) {
+                    WatchFacePreview("red", meetings, faceSize, interactive = live, atMinute = at)
+                    if (!live) Box(Modifier.matchParentSize().pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } })
+                }
+            }
+          }
         }
 
         Box(Modifier.fillMaxSize()) {

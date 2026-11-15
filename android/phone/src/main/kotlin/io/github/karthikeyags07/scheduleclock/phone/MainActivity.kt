@@ -181,6 +181,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
     val faceRed = remember { Animatable(if (m.redMode) 1f else 0f) }
     LaunchedEffect(m.redMode) {
         if (m.redMode && faceRed.value < 1f) {
+            delay(450)   // the red face loading underneath, out of sight
             // A tube light catching: quick, uneven blinks, then on.
             for ((v, ms) in listOf(1f to 35L, 0f to 45L, 1f to 30L, 0f to 70L, 1f to 40L, 0f to 35L)) { faceRed.snapTo(v); delay(ms) }
             faceRed.snapTo(1f)
