@@ -99,6 +99,7 @@ import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.ZoneId
@@ -191,11 +192,20 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
             val live = !watchMode
             val meetings = if (live) m.shownMeetings else sample
             val at = if (live && !m.demo) null else SampleDay.SAMPLE_MINUTE
-            // Glow: a blurred copy of the face at rest (48 dp of room so the blur isn't cut square); hidden mid-swipe.
-            if (!pager.isScrollInProgress && kotlin.math.abs(pager.currentPageOffsetFraction) < .01f) {
+            // Glow: a blurred copy of the face at rest (48 dp of room so the blur isn't cut square); hidden mid-swipe,
+            // and while red or focus mode's face is coming in or going out (A25, A26): it fades in only once the new
+            // face has finished arriving, never ahead of it.
+            val modeLevel = LocalRed.current?.face?.value ?: if (m.modeFace) 1f else 0f
+            val modeSettled = if (m.modeFace) modeLevel >= .999f else modeLevel <= .001f
+            var glowAfterMode by remember { mutableStateOf(false) }
+            if (!modeSettled) glowAfterMode = true
+            if (modeSettled && !pager.isScrollInProgress && kotlin.math.abs(pager.currentPageOffsetFraction) < .01f) {
                 val glowPad = 48.dp
+                // After a mode change: the copy loads, then fades in softly. After a swipe it shows at once, as before.
+                val glowIn = remember { androidx.compose.animation.core.Animatable(if (glowAfterMode) 0f else 1f) }
+                LaunchedEffect(Unit) { if (glowAfterMode) { delay(250); glowIn.animateTo(1f, tween(450)); glowAfterMode = false } }
                 Box(Modifier.offset(x = left + d(79.2f) - glowPad, y = d(158.8f) + dy - glowPad).size(faceSize + glowPad * 2)
-                    .graphicsLayer { renderEffect = BlurEffect(18.dp.toPx(), 18.dp.toPx(), TileMode.Decal); alpha = .7f; scaleX = 1.04f; scaleY = 1.04f },
+                    .graphicsLayer { renderEffect = BlurEffect(18.dp.toPx(), 18.dp.toPx(), TileMode.Decal); alpha = .7f * glowIn.value; scaleX = 1.04f; scaleY = 1.04f },
                     contentAlignment = Alignment.Center) { WatchFacePreview(if (m.modeFace) m.modeFaceId else COLOURWAYS[pager.settledPage], meetings, faceSize, atMinute = at) }
             }
             // The faces, one per colourway, sliding through the watch's round screen. The band is full width, so a
