@@ -6,7 +6,7 @@
 <title>Focus face</title>
 <!--
   The Focus face (RULES A26) as the phone app shows it: the same layout as the watch's
-  (android/tools/gen_focus_face.py). focus.html?embed&clock=12|24|12n&time=<minutes>#<meetings JSON>, the same
+  (android/tools/gen_focus_face.py). focus.html?embed&theme=<colourway id>&clock=12|24|12n&time=<minutes>#<meetings JSON>, the same
   parameters as index.html; without `time` it runs live, ticking every second. The phone app can also send
   postMessage({ calentime: { events, time | live } }).
 -->
@@ -21,8 +21,8 @@
 </head>
 <body>
 <svg viewBox="0 0 450 450" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="225" cy="225" r="225" fill="#000"/>
-  <circle cx="225" cy="225" r="219" fill="none" stroke="#1c1c1f" stroke-width="12"/>
+  <circle id="dial" cx="225" cy="225" r="225" fill="#000"/>
+  <circle id="track" cx="225" cy="225" r="219" fill="none" stroke="#1c1c1f" stroke-width="12"/>
   <path id="ring" fill="none" stroke="#ffb547" stroke-width="12" stroke-linecap="round"/>
   <g id="meeting">
     <text id="clock" class="anta" x="225" y="117" text-anchor="middle" font-size="40" fill="#8e8e93"></text>
@@ -33,13 +33,22 @@
   </g>
   <g id="idle">
     <text id="bigClock" class="anta" x="225" y="245" text-anchor="middle" font-size="96" fill="#f2f2f2"></text>
-    <text class="sans" x="225" y="304" text-anchor="middle" font-size="24" fill="#8e8e93">No more meetings</text>
+    <text id="idleNote" class="sans" x="225" y="304" text-anchor="middle" font-size="24" fill="#8e8e93">No more meetings</text>
   </g>
 </svg>
+<script src="focus-themes.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
 const CLOCK = Q.get('clock') || '12';
+// The colourway's colours (RULES A26), as on the watch's Focus face for it.
+{
+  const t = (typeof FOCUS_THEMES !== 'undefined' && FOCUS_THEMES[Q.get('theme')]) || { bg: '#000000', track: '#1c1c1f', text: '#f2f2f2', muted: '#8e8e93', accent: '#ffb547' };
+  const css = document.createElement('style');
+  css.textContent = `#dial { fill: ${t.bg} } #track { stroke: ${t.track} } #ring { stroke: ${t.accent} } #label { fill: ${t.accent} }
+    #left, #title, #bigClock { fill: ${t.text} } #clock, #range, #idleNote { fill: ${t.muted} }`;
+  document.head.appendChild(css);
+}
 let events = [];
 try { events = JSON.parse(decodeURIComponent(location.hash.slice(1))) || []; } catch { events = []; }
 let fixed = Q.get('time') !== null && Q.get('time') !== '' ? +Q.get('time') * 60 : null;   // seconds from midnight, or live

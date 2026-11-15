@@ -63,7 +63,7 @@ android {
 // The watch previews are the real watch face: the watch prototype (prototype/index.html, embed mode)
 // shipped in the app's assets and shown in a WebView, so the phone always matches the face's design.
 val copyFacePreview = tasks.register<Sync>("copyFacePreview") {
-    from(rootProject.file("../prototype")) { include("index.html", "focus.html", "anta.ttf") }
+    from(rootProject.file("../prototype")) { include("index.html", "focus.html", "focus-themes.js", "anta.ttf") }
     into(layout.buildDirectory.dir("generated/facePreview/face"))
 }
 androidComponents {

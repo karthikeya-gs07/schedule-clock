@@ -196,7 +196,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                 val glowPad = 48.dp
                 Box(Modifier.offset(x = left + d(79.2f) - glowPad, y = d(158.8f) + dy - glowPad).size(faceSize + glowPad * 2)
                     .graphicsLayer { renderEffect = BlurEffect(18.dp.toPx(), 18.dp.toPx(), TileMode.Decal); alpha = .7f; scaleX = 1.04f; scaleY = 1.04f },
-                    contentAlignment = Alignment.Center) { WatchFacePreview(if (m.modeFace) m.nightMode else COLOURWAYS[pager.settledPage], meetings, faceSize, atMinute = at) }
+                    contentAlignment = Alignment.Center) { WatchFacePreview(if (m.modeFace) m.modeFaceId else COLOURWAYS[pager.settledPage], meetings, faceSize, atMinute = at) }
             }
             // The faces, one per colourway, sliding through the watch's round screen. The band is full width, so a
             // swipe anywhere across the watch works; drawing is clipped to the screen.
@@ -216,15 +216,20 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
                 }
             }
             // Red mode (A25): the red face itself (the same as the watch's), over whichever face is in use; it
-            // flickers in on the way in. Composed while red mode is on, so it's loaded before the flicker starts.
+            // flickers in on the way in. Focus mode (A26): the Focus face slides down into the watch from the top,
+            // and back up on the way out. Composed while the mode is on, so it's loaded before it shows.
             val redLevel = LocalRed.current?.face
             // The last face shown, so it can fade out after the mode is turned off.
-            var nightFace by remember { mutableStateOf(m.nightMode.ifEmpty { "red" }) }
-            if (m.modeFace) nightFace = m.nightMode
+            var nightFace by remember { mutableStateOf(m.modeFaceId.ifEmpty { "red" }) }
+            if (m.modeFace) nightFace = m.modeFaceId
             if (m.modeFace || (redLevel?.value ?: 0f) > 0f) {
-                Box(Modifier.offset(x = left + d(79.2f), y = d(158.8f) + dy).size(faceSize).graphicsLayer { alpha = redLevel?.value ?: 1f }) {
-                    WatchFacePreview(nightFace, meetings, faceSize, interactive = live, atMinute = at)
-                    if (!live) Box(Modifier.matchParentSize().pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } })
+                val slides = nightFace.startsWith("focus")
+                Box(Modifier.offset(x = left + d(79.2f), y = d(158.8f) + dy).size(faceSize).clip(CircleShape)
+                    .graphicsLayer { alpha = if (slides) 1f else redLevel?.value ?: 1f }) {
+                    Box(Modifier.matchParentSize().graphicsLayer { if (slides) translationY = -(1f - (redLevel?.value ?: 1f)) * size.height }) {
+                        WatchFacePreview(nightFace, meetings, faceSize, interactive = live, atMinute = at)
+                        if (!live) Box(Modifier.matchParentSize().pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } })
+                    }
                 }
             }
           }
@@ -298,7 +303,8 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
         // ---- Watchface: the four face shortcuts round the face (RULES A23): 12 compass, 3 countdown, 6 all events,
         // 9 flashlight. Tapping one switches it on or off, as in Settings; on, it glows in the colourway's colour. ----
         // They wait for the page's own transition to finish, then glide in; leaving, they go out first, quickly.
-        val settled = watchMode && p > .99f && m.shortcutsOn   // hidden when shortcuts are off altogether
+        // Hidden when shortcuts are off altogether, and in focus mode (A26).
+        val settled = watchMode && p > .99f && m.shortcutsOn && m.nightMode != "focus"
         val iconsIn by animateFloatAsState(if (settled) 1f else 0f,
             if (settled) tween(420, easing = FastOutSlowInEasing) else tween(200), label = "shortcutsIn")
         if (iconsIn > 0f) {

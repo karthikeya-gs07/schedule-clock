@@ -136,9 +136,11 @@ private fun previewUrl(colourway: String, meetings: List<Meeting>, atMinute: Int
     val json = events.toString()
     // The page's themes are keyed by name; Solaris and the Palette themes are its sweeping ("timeshift") face.
     val look = Looks.of(colourway)
-    // "focus" is focus mode's face (RULES A26): its own page, the same layout as the watch's.
-    if (colourway == "focus")
+    // "focusEmber" and so on are focus mode's face in a colourway's colours (RULES A26): its own page, the same
+    // layout as the watch's.
+    if (colourway.startsWith("focus"))
         return "https://appassets.androidplatform.net/assets/face/focus.html?embed&clock=${FaceClock.param}" +
+            "&theme=${colourway.removePrefix("focus").replaceFirstChar(Char::lowercase)}" +
             (atMinute?.let { "&time=$it" } ?: "") +
             "&v=${json.hashCode()}#${URLEncoder.encode(json, "UTF-8").replace("+", "%20")}" to json
     // "red" is red mode's face (RULES A25), not a colourway on the list.

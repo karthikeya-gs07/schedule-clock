@@ -82,7 +82,13 @@ object AppPrefs {
             .let { if (it == "green") "" else it }   // green mode was replaced by focus mode
     fun setNightMode(context: Context, mode: String) = prefs(context).edit().putString("nightMode", mode).apply()
     /** The face the watch should wear: the red or Focus face in those modes, otherwise the colourway. */
-    fun watchColourway(context: Context) = nightMode(context).ifEmpty { colourway(context) }
+    fun watchColourway(context: Context) = faceFor(nightMode(context), colourway(context))
+    /** The face for [mode] ("", "red" or "focus") with [colourway]: the Focus face comes in each colourway's colours. */
+    fun faceFor(mode: String, colourway: String) = when (mode) {
+        "focus" -> "focus" + colourway.replaceFirstChar(Char::uppercase)
+        "" -> colourway
+        else -> mode
+    }
     fun shortcutsOn(context: Context) = prefs(context).getBoolean("shortcutsOn", true)
     fun setShortcutsOn(context: Context, on: Boolean) = prefs(context).edit().putBoolean("shortcutsOn", on).apply()
     fun clock24(context: Context) = prefs(context).getBoolean("clock24", false)

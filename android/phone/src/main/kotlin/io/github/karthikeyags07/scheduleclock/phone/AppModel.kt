@@ -296,6 +296,8 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
     val redMode: Boolean get() = RedTheme.on
     /** Red or focus mode is on (RULES A25, A26): the face is that mode's, on the phone and the watch. */
     val modeFace: Boolean get() = RedTheme.mode != ""
+    /** The mode's face, as the watch names it: "red", or the Focus face in the colourway in use ("focusEmber"). */
+    val modeFaceId: String get() = AppPrefs.faceFor(RedTheme.mode, colourway)
     /** "", "red" or "focus". */
     val nightMode: String get() = RedTheme.mode
     init { RedTheme.mode = AppPrefs.nightMode(context) }

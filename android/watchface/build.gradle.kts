@@ -58,7 +58,10 @@ android {
         create("ember") { dimension = "colourway" }
         create("cobalt") { dimension = "colourway" }
         create("red") { dimension = "colourway" }   // red mode (RULES A25)
-        create("focus") { dimension = "colourway" }   // focus mode (RULES A26)
+        // Focus mode (RULES A26): a Focus face in each colourway's colours.
+        for (c in listOf("amber", "mint", "violet", "rose", "solaris", "quartz", "copper", "ocean", "aurora", "acid", "lunar",
+                "desert", "lime", "plum", "forest", "arctic", "orange", "jaeger", "prime", "platinum", "electric", "glacier", "ember", "cobalt"))
+            create("focus" + c.replaceFirstChar(Char::uppercase)) { dimension = "colourway" }
     }
 
     signingConfigs {

@@ -54,9 +54,11 @@ android {
 // Watch Face Push (PRD §6.5): this app installs the face itself. It carries one face per colourway, each
 // checked by Google's validator, whose token the install call needs. The amber face is also the
 // "default watch face" the push library expects at assets/default_watchface.apk.
-val colourways = listOf("amber", "mint", "violet", "rose", "solaris",
+val looks = listOf("amber", "mint", "violet", "rose", "solaris",
     "quartz", "copper", "ocean", "aurora", "acid", "lunar", "desert", "lime", "plum", "forest", "arctic",
-    "orange", "jaeger", "prime", "platinum", "electric", "glacier", "ember", "cobalt", "red", "focus")
+    "orange", "jaeger", "prime", "platinum", "electric", "glacier", "ember", "cobalt")
+// Plus red mode's face (RULES A25) and a Focus face in each colourway's colours (A26).
+val colourways = looks + "red" + looks.map { "focus" + it.replaceFirstChar(Char::uppercase) }
 val faceValidator: Configuration by configurations.creating { isTransitive = false }
 
 abstract class BundleFacesTask : DefaultTask() {
