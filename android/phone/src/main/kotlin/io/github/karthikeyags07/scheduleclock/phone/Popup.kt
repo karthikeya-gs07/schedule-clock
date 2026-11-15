@@ -35,7 +35,7 @@ import androidx.compose.ui.window.DialogProperties
 fun CalenPopup(title: String, onClose: () -> Unit, text: String? = null, content: @Composable ColumnScope.() -> Unit = {}) =
     Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Column(
-            Modifier.appRed().padding(horizontal = 16.dp).widthIn(max = 460.dp).fillMaxWidth()   // red mode reaches pop-ups too (A25)
+            Modifier.padding(horizontal = 16.dp).widthIn(max = 460.dp).fillMaxWidth()
                 .clip(RoundedCornerShape(32.dp)).background(Color(0xFF1C1C20))
                 .border(1.dp, Color.White.copy(alpha = .08f), RoundedCornerShape(32.dp))
                 .padding(22.dp),

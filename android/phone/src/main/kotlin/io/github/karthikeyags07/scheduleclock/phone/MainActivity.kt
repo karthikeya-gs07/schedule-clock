@@ -177,9 +177,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
     var watchStatus by rememberSaveable { mutableStateOf(false) }
     val install: () -> Unit = { setupStep = 3; m.restartSetup() }
 
-    // Red mode (RULES A25): the app eases into its tactical red; the face on Today flickers quickly between its
-    // colours and red, then stays red.
-    val appRed = animateFloatAsState(if (m.redMode) 1f else 0f, tween(300), label = "appRed")
+    // Red mode (RULES A25): the face on Today flickers quickly between its colours and red, then stays red.
     val faceRed = remember { Animatable(if (m.redMode) 1f else 0f) }
     LaunchedEffect(m.redMode) {
         if (m.redMode && faceRed.value < 1f) {
@@ -188,15 +186,15 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
             faceRed.snapTo(1f)
         } else faceRed.animateTo(if (m.redMode) 1f else 0f, tween(250))
     }
-    val red = remember { RedLevels(appRed, faceRed.asState()) }
+    val red = remember { RedLevels(faceRed.asState()) }
 
-    CompositionLocalProvider(LocalAccent provides animatedAccent(m.colourway), LocalGlow provides animatedAccent(m.colourway), LocalTextStyle provides BodyStyle, LocalRed provides red) {   // Google Sans Flex everywhere
-        BoxWithConstraints(Modifier.fillMaxSize().background(if (m.redMode) Color.Black else Palette.screen)) {   // black in red mode (A25)
+    CompositionLocalProvider(LocalAccent provides animatedAccent(m.colourway, m.redMode), LocalGlow provides animatedAccent(m.colourway, m.redMode), LocalTextStyle provides BodyStyle, LocalRed provides red) {   // Google Sans Flex everywhere
+        BoxWithConstraints(Modifier.fillMaxSize().background(Palette.screen)) {
             // Unfolded (Fold 7/8 inner screen, tablets): two panes, Today on the left and the other pages on the right.
             // Only when the screen is tall enough too: a landscape phone (or a short window) stays one pane.
             val wide = maxWidth >= 600.dp && maxHeight >= 600.dp
             val workPage: @Composable (Tab, HazeState) -> Unit = { shown, h ->
-                Column(Modifier.fillMaxSize().appRed().hazeSource(h, zIndex = 0f).stagePage(LocalGlow.current, dark = true).statusBarsPadding()
+                Column(Modifier.fillMaxSize().hazeSource(h, zIndex = 0f).stagePage(LocalGlow.current, dark = true).statusBarsPadding()
                     // Clear of the floating nav (28 + 80 dp above the system bar) with room to spare.
                     .verticalScroll(rememberScrollState()).navigationBarsPadding().padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 150.dp)) {
                     when (shown) {
@@ -216,7 +214,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
                         Box(Modifier.weight(1f).fillMaxHeight()) {
                             HomeScreen(m, haze, watchMode = false, onWatchStatus = { watchStatus = true }, onAbout = { about = true })
                             // The watch status card opens over Today's pane only, under its clock button.
-                            if (watchStatus) Box(Modifier.appRed()) { WatchStatusPanel(m, haze, allow, install) { watchStatus = false } }
+                            if (watchStatus) WatchStatusPanel(m, haze, allow, install) { watchStatus = false }
                         }
                         Box(Modifier.width(1.dp).fillMaxHeight().background(Color.White.copy(alpha = .06f)))
                         Box(Modifier.weight(1f).fillMaxHeight()) {
@@ -229,11 +227,11 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
                                         slideOutHorizontally(ease) { w -> if (forward) -w else w })   // a plain slide: both pages move together
                                 },
                                 label = "rightPane",
-                            ) { shown -> if (shown == Tab.WATCHFACE) Box(Modifier.appRed()) { WatchfaceGrid(m, rightHaze) } else workPage(shown, rightHaze) }
+                            ) { shown -> if (shown == Tab.WATCHFACE) WatchfaceGrid(m, rightHaze) else workPage(shown, rightHaze) }
                             // About opens over the right pane, with a close button; Today stays on the left.
                             androidx.compose.animation.AnimatedVisibility(about, enter = ABOUT_IN, exit = ABOUT_OUT) {
                                 BackHandler { about = false }
-                                Box(Modifier.appRed()) { AboutScreen(m, onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() } }
+                                AboutScreen(m, onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() }
                             }
                             if (!about) NavBar(right, rightHaze, null, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp),
                                 tabs = listOf(Tab.WATCHFACE, Tab.CALENDARS, Tab.SETTINGS)) { tab = it }
@@ -259,17 +257,17 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
                             HomeScreen(m, haze, watchMode = shown == Tab.WATCHFACE, onWatchStatus = { watchStatus = true }, onAbout = { about = true })
                         else workPage(shown, haze)
                     }
-                    NavBar(tab, haze, m.previewColourway.takeIf { tab == Tab.WATCHFACE }, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp),
+                    NavBar(tab, haze, m.previewColourway.takeIf { tab == Tab.WATCHFACE && !m.redMode }, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp),
                         onHomePush = m::toggleRed) { tab = it }
-                    if (watchStatus) Box(Modifier.appRed()) { WatchStatusPanel(m, haze, allow, install) { watchStatus = false } }
+                    if (watchStatus) WatchStatusPanel(m, haze, allow, install) { watchStatus = false }
                     // About slides up over the page from the bottom, and back down when closed.
                     androidx.compose.animation.AnimatedVisibility(about, enter = ABOUT_IN, exit = ABOUT_OUT) {
                         BackHandler { about = false }
-                        Box(Modifier.appRed()) { AboutScreen(m, onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() } }
+                        AboutScreen(m, onBack = { about = false }) { about = false; setupStep = 0; m.restartSetup() }
                     }
                 }
             }
-            m.toast?.let { Toast(it, Modifier.appRed().align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 124.dp)) }
+            m.toast?.let { Toast(it, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 124.dp)) }
             if (m.setupDone) UpdatePrompts(m, updateApp)
         }
     }
@@ -284,11 +282,11 @@ private fun NavBar(current: Tab, haze: HazeState, preview: String?, modifier: Mo
                    onHomePush: (() -> Unit)? = null, onSelect: (Tab) -> Unit) {
     // While browsing Watchface, the selected icon takes the colour of the colourway on show.
     val selectedTint by animateColorAsState(preview?.let(::accentFor) ?: LocalAccent.current, tween(300), label = "navTint")
-    Box(modifier.appRed().width((tabs.size * 77 + 24).dp).height(80.dp)) {
+    Box(modifier.width((tabs.size * 77 + 24).dp).height(80.dp)) {
     // The frosted pill sits behind the icons on its own, so an icon pushed up can rise out of it (A25).
     Box(Modifier.matchParentSize().clip(RoundedCornerShape(40.dp))
             // Frosted glass: whatever scrolls or sits behind shows through, blurred and lightly tinted.
-            .hazeEffect(haze, HazeStyle(Color(0xFF191919), HazeTint(Color(0xFF2C2C30).copy(alpha = .55f)), blurRadius = 26.dp, noiseFactor = .12f))
+            .hazeEffect(haze, HazeStyle(Color(0xFF191919), HazeTint(RedTheme.glass(Color(0xFF2C2C30)).copy(alpha = .55f)), blurRadius = 26.dp, noiseFactor = .12f))
             .border(1.dp, Color.White.copy(alpha = .06f), RoundedCornerShape(40.dp)))
     Row(
         Modifier.matchParentSize().clickable(enabled = false) {}.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -342,7 +340,7 @@ private fun NavBar(current: Tab, haze: HazeState, preview: String?, modifier: Mo
                             center = center, radius = 22.dp.toPx(),
                         ), radius = 22.dp.toPx())
                     }, contentAlignment = Alignment.Center) {
-                    Icon(t.icon, null, tint = if (selected) selectedTint else Palette.muted, modifier = Modifier.size(24.dp))
+                    Icon(t.icon, null, tint = if (selected) selectedTint else if (RedTheme.on) RedTheme.muted else Palette.muted, modifier = Modifier.size(24.dp))
                 }
             }
         }

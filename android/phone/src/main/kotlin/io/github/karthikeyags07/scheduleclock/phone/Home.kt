@@ -126,6 +126,8 @@ private val COLOURWAYS = Looks.IDS
  */
 @Composable
 fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: () -> Unit, onAbout: () -> Unit) {
+    // Red mode (A25): on Today and Watchface the text and icons are red.
+    CompositionLocalProvider(LocalRedText provides m.redMode) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val pageHeight = maxHeight
         // Design px → dp: by width, or by height on a short screen (small phones, a tablet's left pane), so the
@@ -154,7 +156,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
         LaunchedEffect(watchMode, shown) { m.previewColourway = if (watchMode) shown else null }
         // The underglow's colours, left to right: one colour, or a gradient face's colours (Solaris: its day). Five
         // stops either way, each easing on its own, so changing face blends the glow smoothly.
-        val glowStops = (Looks.of(shown).palette?.map { Color(it) } ?: if (shown == "solaris") SOLARIS_COLOURS else null)
+        val glowStops = if (m.redMode) List(5) { RedTheme.red } else (Looks.of(shown).palette?.map { Color(it) } ?: if (shown == "solaris") SOLARIS_COLOURS else null)
             ?.let { pal -> List(5) { pal[it * (pal.size - 1) / 4] } } ?: List(5) { accentFor(shown) }
         val glows = glowStops.mapIndexed { i, c -> animateColorAsState(c, tween(400), label = "glow$i").value }
 
@@ -168,7 +170,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
         // Everything but the drawer is the "page" the drawer and the floating nav blur.
         Box(Modifier.fillMaxSize().hazeSource(haze, zIndex = 0f).dither()) {
           // Red mode (A25): the page goes red with the app; the face has its own red, which flickers on the way in.
-          Box(Modifier.fillMaxSize().appRed().background(Home.background)) {
+          Box(Modifier.fillMaxSize().background(RedTheme.darker(Home.background))) {
             // A soft glow of the colourway rising from the bottom of the page (the background colour stays). On
             // Watchface it's fainter and sits lower, so the face is the brightest thing on screen.
             // For a gradient face the glow carries its colours across, faded by the same round falloff.
@@ -216,7 +218,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
 
         }
 
-        Box(Modifier.fillMaxSize().appRed()) {
+        Box(Modifier.fillMaxSize()) {
         // ---- Today's controls: they dissolve away on Watchface ----
         // Soft fades (smoothstep), not straight lines: Today's buttons go over the first 40 %, the tabs come in over the last half.
         fun soft(t: Float) = t.coerceIn(0f, 1f).let { it * it * (3f - 2f * it) }
@@ -288,7 +290,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
         val iconsIn by animateFloatAsState(if (settled) 1f else 0f,
             if (settled) tween(420, easing = FastOutSlowInEasing) else tween(200), label = "shortcutsIn")
         if (iconsIn > 0f) {
-            val accent = accentFor(shown)
+            val accent = accentFor(shown, m.redMode)
             val btn = 40.dp; val gap = 20.dp
             val cx = left + d(79.2f) + faceSize / 2
             val cy = faceTopCentre + faceSize / 2
@@ -383,6 +385,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
         }
         }
     }
+    }
 }
 
 /** Three frosted tabs, Solids, Mono and Gradients; the lit pill slides to the chosen one. */
@@ -440,7 +443,7 @@ private val SOLARIS_DOT = Brush.horizontalGradient(SOLARIS_COLOURS)
 /** Frosted glass over the page: the watch and glow show through, blurred and lightly tinted, with a hairline edge. */
 @Composable
 private fun Modifier.frosted(haze: HazeState, shape: androidx.compose.ui.graphics.Shape) = this
-    .hazeEffect(haze, HazeStyle(Home.background, HazeTint((Color(0xFF3A3A3E)).copy(alpha = .45f)), blurRadius = 22.dp, noiseFactor = .12f))
+    .hazeEffect(haze, HazeStyle(Home.background, HazeTint(RedTheme.glass(Color(0xFF3A3A3E)).copy(alpha = .45f)), blurRadius = 22.dp, noiseFactor = .12f))
     .border(1.dp, Color.White.copy(alpha = .07f), shape)
 
 /** The status dot: the watch face's own colour when all is well (RULES A3), amber when something needs fixing. */
@@ -652,7 +655,7 @@ private fun DrawerMeeting(meeting: Meeting, live: Boolean, hidden: Boolean, priv
                     style = SubStyle.copy(color = Palette.muted.copy(alpha = .75f)))   // quieter than the title and time
                 val note = listOfNotNull("Hidden on the watch".takeIf { hidden }, "Private on the watch".takeIf { private && !hidden },
                     "Double booked".takeIf { clash }).joinToString(" · ")
-                if (note.isNotEmpty()) Text(note, maxLines = 1, style = SubStyle.copy(color = if (clash) Color(0xFFFF9D82) else Palette.muted))
+                if (note.isNotEmpty()) Text(note, maxLines = 1, style = SubStyle.copy(color = if (clash) (if (RedTheme.on) RedTheme.body else Color(0xFFFF9D82)) else Palette.muted))
             }
             Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(top = 1.dp)) {
                 Text(start.format(DRAWER_TIME), style = BodyStyle.copy(fontSize = 15.sp, color = if (live && !hidden) LocalAccent.current else Palette.text))
