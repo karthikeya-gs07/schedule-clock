@@ -28,13 +28,18 @@ object Focus {
         return until <= 0 || System.currentTimeMillis() < until
     }
 
-    fun data(context: Context): ComplicationData {
-        if (!active(context)) return NoDataComplicationData()
+    /**
+     * What the Focus layout shows now: [kind] 1 a meeting is on (counting down to its end), 2 one is next (to its
+     * start), 0 nothing left today or tomorrow; [target] and [from] in seconds from today's midnight (the ring empties
+     * from [from] to [target]). Shared by the face's layer and the slide drawn over it ([FocusSlideActivity]).
+     */
+    data class State(val kind: Int, val target: Int, val from: Int, val title: String, val range: String)
+
+    fun state(context: Context): State {
         val nowSec = LocalTime.now().toSecondOfDay()
         val meetings = SpikeSchedule.meetingsNow(context).filter { !it.allDay }
         val live = meetings.filter { it.startMin * 60 <= nowSec && it.endMin * 60 > nowSec }.minByOrNull { it.endMin }
         val next = meetings.filter { it.startMin * 60 > nowSec }.minByOrNull { it.startMin }
-        val flags = (if (PhoneSettings.clock24(context)) 4 else 0) + (if (PhoneSettings.hideAodDetails(context)) 8 else 0)
         val (m, kind, target, from) = when {
             live != null -> Quad(live, 1, live.endMin * 60, live.startMin * 60)
             next != null -> Quad(next, 2, next.startMin * 60, next.startMin * 60 - 3600)
@@ -43,6 +48,13 @@ object Focus {
         schedule(context, listOfNotNull(live?.endMin, next?.startMin).map { it * 60 }.filter { it > nowSec }.minOrNull())
         val title = if (m == null) "" else if (m.private) "Private" else m.title.ifEmpty { "Busy" }
         val range = if (m == null) "" else (if (m.startMin >= 1440) "Tomorrow · " else "") + ScheduleRules.formatRange(m, PhoneSettings.clock24(context))
+        return State(kind, target, from, title, range)
+    }
+
+    fun data(context: Context): ComplicationData {
+        if (!active(context)) return NoDataComplicationData()
+        val (kind, target, from, title, range) = state(context)
+        val flags = (if (PhoneSettings.clock24(context)) 4 else 0) + (if (PhoneSettings.hideAodDetails(context)) 8 else 0)
         return RangedValueComplicationData.Builder(target.toFloat(), from.toFloat(), 300000f + kind + flags, text(title.ifEmpty { "—" }))
             .setText(text(title))
             .apply { if (range.isNotEmpty()) setTitle(text(range)) }

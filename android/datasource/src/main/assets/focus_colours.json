@@ -1,0 +1,170 @@
+{
+ "acid": {
+  "bg": "#12180b",
+  "track": "#38462a",
+  "text": "#f6fbea",
+  "muted": "#a6b68e",
+  "accent": "#e7ff8a"
+ },
+ "amber": {
+  "bg": "#000000",
+  "track": "#1c1c1f",
+  "text": "#f2f2f2",
+  "muted": "#8e8e93",
+  "accent": "#ffb547"
+ },
+ "arctic": {
+  "bg": "#0b1622",
+  "track": "#182c40",
+  "text": "#f0faff",
+  "muted": "#a9c4d6",
+  "accent": "#66d6e8"
+ },
+ "aurora": {
+  "bg": "#071a21",
+  "track": "#34525b",
+  "text": "#ecfff8",
+  "muted": "#91b7b9",
+  "accent": "#9dfad0"
+ },
+ "cobalt": {
+  "bg": "#070d1d",
+  "track": "#12214d",
+  "text": "#f7f8fd",
+  "muted": "#a3b4e9",
+  "accent": "#99ace7"
+ },
+ "copper": {
+  "bg": "#061617",
+  "track": "#355454",
+  "text": "#f4f1e7",
+  "muted": "#9fb9b6",
+  "accent": "#e8cba0"
+ },
+ "desert": {
+  "bg": "#1f1716",
+  "track": "#47332c",
+  "text": "#fff5e7",
+  "muted": "#d7bda5",
+  "accent": "#e79775"
+ },
+ "electric": {
+  "bg": "#000000",
+  "track": "#1b1b1b",
+  "text": "#f8ffe9",
+  "muted": "#c1cad3",
+  "accent": "#b9db56"
+ },
+ "ember": {
+  "bg": "#000000",
+  "track": "#1b1b1b",
+  "text": "#f2f6ff",
+  "muted": "#c1cad3",
+  "accent": "#648fff"
+ },
+ "forest": {
+  "bg": "#0c1e1a",
+  "track": "#203c32",
+  "text": "#f1fff6",
+  "muted": "#b2cdbe",
+  "accent": "#79e4b7"
+ },
+ "glacier": {
+  "bg": "#000000",
+  "track": "#1b1b1b",
+  "text": "#f0f8ff",
+  "muted": "#c1cad3",
+  "accent": "#47bceb"
+ },
+ "jaeger": {
+  "bg": "#1a1f21",
+  "track": "#323c3d",
+  "text": "#f7ffe9",
+  "muted": "#bdcec6",
+  "accent": "#00769d"
+ },
+ "lime": {
+  "bg": "#202729",
+  "track": "#323c3d",
+  "text": "#f7ffe9",
+  "muted": "#bdcec6",
+  "accent": "#d0f85a"
+ },
+ "lunar": {
+  "bg": "#14171c",
+  "track": "#292e36",
+  "text": "#f5faff",
+  "muted": "#bdc5cf",
+  "accent": "#b2bfce"
+ },
+ "mint": {
+  "bg": "#000000",
+  "track": "#1c1c1f",
+  "text": "#f2f2f2",
+  "muted": "#8e8e93",
+  "accent": "#5fd4a0"
+ },
+ "ocean": {
+  "bg": "#061524",
+  "track": "#294157",
+  "text": "#e8f6ff",
+  "muted": "#93afc9",
+  "accent": "#8ceadb"
+ },
+ "orange": {
+  "bg": "#1a1f21",
+  "track": "#323c3d",
+  "text": "#f7ffe9",
+  "muted": "#bdcec6",
+  "accent": "#ed9c5f"
+ },
+ "platinum": {
+  "bg": "#000000",
+  "track": "#1b1b1b",
+  "text": "#f7f9fc",
+  "muted": "#c1cad3",
+  "accent": "#bac8d8"
+ },
+ "plum": {
+  "bg": "#1e121f",
+  "track": "#432b44",
+  "text": "#fff3f9",
+  "muted": "#d6b8cd",
+  "accent": "#eea0bd"
+ },
+ "prime": {
+  "bg": "#000000",
+  "track": "#1b1b1b",
+  "text": "#f7ffe9",
+  "muted": "#bdcec6",
+  "accent": "#00769d"
+ },
+ "quartz": {
+  "bg": "#25151e",
+  "track": "#573744",
+  "text": "#fff1f6",
+  "muted": "#c6a4b4",
+  "accent": "#ffd5ae"
+ },
+ "rose": {
+  "bg": "#000000",
+  "track": "#1c1c1f",
+  "text": "#f2f2f2",
+  "muted": "#8e8e93",
+  "accent": "#ff7a9c"
+ },
+ "solaris": {
+  "bg": "#000000",
+  "track": "#1c1c1f",
+  "text": "#f2f2f2",
+  "muted": "#8e8e93",
+  "accent": "#ff9447"
+ },
+ "violet": {
+  "bg": "#000000",
+  "track": "#1c1c1f",
+  "text": "#f2f2f2",
+  "muted": "#8e8e93",
+  "accent": "#b48cff"
+ }
+}
