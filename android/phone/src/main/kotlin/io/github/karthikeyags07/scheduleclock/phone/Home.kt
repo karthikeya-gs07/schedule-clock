@@ -154,7 +154,7 @@ fun HomeScreen(m: AppModel, haze: HazeState, watchMode: Boolean, onWatchStatus: 
         LaunchedEffect(watchMode, shown) { m.previewColourway = if (watchMode) shown else null }
         // The underglow's colours, left to right: one colour, or a gradient face's colours (Solaris: its day). Five
         // stops either way, each easing on its own, so changing face blends the glow smoothly.
-        val glowStops = (Looks.of(shown).palette?.map { Color(it) } ?: if (shown == "solaris") SOLARIS_COLOURS else null)
+        val glowStops = if (m.redMode) List(5) { RedTheme.accent } else (Looks.of(shown).palette?.map { Color(it) } ?: if (shown == "solaris") SOLARIS_COLOURS else null)
             ?.let { pal -> List(5) { pal[it * (pal.size - 1) / 4] } } ?: List(5) { accentFor(shown, red = false) }
         val glows = glowStops.mapIndexed { i, c -> animateColorAsState(c, tween(400), label = "glow$i").value }
 

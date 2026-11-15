@@ -188,7 +188,7 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
     }
     val red = remember { RedLevels(faceRed.asState()) }
 
-    CompositionLocalProvider(LocalAccent provides animatedAccent(m.colourway, m.redMode), LocalGlow provides animatedAccent(m.colourway, red = false), LocalTextStyle provides BodyStyle, LocalRed provides red) {   // Google Sans Flex everywhere
+    CompositionLocalProvider(LocalAccent provides animatedAccent(m.colourway, m.redMode), LocalGlow provides animatedAccent(m.colourway, m.redMode), LocalTextStyle provides BodyStyle, LocalRed provides red) {   // Google Sans Flex everywhere
         BoxWithConstraints(Modifier.fillMaxSize().background(Palette.screen)) {
             // Unfolded (Fold 7/8 inner screen, tablets): two panes, Today on the left and the other pages on the right.
             // Only when the screen is tall enough too: a landscape phone (or a short window) stays one pane.

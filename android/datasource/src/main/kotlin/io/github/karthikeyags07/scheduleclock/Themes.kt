@@ -52,7 +52,7 @@ object Themes {
         solid("glacier", "Glacier", "000000", "47bceb", "ffb98a", "9aa9b8"),   // Figma node 95:3496
         solid("ember", "Cobalt Ember", "000000", "648fff", "ff986e", "9aa9b8"),   // Figma node 95:3496
         solid("cobalt", "Cobalt Mono", "070d1d", "99ace7", "f6f8fd", "5475d7"),   // Figma node 95:3496
-        solid("red", "Red mode", "000000", "ff4438", "ff9a4d", "8a2a23"),   // the phone's red mode (RULES A25)
+        solid("red", "Red mode", "000000", "d60000", "bd0000", "6b0000"),   // the phone's red mode (RULES A25)
     )
     val IDS = ALL.map { it.id }
 

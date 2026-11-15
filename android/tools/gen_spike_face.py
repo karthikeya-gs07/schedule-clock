@@ -218,16 +218,24 @@ FIGMA = {   # id: (name, bg, track, text, major, minor, half tick, accent, clash
     "glacier": ("Glacier", "000000", "35404b", "f0f8ff", "c1cad3", "9aa9b8", "9aa9b8", "47bceb", "ffb98a", "75a9bc", None),
     "ember": ("Cobalt Ember", "000000", "35404b", "f2f6ff", "c1cad3", "9aa9b8", "9aa9b8", "648fff", "ff986e", "7a92be", None),
     "cobalt": ("Cobalt Mono", "070d1d", "12214d", "f7f8fd", "a3b4e9", "5475d7", "4468d3", "99ace7", "f6f8fd", "5475d7", None),
-    # Red mode (RULES A25): soft reds on black, like a tactical night mode; only worn while the phone's red mode is on.
-    "red": ("Red mode", "000000", "2a0d0b", "ff8a80", "d0453b", "8a2a23", "8a2a23", "ff4438", "ff9a4d", "b3362d", None),
     "orange": ("Burnt Orange", "1a1f21", "323c3d", "f7ffe9", "bdcec6", "859c94", "869b91", "ed9c5f", "95c3c0", "ed9c5f", None),
 }
 def argb(h): return "#ff" + h
 for i, (name, bg, track, text_, major, minor, half, accent, clash, later, palette) in FIGMA.items():
     THEMES.append((i, f"theme_{i}", (argb(accent) if accent else HIDE, argb(later), argb(later),
                                       "#ffffffff" if palette else HIDE, argb(accent or palette[0]))))
+# Red mode (RULES A25): Amber run through the phone app's red filter (each colour to a red of its brightness:
+# R = .42 r + .50 g + .23 b, no green or blue), so the watch looks just like the phone's red preview.
+def redden(c):
+    if c == HIDE: return c
+    r, g, b = int(c[3:5], 16), int(c[5:7], 16), int(c[7:9], 16)
+    return "#%s%02x0000" % (c[1:3], min(255, round(.42 * r + .50 * g + .23 * b)))
+THEMES.append(("red", "theme_red", tuple(redden(c) for c in next(c for i, n, c in THEMES if i == "amber"))))
+PRIVATE_TINT = redden("#ff8e8e93") if COLOURWAY == "red" else "#ff8e8e93"   # private meetings' grey
 D = BLACK
-if COLOURWAY in FIGMA:
+if COLOURWAY == "red":
+    D = Colours({k: redden(v) for k, v in BLACK.items()})
+elif COLOURWAY in FIGMA:
     name, bg, track, text_, major, minor, half, *_ , clash, later, palette = FIGMA[COLOURWAY]
     D = Colours(bg=argb(bg), track=argb(track), text=argb(text_), muted=argb(major), num_major=argb(major),
              num_minor=argb(minor), tick_hour=argb(major), tick_half=argb(half), tick_quarter=argb(track),
@@ -305,7 +313,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
         <!-- Always-on (A1): meetings and the later lane in grey, no colour -->
         <Group name="ring_ambient" x="0" y="0" width="450" height="450" alpha="0">
           <Variant mode="AMBIENT" target="alpha" value="255" duration="0.7"/>
-          <PartImage x="0" y="0" width="1800" height="450" tintColor="#ff8e8e93">
+          <PartImage x="0" y="0" width="1800" height="450" tintColor="{PRIVATE_TINT}">
             <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
           </PartImage>
           <PartImage x="-450" y="0" width="1800" height="450" tintColor="#ff5c5c62">

@@ -73,7 +73,7 @@ val SubStyle: TextStyle @Composable get() = TextStyle(fontFamily = GoogleSans, f
 /** The app's accent follows the colourway (RULES A7); Solaris takes the colour of the light now. */
 val LocalAccent = compositionLocalOf { Color(0xFFFFB547) }
 
-/** The page glow keeps the colourway's colour in red mode: backgrounds never change (RULES A25). */
+/** The page glow: the colourway's colour, red in red mode (RULES A25). */
 val LocalGlow = compositionLocalOf { Color(0xFFFFB547) }
 
 fun accentFor(colourway: String, red: Boolean = RedTheme.on): Color =
