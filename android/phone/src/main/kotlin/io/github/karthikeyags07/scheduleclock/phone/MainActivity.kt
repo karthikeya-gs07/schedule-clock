@@ -178,17 +178,20 @@ private fun CalenTimeApp(m: AppModel, openAppSettings: () -> Unit, updateApp: ()
     val install: () -> Unit = { setupStep = 3; m.restartSetup() }
 
     // Red mode (RULES A25): the face flickers quickly between the face in use and the red face, then stays on it.
-    // Focus mode (A26): the Focus face slides into the watch from the right, and back out when it's turned off.
+    // Focus mode (A26): the Focus face simply replaces the face in use, and the other way when it's turned off.
     val faceRed = remember { Animatable(if (m.modeFace) 1f else 0f) }
+    var lastMode by remember { mutableStateOf(m.nightMode) }
     LaunchedEffect(m.nightMode) {
+        val was = lastMode; lastMode = m.nightMode
         if (m.modeFace) {
             faceRed.snapTo(0f)
             delay(450)   // the mode's face loading, out of sight
-            if (m.nightMode == "focus") { faceRed.animateTo(1f, tween(650, easing = FastOutSlowInEasing)); return@LaunchedEffect }
+            if (m.nightMode == "focus") { faceRed.snapTo(1f); return@LaunchedEffect }
             // A tube light catching: quick, uneven blinks, then on.
             for ((v, ms) in listOf(1f to 35L, 0f to 45L, 1f to 30L, 0f to 70L, 1f to 40L, 0f to 35L)) { faceRed.snapTo(v); delay(ms) }
             faceRed.snapTo(1f)
-        } else faceRed.animateTo(0f, tween(450, easing = FastOutSlowInEasing))
+        } else if (was == "focus") faceRed.snapTo(0f)
+        else faceRed.animateTo(0f, tween(450, easing = FastOutSlowInEasing))
     }
     val red = remember { RedLevels(faceRed.asState()) }
     // Focus mode ends by itself when its countdown reaches zero (RULES A26), by the watch's clock like the countdown.
