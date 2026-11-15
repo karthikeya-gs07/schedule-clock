@@ -200,7 +200,8 @@ private class CompassView(context: Context, private val theme: Theme) : View(con
         p.style = Paint.Style.STROKE   // no track round the edge
         val heading = if (shown.isNaN()) 0f else shown
         // The dial turns so that north (its 0° spoke) sits where north is; the arrow stays at the top.
-        // Spokes every 2°, longer every 10°, longest every 30° with the degree beside it; 0° in the accent.
+        // Spokes every 2°, longer every 10°, longest every 30° with the degree beside it; 0° in the accent and wider.
+        // The four letters (N, E, S, W) are in the accent; only north's spoke is.
         // Near the arrow the spokes take its colour, fading to white over 45° either side.
         for (d in 0 until 360 step 2) {
             val at = ((d - heading) % 360f + 360f) % 360f            // where the spoke is now, 0 = top
@@ -209,13 +210,13 @@ private class CompassView(context: Context, private val theme: Theme) : View(con
             val major = d % 30 == 0; val mid = d % 10 == 0
             val len = if (major) 16f else if (mid) 10f else 5f
             val r0 = 225f * s; val r1 = (225f - len - 8f) * s   // from the very edge of the screen
-            p.strokeWidth = (if (d == 0) 5f else if (major) 2.5f else if (mid) 1.8f else 1.2f) * s
+            p.strokeWidth = (if (d == 0) 8f else if (major) 2.5f else if (mid) 1.8f else 1.2f) * s
             val base = if (major) theme.ink else if (mid) blend(theme.ink, theme.background, .35f) else blend(theme.ink, theme.background, .55f)
             p.color = if (d == 0) theme.accent else if (off < 45f) blend(theme.accent, base, off / 45f) else base
             canvas.drawLine(cx + r0 * sin(a).toFloat(), cy - r0 * cos(a).toFloat(), cx + r1 * sin(a).toFloat(), cy - r1 * cos(a).toFloat(), p)
             if (major) {
                 val rl = r - 44f * s   // well inside the longest spokes, so wide numbers (240, 210…) stay clear
-                text.textSize = 21f * s; text.color = if (d == 0) theme.accent else grey
+                text.textSize = 21f * s; text.color = if (d % 90 == 0) theme.accent else grey   // N, E, S and W in the accent
                 val label = when (d) { 0 -> "N"; 90 -> "E"; 180 -> "S"; 270 -> "W"; else -> "$d" }   // the four directions by letter
                 val letter = d % 90 == 0
                 if (letter) { text.textSize = 30f * s; text.isFakeBoldText = true }   // Anta has one weight: bold is drawn heavier
