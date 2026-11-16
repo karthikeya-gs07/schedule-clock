@@ -518,9 +518,9 @@
             </Group>
           </Group>
           <!-- Divider (T2): selected: up 32 px, 60 % wide; fades out when empty (C3) -->
-          <Group name="divider" x="155" y="236" width="140" height="4" pivotX="0.5" pivotY="0.5">
+          <Group name="divider" x="155" y="231" width="140" height="4" pivotX="0.5" pivotY="0.5">
             <Transform target="alpha" value="255 * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 32) % 2))"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
-            <Transform target="y" value="236 - 32 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
+            <Transform target="y" value="231 - 32 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
             <Transform target="scaleX" value="1 - 0.4 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
             <PartDraw x="0" y="0" width="140" height="4">
               <Line startX="1" startY="2" endX="139" endY="2"><Stroke color="#ff323c3d" thickness="2" cap="ROUND"/></Line>
@@ -594,10 +594,10 @@
             </Group>
           </Group>
           <!-- Divider (T2): selected: up 32 px, 60 % wide; fades out when empty (C3) -->
-          <Group name="divider_c" x="155" y="236" width="140" height="4" pivotX="0.5" pivotY="0.5">
+          <Group name="divider_c" x="155" y="231" width="140" height="4" pivotX="0.5" pivotY="0.5">
             <Variant mode="AMBIENT" target="alpha" value="0" duration="0.7"/>
             <Transform target="alpha" value="255 * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 32) % 2))"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
-            <Transform target="y" value="236 - 32 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
+            <Transform target="y" value="231 - 32 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
             <Transform target="scaleX" value="1 - 0.4 * [COMPLICATION.RANGED_VALUE_VALUE]"><Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/></Transform>
             <PartDraw x="0" y="0" width="140" height="4">
               <Line startX="1" startY="2" endX="139" endY="2"><Stroke color="#ff323c3d" thickness="2" cap="ROUND"/></Line>

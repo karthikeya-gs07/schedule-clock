@@ -485,9 +485,9 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
             </Group>
           </Group>
           <!-- Divider (T2): selected: up 32 px, 60 % wide; fades out when empty (C3) -->
-          <Group name="divider" x="{CX - 70}" y="236" width="140" height="4" pivotX="0.5" pivotY="0.5">
+          <Group name="divider" x="{CX - 70}" y="231" width="140" height="4" pivotX="0.5" pivotY="0.5">
             <Transform target="alpha" value="255 * (1 - {EMPTY})">{SELECT_ANIM}</Transform>
-            <Transform target="y" value="236 - 32 * {S}">{SELECT_ANIM}</Transform>
+            <Transform target="y" value="231 - 32 * {S}">{SELECT_ANIM}</Transform>
             <Transform target="scaleX" value="1 - 0.4 * {S}">{SELECT_ANIM}</Transform>
             <PartDraw x="0" y="0" width="140" height="4">
               <Line startX="1" startY="2" endX="139" endY="2"><Stroke color="{D.divider}" thickness="2" cap="ROUND"/></Line>
@@ -561,10 +561,10 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
             </Group>
           </Group>
           <!-- Divider (T2): selected: up 32 px, 60 % wide; fades out when empty (C3) -->
-          <Group name="divider_c" x="{CX - 70}" y="236" width="140" height="4" pivotX="0.5" pivotY="0.5">
+          <Group name="divider_c" x="{CX - 70}" y="231" width="140" height="4" pivotX="0.5" pivotY="0.5">
             <Variant mode="AMBIENT" target="alpha" value="0" duration="0.7"/>
             <Transform target="alpha" value="255 * (1 - {EMPTY})">{SELECT_ANIM}</Transform>
-            <Transform target="y" value="236 - 32 * {S}">{SELECT_ANIM}</Transform>
+            <Transform target="y" value="231 - 32 * {S}">{SELECT_ANIM}</Transform>
             <Transform target="scaleX" value="1 - 0.4 * {S}">{SELECT_ANIM}</Transform>
             <PartDraw x="0" y="0" width="140" height="4">
               <Line startX="1" startY="2" endX="139" endY="2"><Stroke color="{D.divider}" thickness="2" cap="ROUND"/></Line>

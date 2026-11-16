@@ -232,7 +232,7 @@
   /* One layout, two sizes. Fixed origins so changing text never shifts the scale center. */
   #dDateG   { transform-origin: 225px 110px; }
   #dClock   { transform-origin: 225px 170px; }
-  #dDivider { transform-origin: 225px 238px; }
+  #dDivider { transform-origin: 225px 233px; }
   #dBottom  { transform-origin: 225px 310px; }
   #dText    { transition: opacity var(--swap-in) ease-out, transform var(--swap-in) var(--ease); }
 
@@ -716,7 +716,7 @@ svg.innerHTML = `
       ${T('dTime', CX, 206, 88, { weight: 400 })}
       ${T('dAmpm', 0, 205, 24, { fill: C.muted, anchor: 'start', weight: 500 })}
     </g>
-    <line id="dDivider" class="m" x1="${CX - 70}" y1="238" x2="${CX + 70}" y2="238" stroke="#2a2a2e" stroke-width="2" stroke-linecap="round"/>
+    <line id="dDivider" class="m" x1="${CX - 70}" y1="233" x2="${CX + 70}" y2="233" stroke="#2a2a2e" stroke-width="2" stroke-linecap="round"/>
     <g id="dBottom" class="m"><g id="dText">
       ${T('dStatus', CX, 280, 17, { fill: 'currentColor', spacing: 1.8, weight: 600 })}
       <path id="dArrow" fill="none" stroke="${C.event}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
