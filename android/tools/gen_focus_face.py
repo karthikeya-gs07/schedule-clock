@@ -64,7 +64,7 @@ def text(x, y, w, h, size, color, template, *exprs, weight="NORMAL", family="SYN
 def clock(y, h, size, color, align="CENTER"):
     """The time, 12- or 24-hour as the phone says."""
     out = []
-    for fmt, hf, show in (("h:mm", "12", f"(1 - {H24})"), ("hh:mm", "24", H24)):
+    for fmt, hf, show in (("h:mm", "12", f"(1 - {H24})"), ("h:mm", "24", H24)):
         out.append(f'''        <Group name="clock_{hf}" x="0" y="{y}" width="450" height="{h}">
           <Transform target="alpha" value="255 * {show}"/>
           <DigitalClock x="0" y="0" width="450" height="{h}">

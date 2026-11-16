@@ -55,9 +55,9 @@ let fixed = Q.get('time') !== null && Q.get('time') !== '' ? +Q.get('time') * 60
 
 const mins = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
 const pad = n => String(n).padStart(2, '0');
-function fmt(min) {   // a time of day, as the phone's clock setting says
+function fmt(min, face = false) {   // a time of day, as the phone's clock setting says ([face]: the clocks)
   const h = Math.floor(min / 60) % 24, m = min % 60;
-  if (CLOCK === '24') return `${pad(h)}:${pad(m)}`;
+  if (CLOCK === '24') return `${face ? h : pad(h)}:${pad(m)}`;   // the clocks drop the leading zero, as on the watch
   return `${h % 12 || 12}:${pad(m)}`;
 }
 function fmtAp(min) { const h = Math.floor(min / 60) % 24; return CLOCK === '24' ? fmt(min) : `${fmt(min)} ${h < 12 ? 'AM' : 'PM'}`; }
@@ -124,7 +124,7 @@ function draw(st, parts = { clock: true, ring: true, rest: true }) {
       fitTitle();
     }
   }
-  if (parts.clock) { $('clock').textContent = fmt(st.nowMin); $('bigClock').textContent = fmt(st.nowMin); }
+  if (parts.clock) { $('clock').textContent = fmt(st.nowMin, true); $('bigClock').textContent = fmt(st.nowMin, true); }
   if (parts.ring) $('ring').setAttribute('d', st.idle ? '' : arc(st.frac));
 }
 function render() { shown = state(fixed ?? liveNow()); draw(shown); }

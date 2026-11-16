@@ -511,7 +511,7 @@
             <Group name="clock_24" x="0" y="0" width="450" height="110" alpha="0">
               <Transform target="alpha" value="255 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 64) % 2)"/>
               <DigitalClock x="0" y="0" width="450" height="110">
-                <TimeText x="0" y="0" width="450" height="110" format="hh:mm" hourFormat="24" align="CENTER">
+                <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="24" align="CENTER">
                   <Font family="anta_regular" size="88" color="#fff2f2f2"/>
                 </TimeText>
               </DigitalClock>
@@ -587,7 +587,7 @@
             <Group name="clock_24_c" x="0" y="0" width="450" height="110" alpha="0">
               <Transform target="alpha" value="255 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 64) % 2)"/>
               <DigitalClock x="0" y="0" width="450" height="110">
-                <TimeText x="0" y="0" width="450" height="110" format="hh:mm" hourFormat="24" align="CENTER">
+                <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="24" align="CENTER">
                   <Font family="anta_regular" size="88" color="#fff2f2f2"/>
                 </TimeText>
               </DigitalClock>
@@ -837,7 +837,7 @@
         <Group name="clock_24" x="0" y="78" width="450" height="50">
           <Transform target="alpha" value="255 * (floor(([COMPLICATION.RANGED_VALUE_MAX] - 300000) / 4) % 2)"/>
           <DigitalClock x="0" y="0" width="450" height="50">
-            <TimeText x="0" y="0" width="450" height="50" format="hh:mm" hourFormat="24" align="CENTER">
+            <TimeText x="0" y="0" width="450" height="50" format="h:mm" hourFormat="24" align="CENTER">
               <Font family="anta_regular" size="40" color="#ff8e8e93"/>
             </TimeText>
           </DigitalClock>
@@ -901,7 +901,7 @@
         <Group name="clock_24" x="0" y="155" width="450" height="110">
           <Transform target="alpha" value="255 * (floor(([COMPLICATION.RANGED_VALUE_MAX] - 300000) / 4) % 2)"/>
           <DigitalClock x="0" y="0" width="450" height="110">
-            <TimeText x="0" y="0" width="450" height="110" format="hh:mm" hourFormat="24" align="CENTER">
+            <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="24" align="CENTER">
               <Font family="anta_regular" size="96" color="#fff2f2f2"/>
             </TimeText>
           </DigitalClock>
@@ -924,7 +924,7 @@
         <Group name="clock_24" x="0" y="118" width="450" height="110">
           <Transform target="alpha" value="255 * (floor(([COMPLICATION.RANGED_VALUE_MAX] - 300000) / 4) % 2)"/>
           <DigitalClock x="0" y="0" width="450" height="110">
-            <TimeText x="0" y="0" width="450" height="110" format="hh:mm" hourFormat="24" align="CENTER">
+            <TimeText x="0" y="0" width="450" height="110" format="h:mm" hourFormat="24" align="CENTER">
               <Font family="anta_regular" size="96" color="#ffc8c8cc"/>
             </TimeText>
           </DigitalClock>
