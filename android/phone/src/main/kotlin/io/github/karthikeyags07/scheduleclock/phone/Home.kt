@@ -828,10 +828,12 @@ fun WatchStatusPanel(m: AppModel, haze: HazeState, onAllow: () -> Unit, onInstal
  */
 @Composable
 fun AboutScreen(m: AppModel, onBack: () -> Unit, onRunSetup: () -> Unit) {
-    val colourway = m.colourway
+    // The pictures show the face in use: the red face in red mode (RULES A25), where the text stays white.
+    val colourway = if (m.redMode) "red" else m.colourway
     val context = androidx.compose.ui.platform.LocalContext.current
     val version = context.packageManager.getPackageInfo(context.packageName, 0).versionName
-    // Four tabs (2026-11-14): Face, Specs (buzzes and shortcuts), Icons (icons on the face), Share (privacy, credits, share).
+    // Four tabs (2026-11-14): Face, Specs (buzzes and shortcuts), Icons (icons on the face), Privacy (privacy, credits,
+    // share; called Share until 2026-11-16).
     // Swipe left and right between the tabs, or tap one; each page scrolls on its own.
     val pages = rememberPagerState { 4 }
     val scope = rememberCoroutineScope()
@@ -901,11 +903,13 @@ fun AboutScreen(m: AppModel, onBack: () -> Unit, onRunSetup: () -> Unit) {
                     AboutHeading("Icons on the face")
                     FaceIcon({ c -> arrowGlyph(c) }, LocalAccent.current, "Next meeting",
                         "The arrow before a title means the meeting shown is coming up next, while another one is still going on.")
-                    FaceIcon({ c -> lockGlyph(c) }, Palette.muted, "Private meeting",
+                    // In red mode every icon is a red, as on the red face (A25).
+                    val red = m.redMode
+                    FaceIcon({ c -> lockGlyph(c) }, if (red) RedTheme.muted else Palette.muted, "Private meeting",
                         "The lock: the meeting is private, so the face shows \"Private\" and \"Details hidden\" instead of its title and place.")
-                    FaceIcon({ c -> overlapGlyph(c) }, Color(0xFFFF7A59), "Overlapping meeting",
+                    FaceIcon({ c -> overlapGlyph(c) }, if (red) RedTheme.body else Color(0xFFFF7A59), "Overlapping meeting",
                         "Two linked rings, in coral, with the other meeting's name: you're double-booked. \"+1\" means more than one other meeting.")
-                    FaceIcon({ c -> todGlyphs(c) }, Color(0xFFA9B8E0), "Later today or tomorrow",
+                    FaceIcon({ c -> todGlyphs(c) }, if (red) RedTheme.muted else Color(0xFFA9B8E0), "Later today or tomorrow",
                         "Sunrise, sun, sunset or moon before the time: a meeting on the inner line, by when it starts (morning, afternoon, evening or night). For a meeting tomorrow, the place line also starts with \"Tomorrow\".", tall = true)
                 }
                 else -> {
@@ -934,7 +938,7 @@ fun AboutScreen(m: AppModel, onBack: () -> Unit, onRunSetup: () -> Unit) {
 /** About's four tabs: a frosted pill with a lit segment that slides to the chosen one (like Solids / Gradients). */
 @Composable
 private fun AboutTabs(at: Float, onSelect: (Int) -> Unit) {
-    val labels = listOf("Face", "Specs", "Icons", "Share")
+    val labels = listOf("Face", "Specs", "Icons", "Privacy")
     val tab = kotlin.math.round(at).toInt()   // the lit segment follows the swipe
     BoxWithConstraints(Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(22.dp)).frostCard(RoundedCornerShape(22.dp)).padding(4.dp)) {
         val w = maxWidth / labels.size
@@ -973,7 +977,8 @@ private fun AboutItem(title: String, text: String) = Column(Modifier.fillMaxWidt
  */
 @Composable
 private fun ZonePicture(colourway: String) {
-    val bg = Color(0xFF0B0B0D); val track = Color(0xFF2A2B30); val ink = Color(0xFFF2F2F2)
+    val red = colourway == "red"   // red mode (A25): the ring and triangles in reds
+    val bg = Color(0xFF0B0B0D); val track = if (red) Color(0xFF3A0808) else Color(0xFF2A2B30); val ink = if (red) RedTheme.body else Color(0xFFF2F2F2)
     Box(Modifier.fillMaxWidth().height(150.dp).clip(RoundedCornerShape(24.dp)).background(bg)
         .border(1.dp, Color.White.copy(alpha = .07f), RoundedCornerShape(24.dp))) {
         androidx.compose.foundation.Canvas(Modifier.matchParentSize()) {
@@ -1013,13 +1018,14 @@ private fun ZonePicture(colourway: String) {
  */
 @Composable
 private fun ShortcutsPicture(m: AppModel) {
-    val accent = accentFor(m.colourway)
+    val accent = accentFor(m.colourway, if (m.redMode) RedTheme.red else null)
+    val offTint = if (m.redMode) RedTheme.muted else Palette.muted   // red mode (A25): all in reds
     val day = remember { SampleDay.meetings() }
     BoxWithConstraints(Modifier.fillMaxWidth().height(340.dp).clip(RoundedCornerShape(24.dp)).background(Color(0xFF0B0B0D))
         .border(1.dp, Color.White.copy(alpha = .07f), RoundedCornerShape(24.dp))) {
         val face = 150.dp
         val cx = maxWidth / 2; val cy = maxHeight / 2
-        Box(Modifier.offset(x = cx - face / 2, y = cy - face / 2)) { WatchFacePreview(m.colourway, day, face, atMinute = SampleDay.SAMPLE_MINUTE) }
+        Box(Modifier.offset(x = cx - face / 2, y = cy - face / 2)) { WatchFacePreview(if (m.redMode) "red" else m.colourway, day, face, atMinute = SampleDay.SAMPLE_MINUTE) }
         val reach = face / 2 + 34.dp; val side = face / 2 + 50.dp
         listOf(12 to (0.dp to -reach), 3 to (side to 0.dp), 6 to (0.dp to reach), 9 to (-side to 0.dp)).forEach { (n, pos) ->
             val info = shortcutInfo(m.shortcutAt(n)); val on = m.shortcutOn(info.id)
@@ -1029,9 +1035,10 @@ private fun ShortcutsPicture(m: AppModel) {
                 Box(Modifier.size(30.dp).drawBehind {
                     if (on) drawCircle(Brush.radialGradient(*glowStops(accent, .16f), center = center, radius = 20.dp.toPx()), radius = 20.dp.toPx())
                 }, contentAlignment = Alignment.Center) {
-                    Icon(info.icon, null, tint = if (on) accent.copy(alpha = .75f) else Palette.muted.copy(alpha = .55f), modifier = Modifier.size(22.dp))
+                    Icon(info.icon, null, tint = if (on) accent.copy(alpha = .75f) else offTint.copy(alpha = .55f), modifier = Modifier.size(22.dp))
                 }
-                Text("$n · ${info.short}", style = AboutText.copy(fontSize = 11.sp, lineHeight = 14.sp, color = if (on) Palette.text else Palette.muted),
+                Text("$n · ${info.short}", style = AboutText.copy(fontSize = 11.sp, lineHeight = 14.sp,
+                    color = if (m.redMode) (if (on) RedTheme.body else RedTheme.muted) else if (on) Palette.text else Palette.muted),
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
