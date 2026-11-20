@@ -124,6 +124,15 @@ object ScheduleRules {
             (p.cs until p.ce).any { ((it % DIAL_MIN) + DIAL_MIN) % DIAL_MIN / 60 == hour }
         }.sortedWith(compareBy({ list[it].lane == Lane.LATER }, { it }))
 
+    /**
+     * C5: the part of the day a later-lane meeting starts in, for the icon before its time:
+     * 1 morning (5 AM–noon, sunrise), 2 afternoon (noon–5 PM, sun), 3 evening (5–9 PM, sunset), 4 night (moon).
+     */
+    fun timeOfDay(startMin: Int): Int {
+        val h = ((startMin % DAY_MIN) + DAY_MIN) % DAY_MIN / 60.0
+        return when { h >= 5 && h < 12 -> 1; h >= 12 && h < 17 -> 2; h >= 17 && h < 21 -> 3; else -> 4 }
+    }
+
     /** C8: "1:00 – 2:00 PM", or AM/PM on both ends when they differ; "13:00 – 14:00" on a 24-hour clock (T6). */
     fun formatRange(m: Meeting, h24: Boolean = false): String {
         if (h24) return "${clock24(m.startMin)} – ${clock24(m.endMin)}"

@@ -230,9 +230,12 @@ object SpikeSchedule {
         val (title, fitted) = if (small) TextFit.titleSmall(shown, 260 - iconSpace) else big to bigWidth
         val scrolls = scrollOver(p, arrow) > 0
         val width = if (scrolls) 260 - iconSpace else fitted   // icons sit at the edge of the full window
-        val (range, _) = TextFit.line(ScheduleRules.formatRange(p.meeting, PhoneSettings.clock24(context)), 255)
+        // C5: a later-lane meeting's time gets a time-of-day icon in front (sunrise, sun, sunset, moon). MIN carries
+        // the time line's width and the icon kind, so the face can place the icon: MIN = −(1 + width + 1000 × kind).
+        val tod = if (p.lane == Lane.LATER) ScheduleRules.timeOfDay(p.meeting.startMin) else 0
+        val (range, rangeWidth) = TextFit.line(ScheduleRules.formatRange(p.meeting, PhoneSettings.clock24(context)), if (tod > 0) 225 else 255)
         val flags = (if (arrow) 1 else 0) + (if (lock) 2 else 0) + (if (clash) 4 else 0) + (if (scrolls) 8 else 0) + (if (small) 16 else 0) + clockFlags(context)
-        return ranged(if (selected >= 0) 1f else 0f, 0f, 1f + width + 10000f * flags, title, range)
+        return ranged(if (selected >= 0) 1f else 0f, -(1f + rangeWidth + 1000f * tod), 1f + width + 10000f * flags, title, range)
     }
 
     /** T6: 64 = 24-hour clock, 128 = 12-hour without AM/PM. */

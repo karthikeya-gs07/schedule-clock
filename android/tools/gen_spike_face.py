@@ -88,10 +88,44 @@ SMALL = f"(floor({F} / 16) % 2)"   # C9: the title only fits at 24 px
 EMPTY = f"(floor({F} / 32) % 2)"   # C3: no meetings, the clock takes the center
 H24 = f"(floor({F} / 64) % 2)"     # T6: 24-hour clock (phone app setting)
 NOAP = f"(floor({F} / 128) % 2)"   # T6: 12-hour clock without AM/PM
-HIDEAOD = f"(floor({F} / 256) % 2)"   # A2c: hide the meeting's details in always-on (phone app setting)
+HIDEAOD = f"(floor({F} / 256) % 2)"
+# The status slot's MIN carries the time line's measured width and, for a later-lane meeting, the part of the day
+# it starts in (C5): MIN = −(1 + width + 1000 × kind), kind 1 morning, 2 afternoon, 3 evening, 4 night. MIN 0 = none.
+TODV = "(0 - [COMPLICATION.RANGED_VALUE_MIN])"
+RW = f"(({TODV} - 1) % 1000)"
+TOD = f"floor(({TODV} - 1) / 1000)"
+HAS_TOD = f"({TOD} >= 1 ? 1 : 0)"   # A2c: hide the meeting's details in always-on (phone app setting)
 AMB = '<Variant mode="AMBIENT" target="alpha" value="0" duration="0.7"/>'   # hidden in always-on (A1, A2)
 EXTRA = f"(30 * {ARROW} + 25 * {LOCK})"
 ICON_X = f"(225 - ({W} + {EXTRA}) / 2)"
+
+def tod_icons(y_transform=""):
+    """C5: sunrise, sun, sunset or moon in front of a later-lane meeting's time (as the prototype), 22 px, in the
+    lane text colour. The time is centred with the icon: the icon starts at 225 − (width + 30) / 2."""
+    def line(x0, y0, x1, y1):
+        return f'<Line startX="{x0:.1f}" startY="{y0:.1f}" endX="{x1:.1f}" endY="{y1:.1f}"><Stroke color="{LATER_TEXT}" thickness="2.2" cap="ROUND"/></Line>'
+    def ray(cx, cy, r0, r1, deg):
+        a = math.radians(deg)
+        return line(cx + r0 * math.cos(a), cy + r0 * math.sin(a), cx + r1 * math.cos(a), cy + r1 * math.sin(a))
+    def horizon(up):
+        sun = [f'<Arc centerX="11" centerY="13" width="10" height="10" startAngle="-90" endAngle="90"><Stroke color="{LATER_TEXT}" thickness="2.2" cap="ROUND"/></Arc>',
+               line(1, 13, 21, 13)] + [ray(11, 13, 8, 10.5, d) for d in (270, 225, 315)]
+        arrow = [line(11, 21.5, 11, 17), line(8.5, 19, 11, 16.5), line(11, 16.5, 13.5, 19)] if up else \
+                [line(11, 16.5, 11, 21), line(8.5, 19, 11, 21.5), line(11, 21.5, 13.5, 19)]
+        return sun + arrow
+    kinds = {1: horizon(True),
+             2: [f'<Ellipse x="6.5" y="6.5" width="9" height="9"><Stroke color="{LATER_TEXT}" thickness="2.2"/></Ellipse>'] + [ray(11, 11, 7.5, 10.5, d) for d in range(0, 360, 45)],
+             3: horizon(False),
+             4: [f'<Ellipse x="3.5" y="3.5" width="15" height="15"><Fill color="{LATER_TEXT}"/></Ellipse>',   # a crescent: a disc
+                 f'<Ellipse x="8" y="1" width="13" height="13"><Fill color="{D.bg}"/></Ellipse>']}            # with a bite out
+    parts = "".join(f'''
+            <PartDraw name="tod_{k}" x="0" y="4" width="22" height="22" alpha="0">
+              <Transform target="x" value="225 - ({RW} + 30) / 2"/>
+              <Transform target="alpha" value="{TOD} == {k} ? 255 : 0"/>
+              {"".join(shapes)}
+            </PartDraw>''' for k, shapes in kinds.items())
+    return f'''<Group name="tod" x="0" y="44" width="450" height="30">{y_transform}{parts}
+          </Group>'''
 
 def text(x, y, w, h, size, color, expr, weight="NORMAL", family="SYNC_TO_DEVICE", extra=""):
     return (f'<PartText x="{x}" y="{y}" width="{w}" height="{h}">{extra}<Text align="CENTER" ellipsis="TRUE">'
@@ -236,6 +270,7 @@ def redden(c): return night(c, COLOURWAY == "green")
 for _id in ("red", "green"):
     THEMES.append((_id, f"theme_{_id}", tuple(night(c, _id == "green") for c in next(c for i, n, c in THEMES if i == "amber"))))
 PRIVATE_TINT = redden("#ff8e8e93") if COLOURWAY in ("red", "green") else "#ff8e8e93"   # private meetings' grey
+LANE_AMBIENT = redden("#ff5c5c62") if COLOURWAY in ("red", "green") else "#ff5c5c62"   # the later lane in always-on (A1)
 D = BLACK
 if COLOURWAY in ("red", "green"):
     D = Colours({k: redden(v) for k, v in BLACK.items()})
@@ -328,7 +363,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
           <PartImage x="0" y="0" width="1800" height="450" tintColor="{PRIVATE_TINT}">
             <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
           </PartImage>
-          <PartImage x="-450" y="0" width="1800" height="450" tintColor="#ff5c5c62">
+          <PartImage x="-450" y="0" width="1800" height="450" tintColor="{LANE_AMBIENT}">
             <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
           </PartImage>
         </Group>
@@ -650,10 +685,15 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
           </Group>
           <PartText x="0" y="44" width="450" height="30">
             {AMB}
+            <Transform target="x" value="15 * {HAS_TOD}"/>
             <Transform target="y" value="44 + 30 * {CLASH}"/>
             <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" color="{D.text}">
               <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TITLE]"/></Template></Font></Text>
           </PartText>
+          <Group name="tod_live" x="0" y="0" width="450" height="80">
+            {AMB}
+            {tod_icons(f'<Transform target="y" value="44 + 30 * {CLASH}"/>')}
+          </Group>
           <!-- Always-on time range (A2b): dimmed, straight under the title (the clash line it would sit under is hidden);
                hidden with "Hide details in always-on" (A2c) -->
           <Group name="range_ambient" x="0" y="0" width="450" height="80" alpha="0">
@@ -661,9 +701,11 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
             <Group name="range_ambient_shown" x="0" y="0" width="450" height="80">
               <Transform target="alpha" value="255 * (1 - {HIDEAOD})"/>
               <PartText x="0" y="44" width="450" height="30">
+                <Transform target="x" value="15 * {HAS_TOD}"/>
                 <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" color="{D.text}">
                   <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TITLE]"/></Template></Font></Text>
               </PartText>
+              {tod_icons()}
             </Group>
           </Group>""")}
       </Complication>

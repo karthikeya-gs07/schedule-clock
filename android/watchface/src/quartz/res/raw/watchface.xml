@@ -687,10 +687,36 @@
           </Group>
           <PartText x="0" y="44" width="450" height="30">
             <Variant mode="AMBIENT" target="alpha" value="0" duration="0.7"/>
+            <Transform target="x" value="15 * (floor(((0 - [COMPLICATION.RANGED_VALUE_MIN]) - 1) / 1000) >= 1 ? 1 : 0)"/>
             <Transform target="y" value="44 + 30 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 4) % 2)"/>
             <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" color="#fffff1f6">
               <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TITLE]"/></Template></Font></Text>
           </PartText>
+          <Group name="tod_live" x="0" y="0" width="450" height="80">
+            <Variant mode="AMBIENT" target="alpha" value="0" duration="0.7"/>
+            <Group name="tod" x="0" y="44" width="450" height="30"><Transform target="y" value="44 + 30 * (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 4) % 2)"/>
+            <PartDraw name="tod_1" x="0" y="4" width="22" height="22" alpha="0">
+              <Transform target="x" value="225 - ((((0 - [COMPLICATION.RANGED_VALUE_MIN]) - 1) % 1000) + 30) / 2"/>
+              <Transform target="alpha" value="floor(((0 - [COMPLICATION.RANGED_VALUE_MIN]) - 1) / 1000) == 1 ? 255 : 0"/>
+              <Arc centerX="11" centerY="13" width="10" height="10" startAngle="-90" endAngle="90"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Arc><Line startX="1.0" startY="13.0" endX="21.0" endY="13.0"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="11.0" startY="5.0" endX="11.0" endY="2.5"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="5.3" startY="7.3" endX="3.6" endY="5.6"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="16.7" startY="7.3" endX="18.4" endY="5.6"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="11.0" startY="21.5" endX="11.0" endY="17.0"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="8.5" startY="19.0" endX="11.0" endY="16.5"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="11.0" startY="16.5" endX="13.5" endY="19.0"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line>
+            </PartDraw>
+            <PartDraw name="tod_2" x="0" y="4" width="22" height="22" alpha="0">
+              <Transform target="x" value="225 - ((((0 - [COMPLICATION.RANGED_VALUE_MIN]) - 1) % 1000) + 30) / 2"/>
+              <Transform target="alpha" value="floor(((0 - [COMPLICATION.RANGED_VALUE_MIN]) - 1) / 1000) == 2 ? 255 : 0"/>
+              <Ellipse x="6.5" y="6.5" width="9" height="9"><Stroke color="#ffa6b4f7" thickness="2.2"/></Ellipse><Line startX="18.5" startY="11.0" endX="21.5" endY="11.0"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="16.3" startY="16.3" endX="18.4" endY="18.4"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="11.0" startY="18.5" endX="11.0" endY="21.5"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="5.7" startY="16.3" endX="3.6" endY="18.4"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="3.5" startY="11.0" endX="0.5" endY="11.0"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="5.7" startY="5.7" endX="3.6" endY="3.6"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="11.0" startY="3.5" endX="11.0" endY="0.5"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="16.3" startY="5.7" endX="18.4" endY="3.6"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line>
+            </PartDraw>
+            <PartDraw name="tod_3" x="0" y="4" width="22" height="22" alpha="0">
+              <Transform target="x" value="225 - ((((0 - [COMPLICATION.RANGED_VALUE_MIN]) - 1) % 1000) + 30) / 2"/>
+              <Transform target="alpha" value="floor(((0 - [COMPLICATION.RANGED_VALUE_MIN]) - 1) / 1000) == 3 ? 255 : 0"/>
+              <Arc centerX="11" centerY="13" width="10" height="10" startAngle="-90" endAngle="90"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Arc><Line startX="1.0" startY="13.0" endX="21.0" endY="13.0"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="11.0" startY="5.0" endX="11.0" endY="2.5"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="5.3" startY="7.3" endX="3.6" endY="5.6"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="16.7" startY="7.3" endX="18.4" endY="5.6"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="11.0" startY="16.5" endX="11.0" endY="21.0"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="8.5" startY="19.0" endX="11.0" endY="21.5"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="11.0" startY="21.5" endX="13.5" endY="19.0"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line>
+            </PartDraw>
+            <PartDraw name="tod_4" x="0" y="4" width="22" height="22" alpha="0">
+              <Transform target="x" value="225 - ((((0 - [COMPLICATION.RANGED_VALUE_MIN]) - 1) % 1000) + 30) / 2"/>
+              <Transform target="alpha" value="floor(((0 - [COMPLICATION.RANGED_VALUE_MIN]) - 1) / 1000) == 4 ? 255 : 0"/>
+              <Ellipse x="3.5" y="3.5" width="15" height="15"><Fill color="#ffa6b4f7"/></Ellipse><Ellipse x="8" y="1" width="13" height="13"><Fill color="#ff25151e"/></Ellipse>
+            </PartDraw>
+          </Group>
+          </Group>
           <!-- Always-on time range (A2b): dimmed, straight under the title (the clash line it would sit under is hidden);
                hidden with "Hide details in always-on" (A2c) -->
           <Group name="range_ambient" x="0" y="0" width="450" height="80" alpha="0">
@@ -698,9 +724,32 @@
             <Group name="range_ambient_shown" x="0" y="0" width="450" height="80">
               <Transform target="alpha" value="255 * (1 - (floor(round(floor(([COMPLICATION.RANGED_VALUE_MAX] - 1) / 10000)) / 256) % 2))"/>
               <PartText x="0" y="44" width="450" height="30">
+                <Transform target="x" value="15 * (floor(((0 - [COMPLICATION.RANGED_VALUE_MIN]) - 1) / 1000) >= 1 ? 1 : 0)"/>
                 <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="24" color="#fffff1f6">
                   <Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TITLE]"/></Template></Font></Text>
               </PartText>
+              <Group name="tod" x="0" y="44" width="450" height="30">
+            <PartDraw name="tod_1" x="0" y="4" width="22" height="22" alpha="0">
+              <Transform target="x" value="225 - ((((0 - [COMPLICATION.RANGED_VALUE_MIN]) - 1) % 1000) + 30) / 2"/>
+              <Transform target="alpha" value="floor(((0 - [COMPLICATION.RANGED_VALUE_MIN]) - 1) / 1000) == 1 ? 255 : 0"/>
+              <Arc centerX="11" centerY="13" width="10" height="10" startAngle="-90" endAngle="90"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Arc><Line startX="1.0" startY="13.0" endX="21.0" endY="13.0"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="11.0" startY="5.0" endX="11.0" endY="2.5"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="5.3" startY="7.3" endX="3.6" endY="5.6"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="16.7" startY="7.3" endX="18.4" endY="5.6"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="11.0" startY="21.5" endX="11.0" endY="17.0"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="8.5" startY="19.0" endX="11.0" endY="16.5"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="11.0" startY="16.5" endX="13.5" endY="19.0"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line>
+            </PartDraw>
+            <PartDraw name="tod_2" x="0" y="4" width="22" height="22" alpha="0">
+              <Transform target="x" value="225 - ((((0 - [COMPLICATION.RANGED_VALUE_MIN]) - 1) % 1000) + 30) / 2"/>
+              <Transform target="alpha" value="floor(((0 - [COMPLICATION.RANGED_VALUE_MIN]) - 1) / 1000) == 2 ? 255 : 0"/>
+              <Ellipse x="6.5" y="6.5" width="9" height="9"><Stroke color="#ffa6b4f7" thickness="2.2"/></Ellipse><Line startX="18.5" startY="11.0" endX="21.5" endY="11.0"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="16.3" startY="16.3" endX="18.4" endY="18.4"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="11.0" startY="18.5" endX="11.0" endY="21.5"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="5.7" startY="16.3" endX="3.6" endY="18.4"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="3.5" startY="11.0" endX="0.5" endY="11.0"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="5.7" startY="5.7" endX="3.6" endY="3.6"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="11.0" startY="3.5" endX="11.0" endY="0.5"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="16.3" startY="5.7" endX="18.4" endY="3.6"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line>
+            </PartDraw>
+            <PartDraw name="tod_3" x="0" y="4" width="22" height="22" alpha="0">
+              <Transform target="x" value="225 - ((((0 - [COMPLICATION.RANGED_VALUE_MIN]) - 1) % 1000) + 30) / 2"/>
+              <Transform target="alpha" value="floor(((0 - [COMPLICATION.RANGED_VALUE_MIN]) - 1) / 1000) == 3 ? 255 : 0"/>
+              <Arc centerX="11" centerY="13" width="10" height="10" startAngle="-90" endAngle="90"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Arc><Line startX="1.0" startY="13.0" endX="21.0" endY="13.0"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="11.0" startY="5.0" endX="11.0" endY="2.5"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="5.3" startY="7.3" endX="3.6" endY="5.6"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="16.7" startY="7.3" endX="18.4" endY="5.6"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="11.0" startY="16.5" endX="11.0" endY="21.0"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="8.5" startY="19.0" endX="11.0" endY="21.5"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line><Line startX="11.0" startY="21.5" endX="13.5" endY="19.0"><Stroke color="#ffa6b4f7" thickness="2.2" cap="ROUND"/></Line>
+            </PartDraw>
+            <PartDraw name="tod_4" x="0" y="4" width="22" height="22" alpha="0">
+              <Transform target="x" value="225 - ((((0 - [COMPLICATION.RANGED_VALUE_MIN]) - 1) % 1000) + 30) / 2"/>
+              <Transform target="alpha" value="floor(((0 - [COMPLICATION.RANGED_VALUE_MIN]) - 1) / 1000) == 4 ? 255 : 0"/>
+              <Ellipse x="3.5" y="3.5" width="15" height="15"><Fill color="#ffa6b4f7"/></Ellipse><Ellipse x="8" y="1" width="13" height="13"><Fill color="#ff25151e"/></Ellipse>
+            </PartDraw>
+          </Group>
             </Group>
           </Group>
         </Group>
