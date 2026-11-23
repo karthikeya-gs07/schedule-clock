@@ -55,6 +55,7 @@ object MeetingBuzz {
 
     /** Sets one exact alarm for the next buzz (or clears it when there is none). */
     fun schedule(context: Context) {
+        FaceTick.schedule(context)   // the face's own redraw at the next start or end (RULES R13)
         val alarms = context.getSystemService(AlarmManager::class.java)
         val intent = PendingIntent.getBroadcast(context, 0, Intent(context, BuzzReceiver::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
@@ -103,4 +104,37 @@ class BuzzReceiver : BroadcastReceiver() {
 /** Alarms don't survive a restart, and a clock or time-zone change moves every buzz: set them again. */
 class BuzzRearmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) { MeetingBuzz.schedule(context); FocusEnd.schedule(context) }
+}
+
+/**
+ * The face redraws right when a meeting starts or ends (RULES R13). The ring and its text otherwise refresh on the
+ * watch's own 5-minute schedule, which Wear OS stretches while the watch sleeps, so an arc could stay up well after
+ * its meeting ended until the face was tapped. One exact alarm is set for the next start or end (a few a day, nothing
+ * between meetings); when it fires, every slot is asked again and the next one is set. Re-armed with the buzzes.
+ */
+object FaceTick {
+    private const val AFTER_MS = 2_000L   // just past the minute, so the face's clock has turned over
+
+    fun schedule(context: Context) {
+        val alarms = context.getSystemService(AlarmManager::class.java)
+        val intent = PendingIntent.getBroadcast(context, 1, Intent(context, FaceTickReceiver::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val zone = ZoneId.systemDefault()
+        val midnight = LocalDate.now(zone).atStartOfDay(zone).toInstant().toEpochMilli()
+        val now = System.currentTimeMillis()
+        val next = SpikeSchedule.meetingsNow(context).flatMap { listOf(it.startMin, it.endMin) }
+            .map { midnight + it * 60_000L + AFTER_MS }.filter { it > now + 1_000 }.minOrNull()
+        if (next == null || !alarms.canScheduleExactAlarms()) { alarms.cancel(intent); return }
+        alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, next, intent)
+        Log.i(TAG, "next face redraw at ${java.time.Instant.ofEpochMilli(next).atZone(zone).toLocalTime()}")
+    }
+}
+
+/** A meeting just started or ended: redraw the face, then set the next. */
+class FaceTickReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        Log.i(TAG, "face redraw: a meeting started or ended")
+        SpikeSchedule.requestUpdate(context.applicationContext)
+        FaceTick.schedule(context)
+    }
 }

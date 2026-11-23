@@ -1,6 +1,15 @@
 package io.github.karthikeyags07.scheduleclock.phone
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.ui.semantics.contentDescription
@@ -102,63 +111,90 @@ fun bold(s: String) = buildAnnotatedString {
 }
 
 // ---------- Settings (RULES A6) ----------
+// Each section is an accordion (2026-11-23): only its name shows until it's tapped open. All start closed.
 @Composable
 fun SettingsScreen(m: AppModel, onRunSetup: () -> Unit) {
     PageTitle("Settings")
-    PageHeading("Meeting buzzes")
-    val any = m.buzz[AppPrefs.Buzz.START] == true || m.buzz[AppPrefs.Buzz.MIDDLE] == true || m.buzz[AppPrefs.Buzz.END] == true
-    ToggleItem("2 min before it starts", "One short buzz", m.buzz[AppPrefs.Buzz.START] == true) { m.setBuzz(AppPrefs.Buzz.START, it) }
-    ToggleItem("Halfway through", "One long buzz · meetings of 15 min or more", m.buzz[AppPrefs.Buzz.MIDDLE] == true) { m.setBuzz(AppPrefs.Buzz.MIDDLE, it) }
-    ToggleItem("5 min before it ends", "Two short buzzes · meetings of 10 min or more", m.buzz[AppPrefs.Buzz.END] == true) { m.setBuzz(AppPrefs.Buzz.END, it) }
-    ToggleItem("Buzz in Do Not Disturb", "Buzzes still come through when your watch is silenced", m.buzz[AppPrefs.Buzz.DND] == true, enabled = any) { m.setBuzz(AppPrefs.Buzz.DND, it) }
-    ItemDivider(Modifier.padding(top = 8.dp))
+    Spacer(Modifier.height(12.dp))
+    Accordion("Meeting buzzes", first = true, icon = Icons.buzz) {
+        val any = m.buzz[AppPrefs.Buzz.START] == true || m.buzz[AppPrefs.Buzz.MIDDLE] == true || m.buzz[AppPrefs.Buzz.END] == true
+        ToggleItem("2 min before it starts", "One short buzz", m.buzz[AppPrefs.Buzz.START] == true) { m.setBuzz(AppPrefs.Buzz.START, it) }
+        ToggleItem("Halfway through", "One long buzz · meetings of 15 min or more", m.buzz[AppPrefs.Buzz.MIDDLE] == true) { m.setBuzz(AppPrefs.Buzz.MIDDLE, it) }
+        ToggleItem("5 min before it ends", "Two short buzzes · meetings of 10 min or more", m.buzz[AppPrefs.Buzz.END] == true) { m.setBuzz(AppPrefs.Buzz.END, it) }
+        ToggleItem("Buzz in Do Not Disturb", "Buzzes still come through when your watch is silenced", m.buzz[AppPrefs.Buzz.DND] == true, enabled = any) { m.setBuzz(AppPrefs.Buzz.DND, it) }
+    }
     // Sounds (2026-11-20): a soft felt-piano chime on the watch, with the start and end buzzes. Quiet whenever the
     // watch is on silent or vibrate, in Do Not Disturb or theatre mode.
-    PageHeading("Sounds")
-    ToggleItem("2 min before it starts", "A soft piano chime on your watch", m.buzz[AppPrefs.Buzz.CHIME_START] == true) { m.setBuzz(AppPrefs.Buzz.CHIME_START, it) }
-    ToggleItem("5 min before it ends", "The same chime · quiet when your watch is on silent", m.buzz[AppPrefs.Buzz.CHIME_END] == true) { m.setBuzz(AppPrefs.Buzz.CHIME_END, it) }
-    ItemDivider(Modifier.padding(top = 8.dp))
-    PageHeading("Clock")
-    ToggleItem("24-hour time", if (m.clock24) "Shows 14:30" else "Shows 2:30", m.clock24) { m.setClock(clock24 = it) }
-    ToggleItem("Show AM/PM", "Next to the time in 12-hour mode", m.showAmPm, enabled = !m.clock24) { m.setClock(showAmPm = it) }
-    SecondZoneItem(m)
-    ToggleItem("Hide details in always-on", "When the watch dims, show the ring and the time but not the meeting's name, time or place", m.hideAodDetails) { m.switchHideAodDetails(it) }
-    ItemDivider(Modifier.padding(top = 8.dp))
-    // The section's own switch (RULES A24): off, every number on the face acts like its hour.
-    Row(Modifier.fillMaxWidth().padding(top = 30.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Text("Shortcuts on the face", style = TitleStyle.copy(fontSize = 19.sp, lineHeight = 25.sp))
-            Text("Tap 12, 3, 6 or 9 on the watch to open one", style = ItemTextStyle, modifier = Modifier.padding(top = 2.dp))
-        }
-        SettingSwitch(m.shortcutsOn) { m.switchShortcuts(it) }
+    Accordion("Sounds", icon = Icons.sound) {
+        ToggleItem("2 min before it starts", "A soft piano chime on your watch", m.buzz[AppPrefs.Buzz.CHIME_START] == true) { m.setBuzz(AppPrefs.Buzz.CHIME_START, it) }
+        ToggleItem("5 min before it ends", "The same chime · quiet when your watch is on silent", m.buzz[AppPrefs.Buzz.CHIME_END] == true) { m.setBuzz(AppPrefs.Buzz.CHIME_END, it) }
     }
-    NUMBERS.forEach { n -> ShortcutRow(m, n, enabled = m.shortcutsOn) }   // greyed out, not hidden, while the section is off
+    Accordion("Clock", icon = Icons.clock) {
+        ToggleItem("24-hour time", if (m.clock24) "Shows 14:30" else "Shows 2:30", m.clock24) { m.setClock(clock24 = it) }
+        ToggleItem("Show AM/PM", "Next to the time in 12-hour mode", m.showAmPm, enabled = !m.clock24) { m.setClock(showAmPm = it) }
+        SecondZoneItem(m)
+        ToggleItem("Hide details in always-on", "When the watch dims, show the ring and the time but not the meeting's name, time or place", m.hideAodDetails) { m.switchHideAodDetails(it) }
+    }
+    Accordion("Shortcuts on the face", icon = Icons.shortcuts) {
+        // The section's own switch (RULES A24): off, every number on the face acts like its hour.
+        ToggleItem("Shortcuts", "Tap 12, 3, 6 or 9 on the watch to open one", m.shortcutsOn) { m.switchShortcuts(it) }
+        NUMBERS.forEach { n -> ShortcutRow(m, n, enabled = m.shortcutsOn) }   // greyed out, not hidden, while the section is off
+    }
     // Sync isn't a setting: a short note says how it works.
-    ItemDivider(Modifier.padding(top = 8.dp))   // hairlines between the sections
-    PageHeading("Sync")
-    TextItem("Every 15 minutes", "And as soon as a meeting changes. CalenTime sends yesterday to tomorrow from the calendars you picked.")
-    TextItem("Private events", "They go to your watch without their title or place.")
+    Accordion("Sync", icon = Icons.sync) {
+        TextItem("Every 15 minutes", "And as soon as a meeting changes. CalenTime sends yesterday to tomorrow from the calendars you picked.")
+        TextItem("Private events", "They go to your watch without their title or place.")
+    }
     // Versions and update checks (RULES A14).
-    ItemDivider(Modifier.padding(top = 8.dp))
-    PageHeading("Updates")
-    val face = m.link.face
-    VersionRow("Phone app", BuildConfig.VERSION_NAME)
-    FrostButton("Check for app update", m.checkingApp, Modifier.fillMaxWidth().padding(top = 4.dp)) { m.checkAppUpdate() }
-    Spacer(Modifier.height(18.dp))
-    VersionRow("Watch app", when {
-        face == null -> if (m.link.watch == null) "Not connected" else "Not installed"
-        face.versionName.isNotEmpty() -> face.versionName
-        face.version == BuildConfig.WATCH_VERSION_CODE -> BuildConfig.WATCH_VERSION_NAME
-        face.version > 0 -> "Build ${face.version}"
-        else -> "Older than 0.11.1"
-    })
-    FrostButton("Check for watch update", m.checkingWatch, Modifier.fillMaxWidth().padding(top = 4.dp)) { m.checkWatchUpdate() }
+    Accordion("Updates", icon = Icons.update) {
+        val face = m.link.face
+        VersionRow("Phone app", BuildConfig.VERSION_NAME)
+        FrostButton("Check for app update", m.checkingApp, Modifier.fillMaxWidth().padding(top = 4.dp)) { m.checkAppUpdate() }
+        Spacer(Modifier.height(18.dp))
+        VersionRow("Watch app", when {
+            face == null -> if (m.link.watch == null) "Not connected" else "Not installed"
+            face.versionName.isNotEmpty() -> face.versionName
+            face.version == BuildConfig.WATCH_VERSION_CODE -> BuildConfig.WATCH_VERSION_NAME
+            face.version > 0 -> "Build ${face.version}"
+            else -> "Older than 0.11.1"
+        })
+        FrostButton("Check for watch update", m.checkingWatch, Modifier.fillMaxWidth().padding(top = 4.dp)) { m.checkWatchUpdate() }
+    }
     // Setup again (also on About): calendar access, calendars and the face on the watch, from the start.
-    ItemDivider(Modifier.padding(top = 8.dp))
-    PageHeading("Setup")
-    Text("Go through setup again: calendar access, which calendars to send, and putting the face on your watch.",
-        style = ItemTextStyle, modifier = Modifier.padding(bottom = 16.dp))
-    RunSetupButton(onRunSetup, Modifier.fillMaxWidth())
+    Accordion("Setup", last = true, icon = Icons.watch) {
+        Text("Go through setup again: calendar access, which calendars to send, and putting the face on your watch.",
+            style = ItemTextStyle, modifier = Modifier.padding(bottom = 16.dp))
+        RunSetupButton(onRunSetup, Modifier.fillMaxWidth())
+    }
+}
+
+/**
+ * A Settings section that opens and closes: its icon, its name and a chevron, with hairlines between sections. Open or closed
+ * is kept while the app is open (rememberSaveable), and every section starts closed.
+ */
+@Composable
+private fun Accordion(title: String, first: Boolean = false, last: Boolean = false, icon: androidx.compose.ui.graphics.vector.ImageVector, content: @Composable () -> Unit) {
+    var open by rememberSaveable(title) { mutableStateOf(false) }
+    val turn by animateFloatAsState(if (open) 180f else 0f, tween(250), label = "chevron")
+    if (!first) ItemDivider()
+    Column(Modifier.fillMaxWidth()) {
+        Row(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable(role = Role.Button) { open = !open }
+                .semantics { stateDescription = if (open) "Open" else "Closed" }.padding(vertical = 24.dp),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            // The section's icon in the app's round frosted circle, as on About.
+            Box(Modifier.size(38.dp).clip(CircleShape).frostCard(CircleShape), contentAlignment = Alignment.Center) {
+                Icon(icon, null, tint = Palette.text, modifier = Modifier.size(18.dp))
+            }
+            Text(title, style = TitleStyle.copy(fontSize = 19.sp, lineHeight = 25.sp), modifier = Modifier.weight(1f))
+            Icon(Icons.chevron, null, tint = Palette.text, modifier = Modifier.size(20.dp).rotate(turn))
+        }
+        AnimatedVisibility(open, enter = expandVertically(tween(250)) + fadeIn(tween(250)), exit = shrinkVertically(tween(200)) + fadeOut(tween(150))) {
+            Column(Modifier.fillMaxWidth().padding(bottom = 26.dp)) { content() }
+        }
+    }
+    if (last) ItemDivider()
 }
 
 @Composable
