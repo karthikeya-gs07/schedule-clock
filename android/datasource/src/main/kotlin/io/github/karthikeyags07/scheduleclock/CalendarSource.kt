@@ -23,12 +23,15 @@ import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 
 /**
- * The day's [Meeting]s (PRD §7.0 phase 2), from up to three places, merged with duplicates (same start,
- * end and title) dropped:
- * - events sent by the phone app (`PhoneCalendarListener`, cached in a file): the only source on Galaxy
- *   watches, whose Samsung Calendar keeps events private (PRD §6.3f);
- * - the watch's own calendar, and Wear OS's copy of the phone's calendar, when calendar access is
+ * The day's [Meeting]s (PRD §7.0 phase 2):
+ * - events sent by the phone app (`PhoneCalendarListener`, cached in a file). When the phone app has sent its
+ *   calendar, **that is the only source** (2026-11-23): the phone already merged accounts shown in several
+ *   calendar apps, left out calendars switched off and meetings hidden in its drawer, and sends private ones
+ *   without a title. Adding the watch's own copies on top showed the same meeting twice, overlapping (Wear OS's
+ *   copy of a Google calendar that Samsung Calendar also shows; a private meeting titled on one side only);
+ * - otherwise the watch's own calendar, and Wear OS's copy of the phone's calendar, when calendar access is
  *   granted on the watch. Columns are looked up by name, since the Wear copy may not have all of them.
+ * Either way, the same meeting found twice is kept once ([sameKey]).
  */
 object CalendarSource {
     private val PROVIDERS = listOf(
@@ -50,14 +53,20 @@ object CalendarSource {
         val from = today.minusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
         val to = today.plusDays(2).atStartOfDay(zone).toInstant().toEpochMilli()
         val found = LinkedHashMap<String, Meeting>()
-        fun add(m: Meeting) = found.putIfAbsent("${m.startMin}|${m.endMin}|${m.title}", m)
-        phoneEvents(context)?.let { events ->
+        fun add(m: Meeting) {
+            val k = sameKey(m.startMin, m.endMin, m.allDay, m.title)
+            val had = found[k] ?: return run { found[k] = m }
+            // The same meeting twice: one entry, private if either copy is, with a place if either has one.
+            found[k] = had.copy(private = had.private || m.private, where = had.where.ifEmpty { m.where })
+        }
+        val phone = phoneEvents(context)
+        phone?.let { events ->
             for (i in 0 until events.length()) events.getJSONObject(i).run {
                 add(meeting(getLong("begin"), getLong("end"), getBoolean("allDay"), optString("title"), optString("where"),
                     getBoolean("private"), midnight, today))
             }
         } ?: fetchFromPhone(context)
-        if (hasPermission(context)) for (base in PROVIDERS) {
+        if (phone == null && hasPermission(context)) for (base in PROVIDERS) {
             val uri = base.buildUpon().also { ContentUris.appendId(it, from); ContentUris.appendId(it, to) }.build()
             try {
                 context.contentResolver.query(uri, null, null, null, null)?.use { c ->
@@ -74,6 +83,13 @@ object CalendarSource {
         }
         return found.values.sortedBy { it.startMin }
     }
+
+    /**
+     * One meeting however many calendars show it: the same start, end and all-day flag, and the same title once
+     * spaces and capitals are ignored ("Design review" in Google Calendar and "design  review " in a synced copy).
+     */
+    fun sameKey(startMin: Int, endMin: Int, allDay: Boolean, title: String) =
+        "$startMin|$endMin|$allDay|${title.trim().replace(Regex("\\s+"), " ").lowercase()}"
 
     private fun read(c: Cursor, midnight: Long, today: LocalDate): Meeting? {
         if (int(c, Instances.SELF_ATTENDEE_STATUS) == CalendarContract.Attendees.ATTENDEE_STATUS_DECLINED) return null

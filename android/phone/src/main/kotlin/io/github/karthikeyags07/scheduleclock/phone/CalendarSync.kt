@@ -66,7 +66,12 @@ object CalendarSync {
         return out.sortedWith(compareBy({ it.accountType }, { it.account }, { it.name }))
     }
 
-    /** Meetings from the switched-on calendars, yesterday to the end of tomorrow, by start time. */
+    /**
+     * Meetings from the switched-on calendars, yesterday to the end of tomorrow, by start time. The same meeting in
+     * several calendars (one Google or Outlook account shown by Google Calendar, Samsung Calendar and Outlook, each
+     * with its own copy) is kept once (2026-11-23): same start, end and all-day flag, and the same title ignoring
+     * spaces and capitals. The kept one is private if any copy is, and has a place if any copy has one.
+     */
     fun meetings(context: Context): List<Meeting> {
         if (!hasPermission(context)) return emptyList()
         val enabled = AppPrefs.enabledCalendars(context)
@@ -99,7 +104,15 @@ object CalendarSync {
                 )
             }
         }
-        return out
+        val seen = LinkedHashMap<String, Int>()
+        val merged = mutableListOf<Meeting>()
+        for (m in out) {
+            val k = "${m.begin}|${m.end}|${m.allDay}|${m.title.trim().replace(Regex("\\s+"), " ").lowercase()}"
+            val i = seen[k]
+            if (i == null) { seen[k] = merged.size; merged += m }
+            else merged[i] = merged[i].let { it.copy(private = it.private || m.private, where = it.where.ifEmpty { m.where }) }
+        }
+        return merged
     }
 
     /** Reads and sends; blocking, so call it off the main thread. Returns the number of events sent. */
