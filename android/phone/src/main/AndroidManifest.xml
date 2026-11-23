@@ -15,6 +15,11 @@
         </intent>
     </queries>
 
+    <!-- The app locks to portrait on phones, which makes Play treat a portrait screen as required and hide the app from
+         tablets, desktops and XR. It works in any orientation (Android 16 ignores the lock on large screens), so the
+         feature is optional. -->
+    <uses-feature android:name="android.hardware.screen.portrait" android:required="false" />
+
     <application
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
