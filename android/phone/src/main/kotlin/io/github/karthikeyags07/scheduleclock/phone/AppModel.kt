@@ -212,7 +212,14 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
             // the swap); otherwise, or if the watch can't open it, the swap goes by request or waits for the watch.
             // Not the watch face yet (never put on, or another face picked since): the watch's face setup puts it on
             // and makes it the watch face. Android lets an app do that once; after that the watch says how to pick it.
-            if (link.face?.installed != true || link.face?.active != true) {
+            // The face on the watch but "not active" is often only a stale or passing answer from just after the
+            // last swap; going to the setup then put "Putting CalenTime on your watch… pick it yourself" on the
+            // watch mid-change. So ask again first, and only a face that isn't on the watch, or one never made the
+            // watch face that can still be made it once, goes through the setup. Otherwise the quick swap runs,
+            // and if the face really isn't the watch face, the steps to pick it show here on the phone.
+            if (link.face?.installed == true && link.face?.active != true) WatchLink.state(context).let { if (it.face != null) link = it }
+            val setup = link.face?.installed != true || (link.face?.active != true && link.face?.activateUsed != true)
+            if (setup) {
                 watchDone()   // a setup, not a quick swap: nothing waits on it
                 AppPrefs.sendSettings(context)
                 if (!WatchLink.install(context, c)) { say("Couldn't reach your watch"); return@launch }
@@ -229,6 +236,7 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
                 return@launch
             }
             try { swapOnWatch(c) } finally { watchDone() }
+            if (link.face?.installed == true && link.face?.active == false) notice = PICK_ON_WATCH
         }
     }
 
@@ -236,9 +244,14 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
         run {   // the quick swap on a watch already wearing the face
             val shown = WatchLink.openColourChange(context, c)
             if (shown) {
-                delay(4500)   // the swap and the new face loading, under the transition
+                // The transition on the watch makes the swap; asking for the same colourway waits for it to finish
+                // (one change at a time on the watch) and answers with the face's status. Then a moment for the
+                // new face to load and the transition to lift. This used to be a fixed 4.5 s.
+                val started = System.currentTimeMillis()
+                val status = WatchLink.setColourway(context, c)
+                delay(if (status != null) LIFT_MS else (4500 - (System.currentTimeMillis() - started)).coerceAtLeast(0))
                 AppPrefs.sendSettings(context)   // after the swap, so the watch's catch-up finds it already done
-                link = WatchLink.state(context)
+                if (status != null) link = link.copy(face = status) else WatchLink.state(context).let { if (it.face != null) link = it }
             } else {
                 AppPrefs.sendSettings(context)
                 val status = WatchLink.setColourway(context, c)
@@ -458,6 +471,8 @@ class AppModel(private val context: Context, private val scope: CoroutineScope) 
     }
 }
 
+/** After the watch says the swap is done: the new face loading and the transition lifting (ColourSwapActivity). */
+private const val LIFT_MS = 2600L
 private val WATCH_UPDATING = "Your watch is updating" to "It takes a moment. Your last change goes on as soon as it's done."
 private val PICK_ON_WATCH = "Pick CalenTime on your watch" to "Touch and hold your watch face, swipe to CalenTime and tap it."
 

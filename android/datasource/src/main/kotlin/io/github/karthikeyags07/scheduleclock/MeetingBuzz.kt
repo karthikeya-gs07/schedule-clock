@@ -50,7 +50,7 @@ object MeetingBuzz {
                 if (length >= MIDDLE_MIN_LENGTH) add(Buzz(ms(m.startMin) + length * 30_000L, Kind.MIDDLE))
                 if (length >= END_MIN_LENGTH) add(Buzz(ms(m.endMin - END_BEFORE_MIN), Kind.END))
             }
-        }.filter { PhoneSettings.buzzOn(context, it.kind) }   // H6: the phone app's switches
+        }.filter { PhoneSettings.buzzOn(context, it.kind) || PhoneSettings.chimeOn(context, it.kind) }   // H6, H7: the phone app's switches
     }
 
     /** Sets one exact alarm for the next buzz (or clears it when there is none). */
@@ -76,7 +76,11 @@ object MeetingBuzz {
         val last = prefs.getLong("lastAt", 0L)
         val due = buzzes(context).filter { it.at in (now - LATE_MS)..(now + 5_000) && it.at > last }
         due.maxByOrNull { it.kind.priority }?.let {
-            if (PhoneSettings.buzzAllowedNow(context)) play(context, it.kind)
+            // The chime (H7) plays with the start and end buzzes, even with the buzz itself switched off; never
+            // halfway. MeetingChime keeps it quiet on silent / vibrate, Do Not Disturb and theatre mode.
+            if (PhoneSettings.chimeOn(context, it.kind)) MeetingChime.play(context)
+            if (!PhoneSettings.buzzOn(context, it.kind)) Unit
+            else if (PhoneSettings.buzzAllowedNow(context)) play(context, it.kind)
             else Log.i(TAG, "buzz: ${it.kind} held back (Do Not Disturb, and the phone app says not to buzz through it)")
             prefs.edit().putLong("lastAt", due.maxOf { b -> b.at }).apply()
         }

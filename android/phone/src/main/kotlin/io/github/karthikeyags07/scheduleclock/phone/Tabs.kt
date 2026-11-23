@@ -112,6 +112,12 @@ fun SettingsScreen(m: AppModel, onRunSetup: () -> Unit) {
     ToggleItem("5 min before it ends", "Two short buzzes · meetings of 10 min or more", m.buzz[AppPrefs.Buzz.END] == true) { m.setBuzz(AppPrefs.Buzz.END, it) }
     ToggleItem("Buzz in Do Not Disturb", "Buzzes still come through when your watch is silenced", m.buzz[AppPrefs.Buzz.DND] == true, enabled = any) { m.setBuzz(AppPrefs.Buzz.DND, it) }
     ItemDivider(Modifier.padding(top = 8.dp))
+    // Sounds (2026-11-20): a soft felt-piano chime on the watch, with the start and end buzzes. Quiet whenever the
+    // watch is on silent or vibrate, in Do Not Disturb or theatre mode.
+    PageHeading("Sounds")
+    ToggleItem("2 min before it starts", "A soft piano chime on your watch", m.buzz[AppPrefs.Buzz.CHIME_START] == true) { m.setBuzz(AppPrefs.Buzz.CHIME_START, it) }
+    ToggleItem("5 min before it ends", "The same chime · quiet when your watch is on silent", m.buzz[AppPrefs.Buzz.CHIME_END] == true) { m.setBuzz(AppPrefs.Buzz.CHIME_END, it) }
+    ItemDivider(Modifier.padding(top = 8.dp))
     PageHeading("Clock")
     ToggleItem("24-hour time", if (m.clock24) "Shows 14:30" else "Shows 2:30", m.clock24) { m.setClock(clock24 = it) }
     ToggleItem("Show AM/PM", "Next to the time in 12-hour mode", m.showAmPm, enabled = !m.clock24) { m.setClock(showAmPm = it) }

@@ -3,9 +3,13 @@ package io.github.karthikeyags07.scheduleclock
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.ParcelFileDescriptor
+import android.os.SystemClock
 import android.util.Log
 import androidx.wear.watchfacepush.WatchFacePushManager
 import androidx.wear.watchfacepush.WatchFacePushManagerFactory
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.json.JSONObject
@@ -36,13 +40,23 @@ object FacePush {
     private fun manager(context: Context) = WatchFacePushManagerFactory.createWatchFacePushManager(context)
     private fun prefs(context: Context) = context.getSharedPreferences("face_push", Context.MODE_PRIVATE)
 
+    /** When the last swap finished (elapsedRealtime), or 0. */
+    @Volatile var swappedAt = 0L
+        private set
+
+    /** Is the face on the watch (in our slot)? Doesn't ask whether it's active, which is slow and unreliable mid-swap. */
+    suspend fun installed(context: Context) = supported() && manager(context).listWatchFaces().installedWatchFaceDetails.isNotEmpty()
+
     suspend fun status(context: Context): Status {
         if (!supported()) return Status(supported = false)
         val slot = manager(context).listWatchFaces().installedWatchFaceDetails.firstOrNull()
         val prefs = prefs(context)
-        // Just after a swap the active check can fail for a moment (Google's docs say not to ask then); a swap
-        // keeps the face active, so the last known answer stands in.
-        val active = slot != null && try {
+        // Just after a swap the active check can fail, stall or answer "no" for a moment (Google's docs say not to ask
+        // then). A swap keeps the face active, so for a while after one the last known answer stands in. Saving a
+        // passing "no" made the phone think the face had been taken off, and its next colour change then opened the
+        // face setup on the watch ("put it on, then pick it yourself") instead of the quick swap.
+        val settling = SystemClock.elapsedRealtime() - swappedAt < SETTLE_AFTER_SWAP_MS && swappedAt > 0
+        val active = slot != null && if (settling) prefs.getBoolean("active", false) else try {
             manager(context).isWatchFaceActive(slot.packageName).also { prefs.edit().putBoolean("active", it).apply() }
         } catch (e: Exception) {
             prefs.getBoolean("active", false)
@@ -74,6 +88,9 @@ object FacePush {
         // Saved first: the new face asks for its ring image as it loads, and the ring is drawn in its colours.
         val before = prefs(context).getString("colourway", null)
         prefs(context).edit().putString("colourway", colourway).putLong("appVersion", appVersion(context)).commit()
+        // Draw the new ring meanwhile, so the new face's first ask finds it ready instead of waiting ~1 s for it.
+        val app = context.applicationContext
+        CoroutineScope(Dispatchers.Default).launch { SpikeSchedule.warmRing(app) }
         try {
             apk(context, colourway).use { fd ->
                 if (slot == null) manager.addWatchFace(fd, token) else manager.updateWatchFace(slot.slotId, fd, token)
@@ -82,6 +99,7 @@ object FacePush {
             prefs(context).edit().putString("colourway", before).commit()
             throw e
         }
+        swappedAt = SystemClock.elapsedRealtime()
         SpikeSchedule.requestUpdate(context.applicationContext)
         Log.i(TAG, "face push: ${if (slot == null) "added" else "swapped to"} $colourway")
         if (slot == null) status(context) else cachedStatus(context, colourway)   // no active check right after a swap
@@ -125,10 +143,24 @@ object FacePush {
         }
     }
 
-    /** The bundled face as a file descriptor (assets may be compressed, so it's copied out first). */
+    /**
+     * The bundled face as a file descriptor (assets may be compressed, so it's copied out first). The copy is kept for
+     * this install of the app, so going back to a colourway doesn't unpack it again; copies from earlier installs are
+     * removed. Keyed by the install time, not the version code: test builds keep the same version code, and a face
+     * from an earlier build doesn't match the new build's token, so Watch Face Push refuses it.
+     */
     private fun apk(context: Context, colourway: String): ParcelFileDescriptor {
-        val file = File(context.cacheDir, "face-$colourway.apk")
-        context.assets.open("faces/$colourway.apk").use { input -> file.outputStream().use { input.copyTo(it) } }
+        val version = context.packageManager.getPackageInfo(context.packageName, 0).lastUpdateTime
+        val file = File(context.cacheDir, "face-$colourway-$version.apk")
+        if (!file.exists() || file.length() == 0L) {
+            context.cacheDir.listFiles { f -> f.name.startsWith("face-") && f.name.endsWith(".apk") && !f.name.endsWith("-$version.apk") }
+                ?.forEach { it.delete() }
+            val part = File(context.cacheDir, "${file.name}.part")
+            context.assets.open("faces/$colourway.apk").use { input -> part.outputStream().use { input.copyTo(it) } }
+            part.renameTo(file)
+        }
         return ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
     }
+
+    private const val SETTLE_AFTER_SWAP_MS = 20_000L
 }

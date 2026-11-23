@@ -20,7 +20,7 @@ object PhoneSettings {
             putBoolean("focus", map.getBoolean("focus", false))   // focus mode on (A26); older phone apps don't send it
             if (map.containsKey("secondZone")) putString("secondZone", map.getString("secondZone"))
             if (map.containsKey("shortcuts")) putString("shortcuts", map.getString("shortcuts"))
-            listOf("buzzStart", "buzzMiddle", "buzzEnd", "buzzDnd", "clock24", "showAmPm", "compass", "agenda", "flashlight", "countdown", "hideAodDetails", "shortcutsOn").forEach { if (map.containsKey(it)) putBoolean(it, map.getBoolean(it)) }
+            listOf("buzzStart", "buzzMiddle", "buzzEnd", "buzzDnd", "chimeStart", "chimeEnd", "clock24", "showAmPm", "compass", "agenda", "flashlight", "countdown", "hideAodDetails", "shortcutsOn").forEach { if (map.containsKey(it)) putBoolean(it, map.getBoolean(it)) }
         }.apply()
     }
 
@@ -55,6 +55,16 @@ object PhoneSettings {
     fun focusOn(context: Context) = prefs(context).getBoolean("focus", false)
     /** The face the phone wants: its colourway (an old Focus face's name means its colourway, A26). */
     fun faceNow(context: Context): String? = FacePush.known(colourway(context))
+
+    /**
+     * The phone app's Settings → Sounds (RULES H7, on by default): the chime 2 min before a meeting starts and 5 min
+     * before it ends. Never halfway through.
+     */
+    fun chimeOn(context: Context, kind: MeetingBuzz.Kind) = when (kind) {
+        MeetingBuzz.Kind.START -> prefs(context).getBoolean("chimeStart", true)
+        MeetingBuzz.Kind.END -> prefs(context).getBoolean("chimeEnd", true)
+        MeetingBuzz.Kind.MIDDLE -> false
+    }
 
     fun buzzOn(context: Context, kind: MeetingBuzz.Kind) = prefs(context).getBoolean(
         when (kind) { MeetingBuzz.Kind.START -> "buzzStart"; MeetingBuzz.Kind.MIDDLE -> "buzzMiddle"; MeetingBuzz.Kind.END -> "buzzEnd" }, true)

@@ -43,7 +43,7 @@ class PhoneCalendarListener : WearableListenerService() {
         if (!FacePush.supported()) return@runBlocking
         try {
             val done = withTimeoutOrNull(20_000) {
-                if (FacePush.status(applicationContext).installed) FacePush.install(applicationContext, wanted)
+                if (FacePush.installed(applicationContext)) FacePush.install(applicationContext, wanted)
             }
             if (done == null) Log.w(TAG, "settings: swap to $wanted took too long; left for the next sync")
         } catch (e: Exception) {

@@ -45,10 +45,18 @@ class ColourSwapActivity : Activity(), CoroutineScope by MainScope() {
             } catch (e: Exception) {
                 Log.w(TAG, "colour swap to $colourway failed", e)
             }
-            // Let the ring finish, then give the new face time to load its meetings before showing it. Meanwhile,
-            // whenever the swap brings the watch face to the front (with Wear OS's stand-in clock), onStop puts
-            // this cover straight back on top.
-            delay((SWEEP_MS - (SystemClock.uptimeMillis() - started)).coerceAtLeast(0) + SETTLE_MS)
+            // Lift the cover once the new face is on screen, not before the ring has gone round. Measured on the
+            // Galaxy Watch8: the face is asked for its slots right after the swap (not yet drawn), and again as it
+            // appears, 2–2.6 s after the swap. Until then Wear OS shows a plain stand-in clock and a black frame,
+            // which the old fixed wait (1.6 s after the ring) uncovered. So the cover waits for the ring and text
+            // asked for at least FIRST_ASK_MS after the swap, then a moment for them to be drawn; at most SETTLE_MS
+            // after the ring. Meanwhile, whenever the swap brings the watch face to the front (with the stand-in
+            // clock), onStop puts this cover straight back on top.
+            val swapped = SystemClock.elapsedRealtime() + FIRST_ASK_MS
+            delay((SWEEP_MS - (SystemClock.uptimeMillis() - started)).coerceAtLeast(0))
+            val giveUp = SystemClock.uptimeMillis() + SETTLE_MS
+            while (!FaceLoad.loadedSince(swapped) && SystemClock.uptimeMillis() < giveUp) delay(50)
+            delay(DRAWN_MS)
             holding = false
             view.animate().alpha(0f).setDuration(350).withEndAction {
                 finish()
@@ -78,7 +86,9 @@ class ColourSwapActivity : Activity(), CoroutineScope by MainScope() {
     companion object {
         const val EXTRA_COLOUR = "colour"
         private const val SWEEP_MS = 1100L
-        private const val SETTLE_MS = 1600L
+        private const val SETTLE_MS = 3000L   // the longest the cover waits for the new face, after the ring
+        private const val FIRST_ASK_MS = 900L // asks sooner than this after the swap come before the face is drawn
+        private const val DRAWN_MS = 250L     // after the face has its data: a few frames for it to draw
     }
 
     /** The new face's background, a ring track, the new colourway sweeping round it, and the colourway's name. */

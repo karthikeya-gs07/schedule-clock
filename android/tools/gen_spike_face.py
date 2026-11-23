@@ -19,6 +19,7 @@ CX = CY = 225
 R = 219          # ring radius: band 213–225, flush with the edge (RULES R1)
 R_LATER = R - 10 # later lane (R5)
 HOT = 72         # hotspot box size
+NUM_IN, NUM_OUT, NUM_W = 144, 196, 64   # shortcut taps (A24): on the 12, 3, 6 and 9 numbers only, clear of the ring
 
 SEAM = 294   # right edge of a 1-digit-hour time, so time + AM/PM are centered as a unit (C11)
 SELECT_ANIM = '<Animation duration="0.52" interpolation="CUBIC_BEZIER" controls="0.4 0 0.2 1"/>'   # M1
@@ -95,7 +96,14 @@ TODV = "(0 - [COMPLICATION.RANGED_VALUE_MIN])"
 RW = f"(({TODV} - 1) % 1000)"
 TOD = f"floor(({TODV} - 1) / 1000)"
 HAS_TOD = f"({TOD} >= 1 ? 1 : 0)"   # A2c: hide the meeting's details in always-on (phone app setting)
-AMB = '<Variant mode="AMBIENT" target="alpha" value="0" duration="0.7"/>'   # hidden in always-on (A1, A2)
+# Always-on transition (M4). Every part that changes going into always-on changes over AMB_S, together; parts that
+# leave and whose place is taken by something else (the scrolling title, the place / clash line) go faster, over
+# AMB_OUT_S, so they're gone before the always-on copy fills in. These were all 0.7 s: longer than the watch's own
+# dimming, so the screen could reach always-on mid-fade and stay there until the next minute, with the leaving
+# text and the arriving text drawn over each other.
+AMB_S, AMB_OUT_S = "0.45", "0.2"
+AMB = f'<Variant mode="AMBIENT" target="alpha" value="0" duration="{AMB_S}"/>'   # hidden in always-on (A1, A2)
+AMB_OUT = f'<Variant mode="AMBIENT" target="alpha" value="0" duration="{AMB_OUT_S}"/>'   # leaves first (see above)
 EXTRA = f"(30 * {ARROW} + 25 * {LOCK})"
 ICON_X = f"(225 - ({W} + {EXTRA}) / 2)"
 
@@ -180,7 +188,7 @@ def scroll_slot(slot_id, name, service, arrow):
       <BoundingBox x="{left}" y="215" width="{355 - left}" height="85"/>
       <Complication type="RANGED_VALUE">
         <Group name="scroll_live" x="0" y="0" width="450" height="450">
-          <Variant mode="AMBIENT" target="alpha" value="0" duration="0.7"/>
+          {AMB_OUT}
           <PartText x="{left}" y="255" width="900" height="36" alpha="0">
             <Transform target="x" value="{x}"/>
             <Transform target="y" value="255 - 30 * {S}">{SELECT_ANIM}</Transform>
@@ -191,6 +199,19 @@ def scroll_slot(slot_id, name, service, arrow):
         </Group>
       </Complication>
     </ComplicationSlot>'''
+
+# A24: the ring gaps at 12, 3, 6 and 9 (x, y, width, height, hour selected).
+GAP = 18
+RING_FILLERS = [(CX - GAP, 0, GAP, CY - NUM_OUT, 11), (CX, 0, GAP, CY - NUM_OUT, 0),
+                (CX + NUM_OUT, CY - GAP, CY - NUM_OUT, GAP, 2), (CX + NUM_OUT, CY, CY - NUM_OUT, GAP, 3),
+                (CX, CY + NUM_OUT, GAP, CY - NUM_OUT, 5), (CX - GAP, CY + NUM_OUT, GAP, CY - NUM_OUT, 6),
+                (0, CY, CY - NUM_OUT, GAP, 8), (0, CY - GAP, CY - NUM_OUT, GAP, 9)]
+
+def ring_filler(x, y, w, h, hour):
+    return f'''    <PartDraw name="ring_gap_{hour}_{x}_{y}" x="{x}" y="{y}" width="{w}" height="{h}">
+      <Rectangle x="0" y="0" width="{w}" height="{h}"><Fill color="#00000000"/></Rectangle>
+      <Launch target="app://{PKG}/select?hour={hour}"/>
+    </PartDraw>'''
 
 def hotspot(h):
     a = math.radians(h * 30 + 15)                      # middle of the hour
@@ -308,13 +329,13 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
 
     <!-- Always-on (A1): black background, whatever the colourway -->
     <PartDraw x="0" y="0" width="450" height="450" alpha="0">
-      <Variant mode="AMBIENT" target="alpha" value="255" duration="0.7"/>
+      <Variant mode="AMBIENT" target="alpha" value="255" duration="{AMB_S}"/>
       <Rectangle x="0" y="0" width="450" height="450"><Fill color="#ff000000"/></Rectangle>
     </PartDraw>
 
     <!-- Ring track (R1); faint in always-on -->
     <PartDraw x="0" y="0" width="450" height="450">
-      <Variant mode="AMBIENT" target="alpha" value="110" duration="0.7"/>
+      <Variant mode="AMBIENT" target="alpha" value="110" duration="{AMB_S}"/>
       <Arc centerX="{CX}" centerY="{CY}" width="{2*R}" height="{2*R}" startAngle="0" endAngle="360">
         <Stroke color="{D.track}" thickness="12"/>
       </Arc>
@@ -328,7 +349,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
 
     <!-- Dial: 15-minute ticks (R7) and hour numbers (R8) -->
     <Group name="dial" x="0" y="0" width="450" height="450">
-      <Variant mode="AMBIENT" target="alpha" value="153" duration="0.7"/>
+      <Variant mode="AMBIENT" target="alpha" value="153" duration="{AMB_S}"/>
       <PartDraw x="0" y="0" width="450" height="450">
 {ticks()}
       </PartDraw>
@@ -359,7 +380,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
         </Group>
         <!-- Always-on (A1): meetings and the later lane in grey, no colour -->
         <Group name="ring_ambient" x="0" y="0" width="450" height="450" alpha="0">
-          <Variant mode="AMBIENT" target="alpha" value="255" duration="0.7"/>
+          <Variant mode="AMBIENT" target="alpha" value="255" duration="{AMB_S}"/>
           <PartImage x="0" y="0" width="1800" height="450" tintColor="{PRIVATE_TINT}">
             <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
           </PartImage>
@@ -368,7 +389,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
           </PartImage>
         </Group>
         <Group name="ring_fixed" x="0" y="0" width="450" height="450">
-          <Variant mode="AMBIENT" target="alpha" value="140" duration="0.7"/>
+          <Variant mode="AMBIENT" target="alpha" value="140" duration="{AMB_S}"/>
           <PartImage x="-900" y="0" width="1800" height="450">
             <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
           </PartImage>
@@ -415,7 +436,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
 
     <!-- Now dot (R6): rotates with the clock; above the ring layers -->
     <Group name="now" x="0" y="0" width="450" height="450" pivotX="0.5" pivotY="0.5">
-      <Variant mode="AMBIENT" target="alpha" value="190" duration="0.7"/>   <!-- dimmed, not hidden, in always-on (A2b); it moves once a minute with the clock -->
+      <Variant mode="AMBIENT" target="alpha" value="190" duration="{AMB_S}"/>   <!-- dimmed, not hidden, in always-on (A2b); it moves once a minute with the clock -->
       <Transform target="angle" value="{NOW_DEG}"/>
       <PartDraw x="{CX - 16}" y="{CY - R - 16}" width="32" height="32">
         <Ellipse x="2" y="2" width="28" height="28"><Fill color="#2e{D.ink[3:]}"/></Ellipse>
@@ -433,7 +454,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
       <BoundingOval x="0" y="0" width="450" height="450"/>
       <Complication type="RANGED_VALUE">
         <Group name="zone_marker" x="0" y="0" width="450" height="450" pivotX="0.5" pivotY="0.5">
-          <Variant mode="AMBIENT" target="alpha" value="190" duration="0.7"/>
+          <Variant mode="AMBIENT" target="alpha" value="190" duration="{AMB_S}"/>
           <Transform target="angle" value="{NOW_DEG} + ([COMPLICATION.RANGED_VALUE_VALUE] - 2000) * 0.5"/>
           <PartImage x="{CX - 16}" y="{CY - R - 16}" width="32" height="32" alpha="0">
             <Transform target="alpha" value="([COMPLICATION.RANGED_VALUE_VALUE] &gt; 2000) * 255"/>
@@ -533,7 +554,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
           <Transform target="alpha" value="255 * {HIDEAOD}"/>
           <!-- Day + date (C1, T1): 24 px, muted; shrinks to 90 % in place when selected; down 55 px when empty (C3) -->
           <Group name="date_c" x="0" y="98" width="450" height="30" pivotX="0.5" pivotY="0.5">
-            <Variant mode="AMBIENT" target="y" value="153" duration="0.7"/>
+            <Variant mode="AMBIENT" target="y" value="153" duration="{AMB_S}"/>
             <Transform target="y" value="98 + 55 * {EMPTY}">{SELECT_ANIM}</Transform>
             <Transform target="scaleX" value="1 - 0.1 * {S}">{SELECT_ANIM}</Transform>
             <Transform target="scaleY" value="1 - 0.1 * {S}">{SELECT_ANIM}</Transform>
@@ -547,9 +568,9 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
           </Group>
           <!-- Clock (T5): Anta 88 px; selected: 55 %, up 10 px; empty (C3): 115 %, down 60 px to the center -->
           <Group name="clock_c" x="0" y="119" width="450" height="110" pivotX="0.5" pivotY="0.5">
-            <Variant mode="AMBIENT" target="y" value="179" duration="0.7"/>
-            <Variant mode="AMBIENT" target="scaleX" value="1.15" duration="0.7"/>
-            <Variant mode="AMBIENT" target="scaleY" value="1.15" duration="0.7"/>
+            <Variant mode="AMBIENT" target="y" value="179" duration="{AMB_S}"/>
+            <Variant mode="AMBIENT" target="scaleX" value="1.15" duration="{AMB_S}"/>
+            <Variant mode="AMBIENT" target="scaleY" value="1.15" duration="{AMB_S}"/>
             <Transform target="y" value="119 - 10 * {S} + 60 * {EMPTY}">{SELECT_ANIM}</Transform>
             <Transform target="scaleX" value="1 - 0.45 * {S} + 0.15 * {EMPTY}">{SELECT_ANIM}</Transform>
             <Transform target="scaleY" value="1 - 0.45 * {S} + 0.15 * {EMPTY}">{SELECT_ANIM}</Transform>
@@ -597,7 +618,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
           </Group>
           <!-- Divider (T2): selected: up 32 px, 60 % wide; fades out when empty (C3) -->
           <Group name="divider_c" x="{CX - 70}" y="231" width="140" height="4" pivotX="0.5" pivotY="0.5">
-            <Variant mode="AMBIENT" target="alpha" value="0" duration="0.7"/>
+            <Variant mode="AMBIENT" target="alpha" value="0" duration="{AMB_S}"/>
             <Transform target="alpha" value="255 * (1 - {EMPTY})">{SELECT_ANIM}</Transform>
             <Transform target="y" value="231 - 32 * {S}">{SELECT_ANIM}</Transform>
             <Transform target="scaleX" value="1 - 0.4 * {S}">{SELECT_ANIM}</Transform>
@@ -611,7 +632,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
 {details_group("details", f"""          <!-- Live title: hidden while the full title scrolls in slot 4/6 (C9a), and in ambient -->
           <!-- C9: 30 px, or 24 px when it only fits at that size (flag 16); one of the two is visible -->
           <Group name="title_live" x="0" y="0" width="450" height="60">
-            <Variant mode="AMBIENT" target="alpha" value="0" duration="0.7"/>
+            <Variant mode="AMBIENT" target="alpha" value="0" duration="{AMB_S}"/>
             <PartText x="0" y="5" width="450" height="36">
               <Transform target="x" value="{EXTRA} / 2"/>
               <Transform target="alpha" value="255 * (1 - {SCROLL}) * (1 - {SMALL})"/>
@@ -627,7 +648,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
           </Group>
           <!-- Ambient title (A2a): the shortened title, first characters and an ellipsis; nothing moves -->
           <Group name="title_ambient" x="0" y="0" width="450" height="60" alpha="0">
-            <Variant mode="AMBIENT" target="alpha" value="255" duration="0.7"/>
+            <Variant mode="AMBIENT" target="alpha" value="255" duration="{AMB_S}"/>
             <!-- A2c: hidden with "Hide details in always-on" (an inner group: the Variant above sets this group's alpha) -->
             <Group name="title_ambient_shown" x="0" y="0" width="450" height="60">
               <Transform target="alpha" value="255 * (1 - {HIDEAOD})"/>
@@ -664,7 +685,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
           </Group>
           <!-- Always-on copies of the arrow and lock; hidden with "Hide details in always-on" (A2c) -->
           <Group name="icons_ambient" x="0" y="0" width="450" height="60" alpha="0">
-            <Variant mode="AMBIENT" target="alpha" value="255" duration="0.7"/>
+            <Variant mode="AMBIENT" target="alpha" value="255" duration="{AMB_S}"/>
             <Group name="icons_ambient_shown" x="0" y="0" width="450" height="60">
               <Transform target="alpha" value="255 * (1 - {HIDEAOD})"/>
   
@@ -697,7 +718,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
           <!-- Always-on time range (A2b): dimmed, straight under the title (the clash line it would sit under is hidden);
                hidden with "Hide details in always-on" (A2c) -->
           <Group name="range_ambient" x="0" y="0" width="450" height="80" alpha="0">
-            <Variant mode="AMBIENT" target="alpha" value="190" duration="0.7"/>
+            <Variant mode="AMBIENT" target="alpha" value="190" duration="{AMB_S}"/>
             <Group name="range_ambient_shown" x="0" y="0" width="450" height="80">
               <Transform target="alpha" value="255 * (1 - {HIDEAOD})"/>
               <PartText x="0" y="44" width="450" height="30">
@@ -719,7 +740,7 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
       {provider("DetailsDataSourceService", "RANGED_VALUE")}
       <BoundingOval x="0" y="0" width="450" height="450"/>
       <Complication type="RANGED_VALUE">
-{details_group("line", f"""          {AMB}
+{details_group("line", f"""          {AMB_OUT}
           <PartDraw name="overlap" x="0" y="52" width="22" height="14" alpha="0">
             <Transform target="x" value="225 - ({W} + 30) / 2"/>
             <Transform target="alpha" value="{F} == 1 ? 255 : 0"/>
@@ -736,24 +757,32 @@ xml = f'''<?xml version="1.0" encoding="utf-8"?>
 
     <!-- Risks 1 + 7: twelve transparent one-hour hotspots on the ring, each a Launch deep link (I1) -->
 {chr(10).join(hotspot(h) for h in range(12))}
+    <!-- A24: the ring at 12, 3, 6 and 9 falls between two hour hotspots (they're squares round each hour's middle); the
+         shortcut boxes used to cover it. Now that they're on the numbers only, these fill it: each half selects the
+         hour on its side, from the screen edge down to the number's tap box. -->
+{chr(10).join(ring_filler(*f) for f in RING_FILLERS)}
+    <!-- A24 (2026-11-20): each shortcut is tapped on its number only, radius {NUM_IN}–{NUM_OUT} (the numbers sit at
+         {R - 40}), {NUM_W} wide, so the ring band (213–225) and the edge round it stay the hour hotspots' and a tap on a
+         meeting there selects it. The shortcut boxes used to reach the screen edge and took meeting taps from
+         11:30–12:30, 2:30–3:30, 5:30–6:30 and 8:30–9:30. -->
     <!-- A19: the 12 opens the compass (on top of the hour hotspots there) -->
-    <PartDraw name="compass_tap" x="181" y="0" width="88" height="86">
-      <Rectangle x="0" y="0" width="88" height="86"><Fill color="#00000000"/></Rectangle>
+    <PartDraw name="compass_tap" x="{CX - NUM_W // 2}" y="{CY - NUM_OUT}" width="{NUM_W}" height="{NUM_OUT - NUM_IN}">
+      <Rectangle x="0" y="0" width="{NUM_W}" height="{NUM_OUT - NUM_IN}"><Fill color="#00000000"/></Rectangle>
       <Launch target="app://{PKG}/compass"/>
     </PartDraw>
     <!-- A22: the 3 opens the meeting countdown (on top of the hour hotspots there) -->
-    <PartDraw name="countdown_tap" x="364" y="181" width="86" height="88">
-      <Rectangle x="0" y="0" width="86" height="88"><Fill color="#00000000"/></Rectangle>
+    <PartDraw name="countdown_tap" x="{CX + NUM_IN}" y="{CY - NUM_W // 2}" width="{NUM_OUT - NUM_IN}" height="{NUM_W}">
+      <Rectangle x="0" y="0" width="{NUM_OUT - NUM_IN}" height="{NUM_W}"><Fill color="#00000000"/></Rectangle>
       <Launch target="app://{PKG}/countdown"/>
     </PartDraw>
     <!-- A21: the 9 turns the screen into a flashlight (on top of the hour hotspots there) -->
-    <PartDraw name="flashlight_tap" x="0" y="181" width="86" height="88">
-      <Rectangle x="0" y="0" width="86" height="88"><Fill color="#00000000"/></Rectangle>
+    <PartDraw name="flashlight_tap" x="{CX - NUM_OUT}" y="{CY - NUM_W // 2}" width="{NUM_OUT - NUM_IN}" height="{NUM_W}">
+      <Rectangle x="0" y="0" width="{NUM_OUT - NUM_IN}" height="{NUM_W}"><Fill color="#00000000"/></Rectangle>
       <Launch target="app://{PKG}/flashlight"/>
     </PartDraw>
     <!-- A20: the 6 opens all events (on top of the hour hotspots there) -->
-    <PartDraw name="agenda_tap" x="181" y="364" width="88" height="86">
-      <Rectangle x="0" y="0" width="88" height="86"><Fill color="#00000000"/></Rectangle>
+    <PartDraw name="agenda_tap" x="{CX - NUM_W // 2}" y="{CY + NUM_IN}" width="{NUM_W}" height="{NUM_OUT - NUM_IN}">
+      <Rectangle x="0" y="0" width="{NUM_W}" height="{NUM_OUT - NUM_IN}"><Fill color="#00000000"/></Rectangle>
       <Launch target="app://{PKG}/agenda"/>
     </PartDraw>
     <!-- I8: the details area (inside the hour hotspots). A tap while a meeting is selected goes back to the normal view. -->

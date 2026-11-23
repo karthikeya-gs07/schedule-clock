@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
  * - `app://<package>/flashlight`: a tap on the 9; turns the screen into a flashlight (RULES A21).
  * - `app://<package>/countdown`: a tap on the 3; the meeting countdown (RULES A22).
  * - `app://<package>/buzz?kind=start|middle|end`: debug, plays a meeting buzz pattern now.
+ * - `app://<package>/chime`: debug, plays the meeting chime now (MeetingChime).
  * - `app://<package>/promote`: plays the lane → ring settle (spike 3).
  * - `app://<package>/time?offset=M`: debug time shift in minutes for testing.
  * - `app://<package>/day?name=busy|example`: debug switch of the sample day.
@@ -66,6 +67,13 @@ class TapActivity : Activity() {
         } else if (test && uri?.path == "/buzz") {
             MeetingBuzz.Kind.entries.firstOrNull { it.name.equals(uri.getQueryParameter("kind"), true) }
                 ?.let { MeetingBuzz.play(this, it) }
+        } else if (test && uri?.path == "/chime") {
+            MeetingChime.play(this, when (uri.getQueryParameter("usage")) {
+                "alarm" -> android.media.AudioAttributes.USAGE_ALARM
+                "media" -> android.media.AudioAttributes.USAGE_MEDIA
+                "notification" -> android.media.AudioAttributes.USAGE_NOTIFICATION_EVENT
+                else -> android.media.AudioAttributes.USAGE_ALARM
+            })
         } else if (test && uri?.path == "/promote") {
             SpikeSchedule.runPromotion(this)
         } else if (test && uri?.path == "/time") {

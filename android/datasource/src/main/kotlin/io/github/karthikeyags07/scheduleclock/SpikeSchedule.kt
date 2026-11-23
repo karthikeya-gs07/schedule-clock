@@ -137,7 +137,7 @@ object SpikeSchedule {
     // A tap (or any change) asks all six slots at once, and the face asks them all again ~1 s later; each used to read
     // the calendar again. One read now serves the burst: kept 3 s, for the same minute, and dropped on every
     // requestUpdate (a change of data, selection or settings).
-    private var cache: Triple<Int, Long, List<Placed>>? = null
+    @Volatile private var cache: Triple<Int, Long, List<Placed>>? = null   // read from the ring's background thread too
     private const val CACHE_MS = 3_000L
 
     private fun placed(context: Context, now: Int = now(context)): List<Placed> {
@@ -180,10 +180,18 @@ object SpikeSchedule {
 
     // ---- Slot data -------------------------------------------------------------------------
 
-    private var lastRing: Pair<List<Any?>, ByteArray>? = null
+    @Volatile private var lastRing: Pair<List<Any?>, ByteArray>? = null
+    private val ringLock = Any()   // one ring drawn at a time (the face asks again ~1 s later; a swap warms it ahead)
+
+    /** Draws the ring ahead (for a colour change: the new face's first ask then finds it ready). */
+    fun warmRing(context: Context) {
+        try { ringImage(context) } catch (e: Exception) { Log.w(TAG, "ring warm-up failed", e) }
+    }
 
     /** Slot 1: the whole ring as one image (spike 2). */
-    fun ringImage(context: Context): SmallImageComplicationData {
+    fun ringImage(context: Context): SmallImageComplicationData = synchronized(ringLock) { ringImageLocked(context) }
+
+    private fun ringImageLocked(context: Context): SmallImageComplicationData {
         val t0 = SystemClock.elapsedRealtimeNanos()
         val now = now(context)
         val list = placed(context, now)

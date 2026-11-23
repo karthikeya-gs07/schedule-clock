@@ -48,7 +48,11 @@ object AppPrefs {
     fun colourway(context: Context) = prefs(context).getString("colourway", "amber")!!
     fun setColourway(context: Context, colourway: String) = prefs(context).edit().putString("colourway", colourway).apply()
 
-    enum class Buzz(val key: String) { START("buzzStart"), MIDDLE("buzzMiddle"), END("buzzEnd"), DND("buzzDnd") }
+    /**
+     * CHIME_START / CHIME_END (Settings → Sounds, 2026-11-20): the watch plays the Felt piano chime 2 min before a
+     * meeting starts and 5 min before it ends (with those buzzes, or on its own if the buzz is off). On by default.
+     */
+    enum class Buzz(val key: String) { START("buzzStart"), MIDDLE("buzzMiddle"), END("buzzEnd"), DND("buzzDnd"), CHIME_START("chimeStart"), CHIME_END("chimeEnd") }
     fun buzz(context: Context, b: Buzz) = prefs(context).getBoolean(b.key, true)
     fun setBuzz(context: Context, b: Buzz, on: Boolean) = prefs(context).edit().putBoolean(b.key, on).apply()
 

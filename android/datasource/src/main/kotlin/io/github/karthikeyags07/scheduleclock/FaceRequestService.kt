@@ -29,7 +29,7 @@ class FaceRequestService : WearableListenerService() {
                     STATUS -> FacePush.status(applicationContext)
                     COLOUR -> {
                         val colourway = data.decodeToString()
-                        if (FacePush.supported() && FacePush.status(applicationContext).installed) FacePush.install(applicationContext, colourway)
+                        if (FacePush.installed(applicationContext)) FacePush.install(applicationContext, colourway)
                         else FacePush.status(applicationContext)
                     }
                     else -> return@launch reply.setException(IllegalArgumentException("unknown path $path"))
