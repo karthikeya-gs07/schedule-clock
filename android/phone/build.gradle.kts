@@ -31,8 +31,8 @@ android {
         minSdk = 29
         targetSdk = 36
         // Phone and watch apps share one Play listing, so their version codes must differ: phone 1xxx, watch 2xxx.
-        versionCode = 1012
-        versionName = "0.12.2"
+        versionCode = 1013
+        versionName = "0.12.3"
         // The watch app released with this phone app: a watch with an older one is offered the update (RULES A14).
         buildConfigField("int", "WATCH_VERSION_CODE", watchVersionCode)
         buildConfigField("String", "WATCH_VERSION_NAME", "\"$watchVersionName\"")
